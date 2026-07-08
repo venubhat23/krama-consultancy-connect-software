@@ -7,7 +7,7 @@ class Admin::PlatformAnalyticsController < Admin::SuperAdminBaseController
     @forums_by_plan = BusinessPlan.ordered.to_h { |p| [p.name, p.forums.count] }
     @revenue_by_plan = BusinessPlan.ordered.to_h { |p| [p.name, p.forums.active.count * p.price] }
 
-    @forum_status_distribution = Forum.group(:status).count
+    @forum_status_distribution = Forum.group(:status).count.transform_keys { |k| k || "unknown" }
     @ticket_status_distribution = SupportTicket.group(:status).count
     @ticket_priority_distribution = SupportTicket.group(:priority).count
     @announcement_audience_distribution = Announcement.group(:audience).count
