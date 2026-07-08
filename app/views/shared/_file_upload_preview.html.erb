@@ -1,0 +1,259 @@
+<%
+  # Shared File Upload Preview Component
+  # Variables
+  field_id = local_assigns[:field_id] || 'file_upload'
+  preview_id = local_assigns[:preview_id] || "#{field_id}_preview"
+  accept = local_assigns[:accept] || 'image/*,application/pdf'
+  show_file_info = local_assigns[:show_file_info].nil? ? true : local_assigns[:show_file_info]
+  max_file_size = local_assigns[:max_file_size] || '10MB'
+  preview_container_class = local_assigns[:preview_container_class] || 'mt-3'
+%>
+
+<!-- File Upload Preview Container -->
+<div id="<%= preview_id %>" class="<%= preview_container_class %>" style="display: none;">
+  <div class="card border-light bg-light">
+    <div class="card-body p-3">
+      <div class="d-flex align-items-start">
+        <!-- Preview Content -->
+        <div class="preview-content me-3">
+          <!-- Image Preview -->
+          <div class="image-preview" style="display: none;">
+            <img class="preview-image rounded" style="max-width: 150px; max-height: 150px; object-fit: cover; border: 2px solid #e9ecef;" alt="Preview">
+          </div>
+
+          <!-- Document Preview -->
+          <div class="document-preview" style="display: none;">
+            <div class="d-flex align-items-center p-3 border rounded" style="background-color: #f8f9fa; min-width: 150px;">
+              <i class="file-icon bi bi-file-earmark text-primary fs-1 me-3"></i>
+              <div>
+                <div class="fw-bold file-name text-truncate" style="max-width: 200px;"></div>
+                <small class="text-muted file-type"></small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- File Information -->
+        <div class="file-info flex-grow-1">
+          <h6 class="mb-2">
+            <i class="bi bi-file-earmark-check text-success me-2"></i>
+            <span class="file-title">File Selected</span>
+          </h6>
+
+          <% if show_file_info %>
+            <div class="file-details small text-muted">
+              <div><strong>Name:</strong> <span class="file-name-detail"></span></div>
+              <div><strong>Size:</strong> <span class="file-size-detail"></span></div>
+              <div><strong>Type:</strong> <span class="file-type-detail"></span></div>
+              <div><strong>Last Modified:</strong> <span class="file-date-detail"></span></div>
+            </div>
+          <% end %>
+
+          <!-- File Status -->
+          <div class="file-status mt-2">
+            <span class="badge bg-success">
+              <i class="bi bi-check-circle me-1"></i>
+              Ready to Upload
+            </span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="file-actions">
+          <button type="button" class="btn btn-sm btn-outline-danger remove-file" title="Remove File">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Bar (for future upload progress) -->
+      <div class="upload-progress mt-3" style="display: none;">
+        <div class="progress">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+        </div>
+        <small class="text-muted mt-1">Uploading...</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const fileInput = document.getElementById('<%= field_id %>');
+  const previewContainer = document.getElementById('<%= preview_id %>');
+
+  if (!fileInput || !previewContainer) return;
+
+  // File size limit (convert from string like "10MB" to bytes)
+  const maxSizeStr = '<%= max_file_size %>';
+  const maxSize = parseInt(maxSizeStr) * 1024 * 1024; // Convert MB to bytes
+
+  fileInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+
+    if (!file) {
+      hidePreview();
+      return;
+    }
+
+    // Validate file size
+    if (file.size > maxSize) {
+      showError(`File size exceeds <%= max_file_size %> limit`);
+      fileInput.value = '';
+      hidePreview();
+      return;
+    }
+
+    showPreview(file);
+  });
+
+  // Remove file button
+  previewContainer.querySelector('.remove-file')?.addEventListener('click', function() {
+    fileInput.value = '';
+    hidePreview();
+  });
+
+  function showPreview(file) {
+    const imagePreview = previewContainer.querySelector('.image-preview');
+    const documentPreview = previewContainer.querySelector('.document-preview');
+    const fileNameElement = previewContainer.querySelector('.file-name-detail');
+    const fileSizeElement = previewContainer.querySelector('.file-size-detail');
+    const fileTypeElement = previewContainer.querySelector('.file-type-detail');
+    const fileDateElement = previewContainer.querySelector('.file-date-detail');
+
+    // Hide both previews initially
+    imagePreview.style.display = 'none';
+    documentPreview.style.display = 'none';
+
+    // Show preview container
+    previewContainer.style.display = 'block';
+
+    // Update file details
+    if (fileNameElement) fileNameElement.textContent = file.name;
+    if (fileSizeElement) fileSizeElement.textContent = formatFileSize(file.size);
+    if (fileTypeElement) fileTypeElement.textContent = file.type || 'Unknown';
+    if (fileDateElement) fileDateElement.textContent = new Date(file.lastModified).toLocaleDateString();
+
+    // Check if file is an image
+    if (file.type && file.type.startsWith('image/')) {
+      showImagePreview(file, imagePreview);
+    } else {
+      showDocumentPreview(file, documentPreview);
+    }
+
+    // Add smooth animation
+    previewContainer.style.opacity = '0';
+    setTimeout(() => {
+      previewContainer.style.transition = 'opacity 0.3s ease';
+      previewContainer.style.opacity = '1';
+    }, 10);
+  }
+
+  function showImagePreview(file, container) {
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+      const img = container.querySelector('.preview-image');
+      img.src = e.target.result;
+      container.style.display = 'block';
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+  function showDocumentPreview(file, container) {
+    const fileIcon = container.querySelector('.file-icon');
+    const fileName = container.querySelector('.file-name');
+    const fileType = container.querySelector('.file-type');
+
+    // Update document preview
+    fileName.textContent = file.name;
+    fileType.textContent = file.type || 'Unknown type';
+
+    // Set appropriate icon based on file type
+    fileIcon.className = 'file-icon bi fs-1 me-3 ' + getFileIcon(file.type || file.name);
+
+    container.style.display = 'block';
+  }
+
+  function hidePreview() {
+    previewContainer.style.display = 'none';
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  function getFileIcon(fileType) {
+    if (fileType.includes('pdf')) return 'bi-file-earmark-pdf text-danger';
+    if (fileType.includes('word') || fileType.includes('document')) return 'bi-file-earmark-word text-primary';
+    if (fileType.includes('excel') || fileType.includes('spreadsheet')) return 'bi-file-earmark-excel text-success';
+    if (fileType.includes('powerpoint') || fileType.includes('presentation')) return 'bi-file-earmark-ppt text-warning';
+    if (fileType.includes('image')) return 'bi-file-earmark-image text-info';
+    if (fileType.includes('text')) return 'bi-file-earmark-text text-secondary';
+    if (fileType.includes('zip') || fileType.includes('rar')) return 'bi-file-earmark-zip text-dark';
+
+    // Default file icon
+    return 'bi-file-earmark text-muted';
+  }
+
+  function showError(message) {
+    // Create temporary error message
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'alert alert-danger alert-dismissible fade show mt-2';
+    errorDiv.innerHTML = `
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    fileInput.parentNode.insertBefore(errorDiv, fileInput.nextSibling);
+
+    // Auto dismiss after 5 seconds
+    setTimeout(() => {
+      errorDiv.remove();
+    }, 5000);
+  }
+});
+</script>
+
+<style>
+#<%= preview_id %> {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#<%= preview_id %> .card {
+  transition: box-shadow 0.2s ease;
+}
+
+#<%= preview_id %> .card:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+#<%= preview_id %> .file-actions .btn {
+  transition: all 0.2s ease;
+}
+
+#<%= preview_id %> .file-actions .btn:hover {
+  transform: scale(1.1);
+}
+
+#<%= preview_id %> .preview-image {
+  transition: transform 0.2s ease;
+}
+
+#<%= preview_id %> .preview-image:hover {
+  transform: scale(1.05);
+}
+</style>

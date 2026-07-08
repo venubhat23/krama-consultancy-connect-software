@@ -1,0 +1,370 @@
+<style>
+  .investor-dashboard {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px 0;
+  }
+
+  .dashboard-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  }
+
+  .title-section {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .main-title {
+    font-size: 36px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    color: #718096;
+    font-size: 18px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+  }
+
+  .stat-box {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 15px;
+    padding: 25px;
+    text-align: center;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+  }
+
+  .stat-box:hover {
+    border-color: #667eea;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+  }
+
+  .stat-label {
+    font-size: 14px;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+
+  .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 5px;
+  }
+
+  .stat-subtitle {
+    font-size: 12px;
+    color: #a0aec0;
+  }
+
+  .company-section {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+  }
+
+  .investor-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+  }
+
+  .section-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .highlight-box {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+
+  .highlight-value {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+
+  .highlight-label {
+    font-size: 14px;
+    opacity: 0.9;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+  }
+
+  .info-item {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+  }
+
+  .info-value {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 5px;
+  }
+
+  .info-label {
+    font-size: 13px;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .share-indicator {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 18px;
+  }
+
+  .status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-block;
+  }
+
+  .badge-success {
+    background: #c6f6d5;
+    color: #276749;
+  }
+
+  .badge-warning {
+    background: #feebc8;
+    color: #7c2d12;
+  }
+
+  .investor-name {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+</style>
+
+<div class="investor-dashboard">
+  <div class="container">
+    <!-- Main Dashboard Card -->
+    <div class="dashboard-card">
+      <div class="title-section">
+        <h1 class="main-title">Investor Dashboard</h1>
+        <p class="subtitle">Company Performance & Your Investment Portfolio</p>
+      </div>
+
+      <!-- Company-wide Statistics -->
+      <div class="company-section">
+        <h2 class="section-title">
+          <i class="fas fa-building"></i>
+          Company Profit Overview
+        </h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-value"><span>Rs. </span><%= number_with_delimiter((@company_stats[:total_premium_collected]/100000).round(2)) %>L</div>
+            <div class="info-label">Total Premium Collected</div>
+          </div>
+          <div class="info-item">
+            <div class="info-value"><span>Rs. </span><%= number_with_delimiter((@company_stats[:total_profit]/100000).round(2)) %>L</div>
+            <div class="info-label">Gross Profit</div>
+          </div>
+          <div class="info-item">
+            <div class="info-value"><span>Rs. </span><%= number_with_delimiter((@company_stats[:net_profit]/100000).round(2)) %>L</div>
+            <div class="info-label">Net Profit</div>
+          </div>
+          <div class="info-item">
+            <div class="info-value"><%= @company_stats[:profit_margin] %>%</div>
+            <div class="info-label">Profit Margin</div>
+          </div>
+        </div>
+
+        <!-- Additional Profit Details -->
+        <div class="highlight-box" style="margin-top: 20px;">
+          <div class="row">
+            <div class="col-md-3">
+              <div style="text-align: center;">
+                <div class="info-value" style="font-size: 20px;"><span>Rs. </span><%= number_with_delimiter((@company_stats[:total_company_expenses]/100000).round(2)) %>L</div>
+                <div class="info-label">Total Expenses</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div style="text-align: center;">
+                <div class="info-value" style="font-size: 20px;"><%= @company_stats[:expense_ratio] %>%</div>
+                <div class="info-label">Expense Ratio</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div style="text-align: center;">
+                <div class="info-value" style="font-size: 20px;"><span>Rs. </span><%= number_with_delimiter((@company_stats[:current_month_profit]/1000).round(0)) %>K</div>
+                <div class="info-label">This Month Profit</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div style="text-align: center;">
+                <div class="info-value" style="font-size: 20px;"><span>Rs. </span><%= number_with_delimiter((@company_stats[:last_month_profit]/1000).round(0)) %>K</div>
+                <div class="info-label">Last Month Profit</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Investor Specific Section -->
+      <div class="investor-section">
+        <h2 class="section-title">
+          <i class="fas fa-user-tie"></i>
+          Your Investment Portfolio
+        </h2>
+
+        <div class="investor-name">
+          <i class="fas fa-user-circle"></i> <%= @investor.full_name %>
+        </div>
+
+        <p style="margin-bottom: 20px; opacity: 0.9;">
+          You are 1 of <%= @total_investors %> investors in the company
+        </p>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-value"><%= indian_currency(@investor_portion[:total_commission].round(0)) %></div>
+            <div class="info-label">Your Total Returns</div>
+          </div>
+          <div class="info-item">
+            <div class="info-value">
+              <span class="share-indicator">
+                <%= @investor_portion[:share_percentage] %>%
+              </span>
+            </div>
+            <div class="info-label">Your Share of Pool</div>
+          </div>
+          <div class="info-item">
+            <div class="info-value"><%= @investor_portion[:total_policies] %></div>
+            <div class="info-label">Your Policies</div>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="highlight-value">
+                <%= indian_currency(@investor_portion[:paid_amount].round(0)) %>
+              </div>
+              <div class="highlight-label">
+                <span class="status-badge badge-success">Paid Amount</span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="highlight-value">
+                <%= indian_currency(@investor_portion[:pending_amount].round(0)) %>
+              </div>
+              <div class="highlight-label">
+                <span class="status-badge badge-warning">Pending Amount</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue Statistics Section -->
+      <div style="background: linear-gradient(135deg, #fd7e14 0%, #f8690a 100%); color: white; border-radius: 15px; padding: 30px; margin-bottom: 30px;">
+        <h2 class="section-title">
+          <i class="fas fa-chart-line"></i>
+          Revenue Analytics & Growth
+        </h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-value"><span>Rs. </span><%= number_with_delimiter((@revenue_stats[:annual_revenue]/100000).round(2)) %>L</div>
+            <div class="info-label">Annual Revenue</div>
+          </div>
+          <div class="info-item">
+            <div class="info-value"><span>Rs. </span><%= number_with_delimiter((@revenue_stats[:revenue_per_policy]/1000).round(1)) %>K</div>
+            <div class="info-label">Revenue Per Policy</div>
+          </div>
+          <div class="info-item">
+            <div class="info-value"><%= @growth_metrics[:month_over_month_growth] %>%</div>
+            <div class="info-label">Month-over-Month Growth</div>
+          </div>
+          <div class="info-item">
+            <div class="info-value"><%= @growth_metrics[:market_share] %>%</div>
+            <div class="info-label">Estimated Market Share</div>
+          </div>
+        </div>
+
+        <!-- Quarterly Performance -->
+        <div class="highlight-box" style="margin-top: 20px;">
+          <h4 style="margin-bottom: 15px;">Quarterly Performance <%= Date.current.year %></h4>
+          <div class="row">
+            <% @revenue_stats[:quarterly_data].each do |quarter, data| %>
+              <div class="col-md-3">
+                <div style="text-align: center; padding: 10px;">
+                  <div class="info-value" style="font-size: 18px;"><span>Rs. </span><%= number_with_delimiter((data[:revenue]/100000).round(1)) %>L</div>
+                  <div class="info-label"><%= quarter %> Revenue</div>
+                  <small style="opacity: 0.8;">Margin: <%= data[:profit_margin] %>%</small>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhanced Summary Statistics -->
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">Your Investment Share</div>
+          <div class="stat-value"><%= @investor_portion[:share_percentage] %>%</div>
+          <div class="stat-subtitle">of total investor pool</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Year-over-Year Growth</div>
+          <div class="stat-value" style="color: <%= @growth_metrics[:year_over_year_growth] >= 0 ? '#48bb78' : '#fc8181' %>;">
+            <%= @growth_metrics[:year_over_year_growth] >= 0 ? '+' : '' %><%= @growth_metrics[:year_over_year_growth] %>%
+          </div>
+          <div class="stat-subtitle">revenue growth</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Current Month</div>
+          <div class="stat-value"><span>Rs. </span><%= number_with_delimiter((@growth_metrics[:current_month_revenue]/1000).round(1)) %>K</div>
+          <div class="stat-subtitle"><%= @growth_metrics[:current_month_policies] %> policies this month</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Investment ROI</div>
+          <div class="stat-value"><%= @revenue_stats[:annual_investor_percentage] %>%</div>
+          <div class="stat-subtitle">annual investor percentage</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

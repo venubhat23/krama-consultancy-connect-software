@@ -1,0 +1,96 @@
+<!-- Motor Insurance Import Modal -->
+<div class="modal fade" id="motorInsuranceImportModal" tabindex="-1" aria-labelledby="motorInsuranceImportModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="motorInsuranceImportModalLabel">
+          <i class="fas fa-car me-2"></i>
+          Import Motor Insurance Policies
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <%= form_with url: admin_import_motor_insurances_path, method: :post, multipart: true, local: true, class: "import-form" do |form| %>
+        <div class="modal-body">
+          <div class="alert alert-danger" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Motor Insurance Import Requirements:</strong>
+            <ul class="mb-0 mt-2">
+              <li>Customer must exist (link by email)</li>
+              <li>Required: vehicle details, IDV, premiums</li>
+              <li>Vehicle registration number must be unique</li>
+              <li>IDV calculation and premium breakdowns</li>
+            </ul>
+          </div>
+
+          <div class="mb-3">
+            <label for="motorInsuranceFile" class="form-label fw-bold">
+              <i class="fas fa-file-upload me-1"></i>
+              Select Motor Insurance Data File
+            </label>
+            <%= form.file_field :file,
+                                id: "motorInsuranceFile",
+                                class: "form-control",
+                                accept: ".csv,.xlsx,.xls",
+                                required: true %>
+            <div class="form-text">
+              Supported formats: CSV, Excel (.xlsx, .xls). Maximum size: 10MB
+            </div>
+          </div>
+
+          <!-- Sample Data Preview -->
+          <div class="border rounded p-3 bg-light">
+            <h6 class="text-muted mb-2">
+              <i class="fas fa-eye me-1"></i>
+              Sample Data Format:
+            </h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered">
+                <thead class="table-dark">
+                  <tr>
+                    <th>customer_email</th>
+                    <th>policy_number</th>
+                    <th>registration_number</th>
+                    <th>make</th>
+                    <th>model</th>
+                    <th>vehicle_type</th>
+                    <th>total_idv</th>
+                    <th>total_premium</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>john@example.com</td>
+                    <td>MOT001234</td>
+                    <td>MH01AB1234</td>
+                    <td>Maruti Suzuki</td>
+                    <td>Swift</td>
+                    <td>Car</td>
+                    <td>500000</td>
+                    <td>21240</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>
+            Cancel
+          </button>
+          <%= link_to download_template_admin_imports_path(template_type: 'motor_insurances'),
+                      class: "btn btn-outline-danger",
+                      target: "_blank" do %>
+            <i class="fas fa-download me-1"></i> Download Template
+          <% end %>
+          <%= form.submit "Import Motor Insurance", class: "btn btn-danger" do %>
+            <i class="fas fa-upload me-1"></i>
+            Import Motor Insurance
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

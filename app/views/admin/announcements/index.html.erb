@@ -1,0 +1,54 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Platform Announcements</h2>
+    <p class="text-muted mb-0">Broadcast to everyone, a forum, a chapter, or a single member</p>
+  </div>
+  <%= link_to new_admin_platform_announcement_path, class: "btn btn-primary" do %>
+    <i class="bi bi-plus-lg me-1"></i> New Announcement
+  <% end %>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <% if @announcements.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr><th class="border-0">Title</th><th class="border-0">Audience</th><th class="border-0">Posted</th><th class="border-0">Actions</th></tr>
+          </thead>
+          <tbody>
+            <% @announcements.each do |a| %>
+              <tr>
+                <td>
+                  <h6 class="mb-0 fw-medium"><%= link_to a.title, admin_platform_announcement_path(a), class: "text-decoration-none" %></h6>
+                  <small class="text-muted">by <%= a.created_by.full_name %></small>
+                </td>
+                <td>
+                  <span class="badge bg-info-subtle text-info">
+                    <%= a.everyone? ? "Everyone" : a.specific_forum? ? "Forum: #{a.forum&.name}" : a.specific_chapter? ? "Chapter: #{a.chapter&.name}" : "Member: #{a.target_user&.full_name}" %>
+                  </span>
+                </td>
+                <td><%= a.published_at&.strftime("%b %d, %Y") || "Draft" %></td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <%= button_to admin_platform_announcement_path(a), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete this announcement?" } } do %>
+                      <i class="bi bi-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer bg-transparent border-0">
+        <%= render "shared/pagination", records: @announcements %>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-megaphone fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No announcements yet</h5>
+      </div>
+    <% end %>
+  </div>
+</div>

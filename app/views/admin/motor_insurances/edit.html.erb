@@ -1,0 +1,29 @@
+<% content_for :page_title, "Edit Motor Insurance" %>
+<% content_for :page_subtitle, "Update and manage motor insurance policy details" %>
+
+<!-- Action Buttons -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <%= link_to admin_motor_insurances_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-2"></i>
+      Back to List
+    <% end %>
+  </div>
+
+  <div class="trust-seal">
+    <i class="bi bi-shield-check seal-icon"></i>
+    <span>Update Policy</span>
+  </div>
+</div>
+
+<%= form_with model: [:admin, @motor_insurance], local: true, class: "needs-validation", novalidate: true do |form| %>
+  <%= render 'form', form: form %>
+
+  <!-- Form Actions -->
+  <div class="text-center mt-4">
+    <%= link_to admin_motor_insurances_path, class: "btn btn-outline-secondary me-3" do %>
+      <i class="bi bi-x-circle me-1"></i>Cancel
+    <% end %>
+    <%= form.submit "Update Motor Insurance", class: "btn btn-primary btn-lg px-5" %>
+  </div>
+<% end %>

@@ -1,0 +1,117 @@
+<%- content_for :title, "Edit Client Request" %>
+
+<div class="page-header d-print-none">
+  <div class="container-xl">
+    <div class="row align-items-center">
+      <div class="col">
+        <div class="page-pretitle">
+          <%= link_to "Client Requests", admin_client_requests_path, class: "text-muted" %> /
+          <%= link_to "Request ##{@client_request.id}", admin_client_request_path(@client_request), class: "text-muted" %>
+        </div>
+        <h2 class="page-title">
+          Edit Client Request
+        </h2>
+      </div>
+      <div class="col-auto ms-auto d-print-none">
+        <div class="btn-list">
+          <%= link_to "Cancel", admin_client_request_path(@client_request), class: "btn btn-outline-secondary" %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="container-xl">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Update Request Details</h3>
+          </div>
+          <div class="card-body">
+            <%= form_with model: @client_request, url: admin_client_request_path(@client_request), method: :patch, local: true do |form| %>
+              <% if @client_request.errors.any? %>
+                <div class="alert alert-danger">
+                  <h4><%= pluralize(@client_request.errors.count, "error") %> prohibited this request from being saved:</h4>
+                  <ul class="mb-0">
+                    <% @client_request.errors.full_messages.each do |message| %>
+                      <li><%= message %></li>
+                    <% end %>
+                  </ul>
+                </div>
+              <% end %>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <%= form.label :status, class: "form-label" %>
+                  <%= form.select :status, options_for_select([
+                        ['Pending', 'pending'],
+                        ['In Progress', 'in_progress'],
+                        ['Resolved', 'resolved'],
+                        ['Closed', 'closed']
+                      ], @client_request.status), {}, { class: "form-select" } %>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <%= form.label :priority, class: "form-label" %>
+                  <%= form.select :priority, options_for_select([
+                        ['Low', 'low'],
+                        ['Medium', 'medium'],
+                        ['High', 'high'],
+                        ['Urgent', 'urgent']
+                      ], @client_request.priority), {}, { class: "form-select" } %>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <%= form.label :resolved_by_id, "Assign to", class: "form-label" %>
+                <%= form.select :resolved_by_id,
+                    options_from_collection_for_select(User.where(status: true), :id, :email, @client_request.resolved_by_id),
+                    { include_blank: "Select user..." },
+                    { class: "form-select" } %>
+              </div>
+
+              <div class="mb-3">
+                <%= form.label :admin_response, class: "form-label" %>
+                <%= form.text_area :admin_response, class: "form-control", rows: 6,
+                    placeholder: "Add your response to the customer..." %>
+                <div class="form-hint">This response will be shown in the request details.</div>
+              </div>
+
+              <div class="card mb-3">
+                <div class="card-header">
+                  <h4 class="card-title">Customer Information (Read-only)</h4>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-4 mb-3">
+                      <%= form.label :name, class: "form-label" %>
+                      <%= form.text_field :name, class: "form-control", readonly: true %>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <%= form.label :email, class: "form-label" %>
+                      <%= form.email_field :email, class: "form-control", readonly: true %>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <%= form.label :phone_number, class: "form-label" %>
+                      <%= form.text_field :phone_number, class: "form-control", readonly: true %>
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <%= form.label :description, class: "form-label" %>
+                    <%= form.text_area :description, class: "form-control", rows: 4, readonly: true %>
+                  </div>
+                </div>
+              </div>
+
+              <div class="btn-group">
+                <%= form.submit "Update Request", class: "btn btn-primary" %>
+                <%= link_to "Cancel", admin_client_request_path(@client_request), class: "btn btn-secondary" %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

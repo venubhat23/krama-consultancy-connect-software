@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: drwise-admin
+    runtime: ruby
+    buildCommand: ./bin/render-build.sh
+    startCommand: bundle exec rails server -p $PORT -e production
+    envVars:
+      - key: RUBY_VERSION
+        value: 3.2.0
+      - key: RAILS_ENV
+        value: production
+      - key: RAILS_SERVE_STATIC_FILES
+        value: true
+      - key: RAILS_LOG_TO_STDOUT
+        value: true

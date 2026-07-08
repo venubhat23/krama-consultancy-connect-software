@@ -1,0 +1,59 @@
+<%= form_with model: [:admin, announcement], url: (announcement.persisted? ? admin_platform_announcement_path(announcement) : admin_platform_announcements_path), local: true do |form| %>
+  <% if announcement.errors.any? %>
+    <div class="alert alert-danger">
+      <ul class="mb-0"><% announcement.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %></ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <label class="form-label">Title</label>
+    <%= form.text_field :title, class: "form-control", required: true %>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Message</label>
+    <%= form.text_area :body, rows: 4, class: "form-control", required: true %>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Audience</label>
+    <%= form.select :audience,
+          options_for_select([["Everyone (platform-wide)", "everyone"], ["A specific forum", "specific_forum"], ["A specific chapter", "specific_chapter"], ["A specific member", "specific_member"]], announcement.audience),
+          {}, class: "form-select", id: "announcement_audience_select" %>
+  </div>
+  <div class="mb-3" id="target-forum-field">
+    <label class="form-label">Forum</label>
+    <%= form.select :forum_id, @forums.map { |f| [f.name, f.id] }, { include_blank: true }, class: "form-select" %>
+  </div>
+  <div class="mb-3" id="target-chapter-field">
+    <label class="form-label">Chapter</label>
+    <%= form.select :chapter_id, @chapters.map { |c| ["#{c.name} (#{c.forum.name})", c.id] }, { include_blank: true }, class: "form-select" %>
+  </div>
+  <div class="mb-3" id="target-member-field">
+    <label class="form-label">Member</label>
+    <%= form.select :target_user_id, @members.map { |m| ["#{m.full_name} (#{m.email})", m.id] }, { include_blank: true }, class: "form-select" %>
+  </div>
+
+  <div class="mt-4 d-flex gap-2">
+    <%= form.submit announcement.persisted? ? "Update" : "Publish", class: "btn btn-primary" %>
+    <%= link_to "Cancel", admin_platform_announcements_path, class: "btn btn-outline-secondary" %>
+  </div>
+<% end %>
+
+<script>
+  (function() {
+    const select = document.getElementById('announcement_audience_select');
+    const fields = {
+      everyone: [],
+      specific_forum: ['target-forum-field'],
+      specific_chapter: ['target-chapter-field'],
+      specific_member: ['target-member-field']
+    };
+    function sync() {
+      const shown = fields[select.value] || [];
+      ['target-forum-field', 'target-chapter-field', 'target-member-field'].forEach(id => {
+        document.getElementById(id).style.display = shown.includes(id) ? '' : 'none';
+      });
+    }
+    select.addEventListener('change', sync);
+    sync();
+  })();
+</script>

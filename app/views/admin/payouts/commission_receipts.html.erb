@@ -1,0 +1,355 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Commission Receipts</h2>
+    <p class="text-muted mb-0">Manage commission receipts and automatic distributions</p>
+  </div>
+  <div>
+    <%= link_to admin_payouts_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Payouts
+    <% end %>
+  </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Received</h6>
+            <h3 class="mb-0 text-success"><%= indian_currency(@receipt_summary[:total_received] || 0) %></h3>
+          </div>
+          <div class="icon-shape bg-success-soft text-success">
+            <i class="bi bi-cash"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Distributed</h6>
+            <h3 class="mb-0 text-primary"><%= indian_currency(@receipt_summary[:total_distributed] || 0) %></h3>
+          </div>
+          <div class="icon-shape bg-primary-soft text-primary">
+            <i class="bi bi-diagram-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Pending Distribution</h6>
+            <h3 class="mb-0 text-warning"><%= number_with_delimiter(@receipt_summary[:pending_distribution] || 0) %></h3>
+          </div>
+          <div class="icon-shape bg-warning-soft text-warning">
+            <i class="bi bi-clock"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Auto Distributed</h6>
+            <h3 class="mb-0 text-info"><%= number_with_delimiter(@receipt_summary[:auto_distributed] || 0) %></h3>
+          </div>
+          <div class="icon-shape bg-info-soft text-info">
+            <i class="bi bi-check-circle"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters and Actions -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Commission Receipts</h5>
+  </div>
+  <div class="card-body">
+    <%= search_form_for @q, url: commission_receipts_admin_payouts_path, method: :get, local: true do |f| %>
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <%= f.label :insurance_company_name_cont, "Company", class: "form-label" %>
+          <%= f.text_field :insurance_company_name_cont, placeholder: "Search by company...", class: "form-control" %>
+        </div>
+        <div class="col-md-3">
+          <%= f.label :received_date_gteq, "From Date", class: "form-label" %>
+          <%= f.date_field :received_date_gteq, class: "form-control", min: "1900-01-01", max: "2099-12-31" %>
+        </div>
+        <div class="col-md-3">
+          <%= f.label :received_date_lteq, "To Date", class: "form-label" %>
+          <%= f.date_field :received_date_lteq, class: "form-control", min: "1900-01-01", max: "2099-12-31" %>
+        </div>
+        <div class="col-md-3">
+          <div class="d-flex gap-2">
+            <%= f.submit "Filter", class: "btn btn-primary" %>
+            <%= link_to "Clear", commission_receipts_admin_payouts_path, class: "btn btn-outline-secondary" %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Commission Receipts Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <% if @receipts.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Policy Details</th>
+              <th>Insurance Company</th>
+              <th>Commission Received</th>
+              <th>Received Date</th>
+              <th>Distribution Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @receipts.each do |receipt| %>
+              <tr>
+                <td>
+                  <div>
+                    <strong><%= receipt.policy_type.humanize %> Policy</strong>
+                    <br>
+                    <small class="text-muted">
+                      Policy #<%= receipt.policy_id %>
+                      <% if receipt.policy_number.present? %>
+                        (<%= receipt.policy_number %>)
+                      <% end %>
+                    </small>
+                    <% if receipt.customer_name.present? %>
+                      <br>
+                      <small class="text-muted"><%= receipt.customer_name %></small>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <strong><%= receipt.insurance_company_name %></strong>
+                  <% if receipt.insurance_company_reference.present? %>
+                    <br>
+                    <small class="text-muted">Ref: <%= receipt.insurance_company_reference %></small>
+                  <% end %>
+                </td>
+                <td>
+                  <strong class="text-success"><%= indian_currency(receipt.total_commission_received) %></strong>
+                  <% if receipt.auto_distributed? %>
+                    <br>
+                    <small class="text-muted">
+                      Distributed: <%= indian_currency(receipt.total_distributed_amount) %>
+                    </small>
+                  <% end %>
+                </td>
+                <td>
+                  <%= receipt.received_date.strftime("%b %d, %Y") %>
+                </td>
+                <td>
+                  <% if receipt.auto_distributed? %>
+                    <span class="badge bg-success">
+                      <i class="bi bi-check-circle me-1"></i>
+                      Distributed
+                    </span>
+                    <% if receipt.distribution_complete? %>
+                      <br>
+                      <span class="badge bg-primary mt-1">
+                        <i class="bi bi-check-all me-1"></i>
+                        All Paid
+                      </span>
+                    <% else %>
+                      <br>
+                      <span class="badge bg-warning mt-1">
+                        <i class="bi bi-clock me-1"></i>
+                        Pending Payment
+                      </span>
+                    <% end %>
+                  <% else %>
+                    <span class="badge bg-warning">
+                      <i class="bi bi-clock me-1"></i>
+                      Pending Distribution
+                    </span>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <% unless receipt.auto_distributed? %>
+                      <%= button_to auto_distribute_admin_payouts_path,
+                          params: { receipt_id: receipt.id },
+                          method: :post,
+                          class: "btn btn-sm btn-success",
+                          data: {
+                            confirm: "Are you sure you want to auto-distribute this commission?",
+                            turbo: false
+                          } do %>
+                        <i class="bi bi-diagram-3"></i>
+                      <% end %>
+                    <% end %>
+
+                    <% if receipt.auto_distributed? %>
+                      <button type="button"
+                              class="btn btn-sm btn-outline-info"
+                              data-bs-toggle="modal"
+                              data-bs-target="#distributionModal<%= receipt.id %>">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <% if @receipts.respond_to?(:current_page) %>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div class="text-muted">
+            Showing <%= @receipts.offset_value + 1 %> to <%= [@receipts.offset_value + @receipts.limit_value, @receipts.total_count].min %>
+            of <%= @receipts.total_count %> results
+          </div>
+          <%= paginate @receipts, theme: 'bootstrap_5' %>
+        </div>
+      <% end %>
+
+    <% else %>
+      <div class="text-center py-5">
+        <div class="mb-3">
+          <i class="bi bi-inbox display-4 text-muted"></i>
+        </div>
+        <h5 class="text-muted">No Commission Receipts Found</h5>
+        <p class="text-muted mb-0">Commission receipts will appear here when policies generate commissions.</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Distribution Detail Modals -->
+<% @receipts.select(&:auto_distributed?).each do |receipt| %>
+  <div class="modal fade" id="distributionModal<%= receipt.id %>" tabindex="-1" aria-labelledby="distributionModalLabel<%= receipt.id %>" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="distributionModalLabel<%= receipt.id %>">
+            Distribution Details - <%= receipt.policy_type.humanize %> Policy #<%= receipt.policy_id %>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <strong class="text-muted d-block">Total Commission</strong>
+              <h4 class="text-success"><%= indian_currency(receipt.total_commission_received) %></h4>
+            </div>
+            <div class="col-md-6">
+              <strong class="text-muted d-block">Distribution Date</strong>
+              <%= receipt.distributed_at&.strftime("%B %d, %Y at %I:%M %p") || 'Not available' %>
+            </div>
+          </div>
+
+          <% if receipt.payout_distributions.any? %>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Recipient</th>
+                    <th>Percentage</th>
+                    <th>Calculated Amount</th>
+                    <th>Paid Amount</th>
+                    <th>Pending Amount</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% receipt.payout_distributions.each do |distribution| %>
+                    <tr>
+                      <td>
+                        <strong><%= distribution.recipient_type.humanize %></strong>
+                        <% if distribution.recipient_name != 'Unknown' %>
+                          <br>
+                          <small class="text-muted"><%= distribution.recipient_name %></small>
+                        <% end %>
+                      </td>
+                      <td><%= distribution.distribution_percentage %>%</td>
+                      <td><%= indian_currency(distribution.calculated_amount) %></td>
+                      <td><%= indian_currency(distribution.paid_amount) %></td>
+                      <td><%= indian_currency(distribution.pending_amount) %></td>
+                      <td>
+                        <span class="badge bg-<%=
+                          case distribution.status
+                          when 'pending' then 'warning'
+                          when 'partial' then 'info'
+                          when 'paid' then 'success'
+                          when 'cancelled' then 'danger'
+                          else 'secondary'
+                          end
+                        %>">
+                          <%= distribution.status.humanize %>
+                        </span>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="text-center text-muted py-3">
+              <p>No distribution details available</p>
+            </div>
+          <% end %>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<style>
+.icon-shape {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.bg-success-soft {
+  background-color: rgba(25, 135, 84, 0.1);
+}
+
+.bg-primary-soft {
+  background-color: rgba(13, 110, 253, 0.1);
+}
+
+.bg-warning-soft {
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+.bg-info-soft {
+  background-color: rgba(13, 202, 240, 0.1);
+}
+</style>

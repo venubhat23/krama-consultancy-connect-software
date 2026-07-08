@@ -1,0 +1,3269 @@
+<!-- Chart.js for interactive charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+
+<%
+  # Use renewal data from controller (filter-independent)
+  renewal_counts = {
+    expiring: @renewal_due_count || 0,
+    expired: @recently_expired_count || 0,
+    processed: (@renewal_status && @renewal_status['Renewed']) || 0
+  }
+  # Calculate policy alerts using filter-independent data
+  health_alerts = {
+    expiring_soon: @policies_expiring_soon || 0,
+    expired_this_month: @expired_this_month || 0,
+    renewal_opportunities: @renewal_opportunities || 0
+  }
+%>
+<!-- Chart.js Data Labels Plugin for showing values on charts -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<!-- Additional Chart.js plugins -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+<style>
+  .dashboard-container {
+    padding: 0 1.5rem 1.5rem 1.5rem; /* Remove top padding, keep others */
+    background: #f8fafc;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .card-hover {
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  }
+
+  /* Chart containers from analytics */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .chart-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  .chart-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .chart-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+  }
+
+  .chart-container {
+    position: relative;
+    height: 300px;
+    margin-top: 1rem;
+  }
+
+  /* Chart stats section */
+  .chart-stats {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+  }
+
+  .stat-item {
+    text-align: center;
+    flex: 1;
+  }
+
+  .stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .stat-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  /* Color classes */
+  .blue-gradient { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+  .green-gradient { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+  .orange-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+  .pink-gradient { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); }
+
+  /* Modal Styles - Same as Affiliate Payouts */
+  .modal-backdrop {
+    display: none !important;
+  }
+
+  .dashboard-modal.show {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .dashboard-modal.fade:not(.show) {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+
+  /* Hide everything behind the modal */
+  body.modal-open {
+    overflow: hidden !important;
+  }
+
+  .dashboard-modal.show ~ * {
+    pointer-events: none !important;
+  }
+
+  .dashboard-modal .modal-header {
+    flex-shrink: 0 !important;
+  }
+
+  .dashboard-modal .modal-footer {
+    flex-shrink: 0 !important;
+  }
+
+  .dashboard-modal {
+    z-index: 9999 !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(5px) !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+  }
+
+  .dashboard-modal .modal-dialog {
+    max-width: 98vw !important;
+    width: 1600px !important;
+    margin: 0 !important;
+    z-index: 10000 !important;
+    position: relative !important;
+    max-height: 95vh !important;
+    min-height: 80vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .dashboard-modal .modal-content {
+    border: 3px solid #0d6efd;
+    border-radius: 20px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+    position: relative;
+    z-index: 10001 !important;
+    background: white !important;
+    overflow: hidden;
+    max-height: 90vh !important;
+    min-height: 75vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .dashboard-modal .modal-header {
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+    color: white;
+    padding: 2rem;
+    flex-shrink: 0;
+  }
+
+  .dashboard-modal .modal-header h5 {
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  .dashboard-modal .modal-footer {
+    border-top: 1px solid #e9ecef;
+    background: #f8f9fa;
+    padding: 1rem 1.5rem;
+  }
+
+  .dashboard-modal .modal-body {
+    background: white !important;
+    padding: 2.5rem 2rem;
+    position: relative;
+    z-index: 1058 !important;
+    overflow-y: auto !important;
+    flex: 1 !important;
+    min-height: 60vh;
+  }
+
+  .dashboard-modal .btn-close {
+    filter: invert(1);
+    opacity: 1;
+  }
+
+  .dashboard-modal .btn-close:hover {
+    opacity: 0.8;
+  }
+
+  .dashboard-modal .table th {
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #495057;
+  }
+
+  .dashboard-modal .table td {
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .dashboard-modal .table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.01);
+    transition: all 0.2s ease;
+  }
+
+  .dashboard-modal .table-responsive {
+    max-height: 60vh !important;
+    overflow-y: auto !important;
+  }
+
+  .dashboard-modal #systemStatusContent {
+    min-height: 400px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .dashboard-modal #systemStatusLoading {
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .dashboard-modal #systemStatusLoading .spinner-border {
+    width: 4rem;
+    height: 4rem;
+    border-width: 0.5em;
+  }
+
+  .dashboard-modal #systemStatusLoading .loading-text {
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #6c757d;
+  }
+
+  /* Ensure charts and tables display properly in modal */
+  .dashboard-modal .chart-container {
+    max-height: 400px !important;
+    overflow: hidden;
+  }
+
+  .dashboard-modal .table {
+    font-size: 0.9rem;
+  }
+
+  .dashboard-modal .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .dashboard-modal .col-md-6 {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+
+  /* Simple Modal Cards */
+  .kpi-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+    margin-bottom: 20px;
+  }
+
+  .kpi-card .card-body {
+    padding: 20px;
+    text-align: center;
+  }
+
+  .kpi-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #212529;
+    margin-bottom: 8px;
+  }
+
+  .kpi-label {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 600;
+  }
+
+  /* Simple color variants */
+  .kpi-primary {
+    background-color: #0d6efd;
+    color: white;
+  }
+
+  .kpi-primary .kpi-number,
+  .kpi-primary .kpi-label {
+    color: white;
+  }
+
+  .kpi-success {
+    background-color: #198754;
+    color: white;
+  }
+
+  .kpi-success .kpi-number,
+  .kpi-success .kpi-label {
+    color: white;
+  }
+
+  .kpi-warning {
+    background-color: #ffc107;
+    color: #212529;
+  }
+
+  .kpi-warning .kpi-number,
+  .kpi-warning .kpi-label {
+    color: #212529;
+  }
+
+  .kpi-info {
+    background-color: #0dcaf0;
+    color: #212529;
+  }
+
+  .kpi-info .kpi-number,
+  .kpi-info .kpi-label {
+    color: #212529;
+  }
+
+  /* System Status Cards - Simple and Uniform */
+  .system-status-card {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+  }
+
+  .system-status-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+
+  /* Unique Commission Breakdown Card */
+  .commission-breakdown-card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(239, 68, 68, 0.25);
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    position: relative;
+    height: 200px;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .commission-breakdown-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 16px 48px rgba(239, 68, 68, 0.35);
+  }
+
+  .commission-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .commission-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    font-size: 24px;
+    color: white;
+  }
+
+  .commission-total {
+    flex: 1;
+  }
+
+  .total-amount {
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: white;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .total-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .commission-breakdown {
+    margin-bottom: 1rem;
+  }
+
+  .breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .breakdown-item:last-child {
+    border-bottom: none;
+  }
+
+  .breakdown-item .recipient {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    flex: 1;
+  }
+
+  .breakdown-item .amount {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: white;
+  }
+
+  .breakdown-more {
+    padding: 0.3rem 0;
+    text-align: center;
+  }
+
+  .breakdown-more .text-muted {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-style: italic;
+  }
+
+  .commission-footer {
+    position: absolute;
+    bottom: 1rem;
+    left: 1.5rem;
+    right: 1.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .dashboard-modal .modal-dialog {
+      width: 98vw !important;
+      max-width: 98vw !important;
+      min-height: 90vh !important;
+    }
+
+    .dashboard-modal .modal-content {
+      min-height: 85vh !important;
+    }
+
+    .dashboard-modal .modal-header {
+      padding: 1.5rem;
+    }
+
+    .dashboard-modal .modal-body {
+      padding: 1.5rem;
+      min-height: 70vh;
+    }
+
+    .kpi-card .card-body {
+      padding: 15px;
+    }
+
+    .kpi-number {
+      font-size: 1.5rem;
+    }
+
+    .kpi-label {
+      font-size: 13px;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .kpi-card .card-body {
+      padding: 12px;
+    }
+
+    .kpi-number {
+      font-size: 1.25rem;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+    }
+  }
+
+  .renewal-badge {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+  }
+
+  .status-badge-active {
+    background: linear-gradient(135deg, #198754, #157347);
+    color: white;
+    border: none;
+  }
+
+  .status-badge-expired {
+    background: linear-gradient(135deg, #dc3545, #bb2d3b);
+    color: white;
+    border: none;
+  }
+
+  .status-badge-warning {
+    background: linear-gradient(135deg, #ffc107, #e6ac00);
+    color: #212529;
+    border: none;
+  }
+
+  /* Enhanced Lead Conversion Analysis Card */
+  .lead-conversion-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15), 0 5px 15px rgba(0, 0, 0, 0.08) !important;
+    border: 2px solid #e9ecef !important;
+    transform: translateY(0);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .lead-conversion-card:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2), 0 10px 25px rgba(0, 0, 0, 0.12) !important;
+    border-color: #667eea !important;
+  }
+
+  .lead-conversion-title {
+    font-size: 1.2rem !important;
+    font-weight: 800 !important;
+    color: #212529 !important;
+    text-shadow: none;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .lead-conversion-rate {
+    font-size: 3rem !important;
+    font-weight: 900 !important;
+    color: #667eea !important;
+    text-shadow: none;
+    margin: 0.75rem 0 1rem 0 !important;
+  }
+
+  .lead-conversion-stats {
+    background: linear-gradient(135deg, #667eea, #764ba2) !important;
+    border-radius: 12px;
+    padding: 1rem;
+    backdrop-filter: none;
+    border: none;
+    color: white !important;
+  }
+
+  .lead-conversion-stats .fw-bold {
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    color: white !important;
+  }
+
+  .lead-conversion-stats .opacity-75 {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+  }
+
+  .lead-conversion-icon {
+    color: #667eea !important;
+  }
+
+  .lead-conversion-footer {
+    color: #6c757d !important;
+    font-weight: 600 !important;
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-container {
+      padding: 1rem;
+    }
+
+    .charts-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .chart-container {
+      height: 250px;
+    }
+
+    .lead-conversion-title {
+      font-size: 0.9rem !important;
+    }
+
+    .lead-conversion-rate {
+      font-size: 2rem !important;
+    }
+  }
+</style>
+
+<div class="dashboard-container">
+  <!-- Filters and Search - Moved to top with no padding -->
+  <div class="card shadow-sm mb-4" style="margin-top: 0 !important;">
+    <div class="card-body">
+      <%= form_with url: dashboard_path, method: :get, local: true, class: "d-flex flex-wrap gap-3 align-items-end" do |form| %>
+        <!-- Unified Period Filter -->
+        <div>
+          <%
+            current_year = Date.current.year
+            current_fy_end = Date.current.month >= 4 ? current_year + 1 : current_year
+            if @filter_financial_year.present?
+              selected_period = "fy_#{@filter_financial_year}"
+            else
+              selected_period = "cal_#{@filter_year || current_year}"
+            end
+          %>
+          <select id="period_select" class="form-select" style="min-width:200px">
+            <optgroup label="Calendar Year">
+              <% (current_year).downto(current_year - 4) do |y| %>
+                <option value="cal_<%= y %>" <%= 'selected' if selected_period == "cal_#{y}" %>>
+                  <%= y %><%= " (Current)" if y == current_year %>
+                </option>
+              <% end %>
+            </optgroup>
+            <optgroup label="Financial Year">
+              <% (current_fy_end).downto(current_fy_end - 4) do |fy| %>
+                <option value="fy_<%= fy %>" <%= 'selected' if selected_period == "fy_#{fy}" %>>
+                  <%= fy - 1 %>-<%= fy.to_s[-2..] %> Financial Year<%= " (Current)" if fy == current_fy_end %>
+                </option>
+              <% end %>
+            </optgroup>
+          </select>
+          <%= form.hidden_field :year, id: "year_hidden" %>
+          <%= form.hidden_field :financial_year, id: "fy_hidden" %>
+        </div>
+
+        <!-- Month Filter -->
+        <div>
+          <%= form.select :month,
+                         options_for_select([
+                           ['All Year', ''],
+                           ['January', '1'],
+                           ['February', '2'],
+                           ['March', '3'],
+                           ['April', '4'],
+                           ['May', '5'],
+                           ['June', '6'],
+                           ['July', '7'],
+                           ['August', '8'],
+                           ['September', '9'],
+                           ['October', '10'],
+                           ['November', '11'],
+                           ['December', '12']
+                         ], @filter_month.to_s),
+                         {},
+                         { class: "form-select", id: "month_filter" } %>
+        </div>
+
+        <!-- Custom Date Range -->
+        <div class="d-flex gap-2">
+          <%= form.date_field :start_date,
+                             value: @filter_start_date&.strftime('%Y-%m-%d'),
+                             class: "form-control",
+                             id: "start_date_field",
+                             placeholder: "Start Date",
+                             min: "1900-01-01",
+                             max: "2099-12-31" %>
+          <%= form.date_field :end_date,
+                             value: @filter_end_date&.strftime('%Y-%m-%d'),
+                             class: "form-control",
+                             id: "end_date_field",
+                             placeholder: "End Date",
+                             min: "1900-01-01",
+                             max: "2099-12-31" %>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex gap-2">
+          <%= form.submit "Apply Filter", class: "btn btn-primary" %>
+          <button type="button" id="clear_filters_btn" class="btn btn-outline-secondary">Clear</button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Core KPI Cards -->
+  <div class="row mb-4">
+    <!-- Total Customers -->
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card h-100 border-0 shadow-sm card-hover" style="cursor:pointer;" data-card-metric="customers" data-card-label="Total Customers" onclick="openDashboardCardModal(this)">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="text-muted mb-2">Total Customers</h6>
+              <h3 class="mb-0 text-primary"><%= number_with_delimiter(@total_customers) %></h3>
+            </div>
+            <div class="bg-primary bg-opacity-10 rounded p-3">
+              <i class="bi bi-people text-primary fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Policies -->
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card h-100 border-0 shadow-sm card-hover" style="cursor:pointer;" data-card-metric="policies" data-card-label="Total Policies" onclick="openDashboardCardModal(this)">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="text-muted mb-2">Total Policies</h6>
+              <h3 class="mb-0 text-success"><%= number_with_delimiter(@total_policies) %></h3>
+            </div>
+            <div class="bg-success bg-opacity-10 rounded p-3">
+              <i class="bi bi-file-earmark-text text-success fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Premium -->
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card h-100 border-0 shadow-sm card-hover" style="cursor:pointer;" data-card-metric="premium" data-card-label="Total Premium" onclick="openDashboardCardModal(this)">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="text-muted mb-2">Total Premium</h6>
+              <h3 class="mb-0 text-warning"><%= indian_currency(@total_premium_collected || 0) %></h3>
+            </div>
+            <div class="bg-warning bg-opacity-10 rounded p-3">
+              <i class="bi bi-currency-rupee text-warning fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Leads -->
+    <div class="col-xl-3 col-md-6 mb-3">
+      <div class="card h-100 border-0 shadow-sm card-hover" style="cursor:pointer;" data-card-metric="leads" data-card-label="Active Leads" onclick="openDashboardCardModal(this)">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="text-muted mb-2">Active Leads</h6>
+              <h3 class="mb-0 text-info"><%= number_with_delimiter(@pending_leads) %></h3>
+            </div>
+            <div class="bg-info bg-opacity-10 rounded p-3">
+              <i class="bi bi-funnel text-info fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions Grid -->
+  <div class="row mb-4">
+    <!-- Renewal Alerts -->
+    <div class="col-xl-3 col-lg-6 mb-3">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title d-flex align-items-center mb-3">
+            <i class="bi bi-arrow-repeat text-primary me-2"></i>
+            Renewal Alerts
+          </h5>
+
+          <div class="d-flex align-items-center justify-content-between py-2 px-3 rounded-3 mb-2"
+               style="background:#fffbeb; cursor:pointer;" onclick="showRenewalModal('expiring')">
+            <div>
+              <div class="fw-semibold text-dark" style="font-size:13px;">Expiring in 30 days</div>
+              <div class="text-muted" style="font-size:11px;">Next 30 days</div>
+            </div>
+            <span id="badge-renewal-expiring" class="fw-bold text-warning" style="font-size:1.6rem; line-height:1;">
+              <%= renewal_counts[:expiring] %>
+            </span>
+          </div>
+
+          <div class="d-flex align-items-center justify-content-between py-2 px-3 rounded-3 mb-2"
+               style="background:#fff1f2; cursor:pointer;" onclick="showRenewalModal('expired')">
+            <div>
+              <div class="fw-semibold text-dark" style="font-size:13px;">Recently expired</div>
+              <div class="text-muted" style="font-size:11px;">Last 45 days</div>
+            </div>
+            <span id="badge-renewal-expired" class="fw-bold text-danger" style="font-size:1.6rem; line-height:1;">
+              <%= renewal_counts[:expired] %>
+            </span>
+          </div>
+
+          <div class="d-flex align-items-center justify-content-between py-2 px-3 rounded-3"
+               style="background:#f0fdf4; cursor:pointer;" onclick="showRenewalModal('processed')">
+            <div>
+              <div class="fw-semibold text-dark" style="font-size:13px;">Processed this month</div>
+              <div class="text-muted" style="font-size:11px;">Renewals done</div>
+            </div>
+            <span id="badge-renewal-processed" class="fw-bold text-success" style="font-size:1.6rem; line-height:1;">
+              <%= renewal_counts[:processed] %>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Policy Alerts -->
+    <div class="col-xl-3 col-lg-6 mb-3">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title d-flex align-items-center mb-3">
+            <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+            Policy Alerts
+          </h5>
+
+          <div class="d-flex align-items-center justify-content-between py-2 px-3 rounded-3 mb-2"
+               style="background:#fffbeb; cursor:pointer;" onclick="showPolicyModal('expiring')">
+            <div>
+              <div class="fw-semibold text-dark" style="font-size:13px;">Expiring Soon</div>
+              <div class="text-muted" style="font-size:11px;">Next 30 days</div>
+            </div>
+            <span id="badge-policy-expiring" class="fw-bold text-warning" style="font-size:1.6rem; line-height:1;">
+              <%= health_alerts[:expiring_soon] %>
+            </span>
+          </div>
+
+          <div class="d-flex align-items-center justify-content-between py-2 px-3 rounded-3 mb-2"
+               style="background:#fff1f2; cursor:pointer;" onclick="showPolicyModal('expired_month')">
+            <div>
+              <div class="fw-semibold text-dark" style="font-size:13px;">Expired</div>
+              <div class="text-muted" style="font-size:11px;">This month</div>
+            </div>
+            <span id="badge-policy-expired" class="fw-bold text-danger" style="font-size:1.6rem; line-height:1;">
+              <%= health_alerts[:expired_this_month] %>
+            </span>
+          </div>
+
+          <div class="d-flex align-items-center justify-content-between py-2 px-3 rounded-3"
+               style="background:#f0fdf4; cursor:pointer;" onclick="showPolicyModal('opportunities')">
+            <div>
+              <div class="fw-semibold text-dark" style="font-size:13px;">Renewal Opportunities</div>
+              <div class="text-muted" style="font-size:11px;">Ready to renew</div>
+            </div>
+            <span id="badge-policy-opportunities" class="fw-bold text-success" style="font-size:1.6rem; line-height:1;">
+              <%= health_alerts[:renewal_opportunities] %>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-xl-3 col-lg-6 mb-3">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title d-flex align-items-center mb-3">
+            <i class="bi bi-activity text-success me-2"></i>
+            Recent Activity
+          </h5>
+          <div style="max-height: 200px; overflow-y: auto;">
+            <% if @recent_policies&.any? %>
+              <% @recent_policies.first(3).each do |policy| %>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div>
+                    <div class="fw-medium text-dark"><%= policy[:type] %></div>
+                    <small class="text-muted"><%= policy[:customer] || "Customer" %></small>
+                  </div>
+                  <div class="text-end">
+                    <div class="fw-medium text-success"><%= indian_currency(policy[:premium] || 0) %></div>
+                    <small class="text-muted"><%= time_ago_in_words(policy[:date]) %> ago</small>
+                  </div>
+                </div>
+              <% end %>
+            <% else %>
+              <div class="text-center text-muted">
+                <small>No recent activity</small>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-xl-3 col-lg-6 mb-3">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title d-flex align-items-center mb-3">
+            <i class="bi bi-lightning-fill text-info me-2"></i>
+            Quick Actions
+          </h5>
+          <div class="d-grid gap-2">
+            <%= link_to new_admin_customer_path, class: "btn btn-outline-primary btn-sm d-flex align-items-center" do %>
+              <i class="bi bi-person-plus me-2"></i>Add New Customer
+            <% end %>
+            <%= link_to new_admin_lead_path, class: "btn btn-outline-success btn-sm d-flex align-items-center" do %>
+              <i class="bi bi-funnel me-2"></i>Create Lead
+            <% end %>
+            <%= link_to admin_analytics_path, class: "btn btn-outline-warning btn-sm d-flex align-items-center" do %>
+              <i class="bi bi-bar-chart me-2"></i>View Analytics
+            <% end %>
+            <button type="button" class="btn btn-outline-info btn-sm d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#policyTypeModal">
+              <i class="bi bi-file-earmark-plus me-2"></i>Add New Policy
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Birthdays & Anniversaries -->
+  <div class="row mb-4">
+    <!-- Birthdays -->
+    <div class="col-lg-6 mb-3 mb-lg-0">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0 d-flex align-items-center">
+              <i class="bi bi-cake2 text-danger me-2"></i>Upcoming Birthdays
+              <span class="badge bg-danger ms-2"><%= @upcoming_birthdays&.size || 0 %></span>
+            </h5>
+            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#birthdayModal">
+              View All (<%= @upcoming_birthdays&.size || 0 %>)
+            </button>
+          </div>
+          <% if @upcoming_birthdays&.any? %>
+            <div style="max-height: 250px; overflow-y: auto;">
+              <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Birthday</th>
+                    <th>Days Left</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @upcoming_birthdays.first(10).each do |customer| %>
+                    <% bday = customer.birth_date
+                       today = Date.current
+                       this_year = Date.new(today.year, bday.month, bday.day) rescue nil
+                       next_bday = (this_year && this_year >= today) ? this_year : Date.new(today.year + 1, bday.month, bday.day)
+                       days_left = (next_bday - today).to_i %>
+                    <tr>
+                      <td>
+                        <div class="fw-semibold"><%= customer.first_name %> <%= customer.last_name %></div>
+                        <small class="text-muted"><%= customer.mobile %></small>
+                      </td>
+                      <td><span class="badge bg-danger bg-opacity-10 text-danger"><%= bday.strftime("%d %b") %></span></td>
+                      <td>
+                        <% if days_left == 0 %>
+                          <span class="badge bg-success">Today!</span>
+                        <% elsif days_left == 1 %>
+                          <span class="badge bg-warning text-dark">Tomorrow</span>
+                        <% else %>
+                          <span class="text-muted"><%= days_left %> days</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <a href="https://wa.me/<%= customer.mobile&.gsub(/\D/, '') %>?text=Happy+Birthday+<%= CGI.escape(customer.first_name.to_s) %>!" target="_blank" class="btn btn-sm btn-success" title="WhatsApp">
+                          <i class="bi bi-whatsapp"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="text-center text-muted py-4">
+              <i class="bi bi-cake2 fs-3 d-block mb-2"></i>
+              <p class="mb-0">No birthdays in the next 30 days</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Anniversaries -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0 d-flex align-items-center">
+              <i class="bi bi-heart-fill text-pink me-2" style="color:#e91e8c;"></i>Upcoming Anniversaries
+              <span class="badge ms-2" style="background:#e91e8c;"><%= @upcoming_anniversaries&.size || 0 %></span>
+            </h5>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#anniversaryModal">
+              View All (<%= @upcoming_anniversaries&.size || 0 %>)
+            </button>
+          </div>
+          <% if @upcoming_anniversaries&.any? %>
+            <div style="max-height: 250px; overflow-y: auto;">
+              <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Anniversary</th>
+                    <th>Days Left</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @upcoming_anniversaries.first(10).each do |customer| %>
+                    <% ann = customer.anniversary_date
+                       today = Date.current
+                       this_year = Date.new(today.year, ann.month, ann.day) rescue nil
+                       next_ann = (this_year && this_year >= today) ? this_year : Date.new(today.year + 1, ann.month, ann.day)
+                       days_left = (next_ann - today).to_i %>
+                    <tr>
+                      <td>
+                        <div class="fw-semibold"><%= customer.first_name %> <%= customer.last_name %></div>
+                        <small class="text-muted"><%= customer.mobile %></small>
+                      </td>
+                      <td><span class="badge bg-opacity-10 text-dark" style="background:#fce4ec;"><%= ann.strftime("%d %b") %></span></td>
+                      <td>
+                        <% if days_left == 0 %>
+                          <span class="badge bg-success">Today!</span>
+                        <% elsif days_left == 1 %>
+                          <span class="badge bg-warning text-dark">Tomorrow</span>
+                        <% else %>
+                          <span class="text-muted"><%= days_left %> days</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <a href="https://wa.me/<%= customer.mobile&.gsub(/\D/, '') %>?text=Happy+Anniversary+<%= CGI.escape(customer.first_name.to_s) %>!" target="_blank" class="btn btn-sm btn-success" title="WhatsApp">
+                          <i class="bi bi-whatsapp"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="text-center text-muted py-4">
+              <i class="bi bi-heart fs-3 d-block mb-2"></i>
+              <p class="mb-0">No anniversaries in the next 30 days</p>
+              <small class="text-muted">Add anniversary dates in customer profiles</small>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Birthday Modal -->
+  <div class="modal dashboard-modal fade" id="birthdayModal" tabindex="-1" aria-labelledby="birthdayModalLabel" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="birthdayModalLabel">
+            <i class="bi bi-cake2 text-danger me-2"></i>Upcoming Birthdays (Next 30 Days)
+            <span class="badge bg-danger ms-2"><%= @upcoming_birthdays&.size || 0 %></span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0">
+          <% if @upcoming_birthdays&.any? %>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-3">#</th>
+                    <th>Name</th>
+                    <th>Mobile</th>
+                    <th>Birthday</th>
+                    <th>Days Left</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @upcoming_birthdays.each_with_index do |customer, i| %>
+                    <% bday = customer.birth_date
+                       today = Date.current
+                       this_year = Date.new(today.year, bday.month, bday.day) rescue nil
+                       next_bday = (this_year && this_year >= today) ? this_year : Date.new(today.year + 1, bday.month, bday.day)
+                       days_left = (next_bday - today).to_i %>
+                    <tr>
+                      <td class="ps-3 text-muted"><%= i + 1 %></td>
+                      <td>
+                        <%= link_to admin_customer_path(customer), class: "fw-semibold text-decoration-none" do %>
+                          <%= customer.first_name %> <%= customer.last_name %>
+                        <% end %>
+                      </td>
+                      <td class="text-muted"><%= customer.mobile %></td>
+                      <td><span class="badge bg-danger bg-opacity-10 text-danger"><%= bday.strftime("%d %b") %></span></td>
+                      <td>
+                        <% if days_left == 0 %>
+                          <span class="badge bg-success">Today!</span>
+                        <% elsif days_left == 1 %>
+                          <span class="badge bg-warning text-dark">Tomorrow</span>
+                        <% else %>
+                          <span class="text-muted"><%= days_left %> days</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <a href="https://wa.me/<%= customer.mobile&.gsub(/\D/, '') %>?text=Happy+Birthday+<%= CGI.escape(customer.first_name.to_s) %>!" target="_blank" class="btn btn-sm btn-success" title="WhatsApp">
+                          <i class="bi bi-whatsapp"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="text-center text-muted py-5">
+              <i class="bi bi-cake2 fs-2 d-block mb-2"></i>
+              <p class="mb-0">No birthdays in the next 30 days</p>
+            </div>
+          <% end %>
+        </div>
+        <div class="modal-footer">
+          <%= link_to "Open Customers", admin_customers_path, class: "btn btn-outline-danger btn-sm", target: "_blank" %>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Anniversary Modal -->
+  <div class="modal dashboard-modal fade" id="anniversaryModal" tabindex="-1" aria-labelledby="anniversaryModalLabel" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="anniversaryModalLabel">
+            <i class="bi bi-heart-fill me-2" style="color:#e91e8c;"></i>Upcoming Anniversaries (Next 30 Days)
+            <span class="badge ms-2" style="background:#e91e8c;"><%= @upcoming_anniversaries&.size || 0 %></span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0">
+          <% if @upcoming_anniversaries&.any? %>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-3">#</th>
+                    <th>Name</th>
+                    <th>Mobile</th>
+                    <th>Anniversary</th>
+                    <th>Days Left</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @upcoming_anniversaries.each_with_index do |customer, i| %>
+                    <% ann = customer.anniversary_date
+                       today = Date.current
+                       this_year = Date.new(today.year, ann.month, ann.day) rescue nil
+                       next_ann = (this_year && this_year >= today) ? this_year : Date.new(today.year + 1, ann.month, ann.day)
+                       days_left = (next_ann - today).to_i %>
+                    <tr>
+                      <td class="ps-3 text-muted"><%= i + 1 %></td>
+                      <td>
+                        <%= link_to admin_customer_path(customer), class: "fw-semibold text-decoration-none" do %>
+                          <%= customer.first_name %> <%= customer.last_name %>
+                        <% end %>
+                      </td>
+                      <td class="text-muted"><%= customer.mobile %></td>
+                      <td><span class="badge bg-opacity-10 text-dark" style="background:#fce4ec;"><%= ann.strftime("%d %b") %></span></td>
+                      <td>
+                        <% if days_left == 0 %>
+                          <span class="badge bg-success">Today!</span>
+                        <% elsif days_left == 1 %>
+                          <span class="badge bg-warning text-dark">Tomorrow</span>
+                        <% else %>
+                          <span class="text-muted"><%= days_left %> days</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <a href="https://wa.me/<%= customer.mobile&.gsub(/\D/, '') %>?text=Happy+Anniversary+<%= CGI.escape(customer.first_name.to_s) %>!" target="_blank" class="btn btn-sm btn-success" title="WhatsApp">
+                          <i class="bi bi-whatsapp"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="text-center text-muted py-5">
+              <i class="bi bi-heart fs-2 d-block mb-2"></i>
+              <p class="mb-0">No anniversaries in the next 30 days</p>
+            </div>
+          <% end %>
+        </div>
+        <div class="modal-footer">
+          <%= link_to "Open Customers", admin_customers_path, class: "btn btn-outline-secondary btn-sm", target: "_blank" %>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Status -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-2 px-3">
+      <div class="text-muted small fw-semibold mb-2" style="font-size:11px;letter-spacing:.5px;">
+        <i class="bi bi-gear-fill me-1"></i>SYSTEM STATUS
+      </div>
+      <div class="d-flex gap-2 flex-nowrap overflow-auto">
+        <!-- Active Affiliates -->
+        <div class="system-status-card flex-fill" style="cursor:pointer;min-width:170px;max-width:20%;height:76px;" onclick="showSystemStatusModal('active_affiliates')">
+          <div class="px-3 py-2 d-flex align-items-center gap-2 h-100">
+            <i class="bi bi-people fs-4 text-primary flex-shrink-0"></i>
+            <div class="overflow-hidden">
+              <div class="fw-bold text-dark text-truncate" style="font-size:1rem;line-height:1.2;"><%= number_with_delimiter(@total_affiliates) %></div>
+              <div class="text-muted text-truncate" style="font-size:11px;">Active Affiliates</div>
+              <div style="font-size:10px;color:#0dcaf0;"><i class="bi bi-info-circle"></i> Click for details</div>
+            </div>
+          </div>
+        </div>
+        <!-- Avg Policy Value -->
+        <div class="system-status-card flex-fill" style="cursor:pointer;min-width:170px;max-width:20%;height:76px;" onclick="window.location='/dashboard/avg_policy_value'">
+          <div class="px-3 py-2 d-flex align-items-center gap-2 h-100">
+            <i class="bi bi-cash-stack fs-4 text-warning flex-shrink-0"></i>
+            <div class="overflow-hidden">
+              <div class="fw-bold text-dark text-truncate" style="font-size:1rem;line-height:1.2;"><%= indian_currency(@avg_policy_value || 0) %></div>
+              <div class="text-muted text-truncate" style="font-size:11px;">Avg Policy Value</div>
+              <div style="font-size:10px;color:#0dcaf0;"><i class="bi bi-arrow-right-circle"></i> View details</div>
+            </div>
+          </div>
+        </div>
+        <!-- Commissions Due -->
+        <div class="system-status-card flex-fill" style="cursor:pointer;min-width:170px;max-width:20%;height:76px;" onclick="window.location='/admin/commission_tracking?date_from=<%= @filter_start_date&.strftime('%Y-%m-%d') %>&date_to=<%= @filter_end_date&.strftime('%Y-%m-%d') %>'">
+          <div class="px-3 py-2 d-flex align-items-center gap-2 h-100">
+            <i class="bi bi-wallet2 fs-4 <%= (@commissions_due || 0) > 0 ? 'text-danger' : 'text-success' %> flex-shrink-0"></i>
+            <div class="overflow-hidden">
+              <div class="fw-bold text-dark text-truncate" style="font-size:1rem;line-height:1.2;"><%= indian_currency(@commissions_due || 0) %></div>
+              <div class="text-muted text-truncate" style="font-size:11px;">Commissions Due</div>
+              <div style="font-size:10px;color:#0dcaf0;"><i class="bi bi-arrow-right-circle"></i> View commission</div>
+            </div>
+          </div>
+        </div>
+        <!-- Total Leads -->
+        <div class="system-status-card flex-fill" style="cursor:pointer;min-width:170px;max-width:20%;height:76px;" onclick="window.location='/admin/leads'">
+          <div class="px-3 py-2 d-flex align-items-center gap-2 h-100">
+            <i class="bi bi-person-lines-fill fs-4 text-info flex-shrink-0"></i>
+            <div class="overflow-hidden">
+              <div class="fw-bold text-dark text-truncate" style="font-size:1rem;line-height:1.2;"><%= number_with_delimiter(@total_leads || 0) %></div>
+              <div class="text-muted text-truncate" style="font-size:11px;">Total Leads</div>
+              <div style="font-size:10px;color:#0dcaf0;"><i class="bi bi-arrow-right-circle"></i> View leads</div>
+            </div>
+          </div>
+        </div>
+        <!-- Net Profit -->
+        <div class="system-status-card flex-fill" style="cursor:pointer;min-width:170px;max-width:20%;height:76px;border-top:3px solid #27ae60;" onclick="window.location='/dashboard/net_profit'">
+          <div class="px-3 py-2 d-flex align-items-center gap-2 h-100">
+            <i class="bi bi-graph-up-arrow fs-4 text-success flex-shrink-0"></i>
+            <div class="overflow-hidden">
+              <div class="fw-bold text-success text-truncate" style="font-size:1rem;line-height:1.2;"><%= indian_currency(@total_profit || 0) %></div>
+              <div class="text-muted text-truncate" style="font-size:11px;">Net Profit</div>
+              <div style="font-size:10px;color:#0dcaf0;"><i class="bi bi-arrow-right-circle"></i> View details</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Banners hidden for dashboard %>
+</div>
+
+<!-- System Status Detail Modal -->
+<div class="modal dashboard-modal fade" id="systemStatusModal" tabindex="-1" aria-labelledby="systemStatusModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+  <div class="modal-dialog modal-fullscreen-lg-down">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="systemStatusModalLabel">
+          <i class="bi bi-gear me-2"></i>System Status Details
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="systemStatusContent">
+          <!-- Dynamic content will be loaded here -->
+        </div>
+        <div id="systemStatusLoading" class="text-center py-4" style="display: none;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2 text-muted loading-text">Loading system status details...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="downloadCsvBtn" class="btn btn-success" onclick="downloadModalCSV()" style="display:none;">
+          <i class="bi bi-download me-1"></i>Download CSV
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x me-1"></i>Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🎯 Enhanced Dashboard Loading...');
+
+  // Register the datalabels plugin globally
+  Chart.register(ChartDataLabels);
+
+  // Set global defaults for data labels
+  Chart.defaults.plugins.datalabels = {
+    display: true,
+    color: '#fff',
+    font: {
+      size: 11,
+      weight: 'bold'
+    },
+    formatter: (value) => value,
+    anchor: 'center',
+    align: 'center'
+  };
+
+  console.log('🎉 Dashboard Loaded!');
+
+  // Load real-time lead conversion rate on page load
+  loadRealTimeLeadConversion();
+
+  // Auto-refresh dashboard data every 5 minutes
+  setInterval(function() {
+    console.log('Dashboard auto-refresh check');
+    loadRealTimeLeadConversion();
+  }, 300000); // 5 minutes
+});
+</script>
+
+<!-- Renewal Alert Modal -->
+<div class="modal dashboard-modal fade" id="renewalModal" tabindex="-1" aria-labelledby="renewalModalLabel" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="renewalModalLabel">
+          <i class="bi bi-exclamation-triangle me-2"></i>Renewal Alerts
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive" style="max-height: 70vh; overflow-y: auto;">
+          <table class="table table-hover mb-0">
+            <thead class="table-dark sticky-top">
+              <tr>
+                <th>Policy Number</th>
+                <th>Customer</th>
+                <th>Type</th>
+                <th>Premium</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="renewalTableBody">
+              <!-- Dynamic content will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="d-flex justify-content-between align-items-center w-100">
+          <div>
+            <span class="text-muted">
+              <i class="bi bi-info-circle me-1"></i>
+              Total: <span id="renewalCount" class="fw-bold">0</span> policies
+            </span>
+          </div>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x me-1"></i>Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Policy Alert Modal -->
+<div class="modal dashboard-modal fade" id="policyModal" tabindex="-1" aria-labelledby="policyModalLabel" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="policyModalLabel">
+          <i class="bi bi-shield-check me-2"></i>Policy Alerts
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive" style="max-height: 70vh; overflow-y: auto;">
+          <table class="table table-hover mb-0">
+            <thead class="table-dark sticky-top">
+              <tr>
+                <th>Policy Number</th>
+                <th>Customer</th>
+                <th>Type</th>
+                <th>Sum Insured</th>
+                <th>Premium</th>
+                <th>End Date</th>
+                <th>Days Left</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="policyTableBody">
+              <!-- Dynamic content will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="d-flex justify-content-between align-items-center w-100">
+          <div>
+            <span class="text-muted">
+              <i class="bi bi-info-circle me-1"></i>
+              Total: <span id="policyCount" class="fw-bold">0</span> policies
+            </span>
+          </div>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x me-1"></i>Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Unified period dropdown handler
+document.addEventListener('DOMContentLoaded', function() {
+  const periodSelect = document.getElementById('period_select');
+  const yearHidden   = document.getElementById('year_hidden');
+  const fyHidden     = document.getElementById('fy_hidden');
+  const monthSelect  = document.getElementById('month_filter');
+  const startField   = document.getElementById('start_date_field');
+  const endField     = document.getElementById('end_date_field');
+
+  function applyPeriod(val) {
+    if (!val) return;
+    if (val.startsWith('cal_')) {
+      const yr = parseInt(val.replace('cal_', ''));
+      if (yearHidden) yearHidden.value = yr;
+      if (fyHidden)   fyHidden.value   = '';
+      if (startField) startField.value = yr + '-01-01';
+      if (endField)   endField.value   = yr + '-12-31';
+      if (monthSelect) monthSelect.value = '';
+    } else if (val.startsWith('fy_')) {
+      const fy = parseInt(val.replace('fy_', ''));
+      if (fyHidden)   fyHidden.value   = fy;
+      if (yearHidden) yearHidden.value = '';
+      if (startField) startField.value = (fy - 1) + '-04-01';
+      if (endField)   endField.value   = fy       + '-03-31';
+      if (monthSelect) monthSelect.value = '';
+    }
+  }
+
+  if (periodSelect) {
+    periodSelect.addEventListener('change', function() {
+      applyPeriod(this.value);
+      if (this.closest('form')) this.closest('form').submit();
+    });
+  }
+
+  // Custom date changes clear the period dropdown highlight but keep selection
+  [startField, endField].forEach(function(el) {
+    if (el) {
+      el.addEventListener('change', function() {
+        if (fyHidden)   fyHidden.value   = '';
+        if (yearHidden) yearHidden.value = '';
+      });
+    }
+  });
+});
+
+// Function to load real-time lead conversion rate
+function loadRealTimeLeadConversion() {
+  fetch('/admin/api/system_status/lead_conversion')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.summary) {
+        const conversionRateDisplay = document.getElementById('lead-conversion-rate');
+        if (conversionRateDisplay) {
+          conversionRateDisplay.textContent = data.summary.conversion_rate + '%';
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error loading real-time lead conversion:', error);
+    });
+}
+
+// Modal Functions for Dashboard Alerts
+function showRenewalModal(type) {
+  console.log('Opening renewal modal for type:', type);
+
+  const modal = new bootstrap.Modal(document.getElementById('renewalModal'), {
+    backdrop: false,
+    keyboard: true,
+    focus: true
+  });
+
+  const modalTitle = document.getElementById('renewalModalLabel');
+  const tableBody = document.getElementById('renewalTableBody');
+
+  // Update modal title based on type
+  switch(type) {
+    case 'expiring':
+      modalTitle.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>Policies Expiring in 30 Days';
+      loadExpiringPolicies(tableBody);
+      break;
+    case 'expired':
+      modalTitle.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Recently Expired Policies';
+      loadExpiredPolicies(tableBody);
+      break;
+    case 'processed':
+      modalTitle.innerHTML = '<i class="bi bi-check-circle me-2"></i>Policies Processed This Month';
+      loadProcessedPolicies(tableBody);
+      break;
+  }
+
+  modal.show();
+}
+
+function showPolicyModal(type) {
+  console.log('Opening policy modal for type:', type);
+
+  const modal = new bootstrap.Modal(document.getElementById('policyModal'), {
+    backdrop: false,
+    keyboard: true,
+    focus: true
+  });
+
+  const modalTitle = document.getElementById('policyModalLabel');
+  const tableBody = document.getElementById('policyTableBody');
+
+  // Update modal title based on type
+  switch(type) {
+    case 'expiring':
+      modalTitle.innerHTML = '<i class="bi bi-clock-history me-2"></i>Policies Expiring Soon';
+      loadPoliciesExpiringSoon(tableBody);
+      break;
+    case 'expired_month':
+      modalTitle.innerHTML = '<i class="bi bi-calendar-x me-2"></i>Policies Expired This Month';
+      loadPoliciesExpiredThisMonth(tableBody);
+      break;
+    case 'opportunities':
+      modalTitle.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i>Renewal Opportunities';
+      loadRenewalOpportunities(tableBody);
+      break;
+  }
+
+  modal.show();
+}
+
+// Data loading functions
+function loadExpiringPolicies(tableBody) {
+  tableBody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>';
+
+  // Fetch data via AJAX
+  fetch('/admin/api/policies/expiring?days=30')
+    .then(response => response.json())
+    .then(data => {
+      const count = data.policies ? data.policies.length : 0;
+      renderPolicyTable(tableBody, data.policies || [], 'expiring');
+      document.getElementById('renewalCount').textContent = count;
+      document.getElementById('badge-renewal-expiring').textContent = count;
+    })
+    .catch(error => {
+      console.error('Error loading expiring policies:', error);
+      tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+    });
+}
+
+function loadExpiredPolicies(tableBody) {
+  tableBody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>';
+
+  fetch('/admin/api/policies/expired')
+    .then(response => response.json())
+    .then(data => {
+      const count = data.policies ? data.policies.length : 0;
+      renderPolicyTable(tableBody, data.policies || [], 'expired');
+      document.getElementById('renewalCount').textContent = count;
+      document.getElementById('badge-renewal-expired').textContent = count;
+    })
+    .catch(error => {
+      console.error('Error loading expired policies:', error);
+      tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+    });
+}
+
+function loadProcessedPolicies(tableBody) {
+  tableBody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>';
+
+  fetch('/admin/api/policies/processed')
+    .then(response => response.json())
+    .then(data => {
+      const count = data.policies ? data.policies.length : 0;
+      renderPolicyTable(tableBody, data.policies || [], 'processed');
+      document.getElementById('renewalCount').textContent = count;
+      document.getElementById('badge-renewal-processed').textContent = count;
+    })
+    .catch(error => {
+      console.error('Error loading processed policies:', error);
+      tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+    });
+}
+
+function loadPoliciesExpiringSoon(tableBody) {
+  tableBody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>';
+
+  fetch('/admin/api/policies/health/expiring')
+    .then(response => response.json())
+    .then(data => {
+      const count = data.policies ? data.policies.length : 0;
+      renderHealthPolicyTable(tableBody, data.policies || [], 'expiring');
+      document.getElementById('policyCount').textContent = count;
+      document.getElementById('badge-policy-expiring').textContent = count;
+    })
+    .catch(error => {
+      console.error('Error loading policies:', error);
+      tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+    });
+}
+
+function loadPoliciesExpiredThisMonth(tableBody) {
+  tableBody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>';
+
+  fetch('/admin/api/policies/health/expired_month')
+    .then(response => response.json())
+    .then(data => {
+      const count = data.policies ? data.policies.length : 0;
+      renderHealthPolicyTable(tableBody, data.policies || [], 'expired');
+      document.getElementById('policyCount').textContent = count;
+      document.getElementById('badge-policy-expired').textContent = count;
+    })
+    .catch(error => {
+      console.error('Error loading policies:', error);
+      tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+    });
+}
+
+function loadRenewalOpportunities(tableBody) {
+  tableBody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>';
+
+  fetch('/admin/api/policies/health/opportunities')
+    .then(response => response.json())
+    .then(data => {
+      const count = data.policies ? data.policies.length : 0;
+      renderHealthPolicyTable(tableBody, data.policies || [], 'opportunity');
+      document.getElementById('policyCount').textContent = count;
+      document.getElementById('badge-policy-opportunities').textContent = count;
+    })
+    .catch(error => {
+      console.error('Error loading policies:', error);
+      tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+    });
+}
+
+// Render functions
+function renderPolicyTable(tableBody, policies, type) {
+  if (policies.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No policies found</td></tr>';
+    return;
+  }
+
+  let html = '';
+  policies.forEach(policy => {
+    const daysLeft = policy.days_left || 0;
+    let statusBadge = '';
+
+    if (type === 'expired') {
+      statusBadge = '<span class="badge status-badge-expired">Expired</span>';
+    } else if (type === 'processed') {
+      statusBadge = '<span class="badge status-badge-active">Renewed</span>';
+    } else if (daysLeft <= 7) {
+      statusBadge = '<span class="badge status-badge-expired">Urgent</span>';
+    } else if (daysLeft <= 30) {
+      statusBadge = '<span class="badge status-badge-warning">Expiring Soon</span>';
+    } else {
+      statusBadge = '<span class="badge status-badge-active">Active</span>';
+    }
+
+    html += `
+      <tr>
+        <td><span class="text-monospace">${policy.policy_number || 'N/A'}</span></td>
+        <td>
+          <div>
+            <strong>${policy.customer_name || 'Unknown'}</strong>
+            ${policy.customer_email ? '<br><small class="text-muted">' + policy.customer_email + '</small>' : ''}
+          </div>
+        </td>
+        <td><span class="badge bg-info text-white">${policy.insurance_type || 'General'}</span></td>
+        <td class="fw-bold">${fmtINR(policy.premium)}</td>
+        <td>${policy.end_date || 'N/A'}</td>
+        <td>${statusBadge}</td>
+        <td>
+          ${type !== 'processed' ?
+            `<a href="/admin/${policy.type_slug}/${policy.id}/renew" class="btn btn-sm btn-success">
+              <i class="bi bi-arrow-repeat me-1"></i>Renew
+            </a>` :
+            '<span class="text-success"><i class="bi bi-check-circle"></i> Completed</span>'
+          }
+        </td>
+      </tr>
+    `;
+  });
+
+  tableBody.innerHTML = html;
+}
+
+function renderHealthPolicyTable(tableBody, policies, type) {
+  if (policies.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No policies found</td></tr>';
+    return;
+  }
+
+  let html = '';
+  policies.forEach(policy => {
+    const daysLeft = policy.days_left || 0;
+    let daysLeftBadge = '';
+
+    if (daysLeft < 0) {
+      daysLeftBadge = `<span class="badge bg-danger">Expired ${Math.abs(daysLeft)} days ago</span>`;
+    } else if (daysLeft === 0) {
+      daysLeftBadge = '<span class="badge bg-danger">Expires Today</span>';
+    } else if (daysLeft <= 7) {
+      daysLeftBadge = `<span class="badge bg-warning text-dark">${daysLeft} days</span>`;
+    } else {
+      daysLeftBadge = `<span class="badge bg-success">${daysLeft} days</span>`;
+    }
+
+    const typeSlug = policy.type_slug || 'insurance/health';
+    const typeBadgeColor = { Health: 'bg-primary', Life: 'bg-info', Motor: 'bg-warning text-dark', Other: 'bg-secondary' }[policy.insurance_type] || 'bg-primary';
+    html += `
+      <tr>
+        <td><span class="text-monospace">${policy.policy_number || 'N/A'}</span></td>
+        <td>
+          <div>
+            <strong>${policy.customer_name || 'Unknown'}</strong>
+            ${policy.customer_email ? '<br><small class="text-muted">' + policy.customer_email + '</small>' : ''}
+          </div>
+        </td>
+        <td><span class="badge ${typeBadgeColor}">${policy.insurance_type || 'Health'}</span></td>
+        <td class="fw-bold">${fmtINR(policy.sum_insured)}</td>
+        <td>${fmtINR(policy.premium)}</td>
+        <td>${policy.end_date || 'N/A'}</td>
+        <td>${daysLeftBadge}</td>
+        <td>
+          <a href="/admin/${typeSlug}/${policy.id}" class="btn btn-sm btn-outline-primary me-1">
+            <i class="bi bi-eye"></i>
+          </a>
+          ${daysLeft >= 0 && daysLeft <= 60 ?
+            `<a href="/admin/${typeSlug}/${policy.id}/renew" class="btn btn-sm btn-success">
+              <i class="bi bi-arrow-repeat"></i> Renew
+            </a>` : ''
+          }
+        </td>
+      </tr>
+    `;
+  });
+
+  tableBody.innerHTML = html;
+}
+
+// Indian number format helper — reliable across all browsers/locales
+function fmtINR(val) {
+  const num = parseFloat(val || 0);
+  const isNeg = num < 0;
+  const [intPart, decPart] = Math.abs(num).toFixed(2).split('.');
+  let result = intPart;
+  if (intPart.length > 3) {
+    const last3 = intPart.slice(-3);
+    const rest  = intPart.slice(0, -3);
+    result = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + last3;
+  }
+  return (isNeg ? '-' : '') + 'Rs. ' + result + '.' + decPart;
+}
+
+// System Status Modal Functions
+let _csvModalType = null;
+let _csvModalData = null;
+
+// ── CSV helpers ────────────────────────────────────────────────────────────
+function _esc(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  return (s.includes(',') || s.includes('"') || s.includes('\n'))
+    ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function _buildCSV(headers, rows) {
+  return [headers.map(_esc).join(','), ...rows.map(r => r.map(_esc).join(','))].join('\n');
+}
+function _triggerDownload(csv, filename) {
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function downloadModalCSV() {
+  if (!_csvModalData || !_csvModalType) {
+    alert('Data not loaded yet. Please wait for the modal to finish loading.');
+    return;
+  }
+  const d = _csvModalData;
+  let csv = '', filename = 'export.csv';
+
+  if (_csvModalType === 'active_affiliates') {
+    filename = 'active_affiliates.csv';
+    csv = _buildCSV(
+      ['ID','Name','Email','Phone','Status','Joined Date','Total Policies','Total Premium (Rs.)','Commission Paid (Rs.)','Commission Pending (Rs.)'],
+      (d.affiliates || []).map(a => [a.id, a.name, a.email, a.phone, a.status, a.joined_date, a.total_policies, a.total_premium, a.commission_paid, a.commission_pending])
+    );
+  }
+  else if (_csvModalType === 'avg_policy_value') {
+    filename = 'avg_policy_value.csv';
+    const typeRows = (d.by_type || []).map(p => [p.type, p.count, p.total_premium, p.average, p.min_premium, p.max_premium]);
+    const distRows = (d.distribution || []).map(r => [r.range, r.count, r.percentage + '%', '', '', '']);
+    csv = _buildCSV(
+      ['Insurance Type','Policy Count','Total Premium (Rs.)','Average Premium (Rs.)','Min Premium (Rs.)','Max Premium (Rs.)'],
+      [...typeRows, ['--- Distribution ---','','','','',''], ...distRows]
+    );
+  }
+  else if (_csvModalType === 'commissions_due') {
+    filename = 'commissions_due.csv';
+    csv = _buildCSV(
+      ['Policy Number','Customer','Policy Type','Payout To','Commission Amount (Rs.)','Percentage (%)','Base Premium (Rs.)','Created Date','Due Date'],
+      (d.data || []).map(r => [r.policy_number, r.customer_name, r.policy_type, r.payout_to, r.amount, r.percentage, r.base_premium, r.created_at, r.due_date])
+    );
+  }
+  else if (_csvModalType === 'lead_conversion') {
+    filename = 'lead_conversion.csv';
+    const monthRows = (d.monthly_trend || []).map(m => ['Monthly', m.month, m.total_leads, m.converted_leads, m.conversion_rate + '%', '']);
+    const srcRows   = (d.source_conversion || []).map(s => ['Source', s.source, s.total, s.converted, s.rate + '%', '']);
+    const stageRows = Object.entries(d.stage_breakdown || {}).map(([stage, cnt]) => ['Stage', stage, cnt, '', '', '']);
+    csv = _buildCSV(
+      ['Section','Name / Month','Total Leads','Converted','Rate (%)',''],
+      [...monthRows, ['---','','','','',''], ...srcRows, ['---','','','','',''], ...stageRows]
+    );
+  }
+  else if (_csvModalType === 'profit') {
+    filename = 'net_profit.csv';
+    const rows = [];
+    (d.policies || []).forEach(pol => {
+      rows.push([pol.policy_number, pol.policy_type, pol.customer, pol.company, pol.booking_date, 'Net Premium', '', '', '', pol.net_premium]);
+      (pol.rows || []).forEach(r => rows.push([pol.policy_number, pol.policy_type, pol.customer, pol.company, pol.booking_date, r.label, r.pct + '%', r.amount, r.tds_pct != null ? r.tds_pct + '%' : '', r.actual]));
+    });
+    csv = _buildCSV(
+      ['Policy Number','Type','Customer','Company','Booking Date','Commission Item','%','Gross Amount (Rs.)','TDS %','Net Amount (Rs.)'],
+      rows
+    );
+  }
+
+  if (csv) _triggerDownload(csv, filename);
+}
+// ──────────────────────────────────────────────────────────────────────────
+
+function showSystemStatusModal(type) {
+  console.log('Opening system status modal for:', type);
+  _csvModalType = type;
+  _csvModalData = null;
+  const btn = document.getElementById('downloadCsvBtn');
+  if (btn) btn.style.display = 'none';
+
+  // Hide scrollbars on body
+  document.body.style.overflow = 'hidden';
+
+  const modalElement = document.getElementById('systemStatusModal');
+
+  // Clear any existing modal instances
+  let existingModal = bootstrap.Modal.getInstance(modalElement);
+  if (existingModal) {
+    existingModal.dispose();
+  }
+
+  const modal = new bootstrap.Modal(modalElement, {
+    backdrop: 'static',
+    keyboard: true,
+    focus: true
+  });
+
+  const modalTitle = document.getElementById('systemStatusModalLabel');
+  const content = document.getElementById('systemStatusContent');
+  const loading = document.getElementById('systemStatusLoading');
+
+  // Show loading
+  if (content) content.style.display = 'none';
+  if (loading) loading.style.display = 'block';
+
+  // Update modal title and load data based on type
+  switch(type) {
+    case 'active_affiliates':
+      modalTitle.innerHTML = '<i class="bi bi-people me-2"></i>Active Affiliates Details';
+      loadActiveAffiliatesData(content, loading);
+      break;
+    case 'lead_conversion':
+      modalTitle.innerHTML = '<i class="bi bi-graph-up-arrow me-2"></i>Lead Conversion Analysis';
+      loadLeadConversionData(content, loading);
+      break;
+    case 'avg_policy_value':
+      modalTitle.innerHTML = '<i class="bi bi-cash-stack me-2"></i>Average Policy Value Breakdown';
+      loadAvgPolicyValueData(content, loading);
+      break;
+    case 'commissions_due':
+      modalTitle.innerHTML = '<i class="bi bi-wallet2 me-2"></i>Commissions Due - Detailed Calculation';
+      loadCommissionsDueData(content, loading);
+      break;
+    case 'total_revenue':
+      modalTitle.innerHTML = '<i class="bi bi-graph-up-arrow me-2"></i>Total Revenue Breakdown';
+      loadTotalRevenueData(content, loading);
+      break;
+    case 'profit':
+      modalTitle.innerHTML = '<i class="bi bi-graph-up-arrow me-2 text-success"></i>Net Profit — Policy Commission Breakdown';
+      loadProfitSummaryData(content, loading);
+      break;
+  }
+
+  // Add event listener to restore body overflow when modal is closed
+  modalElement.addEventListener('hidden.bs.modal', function () {
+    document.body.style.overflow = 'auto';
+    document.body.classList.remove('modal-open');
+  });
+
+  modal.show();
+}
+
+function loadActiveAffiliatesData(content, loading) {
+  fetch('/admin/api/system_status/active_affiliates')
+    .then(response => response.json())
+    .then(data => {
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      if (data.success) { _csvModalData = data; const b = document.getElementById('downloadCsvBtn'); if (b) b.style.display = ''; }
+
+      if (data.success) {
+        // fmtINR is the global Indian formatter defined above
+        content.innerHTML = `
+          <div class="d-flex gap-2 mb-4" style="flex-wrap:nowrap">
+            <div style="flex:1 1 0;min-width:0">
+              <div class="kpi-card kpi-primary h-100">
+                <div class="card-body">
+                  <div class="kpi-number">${data.summary.total_active}</div>
+                  <div class="kpi-label">Active Affiliates</div>
+                </div>
+              </div>
+            </div>
+            <div style="flex:1 1 0;min-width:0">
+              <div class="kpi-card kpi-success h-100">
+                <div class="card-body">
+                  <div class="kpi-number">${data.summary.total_policies}</div>
+                  <div class="kpi-label">Total Policies</div>
+                </div>
+              </div>
+            </div>
+            <div style="flex:1 1 0;min-width:0">
+              <div class="kpi-card kpi-warning h-100">
+                <div class="card-body">
+                  <div class="kpi-number" style="font-size:1.2rem">${fmtINR(data.summary.total_premium)}</div>
+                  <div class="kpi-label">Total Premium</div>
+                </div>
+              </div>
+            </div>
+            <div style="flex:1 1 0;min-width:0">
+              <div class="kpi-card h-100" style="background:#f39c12;color:#fff">
+                <div class="card-body">
+                  <div class="kpi-number" style="font-size:1.2rem">${fmtINR(data.summary.total_commission_pending)}</div>
+                  <div class="kpi-label">Commission Pending</div>
+                </div>
+              </div>
+            </div>
+            <div style="flex:1 1 0;min-width:0">
+              <div class="kpi-card h-100" style="background:#27ae60;color:#fff">
+                <div class="card-body">
+                  <div class="kpi-number" style="font-size:1.2rem">${fmtINR(data.summary.total_commission_paid)}</div>
+                  <div class="kpi-label">Commission Paid</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-dark">
+                <tr>
+                  <th>Sl No</th>
+                  <th>Name</th>
+                  <th>Joined Date</th>
+                  <th>Policies</th>
+                  <th>Premium Generated</th>
+                  <th>Commission Pending</th>
+                  <th>Commission Paid</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.affiliates.map((affiliate, index) => `
+                  <tr>
+                    <td>${index + 1}</td>
+                    <td><strong>${affiliate.name}</strong></td>
+                    <td>${affiliate.joined_date}</td>
+                    <td><span class="badge bg-primary">${affiliate.total_policies}</span></td>
+                    <td class="fw-bold text-success">${fmtINR(affiliate.total_premium)}</td>
+                    <td class="fw-bold" style="color:#e67e22">${fmtINR(affiliate.commission_pending)}</td>
+                    <td class="fw-bold text-success">${fmtINR(affiliate.commission_paid)}</td>
+                    <td><span class="badge bg-success">${affiliate.status}</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else {
+        content.innerHTML = '<div class="alert alert-danger">Error loading affiliate data</div>';
+      }
+    })
+    .catch(error => {
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      content.innerHTML = '<div class="alert alert-danger">Error loading data. Please try again.</div>';
+      console.error('Error:', error);
+    });
+}
+
+function loadCommissionsDueData(content, loading) {
+  fetch('/admin/api/system_status/commissions_due_detailed', {
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+    .then(response => {
+      console.log('Commission API response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Commission API data:', data);
+      console.log('Success:', data.success, 'Total Count:', data.total_count, 'Data Array Length:', data.data?.length);
+
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      if (data.success) { _csvModalData = data; const b = document.getElementById('downloadCsvBtn'); if (b) b.style.display = ''; }
+
+      if (data.success && data.total_count > 0) {
+        const fmtAmt = fmtINR; // use global Indian formatter
+        const sr = data.summary_by_recipient || {};
+
+        const recipientConfig = [
+          { key: 'main_agent',      label: 'Main Agent',      color: '#667eea', bg: 'linear-gradient(135deg,#667eea,#764ba2)' },
+          { key: 'affiliate',       label: 'Affiliate',       color: '#27ae60', bg: 'linear-gradient(135deg,#27ae60,#1e8449)' },
+          { key: 'ambassador',      label: 'Ambassador',      color: '#e67e22', bg: 'linear-gradient(135deg,#e67e22,#ca6f1e)' },
+          { key: 'investor',        label: 'Investor',        color: '#2980b9', bg: 'linear-gradient(135deg,#2980b9,#1a5276)' },
+          { key: 'company_expense', label: 'Company Expense', color: '#8e44ad', bg: 'linear-gradient(135deg,#8e44ad,#6c3483)' }
+        ];
+
+        const thStyle = 'color:white;font-weight:800;border:none;padding:12px 10px;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.5px;';
+
+        const policyPath = (type, id) => {
+          if (!id) return null;
+          const map = { health: '/admin/insurance/health', life: '/admin/insurance/life', motor: '/admin/insurance/motor', other: '/admin/insurance/other' };
+          return (map[type] || null) ? `${map[type]}/${id}` : null;
+        };
+
+        const buildTable = (records, color) => {
+          if (!records.length) return '<p class="text-muted py-3 text-center">No pending records.</p>';
+          return `
+            <div class="table-responsive" style="max-height:420px;overflow-y:auto;border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,0.08);">
+              <table class="table table-hover mb-0" style="background:white;border-radius:10px;overflow:hidden;">
+                <thead style="background:${color};position:sticky;top:0;z-index:10;">
+                  <tr>
+                    <th style="${thStyle}">Lead ID</th>
+                    <th style="${thStyle}">Policy</th>
+                    <th style="${thStyle}">Customer</th>
+                    <th style="${thStyle}">Affiliate</th>
+                    <th style="${thStyle}">Type</th>
+                    <th style="${thStyle}">Premium</th>
+                    <th style="${thStyle}text-align:center;">%</th>
+                    <th style="${thStyle}text-align:center;">Commission</th>
+                    <th style="${thStyle}">Calculation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${records.map((c, i) => {
+                    const isOrphaned = c.orphaned === true;
+                    const rowBg = isOrphaned ? 'rgba(255,243,205,0.6)' : (i%2===0?'rgba(0,0,0,0.02)':'white');
+                    const leadUrl  = c.lead_db_id ? `/admin/leads/${c.lead_db_id}` : null;
+                    const polUrl   = policyPath(c.policy_type, c.policy_db_id);
+                    const linkStyle = 'color:white;text-decoration:none;cursor:pointer;';
+                    const polLinkStyle = 'font-family:monospace;font-weight:700;color:#2c3e50;font-size:0.85rem;background:#ecf0f1;padding:3px 6px;border-radius:5px;text-decoration:none;';
+                    const leadCell = leadUrl
+                      ? `<a href="${leadUrl}" target="_blank" style="${linkStyle}"><span class="badge" style="background:${isOrphaned?'#adb5bd':color};color:white;font-size:0.7rem;padding:4px 7px;border-radius:6px;">${c.lead_id} <i class="bi bi-box-arrow-up-right" style="font-size:0.6rem;"></i></span></a>`
+                      : `<span class="badge" style="background:${isOrphaned?'#adb5bd':color};color:white;font-size:0.7rem;padding:4px 7px;border-radius:6px;">${c.lead_id}</span>`;
+                    const policyCell = (polUrl && c.policy_number !== 'N/A')
+                      ? `<a href="${polUrl}" target="_blank" style="${polLinkStyle}">${c.policy_number} <i class="bi bi-box-arrow-up-right" style="font-size:0.6rem;color:#667eea;"></i></a>`
+                      : `<span style="${polLinkStyle.replace('text-decoration:none;','')}">${c.policy_number}</span>`;
+                    return `
+                    <tr style="background:${rowBg};border-bottom:1px solid #f0f0f0;${isOrphaned?'opacity:0.85;':''}" title="${isOrphaned?'Policy record not found for this payout':''}">
+                      <td style="padding:10px 8px;">${leadCell}</td>
+                      <td style="padding:10px 8px;">${policyCell}</td>
+                      <td style="padding:10px 8px;font-weight:700;color:#34495e;font-size:0.9rem;">${c.customer_name}${isOrphaned?' <span title="Policy not found" style="color:#e67e22;font-size:0.75rem;">⚠ policy missing</span>':''}</td>
+                      <td style="padding:10px 8px;font-size:0.82rem;color:#2c3e7a;">${c.affiliate_name !== 'N/A' ? `<span style="background:#eaf4fb;color:#2980b9;border:1px solid #aed6f1;padding:2px 8px;border-radius:10px;font-weight:600;font-size:0.75rem;">${c.affiliate_name}</span>` : '<span style="color:#adb5bd;font-size:0.75rem;">—</span>'}</td>
+                      <td style="padding:10px 8px;"><span class="badge bg-info text-white" style="font-size:0.7rem;">${c.policy_type}</span></td>
+                      <td style="padding:10px 8px;font-weight:700;color:${isOrphaned?'#adb5bd':'#667eea'};">${isOrphaned ? '—' : fmtAmt(c.base_premium)}</td>
+                      <td style="padding:10px 8px;text-align:center;font-weight:800;color:${isOrphaned?'#adb5bd':'#f39c12'};">${isOrphaned ? '—' : parseFloat(c.percentage||0).toFixed(1)+'%'}</td>
+                      <td style="padding:10px 8px;text-align:center;"><span style="font-weight:900;color:#e74c3c;font-size:1rem;background:rgba(231,76,60,0.1);padding:4px 8px;border-radius:7px;">${fmtAmt(c.amount)}</span></td>
+                      <td style="padding:10px 8px;font-size:0.8rem;color:${isOrphaned?'#e67e22':'#7f8c8d'};font-style:italic;">${c.calculation}</td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>`;
+        };
+
+        content.innerHTML = `
+          <div class="alert mb-3" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;padding:10px 15px;">
+            <span style="color:#fff;font-weight:700;font-size:0.9rem;"><i class="bi bi-calculator me-2"></i>${data.calculation_method}</span>
+          </div>
+
+          <!-- Summary KPI cards: one per recipient -->
+          <div class="d-flex gap-2 mb-4" style="flex-wrap:nowrap;">
+            ${recipientConfig.map(r => `
+              <div style="flex:1 1 0;min-width:0;">
+                <div style="background:${r.bg};border-radius:12px;padding:12px 10px;color:#fff;text-align:center;height:100%;">
+                  <div style="font-size:1.1rem;font-weight:900;">${fmtAmt(sr[r.key] || 0)}</div>
+                  <div style="font-size:0.75rem;font-weight:600;opacity:0.9;margin-top:3px;">${r.label} Pending</div>
+                </div>
+              </div>`).join('')}
+          </div>
+
+          <!-- Tabs -->
+          <ul class="nav nav-tabs mb-0" id="commTabList" role="tablist" style="border-bottom:2px solid #dee2e6;">
+            ${recipientConfig.map((r, i) => {
+              const count = data.data.filter(d => d.payout_to === r.key).length;
+              return `<li class="nav-item" role="presentation">
+                <button class="nav-link${i===0?' active':''}" id="tab-${r.key}" data-bs-toggle="tab" data-bs-target="#pane-${r.key}" type="button" role="tab" style="font-weight:700;font-size:0.85rem;">
+                  ${r.label} <span class="badge ms-1" style="background:${r.color};color:#fff;">${count}</span>
+                </button>
+              </li>`;
+            }).join('')}
+          </ul>
+          <div class="tab-content" style="border:1px solid #dee2e6;border-top:none;border-radius:0 0 10px 10px;padding:15px;background:#fff;">
+            ${recipientConfig.map((r, i) => `
+              <div class="tab-pane fade${i===0?' show active':''}" id="pane-${r.key}" role="tabpanel">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                  <span style="width:12px;height:12px;border-radius:50%;background:${r.color};display:inline-block;"></span>
+                  <strong style="color:${r.color};">${r.label} Commissions Pending</strong>
+                  <span style="margin-left:auto;font-weight:800;color:${r.color};font-size:1.1rem;">${fmtAmt(sr[r.key] || 0)}</span>
+                </div>
+                ${buildTable(data.data.filter(d => d.payout_to === r.key), r.bg)}
+              </div>`).join('')}
+          </div>
+        `;
+      } else {
+        console.log('❌ Showing no commissions - API Response:', {
+          success: data.success,
+          total_count: data.total_count,
+          data_length: data.data?.length,
+          error: data.error || 'None'
+        });
+
+        // Show different message based on the actual issue
+        if (!data.success) {
+          content.innerHTML = `
+            <div class="alert alert-warning" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border: none; color: white;">
+              <h6 style="color: white; font-weight: bold;"><i class="bi bi-exclamation-triangle me-2"></i>API Error</h6>
+              <p class="mb-0" style="color: white; font-weight: 600;">Error: ${data.error || 'Unknown API error'}</p>
+            </div>
+          `;
+        } else {
+          content.innerHTML = `
+            <div class="text-center py-5">
+              <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
+              <h3 class="mt-3" style="color: #11998e; font-weight: bold;"><strong>No Pending Commissions!</strong></h3>
+              <p style="color: #666; font-weight: 600;">All commission payouts have been processed successfully.</p>
+              <div class="mt-3 text-muted">
+                <small>Debug: Success=${data.success}, Count=${data.total_count}</small>
+              </div>
+            </div>
+          `;
+        }
+      }
+    })
+    .catch(error => {
+      console.error('❌ Commission API Error:', error);
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      content.innerHTML = `
+        <div class="alert alert-danger" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); border: none;">
+          <h6 style="color: white; font-weight: bold;"><i class="bi bi-exclamation-triangle me-2"></i>Error Loading Data</h6>
+          <p class="mb-0" style="color: white; font-weight: 600;">Unable to load commission data: ${error.message}</p>
+          <div class="mt-2">
+            <small style="color: rgba(255,255,255,0.8);">Please check browser console for details.</small>
+          </div>
+        </div>
+      `;
+    });
+}
+
+// Load Total Revenue Data
+function loadTotalRevenueData(content, loading) {
+  // Simulating revenue data - in production, this would come from an API endpoint
+  const revenueData = {
+    success: true,
+    total_revenue: <%= @total_premium_collected || 0 %>,
+    revenue_by_type: {
+      health: <%= (HealthInsurance.sum(:total_premium) rescue 0) || 0 %>,
+      life: <%= (LifeInsurance.sum(:total_premium) rescue 0) || 0 %>,
+      motor: <%= (MotorInsurance.sum(:total_premium) rescue 0) || 0 %>,
+      other: <%= (OtherInsurance.column_names.include?('total_premium') ? OtherInsurance.sum(:total_premium) : 0) rescue 0 %>
+    },
+    monthly_revenue: [],
+    growth_rate: 0
+  };
+
+  // Calculate monthly revenue for the last 6 months
+  <% 6.times do |i| %>
+    <% month_start = i.months.ago.beginning_of_month %>
+    <% month_end = i.months.ago.end_of_month %>
+    revenueData.monthly_revenue.push({
+      month: '<%= month_start.strftime("%B %Y") %>',
+      revenue: <%=
+        HealthInsurance.where(created_at: month_start..month_end).sum(:total_premium) +
+        LifeInsurance.where(created_at: month_start..month_end).sum(:total_premium) +
+        MotorInsurance.where(created_at: month_start..month_end).sum(:total_premium) +
+        OtherInsurance.where(created_at: month_start..month_end).sum(:total_premium)
+      %>
+    });
+  <% end %>
+  revenueData.monthly_revenue.reverse();
+
+  // Calculate growth rate
+  if (revenueData.monthly_revenue.length >= 2) {
+    const lastMonth = revenueData.monthly_revenue[revenueData.monthly_revenue.length - 1].revenue;
+    const previousMonth = revenueData.monthly_revenue[revenueData.monthly_revenue.length - 2].revenue;
+    if (previousMonth > 0) {
+      revenueData.growth_rate = ((lastMonth - previousMonth) / previousMonth * 100).toFixed(2);
+    }
+  }
+
+  loading.style.display = 'none';
+  content.style.display = 'block';
+
+  if (revenueData.success) {
+    content.innerHTML = `
+      <div class="alert" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 16px; padding: 1.5rem;">
+        <h6 style="color: #ffffff; font-weight: bold; font-size: 1.1rem;"><i class="bi bi-graph-up-arrow me-2"></i>Revenue Analysis</h6>
+        <p class="mb-0" style="color: #ffffff; font-weight: 600;">Total revenue collected from all insurance policies</p>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="card text-white" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border-radius: 20px; box-shadow: 0 12px 40px rgba(17, 153, 142, 0.4); border: none;">
+            <div class="card-body text-center" style="padding: 2rem 1rem;">
+              <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 1rem; margin-bottom: 1rem;">
+                <i class="bi bi-cash-stack" style="font-size: 2rem; color: white;"></i>
+              </div>
+              <h2 style="font-weight: 900; font-size: 2.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin: 0; line-height: 1;">${fmtINR(revenueData.total_revenue)}</h2>
+              <p style="font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 0.5rem; color: rgba(255, 255, 255, 0.9);">Total Revenue</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4); border: none;">
+            <div class="card-body text-center" style="padding: 2rem 1rem;">
+              <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 1rem; margin-bottom: 1rem;">
+                <i class="bi bi-graph-up" style="font-size: 2rem; color: white;"></i>
+              </div>
+              <h2 style="font-weight: 900; font-size: 2.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin: 0; line-height: 1;">${revenueData.growth_rate}%</h2>
+              <p style="font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 0.5rem; color: rgba(255, 255, 255, 0.9);">Monthly Growth</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card text-white" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border-radius: 20px; box-shadow: 0 12px 40px rgba(243, 156, 18, 0.4); border: none;">
+            <div class="card-body text-center" style="padding: 2rem 1rem;">
+              <div style="background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 1rem; margin-bottom: 1rem;">
+                <i class="bi bi-calendar-month" style="font-size: 2rem; color: white;"></i>
+              </div>
+              <h2 style="font-weight: 900; font-size: 2rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin: 0; line-height: 1;">${revenueData.monthly_revenue.length > 0 ? fmtINR(revenueData.monthly_revenue[revenueData.monthly_revenue.length - 1].revenue) : 'Rs. 0.00'}</h2>
+              <p style="font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 0.5rem; color: rgba(255, 255, 255, 0.9);">This Month</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <h5 style="font-weight: bold; color: #333; margin-bottom: 1rem;">Revenue by Insurance Type</h5>
+          <div class="table-responsive">
+            <table class="table table-hover" style="background: white; border-radius: 15px; overflow: hidden;">
+              <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <tr>
+                  <th style="color: white; font-weight: 800; border: none; padding: 15px;">Type</th>
+                  <th style="color: white; font-weight: 800; border: none; padding: 15px; text-align: right;">Revenue</th>
+                  <th style="color: white; font-weight: 800; border: none; padding: 15px; text-align: right;">Percentage</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.entries(revenueData.revenue_by_type).map(([type, amount], index) => {
+                  const percentage = revenueData.total_revenue > 0 ? (amount / revenueData.total_revenue * 100).toFixed(1) : 0;
+                  const typeColors = {
+                    health: '#11998e',
+                    life: '#667eea',
+                    motor: '#f39c12',
+                    other: '#e74c3c'
+                  };
+                  return `
+                    <tr style="background: ${index % 2 === 0 ? 'rgba(102, 126, 234, 0.05)' : 'white'};">
+                      <td style="padding: 12px 15px;">
+                        <span class="badge" style="background: ${typeColors[type]}; color: white; font-weight: 700; padding: 6px 12px; font-size: 0.9rem;">
+                          ${type.charAt(0).toUpperCase() + type.slice(1)} Insurance
+                        </span>
+                      </td>
+                      <td style="padding: 12px 15px; text-align: right; font-weight: bold; font-size: 1.1rem; color: #2c3e50;">
+                        ${fmtINR(amount)}
+                      </td>
+                      <td style="padding: 12px 15px; text-align: right;">
+                        <div class="progress" style="height: 25px; background: rgba(0,0,0,0.1); border-radius: 10px;">
+                          <div class="progress-bar" role="progressbar"
+                               style="width: ${percentage}%; background: linear-gradient(90deg, ${typeColors[type]}, ${typeColors[type]}dd); font-weight: bold;"
+                               aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100">
+                            ${percentage}%
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <h5 style="font-weight: bold; color: #333; margin-bottom: 1rem;">Monthly Revenue Trend</h5>
+          <div class="table-responsive">
+            <table class="table table-hover" style="background: white; border-radius: 15px; overflow: hidden;">
+              <thead style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <tr>
+                  <th style="color: white; font-weight: 800; border: none; padding: 15px;">Month</th>
+                  <th style="color: white; font-weight: 800; border: none; padding: 15px; text-align: right;">Revenue</th>
+                  <th style="color: white; font-weight: 800; border: none; padding: 15px; text-align: center;">Trend</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${revenueData.monthly_revenue.map((month, index) => {
+                  const prevRevenue = index > 0 ? revenueData.monthly_revenue[index - 1].revenue : month.revenue;
+                  const change = ((month.revenue - prevRevenue) / (prevRevenue || 1) * 100).toFixed(1);
+                  const trendIcon = change > 0 ? '↑' : change < 0 ? '↓' : '→';
+                  const trendColor = change > 0 ? '#11998e' : change < 0 ? '#e74c3c' : '#6c757d';
+                  return `
+                    <tr style="background: ${index % 2 === 0 ? 'rgba(17, 153, 142, 0.05)' : 'white'};">
+                      <td style="padding: 12px 15px; font-weight: 600;">${month.month}</td>
+                      <td style="padding: 12px 15px; text-align: right; font-weight: bold; font-size: 1.1rem; color: #2c3e50;">
+                        ${fmtINR(month.revenue)}
+                      </td>
+                      <td style="padding: 12px 15px; text-align: center;">
+                        ${index > 0 ? `
+                          <span style="color: ${trendColor}; font-weight: bold; font-size: 1.1rem;">
+                            ${trendIcon} ${Math.abs(change)}%
+                          </span>
+                        ` : '<span class="text-muted">-</span>'}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    content.innerHTML = '<div class="alert alert-danger">Error loading revenue data. Please try again.</div>';
+  }
+}
+
+// Load Lead Conversion Data with full implementation
+function loadLeadConversionData(content, loading) {
+  fetch('/admin/api/system_status/lead_conversion')
+    .then(response => response.json())
+    .then(data => {
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      if (data.success) { _csvModalData = data; const b = document.getElementById('downloadCsvBtn'); if (b) b.style.display = ''; }
+
+      if (data.success) {
+        // Update the main dashboard display with real-time data
+        const conversionRateDisplay = document.getElementById('lead-conversion-rate');
+        if (conversionRateDisplay && data.summary) {
+          conversionRateDisplay.textContent = data.summary.conversion_rate + '%';
+        }
+
+        content.innerHTML = `
+          <div class="alert alert-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 16px; padding: 1.5rem;">
+            <h6 style="color: #ffffff; font-weight: bold; font-size: 1.1rem;"><i class="bi bi-calculator me-2"></i>Conversion Rate Calculation:</h6>
+            <p class="mb-0" style="color: #ffffff; font-weight: 600; font-size: 1rem;">${data.calculation_method}</p>
+          </div>
+
+          <div class="row mb-4">
+            <div class="col-md-3">
+              <div class="kpi-card kpi-primary">
+                <div class="card-body">
+                  <div class="kpi-number">${data.summary.total_leads}</div>
+                  <div class="kpi-label">Total Leads</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="kpi-card kpi-success">
+                <div class="card-body">
+                  <div class="kpi-number">${data.summary.converted_leads}</div>
+                  <div class="kpi-label">Converted</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="kpi-card kpi-warning">
+                <div class="card-body">
+                  <div class="kpi-number">${data.summary.pending_leads}</div>
+                  <div class="kpi-label">Pending</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="kpi-card kpi-info">
+                <div class="card-body">
+                  <div class="kpi-number">${data.summary.conversion_rate}%</div>
+                  <div class="kpi-label">Conversion Rate</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <h5 style="font-weight: bold; color: #333;">Monthly Conversion Trend</h5>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover" style="background: white; border-radius: 8px; overflow: hidden;">
+                  <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <tr>
+                      <th style="color: white; font-weight: bold; border: none;">Month</th>
+                      <th style="color: white; font-weight: bold; border: none;">Total Leads</th>
+                      <th style="color: white; font-weight: bold; border: none;">Converted</th>
+                      <th style="color: white; font-weight: bold; border: none;">Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${data.monthly_trend ? data.monthly_trend.map(month => `
+                      <tr style="background: rgba(102, 126, 234, 0.05);">
+                        <td style="font-weight: 600; color: #333;"><strong>${month.month}</strong></td>
+                        <td style="font-weight: bold; color: #667eea; font-size: 1.05rem;"><strong>${month.total_leads}</strong></td>
+                        <td style="font-weight: bold; color: #11998e; font-size: 1.05rem;"><strong>${month.converted_leads}</strong></td>
+                        <td><span class="badge ${month.conversion_rate > 30 ? 'bg-success' : month.conversion_rate > 15 ? 'bg-warning text-dark' : 'bg-danger'}" style="font-weight: bold; font-size: 0.9rem;">${month.conversion_rate}%</span></td>
+                      </tr>
+                    `).join('') : '<tr><td colspan="4" style="font-weight: 600;">No data available</td></tr>'}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <h5 style="font-weight: bold; color: #333;">Lead Stage Breakdown</h5>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead>
+                    <tr>
+                      <th>Stage</th>
+                      <th>Count</th>
+                      <th>Percentage</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${data.stage_breakdown ? Object.entries(data.stage_breakdown).map(([stage, count]) => {
+                      const percentage = data.summary.total_leads > 0 ? ((count / data.summary.total_leads) * 100).toFixed(1) : 0;
+                      return `
+                        <tr>
+                          <td>${stage.replace(/_/g, ' ').toUpperCase()}</td>
+                          <td>${count}</td>
+                          <td>${percentage}%</td>
+                        </tr>
+                      `;
+                    }).join('') : '<tr><td colspan="3">No data available</td></tr>'}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          ${data.source_conversion && data.source_conversion.length > 0 ? `
+            <div class="mt-3">
+              <h5 style="font-weight: bold; color: #333;">Lead Source Performance</h5>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover" style="background: white; border-radius: 8px; overflow: hidden;">
+                  <thead style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <tr>
+                      <th style="color: white; font-weight: bold; border: none;">Source</th>
+                      <th style="color: white; font-weight: bold; border: none;">Total</th>
+                      <th style="color: white; font-weight: bold; border: none;">Converted</th>
+                      <th style="color: white; font-weight: bold; border: none;">Conversion Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${data.source_conversion.map(source => `
+                      <tr style="background: rgba(240, 147, 251, 0.05);">
+                        <td style="font-weight: 600; color: #333;">
+                          <span class="badge bg-dark" style="font-weight: bold; font-size: 0.9rem; padding: 0.4rem 0.7rem;">
+                            ${source.source.toUpperCase()}
+                          </span>
+                        </td>
+                        <td style="font-weight: bold; color: #f093fb; font-size: 1.05rem;"><strong>${source.total}</strong></td>
+                        <td style="font-weight: bold; color: #11998e; font-size: 1.05rem;"><strong>${source.converted}</strong></td>
+                        <td><span class="badge ${source.rate > 30 ? 'bg-success' : source.rate > 15 ? 'bg-warning text-dark' : 'bg-danger'}" style="font-weight: bold; font-size: 0.95rem; padding: 0.4rem 0.6rem;">${source.rate}%</span></td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ` : ''}
+        `;
+      } else {
+        content.innerHTML = '<div class="alert alert-danger">Error loading lead conversion data</div>';
+      }
+    })
+    .catch(error => {
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      content.innerHTML = '<div class="alert alert-danger">Error loading data. Please try again.</div>';
+      console.error('Error:', error);
+    });
+}
+
+function loadProfitSummaryData(content, loading) {
+  const startDate = document.getElementById('start_date_field')?.value || '';
+  const endDate   = document.getElementById('end_date_field')?.value   || '';
+  const params    = new URLSearchParams({ start_date: startDate, end_date: endDate });
+
+  fetch(`/admin/api/system_status/profit_summary?${params}`, { credentials: 'same-origin' })
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(data => {
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      if (!data.success) { content.innerHTML = `<div class="alert alert-danger">${data.error || 'Failed to load'}</div>`; return; }
+      _csvModalData = data; const _b = document.getElementById('downloadCsvBtn'); if (_b) _b.style.display = '';
+
+      const s = data.summary;
+      const typeColor = { Health: '#27ae60', Life: '#2980b9', Motor: '#e67e22' };
+
+      const kpiHtml = `
+        <div class="d-flex gap-2 mb-4" style="flex-wrap:wrap">
+          <div style="flex:1 1 0;min-width:130px"><div style="background:#fff;border:1px solid #dee2e6;border-top:3px solid #0d6efd;border-radius:8px;padding:14px 10px;text-align:center;height:100%">
+            <div style="font-size:1.6rem;font-weight:700;color:#0d6efd;margin-bottom:4px">${s.total_policies}</div><div style="font-size:.8rem;color:#6c757d;font-weight:600">Policies Analysed</div>
+          </div></div>
+          <div style="flex:1 1 0;min-width:130px"><div style="background:#fff;border:1px solid #dee2e6;border-top:3px solid #e67e22;border-radius:8px;padding:14px 10px;text-align:center;height:100%">
+            <div style="font-size:1rem;font-weight:700;color:#e67e22;margin-bottom:4px">${fmtINR(s.total_net_premium)}</div><div style="font-size:.8rem;color:#6c757d;font-weight:600">Total Net Premium</div>
+          </div></div>
+          <div style="flex:1 1 0;min-width:130px"><div style="background:#fff;border:1px solid #dee2e6;border-top:3px solid #27ae60;border-radius:8px;padding:14px 10px;text-align:center;height:100%">
+            <div style="font-size:1rem;font-weight:700;color:#27ae60;margin-bottom:4px">${fmtINR(s.total_profit)}</div><div style="font-size:.8rem;color:#6c757d;font-weight:600">Total Profit</div>
+          </div></div>
+          <div style="flex:1 1 0;min-width:130px"><div style="background:#fff;border:1px solid #dee2e6;border-top:3px solid #2c3e7a;border-radius:8px;padding:14px 10px;text-align:center;height:100%">
+            <div style="font-size:1rem;font-weight:700;color:#2c3e7a;margin-bottom:4px">${fmtINR(s.total_main_agent)}</div><div style="font-size:.8rem;color:#6c757d;font-weight:600">Main Agent (Net)</div>
+          </div></div>
+          <div style="flex:1 1 0;min-width:130px"><div style="background:#fff;border:1px solid #dee2e6;border-top:3px solid #8e44ad;border-radius:8px;padding:14px 10px;text-align:center;height:100%">
+            <div style="font-size:1.6rem;font-weight:700;color:#8e44ad;margin-bottom:4px">${s.avg_profit_pct}%</div><div style="font-size:.8rem;color:#6c757d;font-weight:600">Avg Profit %</div>
+          </div></div>
+        </div>
+        <p class="text-muted mb-3" style="font-size:.82rem">
+          <i class="bi bi-info-circle me-1"></i>
+          <strong>Formula:</strong> Profit = Main Agent Commission − (Affiliate + Ambassador + Investor + Company Expenses) &nbsp;|&nbsp;
+          Period: ${data.start_date} – ${data.end_date}
+        </p>`;
+
+      const rowsHtml = data.policies.map(pol => {
+        const tc = typeColor[pol.policy_type] || '#6c757d';
+        const detailRows = pol.rows.map(r => `
+          <tr style="${r.label==='Profit'?'background:#eafaf1;font-weight:700':''}">
+            <td style="padding:6px 10px">${r.label}</td>
+            <td style="padding:6px 10px;text-align:center">${r.pct > 0 ? r.pct+'%' : '—'}</td>
+            <td style="padding:6px 10px;text-align:right">${fmtINR(r.amount)}</td>
+            <td style="padding:6px 10px;text-align:center">${r.tds_pct != null ? (r.tds_pct > 0 ? r.tds_pct+'%' : '0%') : '—'}</td>
+            <td style="padding:6px 10px;text-align:right">${r.tds_amt != null ? fmtINR(r.tds_amt) : '—'}</td>
+            <td style="padding:6px 10px;text-align:right;font-weight:600;color:${r.label==='Profit'?'#27ae60':''}">${fmtINR(r.actual)}</td>
+          </tr>`).join('');
+
+        return `
+          <div class="mb-4" style="background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.07);overflow:hidden">
+            <div style="background:linear-gradient(90deg,#f8f9ff,#eef1ff);padding:.75rem 1rem;border-bottom:2px solid ${tc};display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+              <span style="font-weight:700;color:#2c3e7a;font-size:.9rem">${pol.policy_number}</span>
+              <span style="background:${tc};color:#fff;padding:.2em .7em;border-radius:12px;font-size:.75rem;font-weight:600">${pol.policy_type}</span>
+              <span style="color:#555;font-size:.82rem">${pol.customer}</span>
+              <span style="color:#888;font-size:.78rem">${pol.company}</span>
+              <span style="color:#888;font-size:.78rem;margin-left:auto">${pol.booking_date}</span>
+              <span style="background:#eafaf1;color:#27ae60;border:1px solid #a9dfbf;padding:.2em .7em;border-radius:12px;font-size:.78rem;font-weight:700">Profit: ${fmtINR(pol.profit_amount)}</span>
+            </div>
+            <div style="padding:.5rem 1rem .75rem">
+              <div style="display:flex;gap:1.5rem;font-size:.78rem;color:#6c757d;margin-bottom:.5rem;flex-wrap:wrap">
+                <span><strong>Net Premium:</strong> ${fmtINR(pol.net_premium)}</span>
+                <span><strong>Total Distribution:</strong> ${pol.total_distribution_pct}%</span>
+                <span><strong>Company Expenses:</strong> ${pol.company_expenses_pct}%</span>
+                <span><strong>Final Profit:</strong> <span style="color:#27ae60;font-weight:700">${fmtINR(pol.profit_amount)}</span></span>
+              </div>
+              <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+                <thead>
+                  <tr style="background:#f1f3f9">
+                    <th style="padding:6px 10px;text-align:left">Commission Details</th>
+                    <th style="padding:6px 10px;text-align:center">%</th>
+                    <th style="padding:6px 10px;text-align:right">Commission</th>
+                    <th style="padding:6px 10px;text-align:center">TDS %</th>
+                    <th style="padding:6px 10px;text-align:right">TDS Amount</th>
+                    <th style="padding:6px 10px;text-align:right">Actual Amount</th>
+                  </tr>
+                </thead>
+                <tbody>${detailRows}</tbody>
+              </table>
+            </div>
+          </div>`;
+      }).join('');
+
+      content.innerHTML = kpiHtml + (data.policies.length ? rowsHtml : '<div class="text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>No policies found for this date range.</div>');
+    })
+    .catch(err => {
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      content.innerHTML = '<div class="alert alert-danger">Error loading profit data. Please try again.</div>';
+    });
+}
+
+function loadAvgPolicyValueData(content, loading) {
+  fetch('/admin/api/system_status/avg_policy_value')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Avg Policy Value API Response:', data); // Debug log
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      if (data.success) { _csvModalData = data; const b = document.getElementById('downloadCsvBtn'); if (b) b.style.display = ''; }
+
+      if (data.success) {
+        content.innerHTML = `
+          <div class="alert alert-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 16px; padding: 1.5rem;">
+            <h6 style="color: #ffffff; font-weight: bold; font-size: 1.1rem;"><i class="bi bi-calculator me-2"></i>Average Policy Value Calculation:</h6>
+            <p class="mb-0" style="color: #ffffff; font-weight: 600; font-size: 1rem;">${data.calculation_method}</p>
+          </div>
+
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <div class="kpi-card kpi-warning">
+                <div class="card-body">
+                  <div class="kpi-number">${fmtINR(data.summary.overall_average)}</div>
+                  <div class="kpi-label">Overall Average</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="kpi-card kpi-primary">
+                <div class="card-body">
+                  <div class="kpi-number">${data.summary.total_policies}</div>
+                  <div class="kpi-label">Total Policies</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="kpi-card kpi-success">
+                <div class="card-body">
+                  <div class="kpi-number">Rs. ${(data.summary.total_premium / 100000).toFixed(1)}L</div>
+                  <div class="kpi-label">Total Premium</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h5 class="mb-3">Average Premium by Insurance Type</h5>
+          <div class="table-responsive mb-4">
+            <table class="table table-hover">
+              <thead class="table-dark">
+                <tr>
+                  <th>Insurance Type</th>
+                  <th>Policy Count</th>
+                  <th>Total Premium</th>
+                  <th>Average Premium</th>
+                  <th>Contribution</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.by_type.map(details => {
+                  const contribution = data.summary.total_premium > 0
+                    ? ((details.total_premium / data.summary.total_premium) * 100).toFixed(1)
+                    : 0;
+                  return `
+                    <tr>
+                      <td><span class="badge bg-info">${details.type}</span></td>
+                      <td>${details.count}</td>
+                      <td class="fw-bold">${fmtINR(details.total_premium)}</td>
+                      <td class="fw-bold text-warning">${fmtINR(details.average)}</td>
+                      <td>
+                        <div class="progress" style="height: 20px;">
+                          <div class="progress-bar bg-success" role="progressbar" style="width: ${contribution}%">${contribution}%</div>
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <h5 class="mb-3">Premium Distribution Analysis</h5>
+          <div class="row">
+            ${data.distribution.map(item => `
+              <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h6 class="card-title text-muted">${item.range}</h6>
+                    <h4 class="mb-0">${item.count}</h4>
+                    <small class="text-muted">policies (${item.percentage}%)</small>
+                    <div class="progress mt-2" style="height: 10px;">
+                      <div class="progress-bar bg-primary" role="progressbar"
+                           style="width: ${item.percentage}%"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        content.innerHTML = '<div class="alert alert-danger">Error loading policy value data</div>';
+      }
+    })
+    .catch(error => {
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      content.innerHTML = '<div class="alert alert-danger">Error loading data. Please try again.</div>';
+      console.error('Error:', error);
+    });
+}
+
+// Dashboard Filter Auto-Update Functionality
+function updateCurrentPeriod() {
+  const yearHidden  = document.getElementById('year_hidden');
+  const monthSelect = document.getElementById('month_filter');
+  const startDateField = document.getElementById('start_date_field');
+  const endDateField = document.getElementById('end_date_field');
+
+  if (!monthSelect) return;
+
+  const year = parseInt(yearHidden?.value) || new Date().getFullYear();
+  const month = monthSelect.value;
+
+  let startDate, endDate;
+
+  if (month && month !== '') {
+    // Specific month selected
+    const monthNum = parseInt(month);
+    startDate = new Date(year, monthNum - 1, 1);
+    endDate = new Date(year, monthNum, 0); // Last day of the month
+    console.log(`Month selected: ${monthNum} (${year})`);
+  } else {
+    // Full year selected
+    startDate = new Date(year, 0, 1); // January 1st
+    endDate = new Date(year, 11, 31); // December 31st
+    console.log(`Full year selected: ${year}`);
+  }
+
+  // AUTO-LOAD: Update Custom Date Range fields immediately
+  if (startDateField && endDateField) {
+    const formatDate = (date) => {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
+
+    // Update the date field values
+    startDateField.value = formatDate(startDate);
+    endDateField.value = formatDate(endDate);
+
+    // Add visual feedback - highlight fields to show they were auto-updated
+    startDateField.style.backgroundColor = '#d4edda';
+    endDateField.style.backgroundColor = '#d4edda';
+    startDateField.style.border = '2px solid #28a745';
+    endDateField.style.border = '2px solid #28a745';
+    startDateField.style.transition = 'all 0.3s ease';
+    endDateField.style.transition = 'all 0.3s ease';
+
+    // Remove the highlight after 2 seconds
+    setTimeout(() => {
+      startDateField.style.backgroundColor = '';
+      endDateField.style.backgroundColor = '';
+      startDateField.style.border = '';
+      endDateField.style.border = '';
+    }, 2000);
+
+    console.log(`🎯 AUTO-LOADED DATES: ${formatDate(startDate)} to ${formatDate(endDate)}`);
+    console.log(`📅 Start Date Field Updated: ${startDateField.value}`);
+    console.log(`📅 End Date Field Updated: ${endDateField.value}`);
+  } else {
+    console.log('❌ Date fields not found - cannot auto-update');
+  }
+}
+
+// Date field change handler to update current period
+function updateCurrentPeriodFromDates() {
+  const startDateField = document.getElementById('start_date_field');
+  const endDateField = document.getElementById('end_date_field');
+  const currentPeriodDisplay = document.getElementById('current-period-display');
+
+  if (!startDateField || !endDateField || !currentPeriodDisplay) return;
+
+  const startValue = startDateField.value;
+  const endValue = endDateField.value;
+
+  if (startValue && endValue) {
+    const startDate = new Date(startValue);
+    const endDate = new Date(endValue);
+
+    const formatDisplayDate = (date) => {
+      const options = { year: 'numeric', month: 'short', day: 'numeric' };
+      return date.toLocaleDateString('en-US', options);
+    };
+
+    const displayText = `${formatDisplayDate(startDate)} - ${formatDisplayDate(endDate)}`;
+    currentPeriodDisplay.textContent = displayText;
+  }
+}
+
+// Clear all filters function
+function clearAllFilters() {
+  const periodSelect = document.getElementById('period_select');
+  const yearHidden   = document.getElementById('year_hidden');
+  const fyHidden     = document.getElementById('fy_hidden');
+  const monthSelect  = document.getElementById('month_filter');
+  const startDateField = document.getElementById('start_date_field');
+  const endDateField = document.getElementById('end_date_field');
+
+  const currentYear = new Date().getFullYear();
+
+  // Reset period dropdown to current calendar year
+  if (periodSelect) periodSelect.value = 'cal_' + currentYear;
+  if (yearHidden)   yearHidden.value   = currentYear;
+  if (fyHidden)     fyHidden.value     = '';
+  if (monthSelect)  monthSelect.value  = '';
+  if (startDateField) { startDateField.value = currentYear + '-01-01'; }
+  if (endDateField)   { endDateField.value   = currentYear + '-12-31'; }
+
+  // Submit the form to reload data with cleared filters
+  setTimeout(() => {
+    updateCurrentPeriod();
+    const form = (periodSelect || monthSelect || startDateField)?.closest('form');
+    if (form) {
+      form.submit();
+      return;
+    }
+
+    // Remove highlighting after auto-load
+    setTimeout(() => {
+      if (startDateField) {
+        startDateField.style.backgroundColor = '';
+        startDateField.style.border = '';
+      }
+      if (endDateField) {
+        endDateField.style.backgroundColor = '';
+        endDateField.style.border = '';
+      }
+    }, 1500);
+  }, 200);
+
+  console.log(`🎯 Filters cleared and reset to default (${currentYear} All Year)`);
+}
+
+// Clean up modal backdrops on close
+document.addEventListener('DOMContentLoaded', function() {
+  // Add event listeners for filter auto-update
+  const monthSelect = document.getElementById('month_filter');
+  const startDateField = document.getElementById('start_date_field');
+  const endDateField = document.getElementById('end_date_field');
+
+  // AUTO-LOAD current year dates on page load
+  console.log('🚀 Page loaded - Auto-loading current year dates...');
+  if (startDateField && endDateField && !startDateField.value && !endDateField.value) {
+    // Only auto-load if fields are empty (first page load)
+    const currentYear = new Date().getFullYear();
+    const yearStart = `${currentYear}-01-01`;
+    const yearEnd = `${currentYear}-12-31`;
+
+    startDateField.value = yearStart;
+    endDateField.value = yearEnd;
+
+    // Brief green highlight to show auto-loading
+    startDateField.style.backgroundColor = '#d4edda';
+    endDateField.style.backgroundColor = '#d4edda';
+
+    setTimeout(() => {
+      startDateField.style.backgroundColor = '';
+      endDateField.style.backgroundColor = '';
+    }, 1000);
+
+    console.log(`✅ Auto-loaded current year dates: ${yearStart} to ${yearEnd}`);
+  } else if (startDateField && endDateField) {
+    console.log(`ℹ️ Date fields already have values: ${startDateField.value} to ${endDateField.value}`);
+  }
+
+  if (monthSelect) {
+    monthSelect.addEventListener('change', function() {
+      updateCurrentPeriod();
+      monthSelect.form.submit();
+    });
+  }
+
+  if (startDateField) {
+    startDateField.addEventListener('change', updateCurrentPeriodFromDates);
+  }
+
+  if (endDateField) {
+    endDateField.addEventListener('change', updateCurrentPeriodFromDates);
+  }
+
+  // Add Clear button event listener
+  const clearButton = document.getElementById('clear_filters_btn');
+  if (clearButton) {
+    console.log('✅ Clear button found, adding click listener');
+    clearButton.addEventListener('click', function() {
+      console.log('🧹 Clear button clicked!');
+      clearAllFilters();
+    });
+  } else {
+    console.log('❌ Clear button not found');
+  }
+
+  // Modal cleanup
+  ['renewalModal', 'policyModal', 'systemStatusModal', 'policyTypeModal'].forEach(modalId => {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.addEventListener('hidden.bs.modal', function() {
+        setTimeout(() => {
+          document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+          document.body.classList.remove('modal-open');
+          document.body.style.paddingRight = '';
+          document.body.style.overflow = '';
+        }, 100);
+      });
+    }
+  });
+});
+</script>
+
+<!-- Policy Type Selection Modal -->
+<div class="modal fade" id="policyTypeModal" tabindex="-1" aria-labelledby="policyTypeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-gradient-primary text-white border-0">
+        <h5 class="modal-title fw-bold" id="policyTypeModalLabel">
+          <i class="bi bi-plus-circle me-2"></i>Select Policy Type
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted mb-4">Choose the type of insurance policy you want to create:</p>
+        <div class="d-grid gap-3">
+          <%= link_to new_admin_health_insurance_path, class: "btn btn-outline-primary btn-lg d-flex align-items-center justify-content-start p-3", style: "text-decoration: none;" do %>
+            <div class="me-3">
+              <i class="bi bi-hospital fs-3 text-primary"></i>
+            </div>
+            <div class="text-start">
+              <div class="fw-bold">Health Insurance</div>
+              <small class="text-muted">Medical coverage and health plans</small>
+            </div>
+          <% end %>
+
+          <%= link_to new_admin_life_insurance_path, class: "btn btn-outline-danger btn-lg d-flex align-items-center justify-content-start p-3", style: "text-decoration: none;" do %>
+            <div class="me-3">
+              <i class="bi bi-heart-fill fs-3 text-danger"></i>
+            </div>
+            <div class="text-start">
+              <div class="fw-bold">Life Insurance</div>
+              <small class="text-muted">Life coverage and protection plans</small>
+            </div>
+          <% end %>
+
+          <%= link_to new_admin_motor_insurance_path, class: "btn btn-outline-warning btn-lg d-flex align-items-center justify-content-start p-3", style: "text-decoration: none;" do %>
+            <div class="me-3">
+              <i class="bi bi-car-front fs-3 text-warning"></i>
+            </div>
+            <div class="text-start">
+              <div class="fw-bold">Motor Insurance</div>
+              <small class="text-muted">Vehicle insurance and auto coverage</small>
+            </div>
+          <% end %>
+
+          <%= link_to new_admin_other_insurance_path, class: "btn btn-outline-info btn-lg d-flex align-items-center justify-content-start p-3", style: "text-decoration: none;" do %>
+            <div class="me-3">
+              <i class="bi bi-shield-check fs-3 text-info"></i>
+            </div>
+            <div class="text-start">
+              <div class="fw-bold">General Insurance</div>
+              <small class="text-muted">Other insurance products and plans</small>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+</style>
+
+<!-- KPI Detail Modal (Dashboard) -->
+<div class="modal fade" id="dashboardKpiModal" tabindex="-1" aria-labelledby="dashboardKpiModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white;">
+        <h5 class="modal-title" id="dashboardKpiModalLabel">Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div id="dashboardKpiLoading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2 text-muted">Loading data…</p>
+        </div>
+        <div id="dashboardKpiContent" style="display:none;">
+          <div id="dashboardKpiSummary" class="px-4 pt-3 pb-1"></div>
+          <div class="table-responsive px-2 pb-3">
+            <table class="table table-hover table-sm align-middle mb-0" id="dashboardKpiTable">
+              <thead class="table-dark" id="dashboardKpiHead"></thead>
+              <tbody id="dashboardKpiBody"></tbody>
+              <tfoot id="dashboardKpiFoot"></tfoot>
+            </table>
+          </div>
+        </div>
+        <div id="dashboardKpiError" style="display:none;" class="alert alert-danger m-3"></div>
+      </div>
+      <div class="modal-footer bg-light py-2 d-flex justify-content-between align-items-center" id="dashboardKpiFooter" style="display:none !important;">
+        <div id="dashboardKpiFooterContent" class="d-flex gap-4 fw-bold fs-6"></div>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DASH_CARD_DETAIL_URL = '<%= dashboard_card_detail_path %>';
+const DASH_FILTER_START    = '<%= @filter_start_date %>';
+const DASH_FILTER_END      = '<%= @filter_end_date %>';
+
+function dashFmtDateDMY(iso) {
+  if (!iso) return iso;
+  const p = iso.split('-');
+  if (p.length !== 3) return iso;
+  return p[2] + '-' + p[1] + '-' + p[0];
+}
+
+function openDashboardCardModal(card) {
+  const metric = card.dataset.cardMetric;
+  const label  = card.dataset.cardLabel;
+  document.getElementById('dashboardKpiModalLabel').textContent = label + ' — ' + dashFmtDateDMY(DASH_FILTER_START) + ' to ' + dashFmtDateDMY(DASH_FILTER_END);
+  document.getElementById('dashboardKpiLoading').style.display = 'block';
+  document.getElementById('dashboardKpiContent').style.display = 'none';
+  document.getElementById('dashboardKpiError').style.display   = 'none';
+  const modal = new bootstrap.Modal(document.getElementById('dashboardKpiModal'));
+  modal.show();
+
+  const url = DASH_CARD_DETAIL_URL + '?metric=' + encodeURIComponent(metric) +
+              '&start_date=' + encodeURIComponent(DASH_FILTER_START) +
+              '&end_date='   + encodeURIComponent(DASH_FILTER_END);
+
+  fetch(url, { headers: { 'Accept': 'application/json',
+                           'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content') } })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) throw new Error(data.error);
+      renderDashboardKpiData(metric, label, data);
+      document.getElementById('dashboardKpiLoading').style.display = 'none';
+      document.getElementById('dashboardKpiContent').style.display = 'block';
+    })
+    .catch(err => {
+      document.getElementById('dashboardKpiLoading').style.display = 'none';
+      document.getElementById('dashboardKpiError').style.display = 'block';
+      document.getElementById('dashboardKpiError').textContent = 'Error loading data: ' + err.message;
+    });
+}
+
+function dashFmtINR(v) {
+  return 'Rs. ' + Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderDashboardKpiData(metric, label, data) {
+  const records = data.records || [];
+  const head = document.getElementById('dashboardKpiHead');
+  const body = document.getElementById('dashboardKpiBody');
+  const foot = document.getElementById('dashboardKpiFoot');
+  const summary = document.getElementById('dashboardKpiSummary');
+
+  head.innerHTML = '';
+  body.innerHTML = '';
+  foot.innerHTML = '';
+  summary.innerHTML = '';
+
+  const kpiFooter = document.getElementById('dashboardKpiFooter');
+  const kpiFooterContent = document.getElementById('dashboardKpiFooterContent');
+  if (kpiFooter) kpiFooter.style.display = 'none';
+
+  if (records.length === 0) {
+    body.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">No records found for this period.</td></tr>';
+    return;
+  }
+
+  if (metric === 'policies' || metric === 'premium') {
+    head.innerHTML = `<tr>
+      <th>#</th><th>Type</th><th>Policy No.</th><th>Customer</th>
+      <th>Start Date</th><th>End Date</th><th>Created</th>
+      <th class="text-end">Net Premium</th><th class="text-end">Total Premium</th>
+      <th class="text-center">Source</th>
+    </tr>`;
+    let totalNet = 0, totalGross = 0;
+    records.forEach((r, i) => {
+      totalNet   += r.net_premium   || 0;
+      totalGross += r.total_premium || 0;
+      const policyCell = r.policy_link
+        ? `<a href="${r.policy_link}" target="_blank" class="font-monospace small text-decoration-none">${r.policy_number}</a>`
+        : `<span class="font-monospace small">${r.policy_number}</span>`;
+      const sourceBadge = r.drwise
+        ? `<span class="badge bg-success">DrWise</span>`
+        : `<span class="badge bg-warning text-dark">Non-DrWise</span>`;
+      body.innerHTML += `<tr>
+        <td class="text-muted">${i+1}</td>
+        <td><span class="badge bg-secondary">${r.type}</span></td>
+        <td>${policyCell}</td>
+        <td>${r.customer}</td>
+        <td>${r.policy_start_date || '—'}</td>
+        <td>${r.policy_end_date   || '—'}</td>
+        <td>${r.created_at}</td>
+        <td class="text-end">${dashFmtINR(r.net_premium)}</td>
+        <td class="text-end fw-bold">${dashFmtINR(r.total_premium)}</td>
+        <td class="text-center">${sourceBadge}</td>
+      </tr>`;
+    });
+    foot.innerHTML = `<tr class="table-warning fw-bold">
+      <td colspan="7">Total (${records.length} policies)</td>
+      <td class="text-end">${dashFmtINR(totalNet)}</td>
+      <td class="text-end">${dashFmtINR(totalGross)}</td>
+      <td></td>
+    </tr>`;
+    summary.innerHTML = `<div class="d-flex gap-3 flex-wrap mb-2">
+      <span class="badge bg-primary fs-6">${records.length} Policies</span>
+      <span class="badge bg-warning text-dark fs-6">Net: ${dashFmtINR(totalNet)}</span>
+      <span class="badge bg-success fs-6">Total: ${dashFmtINR(totalGross)}</span>
+    </div>`;
+    if (kpiFooter && kpiFooterContent) {
+      kpiFooterContent.innerHTML = `
+        <span>Policies: <strong>${records.length}</strong></span>
+        <span class="text-warning">Total Net Premium: <strong>${dashFmtINR(totalNet)}</strong></span>
+        <span class="text-success">Total Gross Premium: <strong>${dashFmtINR(totalGross)}</strong></span>`;
+      kpiFooter.style.display = 'flex';
+    }
+
+  } else if (metric === 'customers') {
+    head.innerHTML = `<tr><th>#</th><th>Name</th><th>City</th><th>Mobile</th><th>Joined</th></tr>`;
+    records.forEach((r, i) => {
+      const nameCell = r.customer_link
+        ? `<a href="${r.customer_link}" class="fw-semibold text-decoration-none">${r.name}</a>`
+        : r.name;
+      body.innerHTML += `<tr>
+        <td class="text-muted">${i+1}</td>
+        <td>${nameCell}</td><td>${r.city || '—'}</td>
+        <td>${r.mobile || '—'}</td><td>${r.created_at}</td>
+      </tr>`;
+    });
+    summary.innerHTML = `<span class="badge bg-primary fs-6 mb-2">${records.length} Customers</span>`;
+
+  } else if (metric === 'leads') {
+    head.innerHTML = `<tr><th>#</th><th>Name</th><th>Stage</th><th>Created</th></tr>`;
+    records.forEach((r, i) => {
+      body.innerHTML += `<tr>
+        <td class="text-muted">${i+1}</td>
+        <td>${r.name}</td><td>${r.stage}</td><td>${r.created_at}</td>
+      </tr>`;
+    });
+    summary.innerHTML = `<span class="badge bg-info fs-6 mb-2">${records.length} Leads</span>`;
+
+  } else if (metric === 'investors') {
+    head.innerHTML = `<tr><th>#</th><th>Name</th><th>Joined</th></tr>`;
+    records.forEach((r, i) => {
+      body.innerHTML += `<tr>
+        <td class="text-muted">${i+1}</td>
+        <td>${r.name}</td><td>${r.created_at}</td>
+      </tr>`;
+    });
+    summary.innerHTML = `<span class="badge fs-6 mb-2" style="background:#8b5cf6;">${records.length} Investors</span>`;
+
+  } else if (metric === 'affiliates') {
+    head.innerHTML = `<tr><th>#</th><th>Name</th><th>Status</th><th>Joined</th></tr>`;
+    records.forEach((r, i) => {
+      body.innerHTML += `<tr>
+        <td class="text-muted">${i+1}</td>
+        <td>${r.name}</td><td>${r.status}</td><td>${r.created_at}</td>
+      </tr>`;
+    });
+    summary.innerHTML = `<span class="badge fs-6 mb-2" style="background:#ec4899;">${records.length} Affiliates</span>`;
+  }
+}
+</script>

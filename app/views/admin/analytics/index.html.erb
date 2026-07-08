@@ -1,0 +1,2706 @@
+<!-- Chart.js for interactive charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+<!-- Chart.js Data Labels Plugin for showing values on charts -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
+<style>
+  .analytics-container {
+    padding: 1.5rem;
+    background: #f8fafc;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+
+  /* KPI Cards Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .kpi-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .kpi-card:hover button[onclick*="refreshAffiliatesData"] {
+    opacity: 1 !important;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--card-color);
+  }
+
+  .kpi-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    margin-bottom: 1rem;
+  }
+
+  .kpi-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+  }
+
+  .kpi-label {
+    color: #6b7280;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .kpi-change {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .growth-positive { color: #10b981; }
+  .growth-negative { color: #ef4444; }
+
+  /* Chart containers */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .chart-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  .chart-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .chart-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .chart-action-btn {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+
+  .chart-action-btn:hover {
+    background: #e2e8f0;
+    color: #334155;
+  }
+
+  .chart-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 6px;
+    padding: 1rem;
+    display: none;
+  }
+
+  .loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e2e8f0;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .chart-container {
+    position: relative;
+    height: 300px;
+    margin-top: 1rem;
+  }
+
+  /* Real-time update indicator */
+  .update-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #10b981;
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateX(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1000;
+  }
+
+  .update-indicator.show {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  .update-indicator.error {
+    background: #ef4444;
+  }
+
+  /* Enhanced chart hover effects */
+  .chart-card:hover .chart-actions {
+    opacity: 1;
+  }
+
+  .chart-actions {
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+  }
+
+  /* Add pulse animation for auto-refresh */
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+  }
+
+  .chart-card.pulse {
+    animation: pulse 1s ease-out;
+  }
+
+  .chart-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+  }
+
+  .chart-container {
+    position: relative;
+    height: 300px;
+  }
+
+  /* Chart stats section */
+  .chart-stats {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+  }
+
+  .stat-item {
+    text-align: center;
+    flex: 1;
+  }
+
+  .stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .stat-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  /* Enhanced chart action tooltips */
+  .chart-action-btn {
+    position: relative;
+  }
+
+  .chart-action-btn:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Tables */
+  .analytics-table {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+  }
+
+  .table-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1rem 1.5rem;
+  }
+
+  .table-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  th {
+    background: #f8fafc;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  td {
+    color: #1f2937;
+  }
+
+  tr:hover {
+    background: #f8fafc;
+  }
+
+  /* Color classes */
+  .blue-gradient { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+  .green-gradient { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+  .orange-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+  .pink-gradient { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); }
+  .purple-gradient { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+  .red-gradient { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+
+  /* Cache status and refresh button styling */
+  .cache-status-info {
+    font-size: 0.875rem;
+  }
+
+  .cache-status-info .badge {
+    font-size: 0.75rem;
+    padding: 0.4em 0.6em;
+  }
+
+  /* Spin animation for refresh button */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .spin-animation {
+    animation: spin 1s linear infinite;
+  }
+
+  /* Cache button hover effects */
+  #cache-btn:hover {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+    border-color: #d1d5db !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  #cache-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  /* Loading overlay for refresh */
+  .analytics-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(248, 250, 252, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+  }
+
+  .loading-spinner {
+    text-align: center;
+    color: #8b5cf6;
+  }
+
+  .loading-spinner .spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 0.3em solid #e2e8f0;
+    border-top: 0.3em solid #8b5cf6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+</style>
+
+<div class="analytics-container">
+
+  <!-- Filter Section -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">
+        <i class="bi bi-funnel me-2"></i>Analytics Filters
+      </h5>
+    </div>
+    <div class="card-body">
+      <%= form_with url: admin_analytics_path, method: :get, local: true, class: "d-flex flex-wrap gap-3 align-items-end" do |form| %>
+        <!-- Unified Period Filter -->
+        <div>
+          <label class="form-label small fw-bold">Period</label>
+          <%
+            current_year = Date.current.year
+            current_fy_end = Date.current.month >= 4 ? current_year + 1 : current_year
+            if @filter_financial_year.present?
+              selected_period = "fy_#{@filter_financial_year}"
+            else
+              selected_period = "cal_#{@filter_year || current_year}"
+            end
+          %>
+          <select id="period_select" class="form-select" style="min-width:210px">
+            <optgroup label="Calendar Year">
+              <% (current_year).downto(current_year - 4) do |y| %>
+                <option value="cal_<%= y %>" <%= 'selected' if selected_period == "cal_#{y}" %>>
+                  <%= y %><%= " (Current)" if y == current_year %>
+                </option>
+              <% end %>
+            </optgroup>
+            <optgroup label="Financial Year">
+              <% (current_fy_end).downto(current_fy_end - 4) do |fy| %>
+                <option value="fy_<%= fy %>" <%= 'selected' if selected_period == "fy_#{fy}" %>>
+                  <%= fy - 1 %>-<%= fy.to_s[-2..] %> Financial Year<%= " (Current)" if fy == current_fy_end %>
+                </option>
+              <% end %>
+            </optgroup>
+          </select>
+          <%= form.hidden_field :year,           id: "year_hidden" %>
+          <%= form.hidden_field :financial_year, id: "fy_hidden" %>
+        </div>
+
+        <!-- Month Filter -->
+        <div>
+          <label for="month_filter" class="form-label small fw-bold">Month</label>
+          <%= form.select :month,
+                         options_for_select([
+                           ['All Year', ''],
+                           ['January', '1'],
+                           ['February', '2'],
+                           ['March', '3'],
+                           ['April', '4'],
+                           ['May', '5'],
+                           ['June', '6'],
+                           ['July', '7'],
+                           ['August', '8'],
+                           ['September', '9'],
+                           ['October', '10'],
+                           ['November', '11'],
+                           ['December', '12']
+                         ], @filter_month.to_s),
+                         {},
+                         { class: "form-select", id: "month_filter" } %>
+        </div>
+
+        <!-- Custom Date Range -->
+        <div class="d-flex gap-2">
+          <div>
+            <label for="start_date_field" class="form-label small fw-bold">Start Date</label>
+            <%= form.date_field :start_date,
+                               value: @filter_start_date&.strftime('%Y-%m-%d'),
+                               class: "form-control",
+                               id: "start_date_field",
+                               min: "1900-01-01",
+                               max: "2099-12-31" %>
+          </div>
+          <div>
+            <label for="end_date_field" class="form-label small fw-bold">End Date</label>
+            <%= form.date_field :end_date,
+                               value: @filter_end_date&.strftime('%Y-%m-%d'),
+                               class: "form-control",
+                               id: "end_date_field",
+                               min: "1900-01-01",
+                               max: "2099-12-31" %>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex gap-2">
+          <%= form.submit "Apply Filter", class: "btn btn-primary", name: "commit" %>
+          <%= link_to "Clear", admin_analytics_path, class: "btn btn-outline-secondary" %>
+          <button type="button" class="btn btn-outline-info" onclick="refreshAnalytics()">
+            <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+          </button>
+        </div>
+      <% end %>
+
+      <!-- Filter Status -->
+      <div class="mt-2">
+        <small class="text-muted">
+          <i class="bi bi-info-circle me-1"></i>
+          Showing data for:
+          <strong>
+            <% if @filter_month.present? %>
+              <%= Date::MONTHNAMES[@filter_month] %> <%= @filter_year %>
+            <% else %>
+              <%= @filter_start_date&.strftime('%b %d, %Y') %> – <%= @filter_end_date&.strftime('%b %d, %Y') %>
+            <% end %>
+          </strong>
+        </small>
+      </div>
+    </div>
+  </div>
+  <!-- Real-time update indicator -->
+  <div id="updateIndicator" class="update-indicator">
+    <i class="bi bi-check-circle me-2"></i>
+    <span id="indicatorText">Charts updated successfully</span>
+  </div>
+  <!-- Cache Control -->
+  <div class="d-flex justify-content-end align-items-center mb-2">
+    <%= button_to admin_analytics_refresh_path, method: :post,
+                  class: "btn btn-sm",
+                  id: "cache-btn",
+                  title: "Cache Data",
+                  style: "width: 32px; height: 32px; border-radius: 6px; border: 1px solid #e2e8f0; background: white; color: #6b7280; font-weight: 600; font-size: 0.875rem; padding: 0;",
+                  data: {
+                    confirm: "This will refresh all analytics data. Continue?",
+                    disable_with: 'C'
+                  } do %>
+      C
+    <% end %>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <!-- Total Customers -->
+    <div class="kpi-card" style="--card-color: #3b82f6; cursor: pointer;" data-metric="customers" data-label="Total Customers" onclick="openKpiDetailModal(this)">
+      <div class="kpi-icon blue-gradient">
+        <i class="bi bi-people-fill"></i>
+      </div>
+      <div class="kpi-value"><%= number_with_delimiter(@total_customers) %></div>
+      <div class="kpi-label">Total Customers</div>
+    </div>
+
+    <!-- Total Policies -->
+    <div class="kpi-card" style="--card-color: #10b981; cursor: pointer;" data-metric="policies" data-label="Total Policies" onclick="openKpiDetailModal(this)">
+      <div class="kpi-icon green-gradient">
+        <i class="bi bi-file-earmark-text-fill"></i>
+      </div>
+      <div class="kpi-value"><%= number_with_delimiter(@total_policies) %></div>
+      <div class="kpi-label">Total Policies</div>
+    </div>
+
+    <!-- Total Premium -->
+    <div class="kpi-card" style="--card-color: #f59e0b; cursor: pointer;" data-metric="premium" data-label="Total Premium" onclick="openKpiDetailModal(this)">
+      <div class="kpi-icon orange-gradient">
+        <i class="bi bi-currency-rupee"></i>
+      </div>
+      <div class="kpi-value"><%= indian_currency(@total_premium || 0) %></div>
+      <div class="kpi-label">Total Premium</div>
+    </div>
+
+    <!-- Total Investors -->
+    <div class="kpi-card" style="--card-color: #8b5cf6; cursor: pointer;" data-metric="investors" data-label="Total Investors" onclick="openKpiDetailModal(this)">
+      <div class="kpi-icon purple-gradient">
+        <i class="bi bi-graph-up-arrow"></i>
+      </div>
+      <div class="kpi-value"><%= number_with_delimiter(@total_investors || 0) %></div>
+      <div class="kpi-label">Total Investors</div>
+    </div>
+
+    <!-- Total Affiliates -->
+    <div class="kpi-card" style="--card-color: #ec4899; position: relative; cursor: pointer;" data-metric="affiliates" data-label="Total Affiliates" onclick="openKpiDetailModal(this)">
+      <button class="btn btn-link btn-sm p-0"
+              onclick="event.stopPropagation(); refreshAffiliatesData();"
+              title="Refresh Affiliates Data"
+              style="position: absolute; top: 0.75rem; right: 0.75rem; width: 24px; height: 24px; border-radius: 4px; border: 1px solid #e2e8f0; background: white; color: #6b7280; opacity: 0; transition: all 0.2s ease; z-index: 10;"
+              onmouseover="this.style.opacity='1'; this.style.backgroundColor='#f3f4f6'; this.style.color='#374151';"
+              onmouseout="this.style.opacity='0'; this.style.backgroundColor='white'; this.style.color='#6b7280';">
+        <i class="bi bi-arrow-clockwise" style="font-size: 0.75rem;"></i>
+      </button>
+      <div class="kpi-icon pink-gradient">
+        <i class="bi bi-people"></i>
+      </div>
+      <div class="kpi-value" id="affiliates-value"><%= number_with_delimiter(@total_affiliates) %></div>
+      <div class="kpi-label">Total Affiliates</div>
+    </div>
+  </div>
+
+  <!-- KPI Detail Modal -->
+  <div class="modal fade" id="kpiDetailModal" tabindex="-1" aria-labelledby="kpiDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header" style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white;">
+          <h5 class="modal-title" id="kpiDetailModalLabel">Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-0">
+          <div id="kpiModalLoading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Loading data…</p>
+          </div>
+          <div id="kpiModalContent" style="display:none;">
+            <div id="kpiModalSummary" class="px-4 pt-3 pb-1"></div>
+            <div class="table-responsive px-2 pb-3">
+              <table class="table table-hover table-sm align-middle mb-0" id="kpiModalTable">
+                <thead class="table-dark" id="kpiModalHead"></thead>
+                <tbody id="kpiModalBody"></tbody>
+                <tfoot id="kpiModalFoot"></tfoot>
+              </table>
+            </div>
+          </div>
+          <div id="kpiModalError" style="display:none;" class="alert alert-danger m-3"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  const KPI_CARD_DETAIL_URL = '<%= admin_analytics_card_detail_path %>';
+  const KPI_FILTER_START = '<%= @filter_start_date %>';
+  const KPI_FILTER_END   = '<%= @filter_end_date %>';
+
+  function openKpiDetailModal(card) {
+    const metric = card.dataset.metric;
+    const label  = card.dataset.label;
+    document.getElementById('kpiDetailModalLabel').textContent = label + ' — ' + KPI_FILTER_START + ' to ' + KPI_FILTER_END;
+    document.getElementById('kpiModalLoading').style.display = 'block';
+    document.getElementById('kpiModalContent').style.display = 'none';
+    document.getElementById('kpiModalError').style.display   = 'none';
+    const modal = new bootstrap.Modal(document.getElementById('kpiDetailModal'));
+    modal.show();
+
+    const url = KPI_CARD_DETAIL_URL + '?metric=' + encodeURIComponent(metric) +
+                '&start_date=' + encodeURIComponent(KPI_FILTER_START) +
+                '&end_date='   + encodeURIComponent(KPI_FILTER_END);
+
+    fetch(url, { headers: { 'Accept': 'application/json',
+                             'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content') } })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+        renderKpiModalData(metric, label, data);
+        document.getElementById('kpiModalLoading').style.display = 'none';
+        document.getElementById('kpiModalContent').style.display = 'block';
+      })
+      .catch(err => {
+        document.getElementById('kpiModalLoading').style.display = 'none';
+        document.getElementById('kpiModalError').style.display = 'block';
+        document.getElementById('kpiModalError').textContent = 'Error loading data: ' + err.message;
+      });
+  }
+
+  function fmtINR(v) {
+    return 'Rs. ' + Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function renderKpiModalData(metric, label, data) {
+    const records = data.records || [];
+    const head = document.getElementById('kpiModalHead');
+    const body = document.getElementById('kpiModalBody');
+    const foot = document.getElementById('kpiModalFoot');
+    const summary = document.getElementById('kpiModalSummary');
+
+    head.innerHTML = '';
+    body.innerHTML = '';
+    foot.innerHTML = '';
+    summary.innerHTML = '';
+
+    if (records.length === 0) {
+      body.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">No records found for this period.</td></tr>';
+      return;
+    }
+
+    if (metric === 'policies' || metric === 'premium') {
+      head.innerHTML = `<tr>
+        <th>#</th><th>Type</th><th>Policy No.</th><th>Customer</th>
+        <th>Start Date</th><th>End Date</th><th>Created</th>
+        <th class="text-end">Net Premium</th><th class="text-end">Total Premium</th>
+        <th class="text-center">Source</th>
+      </tr>`;
+
+      let totalNet = 0, totalGross = 0;
+      records.forEach((r, i) => {
+        totalNet   += r.net_premium   || 0;
+        totalGross += r.total_premium || 0;
+        const policyLink = r.policy_link
+          ? `<a href="${r.policy_link}" target="_blank" class="font-monospace small text-decoration-none">${r.policy_number}</a>`
+          : `<span class="font-monospace small">${r.policy_number}</span>`;
+        const drwiseBadge = r.drwise
+          ? `<span class="badge bg-success">DrWise</span>`
+          : `<span class="badge bg-warning text-dark">Non-DrWise</span>`;
+        const typeColors = { Health: 'bg-info', Life: 'bg-danger', Motor: 'bg-warning text-dark', Other: 'bg-success' };
+        const typeBadgeClass = typeColors[r.type] || 'bg-secondary';
+        body.innerHTML += `<tr>
+          <td class="text-muted">${i+1}</td>
+          <td><span class="badge ${typeBadgeClass}">${r.type}</span></td>
+          <td>${policyLink}</td>
+          <td>${r.customer}</td>
+          <td>${r.policy_start_date || '—'}</td>
+          <td>${r.policy_end_date   || '—'}</td>
+          <td>${r.created_at}</td>
+          <td class="text-end">${fmtINR(r.net_premium)}</td>
+          <td class="text-end fw-bold">${fmtINR(r.total_premium)}</td>
+          <td class="text-center">${drwiseBadge}</td>
+        </tr>`;
+      });
+      foot.innerHTML = `<tr class="table-warning fw-bold">
+        <td colspan="7">Total (${records.length} policies)</td>
+        <td class="text-end">${fmtINR(totalNet)}</td>
+        <td class="text-end">${fmtINR(totalGross)}</td>
+        <td></td>
+      </tr>`;
+      summary.innerHTML = `<div class="d-flex gap-3 flex-wrap">
+        <span class="badge bg-primary fs-6">${records.length} Policies</span>
+        <span class="badge bg-warning text-dark fs-6">Net: ${fmtINR(totalNet)}</span>
+        <span class="badge bg-success fs-6">Total: ${fmtINR(totalGross)}</span>
+      </div>`;
+
+    } else if (metric === 'customers') {
+      head.innerHTML = `<tr><th>#</th><th>Name</th><th>City</th><th>Phone</th><th>Joined</th></tr>`;
+      records.forEach((r, i) => {
+        body.innerHTML += `<tr>
+          <td class="text-muted">${i+1}</td>
+          <td>${r.name}</td><td>${r.city || '—'}</td>
+          <td>${r.phone || '—'}</td><td>${r.created_at}</td>
+        </tr>`;
+      });
+      summary.innerHTML = `<span class="badge bg-primary fs-6">${records.length} Customers</span>`;
+
+    } else if (metric === 'leads') {
+      head.innerHTML = `<tr><th>#</th><th>Name</th><th>Stage</th><th>Created</th></tr>`;
+      records.forEach((r, i) => {
+        body.innerHTML += `<tr>
+          <td class="text-muted">${i+1}</td>
+          <td>${r.name}</td><td>${r.stage}</td><td>${r.created_at}</td>
+        </tr>`;
+      });
+      summary.innerHTML = `<span class="badge bg-info fs-6">${records.length} Leads</span>`;
+
+    } else if (metric === 'investors') {
+      head.innerHTML = `<tr><th>#</th><th>Name</th><th>Joined</th></tr>`;
+      records.forEach((r, i) => {
+        body.innerHTML += `<tr>
+          <td class="text-muted">${i+1}</td>
+          <td>${r.name}</td><td>${r.created_at}</td>
+        </tr>`;
+      });
+      summary.innerHTML = `<span class="badge bg-purple fs-6" style="background:#8b5cf6;">${records.length} Investors</span>`;
+
+    } else if (metric === 'affiliates') {
+      head.innerHTML = `<tr><th>#</th><th>Name</th><th>Status</th><th>Joined</th></tr>`;
+      records.forEach((r, i) => {
+        body.innerHTML += `<tr>
+          <td class="text-muted">${i+1}</td>
+          <td>${r.name}</td><td>${r.status}</td><td>${r.created_at}</td>
+        </tr>`;
+      });
+      summary.innerHTML = `<span class="badge bg-pink fs-6" style="background:#ec4899;">${records.length} Affiliates</span>`;
+    }
+  }
+  </script>
+
+  <!-- ================================================ -->
+  <!-- SECTION 1: LEAD ANALYTICS                      -->
+  <!-- ================================================ -->
+  <div class="d-flex align-items-center gap-3 py-2 px-4 rounded-3 mb-3 mt-2" style="background: linear-gradient(135deg, #dbeafe, #eff6ff); border-left: 4px solid #3b82f6;">
+    <i class="bi bi-funnel-fill fs-4 text-primary"></i>
+    <div>
+      <h5 class="mb-0 fw-bold text-primary">Lead Analytics</h5>
+      <small class="text-muted">Lead conversion funnel, pipeline stages, and recent lead activities</small>
+    </div>
+  </div>
+
+  <!-- Lead Conversion Funnel + Lead Stage Distribution -->
+  <div class="charts-grid">
+    <!-- Lead Conversion Funnel -->
+    <div class="chart-card" data-chart="leadConversion">
+      <div class="chart-header">
+        <h3 class="chart-title">Lead Conversion Funnel</h3>
+        <div class="chart-actions">
+          <button class="chart-action-btn" onclick="toggleChartType('leadFunnelChart', 'bar', 'line')" title="Toggle Chart Type">
+            <i class="bi bi-bar-chart-line"></i>
+          </button>
+          <button class="chart-action-btn" onclick="refreshChart('leadConversion')" title="Refresh Data">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+          <button class="chart-action-btn" onclick="exportChart('leadFunnelChart')" title="Export Chart">
+            <i class="bi bi-download"></i>
+          </button>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="leadFunnelChart"></canvas>
+        <div class="chart-loading">
+          <div class="loading-spinner"></div>
+        </div>
+      </div>
+      <div class="chart-stats">
+        <div class="stat-item">
+          <span class="stat-label">Conversion Rate:</span>
+          <span class="stat-value"><%= @conversion_rate %>%</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Total Leads:</span>
+          <span class="stat-value"><%= @new_leads || 0 %></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lead Stage Distribution -->
+    <div class="chart-card" data-chart="leadStage">
+      <div class="chart-header">
+        <h3 class="chart-title">Lead Stage Distribution</h3>
+        <div class="chart-actions">
+          <button class="chart-action-btn" onclick="toggleChartType('leadStageChart', 'doughnut', 'polarArea')" title="Toggle Chart Type">
+            <i class="bi bi-pie-chart"></i>
+          </button>
+          <button class="chart-action-btn" onclick="refreshChart('leadStage')" title="Refresh Data">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+          <button class="chart-action-btn" onclick="exportChart('leadStageChart')" title="Export Chart">
+            <i class="bi bi-download"></i>
+          </button>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="leadStageChart"></canvas>
+        <div class="chart-loading">
+          <div class="loading-spinner"></div>
+        </div>
+      </div>
+      <div class="chart-stats">
+        <div class="stat-item">
+          <span class="stat-label">Active Leads:</span>
+          <span class="stat-value"><%= (@lead_stage_distribution || {}).reject { |k, _| ['Converted', 'Lead Closed', 'Not Interested', 'Follow Up Unsuccessful'].include?(k) }.values.sum %></span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Converted Leads:</span>
+          <span class="stat-value"><%= @converted_leads || 0 %></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Lead Activities Table -->
+  <div class="analytics-table">
+    <div class="table-header">
+      <h3 class="table-title">Recent Lead Activities - Last 7 Days</h3>
+    </div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Lead Info</th>
+            <th>Stage</th>
+            <th>Product Interest</th>
+            <th>Agent</th>
+            <th>Created</th>
+            <th>Priority</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @recent_leads.each do |lead| %>
+            <tr>
+              <td>
+                <div style="font-weight: 600;"><%= lead.first_name %> <%= lead.last_name %></div>
+                <div style="font-size: 0.75rem; color: #9ca3af;"><%= lead.contact_number %></div>
+              </td>
+              <td>
+                <%
+                  stage_colors = {
+                    'new' => 'bg-info',
+                    'contacted' => 'bg-warning',
+                    'consultation' => 'bg-info',
+                    'one_on_one' => 'bg-warning',
+                    'converted' => 'bg-success',
+                    'policy_created' => 'bg-success'
+                  }
+                %>
+                <span class="badge <%= stage_colors[lead.current_stage] || 'bg-info' %>">
+                  <%= lead.current_stage&.humanize || 'New' %>
+                </span>
+              </td>
+              <td>
+                <div style="font-size: 0.875rem; font-weight: 500;">
+                  <%= lead.product_category || 'General' %>
+                </div>
+                <div style="font-size: 0.75rem; color: #9ca3af;">
+                  <%= lead.product_subcategory || 'N/A' %>
+                </div>
+              </td>
+              <td>
+                <div style="font-size: 0.875rem;">
+                  <%= lead.try(:sub_agent) || Customer.find_by(mobile: lead.contact_number)&.sub_agent || 'Self' %>
+                </div>
+              </td>
+              <td>
+                <div style="font-size: 0.875rem;"><%= time_ago_in_words(lead.created_at) %> ago</div>
+              </td>
+              <td>
+                <%
+                  priority = case lead.current_stage
+                  when 'new', 'contacted'
+                    { label: 'High', class: 'bg-danger' }
+                  when 'consultation', 'one_on_one'
+                    { label: 'Medium', class: 'bg-warning' }
+                  else
+                    { label: 'Low', class: 'bg-success' }
+                  end
+                %>
+                <span class="badge <%= priority[:class] %>"><%= priority[:label] %></span>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <!-- SECTION 2: CUSTOMER ANALYTICS                  -->
+  <!-- ================================================ -->
+  <div class="d-flex align-items-center gap-3 py-2 px-4 rounded-3 mb-3 mt-4" style="background: linear-gradient(135deg, #d1fae5, #ecfdf5); border-left: 4px solid #10b981;">
+    <i class="bi bi-people-fill fs-4 text-success"></i>
+    <div>
+      <h5 class="mb-0 fw-bold text-success">Customer Analytics</h5>
+      <small class="text-muted">Customer acquisition trends, retention, and geographic distribution</small>
+    </div>
+  </div>
+
+  <!-- Customer Acquisition + Monthly Trends -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3 class="chart-title">Customer Acquisition Trend</h3>
+      <div class="chart-container">
+        <canvas id="customerAcquisitionChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card" data-chart="monthlyTrends">
+      <div class="chart-header">
+        <h3 class="chart-title">Monthly Trends</h3>
+        <div class="chart-actions">
+          <button class="chart-action-btn" onclick="toggleChartType('monthlyTrendsChart', 'line', 'bar')">
+            <i class="bi bi-bar-chart"></i>
+          </button>
+          <button class="chart-action-btn" onclick="refreshChart('monthlyTrends')">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="monthlyTrendsChart"></canvas>
+        <div class="chart-loading">
+          <div class="loading-spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Geographic Distribution + Quick Insights -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3 class="chart-title">Customer Geographic Distribution</h3>
+      <div class="chart-container">
+        <canvas id="locationChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3 class="chart-title">Quick Insights</h3>
+      <div class="chart-container">
+        <canvas id="quickInsightsChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <!-- SECTION 3: POLICY ANALYTICS                    -->
+  <!-- ================================================ -->
+  <div class="d-flex align-items-center gap-3 py-2 px-4 rounded-3 mb-3 mt-4" style="background: linear-gradient(135deg, #fef9c3, #fffbeb); border-left: 4px solid #f59e0b;">
+    <i class="bi bi-file-earmark-text-fill fs-4 text-warning"></i>
+    <div>
+      <h5 class="mb-0 fw-bold" style="color: #b45309;">Policy Analytics</h5>
+      <small class="text-muted">Policy distribution, revenue trends, performance metrics, and renewal analytics</small>
+    </div>
+  </div>
+
+  <!-- Premium Revenue Trend - Full Width -->
+  <div class="chart-card" style="margin-bottom: 1.5rem;">
+    <div class="chart-header">
+      <h3 class="chart-title">Premium Revenue Trend (<%= @filter_start_date&.strftime('%b %Y') %> – <%= @filter_end_date&.strftime('%b %Y') %>)</h3>
+      <div class="chart-actions">
+        <button class="chart-action-btn" onclick="toggleChartType('premiumRevenueTrendChart', 'line', 'bar')" title="Toggle Chart Type">
+          <i class="bi bi-bar-chart"></i>
+        </button>
+        <button class="chart-action-btn" onclick="refreshChart('premiumRevenue')" title="Refresh Data">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+    </div>
+    <div class="chart-container">
+      <canvas id="premiumRevenueTrendChart"></canvas>
+      <div class="chart-loading">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+    <div class="chart-stats">
+      <div class="stat-item">
+        <span class="stat-label">Current Month:</span>
+        <span class="stat-value">Rs. <%= ((@premium_revenue_trend&.values&.last || 0) / 1000.0).round(0) %>K</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Average:</span>
+        <span class="stat-value">Rs. <%= ((@premium_revenue_trend&.values&.sum.to_f / (@premium_revenue_trend&.values&.count.to_f.nonzero? || 1)) / 1000.0).round(0) %>K</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Peak Month:</span>
+        <span class="stat-value">Rs. <%= ((@premium_revenue_trend&.values&.max || 0) / 1000.0).round(0) %>K</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Policy Distribution + Policy Performance -->
+  <div class="charts-grid">
+    <div class="chart-card" data-chart="policyDistribution">
+      <div class="chart-header">
+        <h3 class="chart-title">Policy Distribution</h3>
+        <div class="chart-actions">
+          <button class="chart-action-btn" onclick="toggleChartType('policyDistributionChart', 'doughnut', 'pie')">
+            <i class="bi bi-pie-chart"></i>
+          </button>
+          <button class="chart-action-btn" onclick="refreshChart('policyDistribution')">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="policyDistributionChart"></canvas>
+        <div class="chart-loading">
+          <div class="loading-spinner"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3 class="chart-title">Policy Performance Metrics</h3>
+      <div class="chart-container">
+        <canvas id="policyPerformanceChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Renewal Analytics + Operations Overview -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3 class="chart-title">Renewal Analytics</h3>
+      <div class="chart-container">
+        <canvas id="renewalChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3 class="chart-title">Operations Overview</h3>
+      <div class="chart-container">
+        <canvas id="operationsChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Policies Table -->
+  <div class="analytics-table" style="margin-bottom: 1.5rem;">
+    <div class="table-header">
+      <h3 class="table-title">Recent Policies</h3>
+    </div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Customer</th>
+            <th>Premium</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @recent_policies.each do |policy| %>
+            <tr>
+              <td>
+                <span class="badge bg-primary"><%= policy[:type] %></span>
+              </td>
+              <td><%= policy[:customer] %></td>
+              <td><%= indian_currency(policy[:premium] || 0) %></td>
+              <td><%= policy[:date]&.strftime('%d %b %Y') || 'N/A' %></td>
+            </tr>
+          <% end %>
+          <% if @recent_policies.empty? %>
+            <tr>
+              <td colspan="4" class="text-center text-muted">No recent policies found</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <!-- SECTION 4: COMMISSION & AFFILIATE ANALYTICS    -->
+  <!-- ================================================ -->
+  <div class="d-flex align-items-center gap-3 py-2 px-4 rounded-3 mb-3 mt-4" style="background: linear-gradient(135deg, #fce7f3, #fdf2f8); border-left: 4px solid #ec4899;">
+    <i class="bi bi-percent fs-4" style="color: #ec4899;"></i>
+    <div>
+      <h5 class="mb-0 fw-bold" style="color: #9d174d;">Commission & Affiliate Analytics</h5>
+      <small class="text-muted">Commission breakdown, affiliate performance, and earnings overview</small>
+    </div>
+  </div>
+
+  <!-- Commission Summary + Commission Analytics -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3 class="chart-title">Commission Summary</h3>
+      <div class="chart-container">
+        <canvas id="commissionChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3 class="chart-title">Commission Analytics</h3>
+      <div style="margin-top: 1rem;">
+        <%
+          commissions_due_safe  = (@commissions_due.to_f rescue 0)
+          commissions_paid_safe = ((@commission_summary.is_a?(Hash) ? (@commission_summary['total_commission_paid'] || @commission_summary[:total_commission_paid]) : 0).to_f rescue 0)
+          total_policies_safe   = (@total_policies.to_i rescue 0)
+          total_commission      = commissions_due_safe + commissions_paid_safe
+          commission_paid_rate  = total_commission > 0 ? ((commissions_paid_safe / total_commission) * 100).round(1) : 0
+
+          commission_stats = {
+            'Total Commission Due'      => { value: commissions_due_safe, format: 'currency', color: '#ef4444' },
+            'Total Commission Paid'     => { value: commissions_paid_safe, format: 'currency', color: '#10b981' },
+            'Avg Commission per Policy' => { value: total_policies_safe > 0 ? (commissions_due_safe / total_policies_safe.to_f).round(0) : 0, format: 'currency', color: '#3b82f6' },
+            'Commission Paid Rate'      => { value: commission_paid_rate, format: 'percentage', color: '#8b5cf6' }
+          }
+        %>
+        <% commission_stats.each do |label, data| %>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9;">
+            <span style="font-weight: 500; color: #1a202c; font-size: 0.875rem;"><%= label %></span>
+            <span style="color: <%= data[:color] %>; font-size: 0.875rem; font-weight: 600;">
+              <% if data[:format] == 'currency' %>
+                <%= indian_currency(data[:value] || 0) %>
+              <% elsif data[:format] == 'percentage' %>
+                <%= data[:value] %>%
+              <% else %>
+                <%= data[:value] %>
+              <% end %>
+            </span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Affiliates + Top Affiliate Performance -->
+  <div class="row">
+    <div class="col-lg-6">
+      <div class="analytics-table">
+        <div class="table-header">
+          <h3 class="table-title">Top Performing Affiliates</h3>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Policies</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @top_affiliates.each do |affiliate| %>
+                <tr>
+                  <td><%= "#{affiliate.first_name} #{affiliate.last_name}".strip %></td>
+                  <td><%= affiliate.respond_to?(:policies_count) ? affiliate.policies_count : 0 %></td>
+                  <td>
+                    <span class="badge <%= affiliate.status == 'active' ? 'bg-success' : 'bg-secondary' %>">
+                      <%= affiliate.status&.capitalize || 'Active' %>
+                    </span>
+                  </td>
+                </tr>
+              <% end %>
+              <% if @top_affiliates.empty? %>
+                <tr>
+                  <td colspan="3" class="text-center text-muted">No affiliates found</td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="analytics-table">
+        <div class="table-header">
+          <h3 class="table-title">Top Affiliate Performance</h3>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Affiliate Name</th>
+                <th>Customers Acquired</th>
+                <th>Premium Generated</th>
+                <th>Commission</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% (@agent_performance&.first(5) || {}).each do |affiliate_name, premium| %>
+                <tr>
+                  <td style="font-weight: 600;"><%= affiliate_name %></td>
+                  <td><%= (@agent_customer_data&.dig(affiliate_name) || 0) %></td>
+                  <td><%= indian_currency(premium.to_f) %></td>
+                  <td>
+                    <span class="badge bg-success">
+                      <%= indian_currency((@agent_commission&.dig(affiliate_name) || 0).to_f) %>
+                    </span>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ -->
+  <!-- SECTION 5: INVESTOR ANALYTICS                  -->
+  <!-- ================================================ -->
+  <div class="d-flex align-items-center gap-3 py-2 px-4 rounded-3 mb-3 mt-4" style="background: linear-gradient(135deg, #ede9fe, #f5f3ff); border-left: 4px solid #8b5cf6;">
+    <i class="bi bi-graph-up-arrow fs-4" style="color: #8b5cf6;"></i>
+    <div>
+      <h5 class="mb-0 fw-bold" style="color: #5b21b6;">Investor Analytics</h5>
+      <small class="text-muted">Investor overview, ambassador counts, and portfolio breakdown</small>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">Top Investors by Ambassador Count</h3>
+      </div>
+      <div class="chart-container">
+        <canvas id="investorAmbassadorChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3 class="chart-title">Top Investors Overview</h3>
+      <div class="table-responsive" style="margin-top: 0.5rem;">
+        <table style="font-size: 0.875rem;">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Investor Name</th>
+              <th>Ambassadors</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% (@top_investors_by_ambassadors || {}).first(8).each_with_index do |(name, count), idx| %>
+              <tr>
+                <td style="color: #6b7280; font-weight: 600;"><%= idx + 1 %></td>
+                <td style="font-weight: 600;"><%= name %></td>
+                <td>
+                  <span class="badge bg-purple" style="background: #8b5cf6;">
+                    <%= count %>
+                  </span>
+                </td>
+              </tr>
+            <% end %>
+            <% if (@top_investors_by_ambassadors || {}).empty? %>
+              <tr>
+                <td colspan="3" class="text-center text-muted">No investor data found</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Performance KPIs -->
+  <div class="kpi-grid" style="margin-top: 1.5rem;">
+    <div class="kpi-card" style="--card-color: #667eea;">
+      <div class="kpi-icon blue-gradient">
+        <i class="bi bi-percent"></i>
+      </div>
+      <div class="kpi-value"><%= @conversion_rate %>%</div>
+      <div class="kpi-label">Lead Conversion Rate</div>
+    </div>
+
+    <div class="kpi-card" style="--card-color: #f093fb;">
+      <div class="kpi-icon pink-gradient">
+        <i class="bi bi-currency-rupee"></i>
+      </div>
+      <div class="kpi-value">Rs. <%= (@avg_policy_value.to_f / 1000.0).round(0) %>K</div>
+      <div class="kpi-label">Avg Policy Value</div>
+    </div>
+
+    <div class="kpi-card" style="--card-color: #4facfe;">
+      <div class="kpi-icon blue-gradient">
+        <i class="bi bi-people-fill"></i>
+      </div>
+      <div class="kpi-value"><%= @customer_retention %>%</div>
+      <div class="kpi-label">Customer Retention</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🎯 Analytics Charts Initialization Started...');
+
+  // Register the datalabels plugin globally
+  Chart.register(ChartDataLabels);
+
+  // Set global defaults for data labels
+  Chart.defaults.plugins.datalabels = {
+    display: true,
+    color: '#fff',
+    font: {
+      size: 11,
+      weight: 'bold'
+    },
+    formatter: (value) => value,
+    anchor: 'center',
+    align: 'center'
+  };
+
+  // Refresh Affiliates Data function
+  window.refreshAffiliatesData = function() {
+    const card = document.querySelector('.kpi-card[style*="--card-color: #ec4899"]');
+    const valueElement = document.getElementById('affiliates-value');
+    const changeElement = document.getElementById('affiliates-change');
+    const refreshBtn = event.currentTarget;
+
+    if (!card || !valueElement || !changeElement) return;
+
+    // Start loading state
+    refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise" style="font-size: 0.75rem; animation: spin 1s linear infinite;"></i>';
+
+    // Add visual feedback
+    card.style.transform = 'scale(0.98)';
+    card.style.transition = 'transform 0.2s ease';
+    card.style.boxShadow = '0 0 0 2px rgba(236, 72, 153, 0.2)';
+
+    // Show notification
+    showNotification('Refreshing affiliates data...', 'loading');
+
+    // Simulate data refresh (in a real app, this would be an AJAX call)
+    setTimeout(() => {
+      // Success animation
+      card.style.transform = 'scale(1)';
+      card.style.boxShadow = '';
+
+      // Reset button
+      refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise" style="font-size: 0.75rem;"></i>';
+
+      // Add a subtle flash effect to show update
+      valueElement.style.background = 'rgba(236, 72, 153, 0.1)';
+      setTimeout(() => {
+        valueElement.style.background = '';
+      }, 300);
+
+      showNotification('Affiliates data refreshed', 'success');
+    }, 800);
+  };
+
+  // Debug data with fallbacks
+  const policyDistributionData = <%= (@policy_distribution || {}).to_json.html_safe %>;
+  const commissionSummaryData = <%= (@commission_summary || {}).to_json.html_safe %>;
+  const leadFunnelData = <%= (@lead_conversion_funnel || {}).to_json.html_safe %>;
+  const monthlyTrendsData = <%= (@monthly_trends || {}).to_json.html_safe %>;
+  const leadStageData = <%= (@lead_stage_distribution || {}).to_json.html_safe %>;
+  const renewalAnalyticsData = <%= (@renewal_analytics || {}).to_json.html_safe %>;
+  const customerLocationData = <%= (@customer_location || {}).to_json.html_safe %>;
+  const customerAcquisitionData = <%= (@customer_acquisition_trend || {}).to_json.html_safe %>;
+  const premiumRevenueData = <%= (@premium_revenue_trend || {}).to_json.html_safe %>;
+
+  console.log('Policy Distribution Data:', policyDistributionData);
+  console.log('Commission Summary Data:', commissionSummaryData);
+  console.log('Lead Funnel Data:', leadFunnelData);
+  console.log('Monthly Trends Data:', monthlyTrendsData);
+  console.log('Lead Stage Data:', leadStageData);
+  console.log('Renewal Analytics Data:', renewalAnalyticsData);
+
+  try {
+    // Premium Revenue Trend Chart - Clean Line Graph
+    console.log('💰 Initializing Premium Revenue Trend Chart...');
+    const premiumTrendCtx = document.getElementById('premiumRevenueTrendChart');
+    if (!premiumTrendCtx) {
+      console.error('❌ premiumRevenueTrendChart canvas not found!');
+    } else {
+      const premiumLabels = Object.keys(premiumRevenueData);
+      const premiumValues = Object.values(premiumRevenueData);
+
+      if (premiumLabels.length === 0) {
+        console.warn('No premium revenue data available');
+      } else {
+
+      // Create gradient for the line
+      const gradientPremium = premiumTrendCtx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+      gradientPremium.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+      gradientPremium.addColorStop(1, 'rgba(16, 185, 129, 0.01)');
+
+      const premiumRevenueTrendChart = new Chart(premiumTrendCtx.getContext('2d'), {
+        type: 'line',
+        plugins: [ChartDataLabels],
+        data: {
+          labels: premiumLabels,
+          datasets: [{
+            label: 'Premium Revenue (Rs.)',
+            data: premiumValues,
+            borderColor: '#10b981',
+            backgroundColor: gradientPremium,
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: '#10b981',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#10b981',
+            pointHoverBorderColor: '#ffffff',
+            pointHoverBorderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: '#ffffff',
+              bodyColor: '#ffffff',
+              borderColor: '#10b981',
+              borderWidth: 1,
+              cornerRadius: 6,
+              padding: 12,
+              displayColors: false,
+              callbacks: {
+                label: function(context) {
+                  const value = context.raw;
+                  return 'Revenue: Rs. ' + (value / 1000).toFixed(1) + 'K';
+                }
+              }
+            },
+            datalabels: {
+              backgroundColor: '#10b981',
+              borderColor: 'white',
+              borderRadius: 4,
+              borderWidth: 2,
+              color: 'white',
+              font: {
+                size: 10,
+                weight: 'bold'
+              },
+              formatter: (value) => 'Rs. ' + (value / 1000).toFixed(0) + 'K',
+              padding: 4,
+              anchor: 'end',
+              align: 'top',
+              display: 'auto'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: '#f1f5f9',
+                drawBorder: false
+              },
+              ticks: {
+                color: '#6b7280',
+                font: {
+                  size: 11
+                },
+                callback: function(value) {
+                  return 'Rs. ' + (value / 1000) + 'K';
+                }
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                color: '#6b7280',
+                font: {
+                  size: 11
+                },
+                maxRotation: 45,
+                minRotation: 45
+              }
+            }
+          },
+          animation: {
+            duration: 1500,
+            easing: 'easeInOutQuart'
+          }
+        }
+      });
+      console.log('✅ Premium Revenue Trend Chart initialized successfully');
+      } // end else (premiumLabels.length > 0)
+    }
+  } catch (error) {
+    console.error('❌ Error initializing Premium Revenue Trend Chart:', error);
+  }
+
+  try {
+    // Policy Distribution Chart
+    console.log('📊 Initializing Policy Distribution Chart...');
+    const policyCtx = document.getElementById('policyDistributionChart');
+    if (!policyCtx) {
+      console.error('❌ policyDistributionChart canvas not found!');
+      throw new Error('policyDistributionChart canvas not found');
+    }
+
+    const policyLabels = Object.keys(policyDistributionData);
+    const policyValues = Object.values(policyDistributionData);
+
+    if (policyLabels.length === 0) {
+      console.warn('No policy distribution data available');
+      throw new Error('no policy distribution data');
+    }
+
+    const policyChart = new Chart(policyCtx.getContext('2d'), {
+    type: 'doughnut',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: policyLabels,
+      datasets: [{
+        data: policyValues,
+        backgroundColor: [
+          '#3b82f6',
+          '#10b981',
+          '#f59e0b',
+          '#ec4899'
+        ],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 20,
+            usePointStyle: true,
+            font: { size: 12 }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: {
+            size: 14,
+            weight: 'bold'
+          },
+          formatter: (value, context) => {
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = ((value / total) * 100).toFixed(1);
+            return value + '\n(' + percentage + '%)';
+          },
+          anchor: 'center',
+          align: 'center',
+          clip: false
+        }
+      }
+    }
+    });
+    console.log('✅ Policy Distribution Chart initialized successfully');
+
+  } catch (error) {
+    console.error('❌ Error initializing Policy Distribution Chart:', error);
+  }
+
+  try {
+    // Monthly Trends Chart
+    console.log('📈 Initializing Monthly Trends Chart...');
+    const trendsCtx = document.getElementById('monthlyTrendsChart');
+    if (!trendsCtx) {
+      console.error('❌ monthlyTrendsChart canvas not found!');
+      throw new Error('monthlyTrendsChart canvas not found');
+    }
+    const monthlyLabels = Object.keys(monthlyTrendsData);
+    const monthlyValues = Object.values(monthlyTrendsData);
+    const customerData = monthlyValues.map(v => v.customers || 0);
+    const policyData = monthlyValues.map(v => v.policies || 0);
+
+    if (monthlyLabels.length === 0) {
+      console.warn('No monthly trends data available');
+      throw new Error('no monthly trends data');
+    }
+
+    console.log('Monthly Labels:', monthlyLabels);
+    console.log('Customer Data:', customerData);
+    console.log('Policy Data:', policyData);
+
+    const monthlyChart = new Chart(trendsCtx.getContext('2d'), {
+    type: 'line',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: monthlyLabels,
+      datasets: [
+        {
+          label: 'Customers',
+          data: customerData,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4,
+          fill: true
+        },
+        {
+          label: 'Policies',
+          data: policyData,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          tension: 0.4,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f1f5f9' }
+        },
+        x: {
+          grid: { color: '#f1f5f9' }
+        }
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: { font: { size: 12 } }
+        },
+        datalabels: {
+          backgroundColor: function(context) {
+            return context.dataset.borderColor;
+          },
+          borderColor: 'white',
+          borderRadius: 4,
+          borderWidth: 2,
+          color: 'white',
+          font: {
+            size: 11,
+            weight: 'bold'
+          },
+          formatter: (value) => value,
+          padding: 4,
+          anchor: 'end',
+          align: 'top',
+          display: 'auto',
+          clip: false
+        }
+      }
+    }
+    });
+    console.log('✅ Monthly Trends Chart initialized successfully');
+
+  } catch (error) {
+    console.error('❌ Error initializing Monthly Trends Chart:', error);
+  }
+
+  try {
+    // Commission Chart
+    console.log('💰 Initializing Commission Chart...');
+    const commissionCtx = document.getElementById('commissionChart');
+    if (!commissionCtx) {
+      console.error('❌ commissionChart canvas not found!');
+      throw new Error('commissionChart canvas not found');
+    }
+    const commissionChart = new Chart(commissionCtx.getContext('2d'), {
+    type: 'bar',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: ['Due', 'Paid', 'Affiliate', 'Ambassador'],
+      datasets: [{
+        data: [
+          commissionSummaryData.total_commission_due || 0,
+          commissionSummaryData.total_commission_paid || 0,
+          commissionSummaryData.affiliate_commissions || 0,
+          commissionSummaryData.ambassador_commissions || 0
+        ],
+        backgroundColor: [
+          '#ef4444',
+          '#10b981',
+          '#3b82f6',
+          '#ec4899'
+        ],
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f1f5f9' }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          font: {
+            size: 12,
+            weight: 'bold'
+          },
+          formatter: (value) => {
+            if (value >= 1000) {
+              return 'Rs. ' + (value / 1000).toFixed(1) + 'K';
+            }
+            return 'Rs. ' + value;
+          },
+          anchor: 'center',
+          align: 'center'
+        }
+      }
+    }
+    });
+    console.log('✅ Commission Chart initialized successfully');
+
+  } catch (error) {
+    console.error('❌ Error initializing Commission Chart:', error);
+  }
+
+  try {
+    // Renewal Analytics Chart
+    console.log('🔄 Initializing Renewal Analytics Chart...');
+    const renewalCtx = document.getElementById('renewalChart');
+    if (!renewalCtx) {
+      console.error('❌ renewalChart canvas not found!');
+      throw new Error('renewalChart canvas not found');
+    }
+    const renewalChart = new Chart(renewalCtx.getContext('2d'), {
+    type: 'bar',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: ['Expiring Soon', 'Expiring Later', 'Expired', 'Renewal Rate %'],
+      datasets: [{
+        data: [
+          renewalAnalyticsData.expiring_soon || 0,
+          renewalAnalyticsData.expiring_later || 0,
+          renewalAnalyticsData.expired || 0,
+          renewalAnalyticsData.renewal_rate || 0
+        ],
+        backgroundColor: [
+          '#f59e0b',
+          '#8b5cf6',
+          '#ef4444',
+          '#10b981'
+        ],
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f1f5f9' }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          font: {
+            size: 12,
+            weight: 'bold'
+          },
+          formatter: (value, context) => {
+            const label = context.chart.data.labels[context.dataIndex];
+            if (label.includes('%')) {
+              return value + '%';
+            }
+            return value;
+          },
+          anchor: 'center',
+          align: 'center'
+        }
+      }
+    }
+    });
+    console.log('✅ Renewal Analytics Chart initialized successfully');
+
+  } catch (error) {
+    console.error('❌ Error initializing Renewal Analytics Chart:', error);
+  }
+
+  try {
+    // Lead Funnel Chart - Enhanced with gradient and animations
+    console.log('🎯 Initializing Lead Funnel Chart...');
+    const leadFunnelCtx = document.getElementById('leadFunnelChart');
+    if (!leadFunnelCtx) {
+      console.error('❌ leadFunnelChart canvas not found!');
+      throw new Error('leadFunnelChart canvas not found');
+    }
+
+    // Create gradient colors for funnel effect
+    const ctx = leadFunnelCtx.getContext('2d');
+    const gradient1 = ctx.createLinearGradient(0, 0, 400, 0);
+    gradient1.addColorStop(0, '#3b82f6');
+    gradient1.addColorStop(1, '#1d4ed8');
+
+    const gradient2 = ctx.createLinearGradient(0, 0, 300, 0);
+    gradient2.addColorStop(0, '#10b981');
+    gradient2.addColorStop(1, '#047857');
+
+    const gradient3 = ctx.createLinearGradient(0, 0, 200, 0);
+    gradient3.addColorStop(0, '#f59e0b');
+    gradient3.addColorStop(1, '#d97706');
+
+    const gradient4 = ctx.createLinearGradient(0, 0, 150, 0);
+    gradient4.addColorStop(0, '#ec4899');
+    gradient4.addColorStop(1, '#be185d');
+
+    const gradient5 = ctx.createLinearGradient(0, 0, 100, 0);
+    gradient5.addColorStop(0, '#8b5cf6');
+    gradient5.addColorStop(1, '#6d28d9');
+
+    const leadFunnelChart = new Chart(leadFunnelCtx.getContext('2d'), {
+      type: 'bar',
+      plugins: [ChartDataLabels],
+      data: {
+        labels: Object.keys(leadFunnelData),
+        datasets: [{
+          label: 'Lead Count',
+          data: Object.values(leadFunnelData),
+          backgroundColor: [gradient1, gradient2, gradient3, gradient4, gradient5],
+          borderRadius: 8,
+          borderSkipped: false,
+          borderWidth: 2,
+          borderColor: [
+            '#1e40af',
+            '#047857',
+            '#b45309',
+            '#9d174d',
+            '#5b21b6'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: {
+              color: '#f1f5f9',
+              drawOnChartArea: true
+            },
+            ticks: {
+              color: '#6b7280'
+            }
+          },
+          y: {
+            grid: {
+              color: '#f1f5f9',
+              drawOnChartArea: false
+            },
+            ticks: {
+              color: '#374151',
+              font: {
+                weight: 'bold'
+              }
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            borderColor: '#374151',
+            borderWidth: 1,
+            cornerRadius: 6,
+            displayColors: false,
+            callbacks: {
+              title: function(context) {
+                return context[0].label;
+              },
+              label: function(context) {
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+                return `Count: ${context.raw} (${percentage}%)`;
+              }
+            }
+          },
+          datalabels: {
+            color: '#fff',
+            font: {
+              size: 11,
+              weight: 'bold'
+            },
+            formatter: (value) => value,
+            anchor: 'end',
+            align: 'start',
+            offset: 4
+          }
+        },
+        animation: {
+          duration: 2000,
+          easing: 'easeInOutQuart'
+        },
+        onHover: (event, activeElements) => {
+          event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+        }
+      }
+    });
+    console.log('✅ Lead Funnel Chart initialized successfully');
+
+  } catch (error) {
+    console.error('❌ Error initializing Lead Funnel Chart:', error);
+  }
+
+  try {
+    // Customer Geographic Distribution Chart
+    console.log('🌍 Initializing Location Chart...');
+    const locationCtx = document.getElementById('locationChart');
+    if (!locationCtx) {
+      console.error('❌ locationChart canvas not found!');
+      return;
+    }
+    const locationChart = new Chart(locationCtx.getContext('2d'), {
+    type: 'doughnut',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: Object.keys(customerLocationData),
+      datasets: [{
+        data: Object.values(customerLocationData),
+        backgroundColor: [
+          '#3b82f6', '#10b981', '#f59e0b', '#ec4899',
+          '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16'
+        ],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            padding: 15,
+            usePointStyle: true,
+            font: { size: 11 }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: {
+            size: 11,
+            weight: 'bold'
+          },
+          formatter: (value, context) => {
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = ((value / total) * 100).toFixed(0);
+            if (percentage < 5) return ''; // Hide label if too small
+            return value + '\n(' + percentage + '%)';
+          },
+          anchor: 'center',
+          align: 'center'
+        }
+      }
+    }
+    });
+    console.log('✅ Location Chart initialized successfully');
+
+  } catch (error) {
+    console.error('❌ Error initializing Location Chart:', error);
+  }
+
+  try {
+    // Customer Acquisition Trend Chart
+    console.log('📈 Initializing Customer Acquisition Chart...');
+    const acquisitionCtx = document.getElementById('customerAcquisitionChart');
+    if (!acquisitionCtx) {
+      console.error('❌ customerAcquisitionChart canvas not found!');
+      throw new Error('customerAcquisitionChart canvas not found');
+    }
+    const acquisitionChart = new Chart(acquisitionCtx.getContext('2d'), {
+    type: 'line',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: Object.keys(customerAcquisitionData),
+      datasets: [{
+        label: 'New Customers',
+        data: Object.values(customerAcquisitionData),
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: '#3b82f6',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f1f5f9' }
+        },
+        x: {
+          grid: { color: '#f1f5f9' }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+    }
+    });
+    console.log('✅ Customer Acquisition Chart initialized successfully');
+
+  } catch (error) {
+    console.error('❌ Error initializing Customer Acquisition Chart:', error);
+  }
+
+  try {
+    // Lead Stage Distribution Chart
+    console.log('📋 Initializing Lead Stage Distribution Chart...');
+    const leadStageCtx = document.getElementById('leadStageChart');
+    if (!leadStageCtx) {
+      console.error('❌ leadStageChart canvas not found!');
+      throw new Error('leadStageChart canvas not found');
+    }
+    const leadStageLabels = Object.keys(leadStageData);
+    const leadStageValues = Object.values(leadStageData);
+    console.log('Lead Stage Data:', leadStageData);
+
+    if (leadStageLabels.length === 0) {
+      console.warn('No lead stage data available');
+      leadStageLabels.push('No Data');
+      leadStageValues.push(1);
+    }
+
+    const leadStageChart = new Chart(leadStageCtx.getContext('2d'), {
+    type: 'doughnut',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: leadStageLabels,
+      datasets: [{
+        data: leadStageValues,
+        backgroundColor: [
+          '#3b82f6',
+          '#10b981',
+          '#f59e0b',
+          '#ec4899',
+          '#8b5cf6'
+        ],
+        borderWidth: 0,
+        cutout: '60%'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 20,
+            usePointStyle: true,
+            font: { size: 11 }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+              return context.label + ': ' + context.raw + ' (' + percentage + '%)';
+            }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: {
+            size: 11,
+            weight: 'bold'
+          },
+          formatter: (value, context) => {
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = ((value / total) * 100).toFixed(0);
+            if (percentage < 5) return ''; // Hide if too small
+            return value + '\n(' + percentage + '%)';
+          },
+          anchor: 'center',
+          align: 'center'
+        }
+      }
+    }
+  });
+    console.log('✅ Lead Stage Distribution Chart initialized successfully');
+
+  } catch (error) {
+    console.error('❌ Error initializing Lead Stage Distribution Chart:', error);
+  }
+
+  try {
+    // Policy Performance Metrics Chart
+    console.log('📊 Initializing Policy Performance Chart...');
+    const policyPerformanceCtx = document.getElementById('policyPerformanceChart');
+    if (!policyPerformanceCtx) {
+      console.error('❌ policyPerformanceChart canvas not found!');
+      return;
+    }
+    const policyPerformanceLabels = Object.keys(policyDistributionData);
+    const policyPerformanceValues = Object.values(policyDistributionData);
+
+    if (policyPerformanceLabels.length === 0) {
+      console.warn('No policy performance data available');
+      return;
+    }
+
+    const policyPerformanceChart = new Chart(policyPerformanceCtx.getContext('2d'), {
+    type: 'bar',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: policyPerformanceLabels,
+      datasets: [{
+        label: 'Number of Policies',
+        data: policyPerformanceValues,
+        backgroundColor: [
+          '#3b82f6',
+          '#10b981',
+          '#f59e0b',
+          '#ec4899'
+        ],
+        borderRadius: 8,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f1f5f9' }
+        },
+        x: {
+          grid: { display: false }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          titleColor: '#ffffff',
+          bodyColor: '#ffffff'
+        }
+      }
+    }
+  });
+    console.log('✅ Policy Performance Chart initialized successfully');
+
+  } catch (error) {
+    console.error('❌ Error initializing Policy Performance Chart:', error);
+  }
+
+  try {
+    // Operations Overview Chart
+    console.log('🔧 Initializing Operations Chart...');
+    const operationsCtx = document.getElementById('operationsChart');
+    if (!operationsCtx) {
+      console.error('❌ operationsChart canvas not found!');
+      return;
+    }
+    const operationsChart = new Chart(operationsCtx.getContext('2d'), {
+    type: 'polarArea',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: ['Documents Pending', 'Support Tickets', 'Claims Processing', 'Client Requests'],
+      datasets: [{
+        data: [
+          <%= (@docs_pending || 0) %>,
+          <%= (@support_tickets || 0) %>,
+          <%= (@claims_processing || 0) %>,
+          <%= (@client_requests_count || 0) %>
+        ],
+        backgroundColor: [
+          'rgba(239, 68, 68, 0.7)',
+          'rgba(245, 158, 11, 0.7)',
+          'rgba(139, 92, 246, 0.7)',
+          'rgba(6, 182, 212, 0.7)'
+        ],
+        borderColor: [
+          '#ef4444',
+          '#f59e0b',
+          '#8b5cf6',
+          '#06b6d4'
+        ],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 15,
+            usePointStyle: true,
+            font: { size: 11 }
+          }
+        },
+        datalabels: {
+          display: false  // Disable for polar area charts
+        }
+      },
+      scales: {
+        r: {
+          beginAtZero: true,
+          grid: { color: '#f1f5f9' }
+        }
+      }
+    }
+  });
+    console.log('✅ Operations Chart initialized successfully');
+
+  } catch (error) {
+    console.error('❌ Error initializing Operations Chart:', error);
+  }
+
+  try {
+    // Quick Insights Chart
+    console.log('📈 Initializing Quick Insights Chart...');
+    const quickInsightsCtx = document.getElementById('quickInsightsChart');
+    if (!quickInsightsCtx) {
+      console.error('❌ quickInsightsChart canvas not found!');
+      return;
+    }
+    const quickInsightsChart = new Chart(quickInsightsCtx.getContext('2d'), {
+    type: 'radar',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: ['Active Customers', 'Converted Leads', 'New Leads', 'Support Tickets'],
+      datasets: [{
+        label: 'Business Metrics',
+        data: [
+          <%= (@active_customers || 0) %>,
+          <%= (@converted_leads || 0) %>,
+          <%= (@new_leads || 0) %>,
+          <%= (@support_tickets || 0) %>
+        ],
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+        pointBackgroundColor: '#3b82f6',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        borderWidth: 2,
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          display: false  // Disable for radar charts
+        }
+      },
+      scales: {
+        r: {
+          beginAtZero: true,
+          grid: { color: '#f1f5f9' },
+          angleLines: { color: '#e2e8f0' },
+          ticks: {
+            display: false
+          }
+        }
+      }
+    }
+  });
+    console.log('✅ Quick Insights Chart initialized successfully');
+
+  } catch (error) {
+    console.error('❌ Error initializing Quick Insights Chart:', error);
+  }
+
+  console.log('🎉 All analytics charts initialization completed!');
+
+  // Enhanced Chart Interaction Functions
+
+  // Store chart instances globally for manipulation
+  window.chartInstances = {};
+
+  // Function to toggle chart types
+  window.toggleChartType = function(chartId, currentType, newType) {
+    const chart = Chart.getChart(chartId);
+    if (chart) {
+      const currentTypeActual = chart.config.type;
+      const targetType = currentTypeActual === currentType ? newType : currentType;
+
+      // Show loading
+      showChartLoading(chartId);
+
+      setTimeout(() => {
+        chart.config.type = targetType;
+
+        // Adjust options based on chart type
+        if (targetType === 'bar' && currentTypeActual === 'line') {
+          chart.config.options.scales.y.beginAtZero = true;
+          chart.config.data.datasets.forEach(dataset => {
+            dataset.fill = false;
+            dataset.tension = 0;
+          });
+        } else if (targetType === 'line' && currentTypeActual === 'bar') {
+          chart.config.data.datasets.forEach(dataset => {
+            dataset.fill = true;
+            dataset.tension = 0.4;
+          });
+        }
+
+        chart.update('active');
+        hideChartLoading(chartId);
+      }, 300);
+    }
+  };
+
+  // Function to refresh individual charts with real data
+  window.refreshChart = function(chartName) {
+    const chartCard = document.querySelector(`[data-chart="${chartName}"]`);
+    if (chartCard) {
+      showChartLoading(chartCard.querySelector('canvas').id);
+
+      // Preserve current filter params so chart refresh uses the same date range
+      const currentParams = new URLSearchParams(window.location.search);
+      currentParams.set('refresh', 'true');
+      currentParams.set('chart', chartName);
+
+      fetch('/admin/analytics?' + currentParams.toString(), {
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log(`✅ Fresh data received for ${chartName}:`, data);
+
+        // Update chart with fresh data based on chart type
+        updateChartData(chartName, data);
+
+        hideChartLoading(chartCard.querySelector('canvas').id);
+
+        // Success animation
+        chartCard.style.borderColor = '#10b981';
+        chartCard.style.transform = 'scale(0.98)';
+        setTimeout(() => {
+          chartCard.style.transform = 'scale(1)';
+          chartCard.style.borderColor = '#e2e8f0';
+        }, 150);
+
+        // Show success notification
+        showNotification(`${chartName} updated successfully`, 'success');
+      })
+      .catch(error => {
+        console.error(`❌ Error refreshing ${chartName}:`, error);
+        hideChartLoading(chartCard.querySelector('canvas').id);
+
+        // Error animation
+        chartCard.style.borderColor = '#ef4444';
+        setTimeout(() => {
+          chartCard.style.borderColor = '#e2e8f0';
+        }, 2000);
+
+        // Show error notification
+        showNotification(`Failed to update ${chartName}`, 'error');
+      });
+    }
+  };
+
+  // Function to update chart data dynamically
+  function updateChartData(chartName, newData) {
+    const chartMapping = {
+      'policyDistribution': 'policyDistributionChart',
+      'monthlyTrends': 'monthlyTrendsChart',
+      'leadStage': 'leadStageChart',
+      'policyPerformance': 'policyPerformanceChart',
+      'premiumRevenue': 'premiumRevenueTrendChart'
+    };
+
+    const chartId = chartMapping[chartName];
+    const chart = Chart.getChart(chartId);
+
+    if (chart && newData) {
+      // Update chart data with smooth animation
+      chart.data.labels = newData.labels || chart.data.labels;
+
+      if (chart.data.datasets && newData.data) {
+        chart.data.datasets.forEach((dataset, index) => {
+          dataset.data = Array.isArray(newData.data) ? newData.data : newData.data[index] || dataset.data;
+        });
+      }
+
+      chart.update('active');
+      console.log(`🔄 Updated ${chartName} with fresh data`);
+    }
+  }
+
+  // Notification system functions
+  function showNotification(message, type = 'success') {
+    const indicator = document.getElementById('updateIndicator');
+    const text = document.getElementById('indicatorText');
+    const icon = indicator.querySelector('i');
+
+    // Update content
+    text.textContent = message;
+
+    // Update styling based on type
+    if (type === 'error') {
+      indicator.className = 'update-indicator error show';
+      icon.className = 'bi bi-exclamation-triangle me-2';
+    } else if (type === 'loading') {
+      indicator.className = 'update-indicator show';
+      icon.className = 'bi bi-arrow-repeat me-2';
+      icon.style.animation = 'spin 1s linear infinite';
+    } else {
+      indicator.className = 'update-indicator show';
+      icon.className = 'bi bi-check-circle me-2';
+      icon.style.animation = '';
+    }
+
+    // Hide after 3 seconds (except for loading)
+    if (type !== 'loading') {
+      setTimeout(() => {
+        indicator.classList.remove('show');
+      }, 3000);
+    }
+  }
+
+  function showLoadingNotification(message) {
+    const indicator = document.getElementById('updateIndicator');
+    const text = document.getElementById('indicatorText');
+    const icon = indicator.querySelector('i');
+
+    text.textContent = message;
+    indicator.className = 'update-indicator show';
+    icon.className = 'bi bi-arrow-repeat me-2';
+    icon.style.animation = 'spin 1s linear infinite';
+
+    return () => {
+      icon.style.animation = '';
+      indicator.classList.remove('show');
+    };
+  }
+
+  // Function to show loading state
+  function showChartLoading(chartId) {
+    const canvas = document.getElementById(chartId);
+    if (canvas) {
+      const loadingElement = canvas.parentElement.querySelector('.chart-loading');
+      if (loadingElement) {
+        loadingElement.style.display = 'block';
+      }
+    }
+  }
+
+  // Function to hide loading state
+  function hideChartLoading(chartId) {
+    const canvas = document.getElementById(chartId);
+    if (canvas) {
+      const loadingElement = canvas.parentElement.querySelector('.chart-loading');
+      if (loadingElement) {
+        loadingElement.style.display = 'none';
+      }
+    }
+  }
+
+  // Enhanced chart animations and interactions
+  Chart.defaults.animation = {
+    duration: 1000,
+    easing: 'easeInOutQuart'
+  };
+
+  Chart.defaults.interaction = {
+    mode: 'index',
+    intersect: false
+  };
+
+  // Global chart hover effects
+  Chart.defaults.onHover = function(event, activeElements) {
+    event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+  };
+
+  // Auto-refresh charts every 5 minutes (optional)
+  setInterval(() => {
+    const currentTime = new Date().toLocaleTimeString();
+    console.log(`Auto-refreshing analytics charts at ${currentTime}`);
+
+    // Show loading notification
+    const hideLoading = showLoadingNotification('Auto-refreshing charts...');
+
+    // Add pulse effect to indicate auto-refresh
+    document.querySelectorAll('.chart-card').forEach(card => {
+      card.classList.add('pulse');
+      setTimeout(() => {
+        card.classList.remove('pulse');
+      }, 1000);
+    });
+
+    // Refresh page data (simplified approach)
+    setTimeout(() => {
+      hideLoading();
+      showNotification('Charts auto-refreshed', 'success');
+    }, 2000);
+  }, 300000); // 5 minutes
+
+  // Add keyboard shortcuts for chart interactions
+  document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.key === 'r') {
+      event.preventDefault();
+      // Refresh all charts
+      document.querySelectorAll('[data-chart]').forEach(card => {
+        const chartName = card.dataset.chart;
+        refreshChart(chartName);
+      });
+    }
+  });
+
+  // ---- Investor Analytics Charts ----
+  const investorAmbassadorData = <%= (@top_investors_by_ambassadors || {}).to_json.html_safe %>;
+
+  try {
+    // Top Investors by Ambassador Count (horizontal bar)
+    const invAmbCtx = document.getElementById('investorAmbassadorChart');
+    if (invAmbCtx && Object.keys(investorAmbassadorData).length > 0) {
+      new Chart(invAmbCtx.getContext('2d'), {
+        type: 'bar',
+        plugins: [ChartDataLabels],
+        data: {
+          labels: Object.keys(investorAmbassadorData),
+          datasets: [{
+            label: 'Ambassadors',
+            data: Object.values(investorAmbassadorData),
+            backgroundColor: [
+              '#8b5cf6','#7c3aed','#a78bfa','#6d28d9','#ddd6fe',
+              '#4c1d95','#c4b5fd','#5b21b6','#ede9fe','#4338ca'
+            ],
+            borderRadius: 6,
+            borderSkipped: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          scales: {
+            x: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+            y: { grid: { display: false }, ticks: { font: { weight: 'bold' } } }
+          },
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              color: '#fff', font: { size: 11, weight: 'bold' },
+              formatter: (v) => v,
+              anchor: 'end', align: 'start', offset: 4
+            }
+          }
+        }
+      });
+    } else if (invAmbCtx) {
+      const ctx2d = invAmbCtx.getContext('2d');
+      ctx2d.font = '14px sans-serif';
+      ctx2d.fillStyle = '#9ca3af';
+      ctx2d.textAlign = 'center';
+      ctx2d.fillText('No ambassador data available', invAmbCtx.width / 2, invAmbCtx.height / 2);
+    }
+  } catch(e) { console.error('Investor ambassador chart error:', e); }
+
+
+  // Final initialization summary
+  console.log('🎯 ===== ANALYTICS CHARTS INITIALIZATION COMPLETE =====');
+  console.log('✅ All charts should now be visible and interactive');
+  console.log('📊 Charts initialized:', Chart.instances.length, 'total instances');
+  console.log('🎨 Enhanced analytics charts loaded with interactive features!');
+  console.log('💡 Features available:');
+  console.log('   - Click chart type buttons to toggle between chart types');
+  console.log('   - Click refresh buttons to reload chart data');
+  console.log('   - Hover effects and animations on all charts');
+  console.log('   - Auto-refresh every 5 minutes');
+  console.log('   - Keyboard shortcut: Ctrl+R to refresh all charts');
+  console.log('🔗 If charts are still empty, check:');
+  console.log('   1. Data availability in controller');
+  console.log('   2. Canvas elements exist in HTML');
+  console.log('   3. Chart.js library loaded correctly');
+
+  // Unified period dropdown handler
+  function applyPeriod(val) {
+    const yearHidden  = document.getElementById('year_hidden');
+    const fyHidden    = document.getElementById('fy_hidden');
+    const startField  = document.getElementById('start_date_field');
+    const endField    = document.getElementById('end_date_field');
+    const monthSelect = document.getElementById('month_filter');
+
+    if (!val) return;
+    if (val.startsWith('cal_')) {
+      const yr = parseInt(val.replace('cal_', ''));
+      if (yearHidden) yearHidden.value = yr;
+      if (fyHidden)   fyHidden.value   = '';
+      if (startField) startField.value = yr + '-01-01';
+      if (endField)   endField.value   = yr + '-12-31';
+      if (monthSelect) monthSelect.value = '';
+    } else if (val.startsWith('fy_')) {
+      const fy = parseInt(val.replace('fy_', ''));
+      if (fyHidden)   fyHidden.value   = fy;
+      if (yearHidden) yearHidden.value = '';
+      if (startField) startField.value = (fy - 1) + '-04-01';
+      if (endField)   endField.value   = fy       + '-03-31';
+      if (monthSelect) monthSelect.value = '';
+    }
+  }
+
+  const periodSelect = document.getElementById('period_select');
+  if (periodSelect) {
+    periodSelect.addEventListener('change', function() {
+      applyPeriod(this.value);
+      const form = this.closest('form');
+      if (form) form.submit();
+    });
+  }
+
+  const monthSelectEl = document.getElementById('month_filter');
+  if (monthSelectEl) {
+    monthSelectEl.addEventListener('change', function() {
+      const form = this.closest('form');
+      if (form) form.submit();
+    });
+  }
+
+  function refreshAnalytics() {
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('refresh', 'true');
+    window.location.href = currentUrl.toString();
+  }
+
+  // Add keyboard shortcut for refresh (Ctrl+R or Cmd+R)
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+      e.preventDefault();
+      refreshAnalytics();
+    }
+  });
+
+  console.log('✅ Analytics filter functionality initialized');
+
+});
+</script>

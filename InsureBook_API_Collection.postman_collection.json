@@ -1,0 +1,775 @@
+{
+  "info": {
+    "name": "InsureBook API Collection",
+    "description": "Complete API collection for InsureBook application including authentication, notifications, leads, helpdesk, and commission APIs",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://dr-wise-ag.onrender.com",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customer_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sub_agent_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication APIs",
+      "description": "User authentication endpoints for login, register, and password management",
+      "item": [
+        {
+          "name": "Admin/User Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.status === 'OK') {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.token) {",
+                  "        pm.collectionVariables.set('jwt_token', response.data.token);",
+                  "        pm.collectionVariables.set('user_id', response.data.user.id);",
+                  "        console.log('JWT Token saved:', response.data.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@drwise.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Login endpoint for admin/user authentication"
+          }
+        },
+        {
+          "name": "Customer Login (Mobile)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.status === 'OK') {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.token) {",
+                  "        pm.collectionVariables.set('jwt_token', response.data.token);",
+                  "        pm.collectionVariables.set('user_id', response.data.user_id);",
+                  "        pm.collectionVariables.set('customer_id', response.data.customer_id);",
+                  "        console.log('Customer JWT Token saved:', response.data.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"customer@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"client\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "auth", "login"]
+            },
+            "description": "Customer login via mobile API with role-based authentication"
+          }
+        },
+        {
+          "name": "Sub-Agent Login (Mobile)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.status === 'OK') {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.token) {",
+                  "        pm.collectionVariables.set('jwt_token', response.data.token);",
+                  "        pm.collectionVariables.set('user_id', response.data.user_id);",
+                  "        pm.collectionVariables.set('sub_agent_id', response.data.user_id);",
+                  "        console.log('Sub-Agent JWT Token saved:', response.data.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"subagent@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"sub_agent\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "auth", "login"]
+            },
+            "description": "Sub-agent login via mobile API with role-based authentication"
+          }
+        },
+        {
+          "name": "Affiliate/Agent Login (Auto-detect)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.status === 'OK') {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.token) {",
+                  "        pm.collectionVariables.set('jwt_token', response.data.token);",
+                  "        pm.collectionVariables.set('user_id', response.data.user_id);",
+                  "        console.log('Agent JWT Token saved:', response.data.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"agent@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "auth", "login"]
+            },
+            "description": "Agent/Affiliate login with auto-detection (no role specified)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔔 Notification APIs",
+      "description": "Notification management endpoints for users and sub-agents",
+      "item": [
+        {
+          "name": "Get All Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications?page=1&per_page=10&is_read=false",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "description": "Records per page (max 50)"
+                },
+                {
+                  "key": "is_read",
+                  "value": "false",
+                  "description": "Filter by read status"
+                },
+                {
+                  "key": "type",
+                  "value": "policy_created",
+                  "description": "Filter by notification type",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated list of notifications with optional filters"
+          }
+        },
+        {
+          "name": "Get Specific Notification",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "1"]
+            },
+            "description": "Get detailed information about a specific notification"
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/unread_count",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "unread_count"]
+            },
+            "description": "Get count of unread notifications"
+          }
+        },
+        {
+          "name": "Get Recent Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/recent",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "recent"]
+            },
+            "description": "Get 10 most recent notifications"
+          }
+        },
+        {
+          "name": "Get Notification Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/types",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "types"]
+            },
+            "description": "Get all available notification types"
+          }
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/1/mark_as_read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "1", "mark_as_read"]
+            },
+            "description": "Mark a specific notification as read"
+          }
+        },
+        {
+          "name": "Mark Notification as Unread",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/1/mark_as_unread",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "1", "mark_as_unread"]
+            },
+            "description": "Mark a specific notification as unread"
+          }
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/mark_all_as_read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "mark_all_as_read"]
+            },
+            "description": "Mark all notifications as read for authenticated user"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎯 Leads APIs",
+      "description": "Lead management endpoints for agents and sub-agents",
+      "item": [
+        {
+          "name": "Get Agent Leads",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/agent/leads?page=1&per_page=10&stage=consultation&product=health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "agent", "leads"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "description": "Records per page"
+                },
+                {
+                  "key": "stage",
+                  "value": "consultation",
+                  "description": "Filter by lead stage"
+                },
+                {
+                  "key": "product",
+                  "value": "health",
+                  "description": "Filter by product type"
+                },
+                {
+                  "key": "search",
+                  "value": "john",
+                  "description": "Search leads by name/email/phone",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated leads for agents with filtering options"
+          }
+        },
+        {
+          "name": "Add New Lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"contact_number\": \"9876543210\",\n  \"product_category\": \"insurance\",\n  \"product_subcategory\": \"health\",\n  \"current_stage\": \"consultation\",\n  \"lead_source\": \"mobile_app\",\n  \"customer_type\": \"individual\",\n  \"notes\": \"Interested in family health insurance\",\n  \"age\": 30,\n  \"occupation\": \"Software Engineer\",\n  \"annual_income\": 800000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/agent/leads",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "agent", "leads"]
+            },
+            "description": "Create a new lead via agent mobile API"
+          }
+        },
+        {
+          "name": "Get Sub-Agent Leads",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/sub_agent/leads?page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "sub_agent", "leads"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get leads assigned to specific sub-agent"
+          }
+        },
+        {
+          "name": "Get Lead Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/sub_agent/leads/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "sub_agent", "leads", "1"]
+            },
+            "description": "Get detailed information about a specific lead"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎧 Helpdesk APIs",
+      "description": "Helpdesk and support ticket management endpoints",
+      "item": [
+        {
+          "name": "Create Customer Helpdesk Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"Issue with policy renewal\",\n  \"description\": \"I'm having trouble renewing my health insurance policy. The payment is not going through.\",\n  \"priority\": \"medium\",\n  \"category\": \"policy_renewal\",\n  \"customer_id\": \"{{customer_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/customer/helpdesk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "customer", "helpdesk"]
+            },
+            "description": "Create a new helpdesk ticket for customer"
+          }
+        },
+        {
+          "name": "Get Customer Helpdesk Tickets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/customer/helpdesk_tickets?page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "customer", "helpdesk_tickets"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all helpdesk tickets for customer"
+          }
+        },
+        {
+          "name": "Get Helpdesk Ticket Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/customer/helpdesk_tickets/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "customer", "helpdesk_tickets", "1"]
+            },
+            "description": "Get detailed information about a specific ticket"
+          }
+        },
+        {
+          "name": "Create Sub-Agent Helpdesk Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"Commission calculation issue\",\n  \"description\": \"The commission for policy #ABC123 is not reflecting correctly in my account.\",\n  \"priority\": \"high\",\n  \"category\": \"commission\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/sub_agent/helpdesk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "sub_agent", "helpdesk"]
+            },
+            "description": "Create a new helpdesk ticket for sub-agent"
+          }
+        },
+        {
+          "name": "Get Sub-Agent Helpdesk Tickets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/sub_agent/helpdesk_tickets?status=open",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "sub_agent", "helpdesk_tickets"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "open",
+                  "description": "Filter by ticket status"
+                }
+              ]
+            },
+            "description": "Get all helpdesk tickets for sub-agent"
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Commission APIs",
+      "description": "Commission breakdown and payout management endpoints",
+      "item": [
+        {
+          "name": "Commission Breakdown",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/commission/breakdown",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "commission", "breakdown"]
+            },
+            "description": "Get complete commission breakdown including summary and recent payouts"
+          }
+        },
+        {
+          "name": "Commission Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/commission/summary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "commission", "summary"]
+            },
+            "description": "Get commission summary totals only"
+          }
+        },
+        {
+          "name": "Commission History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/commission/history?page=1&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "commission", "history"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "description": "Records per page (max 50)"
+                }
+              ]
+            },
+            "description": "Get paginated commission payout history"
+          }
+        },
+        {
+          "name": "Commission Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/commission/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "commission", "stats"]
+            },
+            "description": "Get monthly and year-to-date commission statistics"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Additional APIs",
+      "description": "Additional utility endpoints for mobile app functionality",
+      "item": [
+        {
+          "name": "Agent Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/agent/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "agent", "dashboard"]
+            },
+            "description": "Get agent dashboard statistics and summary"
+          }
+        },
+        {
+          "name": "Agent Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/agent/customers?page=1&per_page=10&filter=all",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "agent", "customers"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                },
+                {
+                  "key": "filter",
+                  "value": "all",
+                  "description": "all, agent_added, system_added"
+                }
+              ]
+            },
+            "description": "Get customers associated with agent"
+          }
+        },
+        {
+          "name": "Sub-Agent Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/sub_agent/notifications?page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "sub_agent", "notifications"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get notifications for sub-agent"
+          }
+        },
+        {
+          "name": "Mark Sub-Agent Notification Read",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/sub_agent/notifications/1/mark_read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "sub_agent", "notifications", "1", "mark_read"]
+            },
+            "description": "Mark specific sub-agent notification as read"
+          }
+        },
+        {
+          "name": "Sub-Agent Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/sub_agent/notifications/unread_count",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mobile", "sub_agent", "notifications", "unread_count"]
+            },
+            "description": "Get unread notification count for sub-agent"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-add Authorization header if token exists",
+          "const token = pm.collectionVariables.get('jwt_token');",
+          "if (token) {",
+          "    pm.request.headers.add({",
+          "        key: 'Authorization',",
+          "        value: 'Bearer ' + token",
+          "    });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global response logging",
+          "console.log('Response Status:', pm.response.status);",
+          "console.log('Response Time:', pm.response.responseTime + 'ms');",
+          "",
+          "// Check for common error patterns",
+          "if (pm.response.status === 'Unauthorized') {",
+          "    console.log('⚠️ Authentication required - Please login first');",
+          "}",
+          "",
+          "if (pm.response.status === 'Forbidden') {",
+          "    console.log('⚠️ Access denied - Check permissions');",
+          "}"
+        ]
+      }
+    }
+  ]
+}

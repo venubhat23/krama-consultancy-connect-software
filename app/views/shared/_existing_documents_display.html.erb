@@ -1,0 +1,485 @@
+<%
+  # Shared Existing Documents Display Component
+  # Usage: render 'shared/existing_documents_display',
+  #          documents: @record.documents || @record.uploaded_documents,
+  #          title: 'Existing Documents',
+  #          show_actions: true,
+  #          record_type: 'customer'
+%>
+<%
+  documents = local_assigns[:documents] || []
+  title = local_assigns[:title] || 'Existing Documents'
+  show_actions = local_assigns[:show_actions].nil? ? true : local_assigns[:show_actions]
+  record_type = local_assigns[:record_type] || 'document'
+  container_class = local_assigns[:container_class] || 'mt-4'
+%>
+
+<% if documents.any? %>
+  <div class="<%= container_class %>">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="mb-0 text-primary">
+        <i class="bi bi-files me-2"></i>
+        <%= title %> (<%= documents.count %>)
+      </h6>
+      <% if show_actions %>
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-sm btn-outline-primary toggle-view" data-view="grid">
+            <i class="bi bi-grid-3x3-gap"></i> Grid
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-primary toggle-view active" data-view="list">
+            <i class="bi bi-list"></i> List
+          </button>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- List View -->
+    <div class="documents-list-view">
+      <% documents.each_with_index do |document, index| %>
+        <div class="existing-document-item mb-3" data-document-id="<%= document.id %>">
+          <div class="card border-light shadow-sm">
+            <div class="card-body p-3">
+              <div class="row align-items-center">
+                <!-- Document Preview -->
+                <div class="col-auto">
+                  <div class="document-thumbnail">
+                    <% if document.respond_to?(:r2_file_key) && document.r2_file_key.present? %>
+                      <!-- R2 Document -->
+                      <% if document.is_image? %>
+                        <%= image_tag document.document_url,
+                            class: "rounded border",
+                            style: "width: 80px; height: 80px; object-fit: cover;",
+                            alt: "Document preview",
+                            onerror: "this.style.display='none'; this.nextElementSibling.style.display='block';" %>
+                        <div class="file-icon-fallback d-none">
+                          <i class="bi bi-file-earmark-image text-info" style="font-size: 3rem;"></i>
+                        </div>
+                      <% else %>
+                        <div class="file-icon-display text-center">
+                          <i class="<%= get_file_icon_class_r2(document.r2_content_type) %>" style="font-size: 3rem;"></i>
+                        </div>
+                      <% end %>
+                    <% elsif document.respond_to?(:file) && document.file.present? %>
+                      <% if document.file.content_type&.include?('image') %>
+                        <%= image_tag document.file,
+                            class: "rounded border",
+                            style: "width: 80px; height: 80px; object-fit: cover;",
+                            alt: "Document preview",
+                            onerror: "this.style.display='none'; this.nextElementSibling.style.display='block';" %>
+                        <div class="file-icon-fallback d-none">
+                          <i class="bi bi-file-earmark-image text-info" style="font-size: 3rem;"></i>
+                        </div>
+                      <% else %>
+                        <div class="file-icon-display text-center">
+                          <i class="<%= get_file_icon_class(document.file.content_type) %>" style="font-size: 3rem;"></i>
+                        </div>
+                      <% end %>
+                    <% elsif document.respond_to?(:document_file) && document.document_file.present? %>
+                      <% if document.document_file.content_type&.include?('image') %>
+                        <%= image_tag document.document_file,
+                            class: "rounded border",
+                            style: "width: 80px; height: 80px; object-fit: cover;",
+                            alt: "Document preview",
+                            onerror: "this.style.display='none'; this.nextElementSibling.style.display='block';" %>
+                        <div class="file-icon-fallback d-none">
+                          <i class="bi bi-file-earmark-image text-info" style="font-size: 3rem;"></i>
+                        </div>
+                      <% else %>
+                        <div class="file-icon-display text-center">
+                          <i class="<%= get_file_icon_class(document.document_file.content_type) %>" style="font-size: 3rem;"></i>
+                        </div>
+                      <% end %>
+                    <% else %>
+                      <div class="file-icon-display text-center">
+                        <i class="bi bi-file-earmark text-muted" style="font-size: 3rem;"></i>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+
+                <!-- Document Details -->
+                <div class="col">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h6 class="mb-1">
+                        <%= (document.respond_to?(:title) ? document.title.presence : nil) || document.document_type.presence || "Document #{index + 1}" %>
+                        <% if document.respond_to?(:document_type) && document.document_type.present? %>
+                          <span class="badge bg-light text-dark ms-2"><%= document.document_type.humanize %></span>
+                        <% end %>
+                      </h6>
+
+                      <% if document.respond_to?(:description) && document.description.present? %>
+                        <p class="text-muted mb-2 small"><%= truncate(document.description, length: 100) %></p>
+                      <% end %>
+
+                      <div class="document-meta small text-muted">
+                        <% if document.created_at.present? %>
+                          <span class="me-3">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            Uploaded: <%= document.created_at.strftime("%B %d, %Y") %>
+                          </span>
+                        <% end %>
+
+                        <% if document.respond_to?(:r2_file_size) && document.r2_file_size.present? %>
+                          <span class="me-3">
+                            <i class="bi bi-file-earmark me-1"></i>
+                            Size: <%= number_to_human_size(document.r2_file_size) %>
+                          </span>
+                        <% elsif document.respond_to?(:file) && document.file.present? %>
+                          <span class="me-3">
+                            <i class="bi bi-file-earmark me-1"></i>
+                            Size: <%= number_to_human_size(document.file.byte_size) if document.file.respond_to?(:byte_size) %>
+                          </span>
+                        <% elsif document.respond_to?(:document_file) && document.document_file.present? %>
+                          <span class="me-3">
+                            <i class="bi bi-file-earmark me-1"></i>
+                            Size: <%= number_to_human_size(document.document_file.byte_size) if document.document_file.respond_to?(:byte_size) %>
+                          </span>
+                        <% end %>
+
+                        <% if document.respond_to?(:uploaded_by) && document.uploaded_by.present? %>
+                          <span class="me-3">
+                            <i class="bi bi-person me-1"></i>
+                            By: <%= document.uploaded_by %>
+                          </span>
+                        <% end %>
+                      </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <% if show_actions %>
+                      <div class="btn-group-vertical btn-group-sm">
+                        <% if document.respond_to?(:r2_file_key) && document.r2_file_key.present? %>
+                          <%= link_to document.document_url,
+                              class: "btn btn-outline-primary btn-sm",
+                              target: "_blank",
+                              title: "View Document",
+                              data: { toggle: "tooltip" } do %>
+                            <i class="bi bi-eye"></i>
+                          <% end %>
+                          <%= link_to document.document_url,
+                              class: "btn btn-outline-success btn-sm",
+                              download: document.document_name,
+                              title: "Download Document",
+                              data: { toggle: "tooltip" } do %>
+                            <i class="bi bi-download"></i>
+                          <% end %>
+                        <% elsif document.respond_to?(:file) && document.file.present? %>
+                          <%= link_to document.file,
+                              class: "btn btn-outline-primary btn-sm",
+                              target: "_blank",
+                              title: "View Document",
+                              data: { toggle: "tooltip" } do %>
+                            <i class="bi bi-eye"></i>
+                          <% end %>
+                          <%= link_to document.file,
+                              class: "btn btn-outline-success btn-sm",
+                              download: true,
+                              title: "Download Document",
+                              data: { toggle: "tooltip" } do %>
+                            <i class="bi bi-download"></i>
+                          <% end %>
+                        <% elsif document.respond_to?(:document_file) && document.document_file.present? %>
+                          <%= link_to document.document_file,
+                              class: "btn btn-outline-primary btn-sm",
+                              target: "_blank",
+                              title: "View Document",
+                              data: { toggle: "tooltip" } do %>
+                            <i class="bi bi-eye"></i>
+                          <% end %>
+                          <%= link_to document.document_file,
+                              class: "btn btn-outline-success btn-sm",
+                              download: true,
+                              title: "Download Document",
+                              data: { toggle: "tooltip" } do %>
+                            <i class="bi bi-download"></i>
+                          <% end %>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Grid View -->
+    <div class="documents-grid-view" style="display: none;">
+      <div class="row">
+        <% documents.each_with_index do |document, index| %>
+          <div class="col-md-4 col-lg-3 mb-3">
+            <div class="card border-light shadow-sm h-100" data-document-id="<%= document.id %>">
+              <div class="card-body p-3 text-center">
+                <!-- Document Preview -->
+                <div class="document-thumbnail mb-3">
+                  <% if document.respond_to?(:r2_file_key) && document.r2_file_key.present? %>
+                    <!-- R2 Document -->
+                    <% if document.is_image? %>
+                      <%= image_tag document.document_url,
+                          class: "rounded border",
+                          style: "width: 100px; height: 100px; object-fit: cover;",
+                          alt: "Document preview",
+                          onerror: "this.style.display='none'; this.nextElementSibling.style.display='block';" %>
+                      <div class="file-icon-fallback d-none">
+                        <i class="bi bi-file-earmark-image text-info" style="font-size: 4rem;"></i>
+                      </div>
+                    <% else %>
+                      <div class="file-icon-display">
+                        <i class="<%= get_file_icon_class_r2(document.r2_content_type) %>" style="font-size: 4rem;"></i>
+                      </div>
+                    <% end %>
+                  <% elsif document.respond_to?(:file) && document.file.present? %>
+                    <% if document.file.content_type&.include?('image') %>
+                      <%= image_tag document.file,
+                          class: "rounded border",
+                          style: "width: 100px; height: 100px; object-fit: cover;",
+                          alt: "Document preview",
+                          onerror: "this.style.display='none'; this.nextElementSibling.style.display='block';" %>
+                      <div class="file-icon-fallback d-none">
+                        <i class="bi bi-file-earmark-image text-info" style="font-size: 4rem;"></i>
+                      </div>
+                    <% else %>
+                      <div class="file-icon-display">
+                        <i class="<%= get_file_icon_class(document.file.content_type) %>" style="font-size: 4rem;"></i>
+                      </div>
+                    <% end %>
+                  <% elsif document.respond_to?(:document_file) && document.document_file.present? %>
+                    <% if document.document_file.content_type&.include?('image') %>
+                      <%= image_tag document.document_file,
+                          class: "rounded border",
+                          style: "width: 100px; height: 100px; object-fit: cover;",
+                          alt: "Document preview",
+                          onerror: "this.style.display='none'; this.nextElementSibling.style.display='block';" %>
+                      <div class="file-icon-fallback d-none">
+                        <i class="bi bi-file-earmark-image text-info" style="font-size: 4rem;"></i>
+                      </div>
+                    <% else %>
+                      <div class="file-icon-display">
+                        <i class="<%= get_file_icon_class(document.document_file.content_type) %>" style="font-size: 4rem;"></i>
+                      </div>
+                    <% end %>
+                  <% else %>
+                    <div class="file-icon-display">
+                      <i class="bi bi-file-earmark text-muted" style="font-size: 4rem;"></i>
+                    </div>
+                  <% end %>
+                </div>
+
+                <!-- Document Info -->
+                <h6 class="card-title small mb-2">
+                  <%= truncate((document.respond_to?(:title) ? document.title.presence : nil) || document.document_type.presence || "Document #{index + 1}", length: 25) %>
+                </h6>
+
+                <% if document.respond_to?(:document_type) && document.document_type.present? %>
+                  <span class="badge bg-light text-dark mb-2 small"><%= document.document_type.humanize %></span>
+                <% end %>
+
+                <% if document.created_at.present? %>
+                  <div class="small text-muted mb-3">
+                    <%= document.created_at.strftime("%b %d, %Y") %>
+                  </div>
+                <% end %>
+
+                <!-- Actions -->
+                <% if show_actions %>
+                  <div class="btn-group btn-group-sm">
+                    <% if document.respond_to?(:r2_file_key) && document.r2_file_key.present? %>
+                      <%= link_to document.document_url,
+                          class: "btn btn-outline-primary btn-sm",
+                          target: "_blank",
+                          title: "View" do %>
+                        <i class="bi bi-eye"></i>
+                      <% end %>
+                      <%= link_to document.document_url,
+                          class: "btn btn-outline-success btn-sm",
+                          download: document.document_name,
+                          title: "Download" do %>
+                        <i class="bi bi-download"></i>
+                      <% end %>
+                    <% elsif document.respond_to?(:file) && document.file.present? %>
+                      <%= link_to document.file,
+                          class: "btn btn-outline-primary btn-sm",
+                          target: "_blank",
+                          title: "View" do %>
+                        <i class="bi bi-eye"></i>
+                      <% end %>
+                      <%= link_to document.file,
+                          class: "btn btn-outline-success btn-sm",
+                          download: true,
+                          title: "Download" do %>
+                        <i class="bi bi-download"></i>
+                      <% end %>
+                    <% elsif document.respond_to?(:document_file) && document.document_file.present? %>
+                      <%= link_to document.document_file,
+                          class: "btn btn-outline-primary btn-sm",
+                          target: "_blank",
+                          title: "View" do %>
+                        <i class="bi bi-eye"></i>
+                      <% end %>
+                      <%= link_to document.document_file,
+                          class: "btn btn-outline-success btn-sm",
+                          download: true,
+                          title: "Download" do %>
+                        <i class="bi bi-download"></i>
+                      <% end %>
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <style>
+  .existing-document-item {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .existing-document-item:hover {
+    transform: translateY(-2px);
+  }
+
+  .existing-document-item:hover .card {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+  }
+
+  .document-thumbnail {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+  }
+
+  .documents-grid-view .document-thumbnail {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+  }
+
+  .file-icon-display {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toggle-view.active {
+    background-color: var(--bs-primary);
+    color: white;
+    border-color: var(--bs-primary);
+  }
+
+  .btn-group-vertical .btn {
+    margin-bottom: 2px;
+  }
+
+  .btn-group-vertical .btn:last-child {
+    margin-bottom: 0;
+  }
+  </style>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // View toggle functionality
+    const toggleButtons = document.querySelectorAll('.toggle-view');
+    const listView = document.querySelector('.documents-list-view');
+    const gridView = document.querySelector('.documents-grid-view');
+
+    toggleButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const view = this.getAttribute('data-view');
+
+        // Update active button
+        toggleButtons.forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+
+        // Switch views
+        if (view === 'grid') {
+          listView.style.display = 'none';
+          gridView.style.display = 'block';
+        } else {
+          listView.style.display = 'block';
+          gridView.style.display = 'none';
+        }
+      });
+    });
+
+    // Initialize tooltips if Bootstrap is available
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
+      tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+      });
+    }
+  });
+  </script>
+<% else %>
+  <div class="<%= container_class %>">
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle me-2"></i>
+      <strong>No documents uploaded yet.</strong>
+      Documents uploaded for this <%= record_type %> will appear here.
+    </div>
+  </div>
+<% end %>
+
+<%
+  # Helper method for file icon classes
+  def get_file_icon_class(content_type)
+    return 'bi bi-file-earmark text-muted' unless content_type
+
+    case content_type.downcase
+    when /pdf/
+      'bi bi-file-earmark-pdf text-danger'
+    when /image/
+      'bi bi-file-earmark-image text-info'
+    when /word|document/
+      'bi bi-file-earmark-word text-primary'
+    when /excel|spreadsheet/
+      'bi bi-file-earmark-excel text-success'
+    when /powerpoint|presentation/
+      'bi bi-file-earmark-ppt text-warning'
+    when /text/
+      'bi bi-file-earmark-text text-secondary'
+    when /zip|rar|archive/
+      'bi bi-file-earmark-zip text-dark'
+    else
+      'bi bi-file-earmark text-muted'
+    end
+  end
+
+  # Helper method for R2 file icon classes
+  def get_file_icon_class_r2(content_type)
+    return 'bi bi-file-earmark text-muted' unless content_type
+
+    case content_type.downcase
+    when /pdf/
+      'bi bi-file-earmark-pdf text-danger'
+    when /image/
+      'bi bi-file-earmark-image text-info'
+    when /word|document/
+      'bi bi-file-earmark-word text-primary'
+    when /excel|spreadsheet/
+      'bi bi-file-earmark-excel text-success'
+    when /powerpoint|presentation/
+      'bi bi-file-earmark-ppt text-warning'
+    when /text/
+      'bi bi-file-earmark-text text-secondary'
+    when /zip|rar|archive/
+      'bi bi-file-earmark-zip text-dark'
+    else
+      'bi bi-file-earmark text-muted'
+    end
+  end
+%>

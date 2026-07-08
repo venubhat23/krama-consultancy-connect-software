@@ -1,0 +1,365 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex align-items-center">
+    <h2 class="page-title mb-0">
+      <span class="title-text">Investor</span>
+      <span class="title-highlight">Management</span>
+    </h2>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to investor_summary_admin_investors_path, class: "btn btn-info", target: "_blank" do %>
+      <i class="bi bi-bar-chart-line me-1"></i>
+      Investor Summary
+    <% end %>
+    <%= link_to new_admin_investor_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg me-1"></i>
+      Create Investor
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-6 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Investors</h6>
+            <h3 class="mb-0 text-primary"><%= indian_number(@total_investors) %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-people text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-6 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Invested Amount</h6>
+            <h3 class="mb-0 text-success"><%= indian_currency(@total_invested_amount) %></h3>
+            <% if @total_investor_amount != @total_invested_amount %>
+              <small class="text-muted">Commission Pool: <%= indian_currency(@total_investor_amount) %></small>
+            <% end %>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-currency-rupee text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <%= form_with url: admin_investors_path, method: :get, local: true, class: "d-flex flex-wrap gap-3 align-items-end", id: "search_form" do |form| %>
+      <!-- Search -->
+      <div class="flex-grow-1 min-width-250">
+        <%= form.text_field :search, placeholder: "Search by name, mobile, or email... (min 3 characters)",
+                           value: params[:search],
+                           class: "form-control",
+                           id: "search_input",
+                           data: { min_length: 3 } %>
+      </div>
+
+
+      <!-- Actions -->
+      <div class="d-flex gap-2">
+        <%= link_to "Clear", admin_investors_path, class: "btn btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Investors Table -->
+<div class="card shadow-sm">
+  <div class="card-body">
+    <% if @investors.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Name</th>
+              <th>Contact Info</th>
+              <th>Investment Amount</th>
+              <th>No. of Shares</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @investors.each do |investor| %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3">
+                      <i class="bi bi-person text-primary"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-0"><%= investor.full_name %></h6>
+                      <small class="text-muted">Investor ID: <%= investor.id %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex flex-column gap-1">
+                    <span class="badge bg-light text-dark border">
+                      <i class="bi bi-telephone me-1"></i>
+                      <%= investor.formatted_mobile %>
+                    </span>
+                    <span class="badge bg-light text-dark border">
+                      <i class="bi bi-envelope me-1"></i>
+                      <%= investor.formatted_email %>
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <% if investor.invested_amount.present? %>
+                    <span class="text-success fw-semibold">
+                      <%= indian_currency(investor.invested_amount) %>
+                    </span>
+                  <% else %>
+                    <span class="text-muted">-</span>
+                  <% end %>
+                </td>
+                <td class="text-center">
+                  <% if investor.number_of_shares.present? && investor.number_of_shares > 0 %>
+                    <span class="badge bg-primary fs-6"><%= indian_number(investor.number_of_shares) %></span>
+                  <% else %>
+                    <span class="text-muted">-</span>
+                  <% end %>
+                </td>
+                <td>
+                  <small class="text-muted">
+                    <%= time_ago_in_words(investor.created_at) %> ago
+                  </small>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <%= link_to summary_admin_investor_path(investor), class: "btn btn-sm btn-info", title: "Summary", target: "_blank" do %>
+                      <i class="bi bi-bar-chart-line"></i> Summary
+                    <% end %>
+                    <%= link_to admin_investor_path(investor), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                      <i class="bi bi-eye"></i>
+                    <% end %>
+                    <%= link_to edit_admin_investor_path(investor), class: "btn btn-sm btn-outline-warning", title: "Edit" do %>
+                      <i class="bi bi-pencil"></i>
+                    <% end %>
+                    <%= button_to admin_investor_path(investor),
+                        method: :delete,
+                        form: { data: { "turbo-confirm": "Are you sure you want to delete investor #{investor.display_name}? This action cannot be undone!" } },
+                        class: "btn btn-sm btn-outline-danger",
+                        title: "Delete" do %>
+                      <i class="bi bi-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <% if @investors.respond_to?(:current_page) %>
+        <div class="card-footer bg-transparent border-0">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+              <% if @investors.respond_to?(:total_count) %>
+                <small class="text-muted">
+                  Showing <strong><%= @investors.offset_value + 1 %></strong>–<strong><%= [@investors.offset_value + @investors.limit_value, @investors.total_count].min %></strong> of <strong><%= indian_number(@investors.total_count) %></strong> investors
+                </small>
+              <% end %>
+              <%= render 'shared/per_page_selector' %>
+            </div>
+            <% if @investors.respond_to?(:total_pages) && @investors.total_pages > 1 %>
+              <%= paginate @investors %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <!-- Empty State -->
+      <div class="text-center py-5">
+        <div class="mb-3">
+          <i class="bi bi-people display-1 text-muted"></i>
+        </div>
+        <h5 class="mb-3">No Investors Found</h5>
+        <p class="text-muted mb-4">
+          <% if params[:search].present? || params[:status].present? %>
+            No investors match your current filters. Try adjusting your search criteria.
+          <% else %>
+            Start building your investor network by adding your first investor.
+          <% end %>
+        </p>
+        <% unless params[:search].present? || params[:status].present? %>
+          <%= link_to new_admin_investor_path, class: "btn btn-primary" do %>
+            <i class="bi bi-plus-lg me-1"></i>
+            Create First Investor
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+/* Attractive Page Title Styling */
+.page-title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  padding-left: 0;
+}
+
+.title-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  position: relative;
+}
+
+.title-highlight {
+  color: #2d3748;
+  font-weight: 600;
+  position: relative;
+}
+
+.title-highlight::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 2px;
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: 100%;
+    opacity: 1;
+  }
+}
+
+/* Hover effect for the title */
+.page-title:hover .title-text {
+  animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.2);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 1.5rem;
+  }
+}
+
+/* Existing styles */
+.min-width-250 {
+  min-width: 250px;
+}
+
+.avatar-sm {
+  width: 38px;
+  height: 38px;
+}
+
+/* Enhanced button styling for actions */
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.775rem;
+  border-radius: 0.2rem;
+}
+
+.btn-outline-primary:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s;
+}
+
+.btn-outline-warning:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s;
+}
+
+.btn-outline-danger:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s;
+}
+
+/* Style button_to forms to look like inline buttons */
+form[data-turbo-confirm] {
+  display: inline-block;
+  margin: 0;
+}
+
+form[data-turbo-confirm] input[type="submit"] {
+  all: unset;
+  background: none;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.775rem;
+  border-radius: 0.2rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+form[data-turbo-confirm] input[type="submit"]:hover {
+  background-color: #dc3545;
+  color: white;
+  transform: scale(1.05);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('search_input');
+  const searchForm = document.getElementById('search_form');
+  let searchTimeout;
+
+  // Auto-search on typing after 3 characters
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const searchValue = this.value;
+
+    searchTimeout = setTimeout(() => {
+      if (searchValue.length >= 3 || searchValue.length === 0) {
+        searchForm.submit();
+      }
+    }, 500); // 500ms delay after typing stops
+  });
+
+});
+</script>

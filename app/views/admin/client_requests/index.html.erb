@@ -1,0 +1,313 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Client Requests</h2>
+    <p class="text-muted mb-0">Manage customer support requests and inquiries</p>
+  </div>
+  <div class="d-flex gap-2">
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-download me-1"></i>
+        Export
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-text me-2"></i>Export as CSV</a></li>
+        <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-excel me-2"></i>Export as Excel</a></li>
+      </ul>
+    </div>
+    <button class="btn btn-success" onclick="sendBulkNotifications()">
+      <i class="bi bi-bell me-1"></i>
+      Notify All
+    </button>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Requests</h6>
+            <h3 class="mb-0 text-primary"><%= number_with_delimiter(@stats[:total]) %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-headset text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Pending</h6>
+            <h3 class="mb-0 text-warning"><%= number_with_delimiter(@stats[:pending]) %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-clock text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">In Progress</h6>
+            <h3 class="mb-0 text-info"><%= number_with_delimiter(@stats[:in_progress]) %></h3>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-gear text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Resolved</h6>
+            <h3 class="mb-0 text-success"><%= number_with_delimiter(@stats[:resolved] + @stats[:closed]) %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-check-circle text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <%= form_with url: admin_client_requests_path, method: :get, local: true, class: "row g-3" do |form| %>
+      <div class="col-md-4">
+        <%= form.text_field :search, placeholder: "Search by ticket number, name, email, or description...", value: params[:search], class: "form-control" %>
+      </div>
+      <div class="col-md-3">
+        <%= form.select :status, options_for_select([
+          ['All Status', ''],
+          ['Pending', 'pending'],
+          ['In Progress', 'in_progress'],
+          ['Resolved', 'resolved'],
+          ['Closed', 'closed']
+        ], params[:status]), {}, { class: "form-select" } %>
+      </div>
+      <div class="col-md-3">
+        <%= form.select :priority, options_for_select([
+          ['All Priorities', ''],
+          ['Low', 'low'],
+          ['Medium', 'medium'],
+          ['High', 'high'],
+          ['Urgent', 'urgent']
+        ], params[:priority]), {}, { class: "form-select" } %>
+      </div>
+      <div class="col-md-2">
+        <%= form.submit "Filter", class: "btn btn-outline-primary w-100" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item">
+        <%= link_to admin_client_requests_path, class: "nav-link #{'active' if params[:status].blank?}" do %>
+          <i class="bi bi-list me-1"></i>All Requests
+        <% end %>
+      </li>
+      <li class="nav-item">
+        <%= link_to admin_client_requests_path(status: 'pending'), class: "nav-link #{'active' if params[:status] == 'pending'}" do %>
+          <i class="bi bi-clock me-1"></i>Pending
+        <% end %>
+      </li>
+      <li class="nav-item">
+        <%= link_to admin_client_requests_path(status: 'in_progress'), class: "nav-link #{'active' if params[:status] == 'in_progress'}" do %>
+          <i class="bi bi-gear me-1"></i>In Progress
+        <% end %>
+      </li>
+      <li class="nav-item">
+        <%= link_to admin_client_requests_path(status: 'resolved'), class: "nav-link #{'active' if params[:status] == 'resolved'}" do %>
+          <i class="bi bi-check-circle me-1"></i>Resolved
+        <% end %>
+      </li>
+      <li class="nav-item">
+        <%= link_to admin_client_requests_path(status: 'closed'), class: "nav-link #{'active' if params[:status] == 'closed'}" do %>
+          <i class="bi bi-x-circle me-1"></i>Closed
+        <% end %>
+      </li>
+    </ul>
+  </div>
+  <div class="card-body p-0">
+    <% if @client_requests.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Ticket #</th>
+              <th class="border-0">Client</th>
+              <th class="border-0">Contact</th>
+              <th class="border-0">Request Details</th>
+              <th class="border-0">Priority</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Submitted</th>
+              <th class="border-0">Assigned To</th>
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @client_requests.each do |request| %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <span class="badge bg-primary-subtle text-primary">
+                      <%= request.respond_to?(:ticket_number) && request.ticket_number.present? ? request.ticket_number : "#CR#{request.id.to_s.rjust(4, '0')}" %>
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <h6 class="mb-0"><%= request.name %></h6>
+                    <% if request.respond_to?(:subject) && request.subject.present? %>
+                      <small class="text-muted"><%= truncate(request.subject, length: 30) %></small>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <div class="mb-1"><%= request.email %></div>
+                    <% if request.phone_number.present? %>
+                      <small class="text-muted"><%= request.phone_number %></small>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <% if request.respond_to?(:request_type) && request.request_type.present? %>
+                      <div class="fw-semibold mb-1"><%= request.request_type.humanize %></div>
+                    <% end %>
+                    <div class="text-truncate" style="max-width: 200px;" title="<%= request.description %>">
+                      <%= truncate(request.description, length: 50) %>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <% if request.respond_to?(:priority) && request.priority.present? %>
+                    <span class="badge bg-<%=
+                      case request.priority
+                      when 'urgent' then 'danger'
+                      when 'high' then 'warning'
+                      when 'medium' then 'info'
+                      when 'low' then 'secondary'
+                      else 'secondary'
+                      end
+                    %>">
+                      <%= request.priority.humanize %>
+                    </span>
+                  <% else %>
+                    <span class="badge bg-secondary">Medium</span>
+                  <% end %>
+                </td>
+                <td>
+                  <%= request.status.humanize %>
+                </td>
+                <td>
+                  <div>
+                    <div class="fw-semibold"><%= request.created_at.strftime("%d %b %Y") %></div>
+                    <small class="text-muted">
+                      <% days_ago = (Date.current - request.created_at.to_date).to_i %>
+                      <%= pluralize(days_ago, 'day') %> ago
+                    </small>
+                  </div>
+                </td>
+                <td>
+                  <% if request.respond_to?(:resolved_by) && request.resolved_by %>
+                    <div>
+                      <div class="fw-semibold"><%= request.resolved_by.try(:first_name) || 'Admin' %></div>
+                      <small class="text-muted"><%= request.resolved_by.email %></small>
+                    </div>
+                  <% else %>
+                    <span class="text-muted">Unassigned</span>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <%= link_to admin_client_request_path(request), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                      <i class="bi bi-eye"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <% if @client_requests.respond_to?(:total_pages) %>
+        <div class="card-footer bg-transparent border-0">
+          <%= paginate @client_requests %>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-headset fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No client requests found</h5>
+        <p class="text-muted mb-3">
+          <% if params[:search].present? || params[:status].present? || params[:priority].present? %>
+            Try adjusting your search criteria or
+            <%= link_to "view all requests", admin_client_requests_path, class: "text-decoration-none" %>.
+          <% else %>
+            No client requests have been submitted yet.
+          <% end %>
+        </p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+function updateStatus(requestId, status) {
+  fetch(`/admin/client_requests/${requestId}/update_status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+    },
+    body: JSON.stringify({ status: status })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('Error updating status: ' + (data.message || data.errors?.join(', ')));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('An error occurred while updating status');
+  });
+}
+
+function sendBulkNotifications() {
+  if (confirm('Are you sure you want to send notifications to all pending client requests?')) {
+    // Implementation for bulk notification sending
+    alert('Feature coming soon! This will send status updates to all clients with pending requests.');
+  }
+}
+</script>

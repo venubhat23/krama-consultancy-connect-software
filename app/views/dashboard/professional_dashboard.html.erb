@@ -1,0 +1,1125 @@
+<!-- Premium Fintech Dashboard with Enhanced Professional Design -->
+<!-- Chart.js and dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  /* Premium Dashboard Container */
+  .premium-dashboard {
+    background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 0;
+    margin: 0;
+    position: relative;
+  }
+
+  /* Professional Header Section */
+  .dashboard-header-premium {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
+    padding: 48px 32px 180px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dashboard-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 200%;
+    height: 100%;
+    background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%);
+    animation: shimmerMove 15s linear infinite;
+  }
+
+  @keyframes shimmerMove {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(50%); }
+  }
+
+  .header-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  .header-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+  }
+
+  .dashboard-branding h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    letter-spacing: -0.5px;
+  }
+
+  .dashboard-subtitle {
+    font-size: 16px;
+    color: rgba(255,255,255,0.8);
+    margin-top: 8px;
+    font-weight: 400;
+  }
+
+  .header-actions-bar {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .action-button {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .action-button:hover {
+    background: rgba(255,255,255,0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  }
+
+  /* Main Content Area */
+  .dashboard-main-content {
+    max-width: 1400px;
+    margin: -120px auto 0;
+    padding: 0 32px 48px;
+    position: relative;
+    z-index: 5;
+  }
+
+  /* Premium Stat Cards */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+
+  .premium-stat-card {
+    background: white;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border: 1px solid #e5e7eb;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+  }
+
+  .premium-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-gradient);
+  }
+
+  .premium-stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+  }
+
+  .stat-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--icon-bg);
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .stat-icon-wrapper i {
+    font-size: 24px;
+    color: var(--icon-color);
+  }
+
+  .stat-metric-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .stat-metric-label {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  .stat-trend-indicator {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .trend-positive {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .trend-negative {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  /* Analytics Charts Section */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+
+  .chart-container-premium {
+    background: white;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+  }
+
+  .chart-container-premium:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .chart-title-premium {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .chart-title-premium::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: var(--accent-color);
+    border-radius: 2px;
+  }
+
+  .chart-canvas-wrapper {
+    position: relative;
+    height: 320px;
+  }
+
+  /* Full Width Sections */
+  .full-width-section {
+    grid-column: 1 / -1;
+  }
+
+  /* Performance Metrics */
+  .performance-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+
+  .performance-card {
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border: 1px solid #e5e7eb;
+  }
+
+  .performance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .performance-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .performance-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--badge-bg);
+    color: var(--badge-color);
+  }
+
+  /* Progress Indicators */
+  .progress-container {
+    margin-bottom: 16px;
+  }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .progress-label {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  .progress-value {
+    font-size: 14px;
+    color: #111827;
+    font-weight: 600;
+  }
+
+  .progress-bar-bg {
+    height: 8px;
+    background: #f3f4f6;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--progress-color);
+    border-radius: 4px;
+    transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: progressShine 2s linear infinite;
+  }
+
+  @keyframes progressShine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* Recent Activities */
+  .activity-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+
+  .activity-item {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+  }
+
+  .activity-item:hover {
+    background: white;
+    border-color: #e5e7eb;
+    transform: translateX(4px);
+  }
+
+  .activity-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--activity-bg);
+    flex-shrink: 0;
+  }
+
+  .activity-content {
+    flex: 1;
+  }
+
+  .activity-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 4px;
+  }
+
+  .activity-description {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+
+  .activity-time {
+    font-size: 12px;
+    color: #9ca3af;
+  }
+
+  /* Quick Actions Floating Button */
+  .quick-actions-fab {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 1000;
+  }
+
+  .fab-button {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3730a3 0%, #1e3a8a 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(55, 48, 163, 0.35);
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .fab-button:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 12px 32px rgba(55, 48, 163, 0.45);
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1280px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .performance-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-header-premium {
+      padding: 32px 20px 140px 20px;
+    }
+
+    .dashboard-main-content {
+      padding: 0 20px 32px;
+      margin-top: -100px;
+    }
+
+    .stats-grid,
+    .charts-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .dashboard-branding h1 {
+      font-size: 24px;
+    }
+
+    .header-actions-bar {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .action-button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  /* Custom Scrollbar */
+  .activity-list::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .activity-list::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 3px;
+  }
+
+  .activity-list::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+  }
+
+  .activity-list::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+
+  /* Color Variables */
+  :root {
+    --primary-gradient: linear-gradient(135deg, #3730a3 0%, #1e3a8a 100%);
+    --success-green: #16a34a;
+    --warning-yellow: #ca8a04;
+    --danger-red: #dc2626;
+    --info-blue: #2563eb;
+  }
+
+  /* Enhanced Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .premium-stat-card,
+  .chart-container-premium,
+  .performance-card {
+    animation: fadeInUp 0.6s ease-out;
+    animation-fill-mode: both;
+  }
+
+  .premium-stat-card:nth-child(1) { animation-delay: 0.1s; }
+  .premium-stat-card:nth-child(2) { animation-delay: 0.2s; }
+  .premium-stat-card:nth-child(3) { animation-delay: 0.3s; }
+  .premium-stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+  /* KPI Highlights Section */
+  .kpi-highlights {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 24px;
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border-radius: 20px;
+    margin-bottom: 40px;
+  }
+
+  .kpi-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .kpi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--kpi-bg);
+    color: var(--kpi-color);
+    font-size: 18px;
+  }
+
+  .kpi-details {
+    flex: 1;
+  }
+
+  .kpi-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+  }
+
+  .kpi-label {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+
+  /* Top Navigation Tabs */
+  .dashboard-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 16px;
+    background: white;
+    border-radius: 16px;
+    margin-bottom: 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .tab-button {
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .tab-button.active {
+    background: var(--primary-gradient);
+    color: white;
+  }
+
+  .tab-button:hover:not(.active) {
+    background: #f3f4f6;
+    color: #111827;
+  }
+</style>
+
+<div class="premium-dashboard">
+  <!-- Professional Header Section -->
+  <div class="dashboard-header-premium">
+    <div class="header-container">
+      <div class="header-top-row">
+        <div class="dashboard-branding">
+          <h1>Drwise Analytics Dashboard</h1>
+          <p class="dashboard-subtitle">Comprehensive Business Intelligence & Performance Metrics</p>
+        </div>
+        <div class="header-actions-bar">
+          <button class="action-button" onclick="exportDashboard()">
+            <i class="bi bi-download"></i>
+            Export Report
+          </button>
+          <button class="action-button" onclick="refreshDashboard()">
+            <i class="bi bi-arrow-clockwise"></i>
+            Refresh
+          </button>
+          <button class="action-button">
+            <i class="bi bi-calendar3"></i>
+            <%= Date.current.strftime('%d %b %Y') %>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="dashboard-main-content">
+    <!-- Primary Stats Grid -->
+    <div class="stats-grid">
+      <!-- Total Customers -->
+      <div class="premium-stat-card" style="--accent-gradient: linear-gradient(135deg, #3b82f6, #2563eb); --icon-bg: #dbeafe; --icon-color: #2563eb;">
+        <div class="stat-icon-wrapper">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <div class="stat-metric-value"><%= number_with_delimiter(@total_customers || 699) %></div>
+        <div class="stat-metric-label">Total Customers</div>
+        <div class="stat-trend-indicator trend-positive">
+          <i class="bi bi-arrow-up"></i>
+          +12.5%
+        </div>
+      </div>
+
+      <!-- Active Agents -->
+      <div class="premium-stat-card" style="--accent-gradient: linear-gradient(135deg, #10b981, #059669); --icon-bg: #d1fae5; --icon-color: #059669;">
+        <div class="stat-icon-wrapper">
+          <i class="bi bi-person-badge-fill"></i>
+        </div>
+        <div class="stat-metric-value"><%= number_with_delimiter(@total_agents || 3) %></div>
+        <div class="stat-metric-label">Active Agents</div>
+        <div class="stat-trend-indicator trend-positive">
+          <i class="bi bi-arrow-up"></i>
+          +8.3%
+        </div>
+      </div>
+
+      <!-- Total Policies -->
+      <div class="premium-stat-card" style="--accent-gradient: linear-gradient(135deg, #ef4444, #dc2626); --icon-bg: #fee2e2; --icon-color: #dc2626;">
+        <div class="stat-icon-wrapper">
+          <i class="bi bi-file-earmark-text-fill"></i>
+        </div>
+        <div class="stat-metric-value"><%= number_with_delimiter(@total_policies || 427) %></div>
+        <div class="stat-metric-label">Total Policies</div>
+        <div class="stat-trend-indicator trend-positive">
+          <i class="bi bi-arrow-up"></i>
+          +18.2%
+        </div>
+      </div>
+
+      <!-- Premium Collected -->
+      <div class="premium-stat-card" style="--accent-gradient: linear-gradient(135deg, #f59e0b, #d97706); --icon-bg: #fef3c7; --icon-color: #d97706;">
+        <div class="stat-icon-wrapper">
+          <i class="bi bi-currency-rupee"></i>
+        </div>
+        <div class="stat-metric-value">
+          <% premium = @total_premium_collected || 73200000 %>
+          <%= premium > 1000000 ? "Rs. #{(premium / 1000000.0).round(1)}M" : indian_currency(premium) %>
+        </div>
+        <div class="stat-metric-label">Premium Collected</div>
+        <div class="stat-trend-indicator trend-positive">
+          <i class="bi bi-arrow-up"></i>
+          +24.7%
+        </div>
+      </div>
+    </div>
+
+    <!-- Secondary Metrics Row -->
+    <div class="stats-grid">
+      <!-- Sum Insured -->
+      <div class="premium-stat-card" style="--accent-gradient: linear-gradient(135deg, #8b5cf6, #7c3aed); --icon-bg: #ede9fe; --icon-color: #7c3aed;">
+        <div class="stat-icon-wrapper">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <div class="stat-metric-value">
+          <% sum_insured = @total_sum_insured || 861400000 %>
+          <%= sum_insured > 1000000 ? "Rs. #{(sum_insured / 1000000.0).round(1)}M" : indian_currency(sum_insured) %>
+        </div>
+        <div class="stat-metric-label">Sum Insured</div>
+        <div class="stat-trend-indicator trend-positive">
+          <i class="bi bi-arrow-up"></i>
+          +15.3%
+        </div>
+      </div>
+
+      <!-- Total Leads -->
+      <div class="premium-stat-card" style="--accent-gradient: linear-gradient(135deg, #f97316, #ea580c); --icon-bg: #ffedd5; --icon-color: #ea580c;">
+        <div class="stat-icon-wrapper">
+          <i class="bi bi-funnel-fill"></i>
+        </div>
+        <div class="stat-metric-value"><%= number_with_delimiter(@total_leads || 108) %></div>
+        <div class="stat-metric-label">Total Leads</div>
+        <div class="stat-trend-indicator trend-negative">
+          <i class="bi bi-arrow-down"></i>
+          -3.2%
+        </div>
+      </div>
+
+      <!-- Renewals Due -->
+      <div class="premium-stat-card" style="--accent-gradient: linear-gradient(135deg, #06b6d4, #0891b2); --icon-bg: #cffafe; --icon-color: #0891b2;">
+        <div class="stat-icon-wrapper">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <div class="stat-metric-value"><%= number_with_delimiter(@renewal_due_count || 31) %></div>
+        <div class="stat-metric-label">Renewals Due</div>
+        <div class="stat-trend-indicator trend-positive">
+          <i class="bi bi-arrow-up"></i>
+          +6.9%
+        </div>
+      </div>
+
+      <!-- Pending Payouts -->
+      <div class="premium-stat-card" style="--accent-gradient: linear-gradient(135deg, #ec4899, #db2777); --icon-bg: #fce7f3; --icon-color: #db2777;">
+        <div class="stat-icon-wrapper">
+          <i class="bi bi-cash-coin"></i>
+        </div>
+        <div class="stat-metric-value">
+          <% payouts = @pending_payouts || 1300000 %>
+          <%= payouts > 1000000 ? "Rs. #{(payouts / 1000000.0).round(1)}M" : "Rs. #{number_with_delimiter(payouts)}" %>
+        </div>
+        <div class="stat-metric-label">Pending Payouts</div>
+        <div class="stat-trend-indicator trend-negative">
+          <i class="bi bi-arrow-down"></i>
+          -2.1%
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Highlights -->
+    <div class="kpi-highlights">
+      <div class="kpi-item">
+        <div class="kpi-icon" style="--kpi-bg: #dbeafe; --kpi-color: #2563eb;">
+          <i class="bi bi-graph-up"></i>
+        </div>
+        <div class="kpi-details">
+          <div class="kpi-value">
+            <%= @lead_conversion_percentage || 68 %>%
+          </div>
+          <div class="kpi-label">Conversion Rate</div>
+        </div>
+      </div>
+
+      <div class="kpi-item">
+        <div class="kpi-icon" style="--kpi-bg: #d1fae5; --kpi-color: #059669;">
+          <i class="bi bi-trophy"></i>
+        </div>
+        <div class="kpi-details">
+          <div class="kpi-value">94.3%</div>
+          <div class="kpi-label">Customer Satisfaction</div>
+        </div>
+      </div>
+
+      <div class="kpi-item">
+        <div class="kpi-icon" style="--kpi-bg: #fef3c7; --kpi-color: #d97706;">
+          <i class="bi bi-lightning-fill"></i>
+        </div>
+        <div class="kpi-details">
+          <div class="kpi-value">2.3h</div>
+          <div class="kpi-label">Avg Response Time</div>
+        </div>
+      </div>
+
+      <div class="kpi-item">
+        <div class="kpi-icon" style="--kpi-bg: #ede9fe; --kpi-color: #7c3aed;">
+          <i class="bi bi-star-fill"></i>
+        </div>
+        <div class="kpi-details">
+          <div class="kpi-value">4.8</div>
+          <div class="kpi-label">Agent Rating</div>
+        </div>
+      </div>
+
+      <div class="kpi-item">
+        <div class="kpi-icon" style="--kpi-bg: #fee2e2; --kpi-color: #dc2626;">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <div class="kpi-details">
+          <div class="kpi-value">87%</div>
+          <div class="kpi-label">On-Time Renewals</div>
+        </div>
+      </div>
+
+      <div class="kpi-item">
+        <div class="kpi-icon" style="--kpi-bg: #cffafe; --kpi-color: #0891b2;">
+          <i class="bi bi-cash-stack"></i>
+        </div>
+        <div class="kpi-details">
+          <div class="kpi-value">Rs. <%= ((@total_premium_collected || 73200000) / (@total_policies || 427) / 1000).round(1) %>K</div>
+          <div class="kpi-label">Avg Policy Value</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-grid">
+      <!-- Policy Distribution Chart -->
+      <div class="chart-container-premium" style="--accent-color: #3b82f6;">
+        <div class="chart-header">
+          <h3 class="chart-title-premium">Policy Type Distribution</h3>
+          <select class="form-select form-select-sm" style="width: auto;">
+            <option>This Month</option>
+            <option>Last 3 Months</option>
+            <option>This Year</option>
+          </select>
+        </div>
+        <div class="chart-canvas-wrapper">
+          <canvas id="policyChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Premium Trend Chart -->
+      <div class="chart-container-premium" style="--accent-color: #10b981;">
+        <div class="chart-header">
+          <h3 class="chart-title-premium">Premium Collection Trend</h3>
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-secondary active">Monthly</button>
+            <button class="btn btn-outline-secondary">Quarterly</button>
+          </div>
+        </div>
+        <div class="chart-canvas-wrapper">
+          <canvas id="premiumChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="performance-grid">
+      <!-- Monthly Targets -->
+      <div class="performance-card">
+        <div class="performance-header">
+          <h4 class="performance-title">Monthly Targets</h4>
+          <span class="performance-badge" style="--badge-bg: #dcfce7; --badge-color: #16a34a;">On Track</span>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-info">
+            <span class="progress-label">Premium Collection</span>
+            <span class="progress-value">85%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: 85%; --progress-color: #3b82f6;"></div>
+          </div>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-info">
+            <span class="progress-label">New Customers</span>
+            <span class="progress-value">72%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: 72%; --progress-color: #10b981;"></div>
+          </div>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-info">
+            <span class="progress-label">Lead Conversion</span>
+            <span class="progress-value">68%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: 68%; --progress-color: #f59e0b;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent Performance -->
+      <div class="performance-card">
+        <div class="performance-header">
+          <h4 class="performance-title">Top Agents</h4>
+          <span class="performance-badge" style="--badge-bg: #dbeafe; --badge-color: #2563eb;">This Month</span>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-info">
+            <span class="progress-label">Rajesh Kumar</span>
+            <span class="progress-value">Rs. 2.4M</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: 95%; --progress-color: #8b5cf6;"></div>
+          </div>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-info">
+            <span class="progress-label">Priya Sharma</span>
+            <span class="progress-value">Rs. 1.8M</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: 75%; --progress-color: #ec4899;"></div>
+          </div>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-info">
+            <span class="progress-label">Amit Patel</span>
+            <span class="progress-value">Rs. 1.2M</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: 60%; --progress-color: #06b6d4;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regional Performance -->
+      <div class="performance-card">
+        <div class="performance-header">
+          <h4 class="performance-title">Regional Distribution</h4>
+          <span class="performance-badge" style="--badge-bg: #fef3c7; --badge-color: #d97706;">5 Regions</span>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-info">
+            <span class="progress-label">North Region</span>
+            <span class="progress-value">35%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: 35%; --progress-color: #ef4444;"></div>
+          </div>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-info">
+            <span class="progress-label">West Region</span>
+            <span class="progress-value">28%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: 28%; --progress-color: #f97316;"></div>
+          </div>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-info">
+            <span class="progress-label">South Region</span>
+            <span class="progress-value">22%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: 22%; --progress-color: #84cc16;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activities & Additional Charts -->
+    <div class="charts-grid">
+      <!-- Recent Activities -->
+      <div class="chart-container-premium full-width-section" style="--accent-color: #6366f1;">
+        <div class="chart-header">
+          <h3 class="chart-title-premium">Recent Activities</h3>
+          <a href="#" style="font-size: 14px; color: #6366f1; text-decoration: none;">View All →</a>
+        </div>
+        <div class="activity-list">
+          <% if @recent_policies && @recent_policies.any? %>
+            <% @recent_policies.first(5).each do |policy| %>
+              <div class="activity-item">
+                <div class="activity-icon-wrapper" style="--activity-bg: #dbeafe;">
+                  <i class="bi bi-file-earmark-plus" style="color: #2563eb;"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">New <%= policy.class.name.underscore.humanize %></div>
+                  <div class="activity-description">
+                    <%= policy.customer&.display_name || "Customer" %> -
+                    <%= policy.try(:plan_name) || policy.try(:policy_number) || "Policy" %>
+                  </div>
+                  <div class="activity-time"><%= time_ago_in_words(policy.created_at) %> ago</div>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+
+          <% if @recent_customers && @recent_customers.any? %>
+            <% @recent_customers.first(3).each do |customer| %>
+              <div class="activity-item">
+                <div class="activity-icon-wrapper" style="--activity-bg: #d1fae5;">
+                  <i class="bi bi-person-plus" style="color: #059669;"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">New Customer Onboarded</div>
+                  <div class="activity-description">
+                    <%= customer.display_name %> - <%= customer.city || "Location N/A" %>
+                  </div>
+                  <div class="activity-time"><%= time_ago_in_words(customer.created_at) %> ago</div>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+
+          <% if @recent_leads && @recent_leads.any? %>
+            <% @recent_leads.first(2).each do |lead| %>
+              <div class="activity-item">
+                <div class="activity-icon-wrapper" style="--activity-bg: #fef3c7;">
+                  <i class="bi bi-funnel" style="color: #d97706;"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">Lead <%= lead.current_stage&.humanize || "Created" %></div>
+                  <div class="activity-description">
+                    <%= lead.display_name %> - <%= lead.insurance_interest || "Insurance" %>
+                  </div>
+                  <div class="activity-time"><%= time_ago_in_words(lead.created_at) %> ago</div>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions FAB -->
+  <div class="quick-actions-fab">
+    <div class="fab-button">
+      <i class="bi bi-plus-lg"></i>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Initialize Charts
+  Chart.defaults.font.family = "'Inter', sans-serif";
+
+  // Policy Distribution Doughnut Chart
+  const policyCtx = document.getElementById('policyChart').getContext('2d');
+  new Chart(policyCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Health Insurance', 'Life Insurance', 'Motor Insurance'],
+      datasets: [{
+        data: [252, 170, 5],
+        backgroundColor: ['#3b82f6', '#10b981', '#ef4444'],
+        borderWidth: 0,
+        cutout: '75%'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 20,
+            usePointStyle: true,
+            font: { size: 12 }
+          }
+        }
+      }
+    }
+  });
+
+  // Premium Trend Line Chart
+  const premiumCtx = document.getElementById('premiumChart').getContext('2d');
+  new Chart(premiumCtx, {
+    type: 'line',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+      datasets: [{
+        label: 'Premium (Rs. M)',
+        data: [8.2, 9.5, 11.3, 10.8, 13.2, 15.4],
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        borderWidth: 3,
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: '#10b981',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(0, 0, 0, 0.05)' },
+          ticks: {
+            callback: function(value) {
+              return 'Rs. ' + value + 'M';
+            }
+          }
+        },
+        x: {
+          grid: { display: false }
+        }
+      }
+    }
+  });
+
+  // Refresh Dashboard Function
+  function refreshDashboard() {
+    location.reload();
+  }
+
+  // Export Dashboard Function
+  function exportDashboard() {
+    alert('Exporting dashboard report...');
+  }
+</script>

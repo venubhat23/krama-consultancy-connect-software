@@ -1,0 +1,150 @@
+<!-- Agency Codes Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <% if agency_codes.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Insurance Type</th>
+              <th class="border-0">Company Name</th>
+              <th class="border-0">Agent Name</th>
+              <th class="border-0">Agency Code</th>
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% agency_codes.each do |agency_code| %>
+              <tr>
+                <td>
+                  <% case agency_code.insurance_type.downcase %>
+                  <% when 'health' %>
+                    <span class="badge bg-success">Health</span>
+                  <% when 'motor' %>
+                    <span class="badge bg-warning">Motor</span>
+                  <% when 'life' %>
+                    <span class="badge bg-info">Life</span>
+                  <% when 'general' %>
+                    <span class="badge bg-secondary">General</span>
+                  <% else %>
+                    <span class="badge bg-dark"><%= agency_code.insurance_type %></span>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="me-3">
+                      <h6 class="mb-0"><%= agency_code.company_name %></h6>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="fw-medium text-dark"><%= agency_code.agent_name %></span>
+                </td>
+                <td>
+                  <code class="bg-light text-dark px-2 py-1 rounded fs-6"><%= agency_code.code %></code>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <%= link_to edit_admin_agency_code_path(agency_code),
+                        class: "btn btn-sm btn-outline-primary",
+                        title: "Edit" do %>
+                      <i class="bi bi-pencil"></i>
+                    <% end %>
+                    <button type="button"
+                        class="btn btn-sm btn-outline-danger delete-agency-code"
+                        data-url="<%= admin_agency_code_path(agency_code) %>"
+                        data-confirm="Are you sure you want to delete this agency code?"
+                        title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="card-footer bg-transparent border-0">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+          <small class="text-muted mb-2 mb-md-0">
+            <% if defined?(total_filtered_count) && total_filtered_count.present? %>
+              Showing <%= agency_codes.current_page == 1 ? 1 : ((agency_codes.current_page - 1) * agency_codes.limit_value + 1) %>
+              to <%= [agency_codes.current_page * agency_codes.limit_value, total_filtered_count].min %>
+              of <%= number_with_delimiter(total_filtered_count) %> agency codes
+            <% elsif agency_codes.respond_to?(:total_count) %>
+              Showing <%= agency_codes.current_page == 1 ? 1 : ((agency_codes.current_page - 1) * agency_codes.limit_value + 1) %>
+              to <%= [agency_codes.current_page * agency_codes.limit_value, agency_codes.total_count].min %>
+              of <%= number_with_delimiter(agency_codes.total_count) %> agency codes
+            <% else %>
+              Showing <%= agency_codes.count %> agency codes
+            <% end %>
+          </small>
+
+          <% if agency_codes.respond_to?(:total_pages) && agency_codes.total_pages > 1 %>
+            <div class="pagination-wrapper">
+              <%= paginate agency_codes %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-building fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No agency codes found</h5>
+        <p class="text-muted mb-3">
+          <% if params[:search].present? || params[:insurance_type].present? || params[:company].present? %>
+            Try adjusting your search criteria or
+            <%= link_to "view all agency codes", admin_agency_codes_path, class: "text-decoration-none" %>.
+          <% else %>
+            Start by creating your first agency code using the form above.
+          <% end %>
+        </p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle agency code delete buttons
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-agency-code')) {
+      e.preventDefault();
+
+      const button = e.target.closest('.delete-agency-code');
+      const url = button.dataset.url;
+      const confirmMessage = button.dataset.confirm;
+
+      if (confirm(confirmMessage)) {
+        // Create and submit a form for DELETE request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        form.style.display = 'none';
+
+        // Add CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+          const csrfInput = document.createElement('input');
+          csrfInput.type = 'hidden';
+          csrfInput.name = 'authenticity_token';
+          csrfInput.value = csrfToken.content;
+          form.appendChild(csrfInput);
+        }
+
+        // Add method override for DELETE
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'DELETE';
+        form.appendChild(methodInput);
+
+        document.body.appendChild(form);
+        form.submit();
+      }
+    }
+  });
+});
+</script>

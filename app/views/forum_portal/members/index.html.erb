@@ -1,0 +1,49 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Members</h2>
+    <p class="text-muted mb-0"><%= current_user.chapter_admin? ? current_user.chapter&.name : @current_forum.name %></p>
+  </div>
+  <%= link_to new_forum_portal_member_path, class: "btn btn-primary" do %><i class="bi bi-plus-lg me-1"></i> Add Member<% end %>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <% if @members.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr><th class="border-0">Name</th><th class="border-0">Email</th><th class="border-0">Chapter</th><th class="border-0">Role</th><th class="border-0">Actions</th></tr>
+          </thead>
+          <tbody>
+            <% @members.each do |m| %>
+              <tr>
+                <td><%= link_to m.full_name, forum_portal_member_path(m), class: "text-decoration-none fw-medium" %></td>
+                <td><%= m.email %></td>
+                <td><%= m.chapter&.name || "—" %></td>
+                <td>
+                  <span class="badge bg-<%= m.user_type == 'chapter_admin' ? 'primary' : 'success' %>-subtle text-<%= m.user_type == 'chapter_admin' ? 'primary' : 'success' %>">
+                    <%= m.user_type.humanize %>
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <%= link_to edit_forum_portal_member_path(m), class: "btn btn-sm btn-outline-primary" do %><i class="bi bi-pencil"></i><% end %>
+                    <%= button_to forum_portal_member_path(m), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Remove #{m.full_name}?" } } do %><i class="bi bi-trash"></i><% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer bg-transparent border-0">
+        <%= render "shared/pagination", records: @members %>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-people fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No members yet</h5>
+      </div>
+    <% end %>
+  </div>
+</div>

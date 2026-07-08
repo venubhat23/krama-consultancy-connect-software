@@ -1,0 +1,1349 @@
+<!-- Modern Customer Details Page -->
+<div class="modern-customer-page">
+  <!-- Header Section -->
+  <div class="page-header">
+    <%= link_to admin_customers_path, class: "back-link" do %>
+      <i class="bi bi-chevron-left"></i>
+      <span>Back to Customers</span>
+    <% end %>
+
+    <div class="customer-header">
+      <div class="customer-title">
+        <h1 class="customer-name"><%= @customer.display_name %></h1>
+        <span class="customer-badge <%= @customer.status? ? 'active' : 'inactive' %>">
+          <%= @customer.status? ? 'ACTIVE' : 'INACTIVE' %>
+        </span>
+      </div>
+      <div class="customer-meta">
+        <span class="customer-type">
+          <span class="badge-type"><%= @customer.customer_type.humanize %></span>
+        </span>
+        <span class="customer-id">Customer ID: #<%= @customer.id %></span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <%= link_to edit_admin_customer_path(@customer), class: "edit-btn" do %>
+        <i class="bi bi-pencil"></i>
+        <span>Edit Customer</span>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="content-layout">
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Basic Information Card -->
+      <div class="info-card basic-info">
+        <div class="card-header">
+          <i class="bi bi-person"></i>
+          <span>Basic Information</span>
+        </div>
+        <div class="card-content">
+          <div class="info-grid">
+            <div class="info-item">
+              <i class="bi bi-person-circle"></i>
+              <div class="info-details">
+                <label>FULL NAME</label>
+                <span><%= @customer.display_name || '-' %></span>
+              </div>
+            </div>
+            <div class="info-item">
+              <i class="bi bi-telephone"></i>
+              <div class="info-details">
+                <label>MOBILE</label>
+                <span><%= @customer.mobile || '-' %></span>
+              </div>
+            </div>
+            <div class="info-item">
+              <i class="bi bi-envelope"></i>
+              <div class="info-details">
+                <label>EMAIL</label>
+                <span><%= @customer.email || '-' %></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collapsible Sections -->
+      <div class="collapsible-sections">
+        <!-- Lead Information -->
+        <% lead_count = @associated_leads.count %>
+        <div class="section-item">
+          <div class="section-header" data-bs-toggle="collapse" data-bs-target="#leadInfo" aria-expanded="false">
+            <div class="section-title">
+              <i class="bi bi-clipboard-data"></i>
+              <span>Lead Information</span>
+            </div>
+            <div class="section-actions">
+              <span class="count-badge"><%= lead_count %></span>
+              <i class="bi bi-chevron-down toggle-icon"></i>
+            </div>
+          </div>
+          <div id="leadInfo" class="section-content collapse">
+            <% if @associated_leads.any? %>
+              <% @associated_leads.each_with_index do |lead, index| %>
+                <div class="lead-card <%= 'primary-lead' if index == 0 %>">
+                  <div class="lead-header">
+                    <div class="lead-badges">
+                      <span class="badge <%= lead.is_branch_out? ? 'branch' : 'parent' %>">
+                        <%= lead.is_branch_out? ? 'Branch Lead' : 'Parent Lead' %>
+                      </span>
+                      <% if index == 0 %>
+                        <span class="badge primary">Primary</span>
+                      <% end %>
+                    </div>
+                    <%= link_to admin_lead_path(lead), class: "view-btn", target: "_blank" do %>
+                      <i class="bi bi-eye"></i>
+                      <span>View Details</span>
+                    <% end %>
+                  </div>
+
+                  <div class="lead-details">
+                    <div class="detail-row">
+                      <div class="detail-item">
+                        <label>Lead ID</label>
+                        <span class="lead-id"><%= lead.lead_id %></span>
+                      </div>
+                      <div class="detail-item">
+                        <label>Status</label>
+                        <span class="status-badge <%= lead.current_stage == 'converted' ? 'converted' : 'pending' %>">
+                          <%= lead.current_stage.humanize %>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="detail-row">
+                      <div class="detail-item">
+                        <label>Product</label>
+                        <span><%= lead.product_category.present? ? lead.product_category.humanize : 'Not specified' %></span>
+                      </div>
+                      <div class="detail-item">
+                        <label>Created</label>
+                        <span><%= lead.created_at.strftime("%B %d, %Y") %></span>
+                      </div>
+                    </div>
+                    <% if lead.current_stage == 'converted' && lead.stage_updated_at.present? %>
+                      <div class="conversion-info">
+                        <i class="bi bi-check-circle"></i>
+                        <span>Converted in <%= pluralize((lead.stage_updated_at.to_date - lead.created_at.to_date).to_i, 'day') %></span>
+                      </div>
+                    <% end %>
+                    <% if lead.notes.present? %>
+                      <div class="notes-section">
+                        <label>Notes</label>
+                        <div class="notes-content"><%= simple_format(lead.notes) %></div>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            <% else %>
+              <div class="empty-state">
+                <i class="bi bi-clipboard-x"></i>
+                <p>No associated lead found for this customer.</p>
+                <% if @customer.lead_id.present? %>
+                  <small>Customer Lead ID: <%= @customer.lead_id %></small>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Advanced Details -->
+        <div class="section-item">
+          <div class="section-header" data-bs-toggle="collapse" data-bs-target="#advancedDetails" aria-expanded="false">
+            <div class="section-title">
+              <i class="bi bi-search"></i>
+              <span>Advanced Details</span>
+            </div>
+            <div class="section-actions">
+              <span class="detail-badge">DETAILS</span>
+              <i class="bi bi-chevron-down toggle-icon"></i>
+            </div>
+          </div>
+          <div id="advancedDetails" class="section-content collapse">
+            <div class="details-grid">
+              <% if @customer.individual? %>
+                <div class="detail-card">
+                  <label>Birth Date</label>
+                  <span><%= @customer.birth_date&.strftime("%B %d, %Y") || '-' %></span>
+                </div>
+                <div class="detail-card">
+                  <label>Age</label>
+                  <span><%= @customer.age || '-' %></span>
+                </div>
+                <div class="detail-card">
+                  <label>Gender</label>
+                  <span><%= @customer.gender&.humanize || '-' %></span>
+                </div>
+                <div class="detail-card">
+                  <label>Marital Status</label>
+                  <span><%= @customer.marital_status&.humanize || '-' %></span>
+                </div>
+              <% else %>
+                <div class="detail-card">
+                  <label>Company Name</label>
+                  <span><%= @customer.company_name || '-' %></span>
+                </div>
+                <div class="detail-card">
+                  <label>Business Type</label>
+                  <span><%= @customer.business_job || '-' %></span>
+                </div>
+              <% end %>
+              <div class="detail-card">
+                <label>PAN Number</label>
+                <span><%= @customer.pan_no || '-' %></span>
+              </div>
+              <div class="detail-card">
+                <label>Annual Income</label>
+                <span><%= @customer.annual_income.present? ? "Rs. #{number_with_delimiter(@customer.annual_income)}" : '-' %></span>
+              </div>
+              <div class="detail-card full-width">
+                <label>Address</label>
+                <span><%= [@customer.address, @customer.city, @customer.state].compact.join(', ').presence || '-' %></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Family Members -->
+        <% family_count = @family_members&.count || 0 %>
+        <div class="section-item">
+          <div class="section-header" data-bs-toggle="collapse" data-bs-target="#familyMembers" aria-expanded="false">
+            <div class="section-title">
+              <i class="bi bi-people"></i>
+              <span>Family Members</span>
+            </div>
+            <div class="section-actions">
+              <span class="count-badge"><%= family_count %></span>
+              <i class="bi bi-chevron-down toggle-icon"></i>
+            </div>
+          </div>
+          <div id="familyMembers" class="section-content collapse">
+            <% if @family_members.any? %>
+              <div class="family-list">
+                <% @family_members.each do |member| %>
+                  <div class="family-card">
+                    <div class="family-info">
+                      <h4><%= member.name %></h4>
+                      <span class="relationship"><%= member.relationship&.humanize %></span>
+                    </div>
+                    <div class="family-meta">
+                      <span class="age">Age: <%= member.age || '-' %></span>
+                      <%= link_to edit_admin_customer_family_member_path(@customer, member), class: "edit-family-btn" do %>
+                        <i class="bi bi-pencil"></i>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+              <div class="section-footer">
+                <%= link_to new_admin_customer_family_member_path(@customer), class: "add-btn" do %>
+                  <i class="bi bi-plus"></i>
+                  <span>Add Family Member</span>
+                <% end %>
+              </div>
+            <% else %>
+              <div class="empty-state">
+                <i class="bi bi-people"></i>
+                <p>No family members added yet.</p>
+                <%= link_to new_admin_customer_family_member_path(@customer), class: "add-btn" do %>
+                  <i class="bi bi-plus"></i>
+                  <span>Add First Family Member</span>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Uploaded Documents -->
+        <% documents_count = @uploaded_documents&.count || 0 %>
+        <div class="section-item">
+          <div class="section-header" data-bs-toggle="collapse" data-bs-target="#documents" aria-expanded="false">
+            <div class="section-title">
+              <i class="bi bi-file-earmark"></i>
+              <span>Uploaded Documents</span>
+            </div>
+            <div class="section-actions">
+              <span class="count-badge"><%= documents_count %></span>
+              <i class="bi bi-chevron-down toggle-icon"></i>
+            </div>
+          </div>
+          <div id="documents" class="section-content collapse">
+            <% if @uploaded_documents.any? %>
+              <div class="documents-grid">
+                <% @uploaded_documents.each do |document| %>
+                  <div class="document-card">
+                    <div class="document-icon">
+                      <i class="bi bi-file-earmark-pdf"></i>
+                    </div>
+                    <div class="document-info">
+                      <h4><%= document.document_type&.humanize || 'Document' %></h4>
+                      <span class="file-name"><%= document.file.filename if document.file.attached? %></span>
+                    </div>
+                    <% if document.file.attached? %>
+                      <%= link_to rails_blob_url(document.file), target: '_blank', class: "view-doc-btn" do %>
+                        <i class="bi bi-eye"></i>
+                      <% end %>
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+              <div class="section-footer">
+                <%= link_to new_admin_customer_document_path(@customer), class: "add-btn" do %>
+                  <i class="bi bi-plus"></i>
+                  <span>Add Document</span>
+                <% end %>
+              </div>
+            <% else %>
+              <div class="empty-state">
+                <i class="bi bi-file-earmark-x"></i>
+                <p>No documents uploaded yet.</p>
+                <%= link_to new_admin_customer_document_path(@customer), class: "add-btn" do %>
+                  <i class="bi bi-plus"></i>
+                  <span>Add First Document</span>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Insurance Policies -->
+        <% policies_count = @all_policies&.count || 0 %>
+        <div class="section-item">
+          <div class="section-header" data-bs-toggle="collapse" data-bs-target="#insurancePolicies" aria-expanded="false">
+            <div class="section-title">
+              <i class="bi bi-shield-check"></i>
+              <span>Insurance Policies</span>
+            </div>
+            <div class="section-actions">
+              <span class="count-badge"><%= policies_count %></span>
+              <i class="bi bi-chevron-down toggle-icon"></i>
+            </div>
+          </div>
+          <div id="insurancePolicies" class="section-content collapse">
+            <% if @all_policies.any? %>
+              <div class="policies-list">
+                <% @all_policies.each do |policy| %>
+                  <div class="policy-card">
+                    <div class="policy-header">
+                      <span class="policy-type"><%= policy[:type] %></span>
+                      <span class="policy-status <%= policy[:status] == 'Active' ? 'active' : 'inactive' %>">
+                        <%= policy[:status] %>
+                      </span>
+                    </div>
+                    <div class="policy-details">
+                      <h4><%= policy[:policy_number] %></h4>
+                      <p class="company"><%= policy[:company_name] %></p>
+                      <div class="policy-meta">
+                        <span class="premium"><%= indian_currency(policy[:premium]) %></span>
+                        <span class="end-date">Expires: <%= policy[:end_date]&.strftime('%d %b %Y') %></span>
+                      </div>
+                    </div>
+                    <div class="policy-actions">
+                      <% case policy[:type] %>
+                      <% when 'Health Insurance' %>
+                        <%= link_to admin_health_insurance_path(policy[:policy]), class: "view-policy-btn" do %>
+                          <i class="bi bi-eye"></i>
+                        <% end %>
+                      <% when 'Life Insurance' %>
+                        <%= link_to admin_life_insurance_path(policy[:policy]), class: "view-policy-btn" do %>
+                          <i class="bi bi-eye"></i>
+                        <% end %>
+                      <% when 'Motor Insurance' %>
+                        <%= link_to admin_motor_insurance_path(policy[:policy]), class: "view-policy-btn" do %>
+                          <i class="bi bi-eye"></i>
+                        <% end %>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            <% else %>
+              <div class="empty-state">
+                <i class="bi bi-shield-x"></i>
+                <p>No insurance policies found.</p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Customer Avatar -->
+      <div class="customer-avatar">
+        <div class="avatar-circle">
+          <span><%= @customer.display_name.present? ? @customer.display_name.first.upcase : 'U' %></span>
+        </div>
+        <h3><%= @customer.display_name %></h3>
+        <p>Customer ID: #<%= @customer.id %></p>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number"><%= policies_count %></div>
+          <div class="stat-label">Policies</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number"><%= family_count %></div>
+          <div class="stat-label">Family</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number"><%= documents_count %></div>
+          <div class="stat-label">Documents</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h4>Quick Actions</h4>
+        <div class="action-buttons">
+          <%= link_to edit_admin_customer_path(@customer), class: "action-btn edit" do %>
+            <i class="bi bi-pencil"></i>
+            <span>Edit Customer</span>
+          <% end %>
+          <%= link_to trace_commission_admin_customer_path(@customer), class: "action-btn summary" do %>
+            <i class="bi bi-graph-up"></i>
+            <span>Insurance Summary</span>
+          <% end %>
+          <div class="action-btn add-policy">
+            <i class="bi bi-plus-circle"></i>
+            <span>Add Policy</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.modern-customer-page {
+  background: #f8fafc;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Header */
+.page-header {
+  background: white;
+  padding: 24px 32px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6366f1;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.back-link:hover {
+  color: #4f46e5;
+}
+
+.customer-header {
+  flex: 1;
+  margin-left: 32px;
+}
+
+.customer-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.customer-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.customer-badge {
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.customer-badge.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.customer-badge.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.customer-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #6b7280;
+}
+
+.badge-type {
+  background: #ede9fe;
+  color: #6366f1;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.edit-btn {
+  background: #6366f1;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: none;
+}
+
+.edit-btn:hover {
+  background: #4f46e5;
+  color: white;
+}
+
+/* Layout */
+.content-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 32px;
+  padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.main-content {
+  space-y: 24px;
+}
+
+/* Basic Info Card */
+.info-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+.card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #374151;
+  font-weight: 600;
+}
+
+.card-content {
+  padding: 24px;
+}
+
+.info-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.info-item i {
+  width: 20px;
+  height: 20px;
+  color: #6366f1;
+  font-size: 20px;
+}
+
+.info-details label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.info-details span {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+/* Collapsible Sections */
+.collapsible-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-item {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.section-header {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: white;
+  width: 100%;
+}
+
+.section-header:hover {
+  background: #f8fafc;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.section-title i {
+  width: 20px;
+  height: 20px;
+  color: #6366f1;
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.count-badge {
+  background: #ede9fe;
+  color: #6366f1;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: center;
+}
+
+.detail-badge {
+  background: #f3f4f6;
+  color: #6b7280;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.toggle-icon {
+  color: #9ca3af;
+  transition: transform 0.2s;
+}
+
+.section-header[aria-expanded="true"] .toggle-icon {
+  transform: rotate(180deg);
+}
+
+.section-content {
+  border-top: 1px solid #e2e8f0;
+  padding: 24px;
+}
+
+/* Lead Cards */
+.lead-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.primary-lead {
+  background: #f8fafc;
+  border-color: #6366f1;
+}
+
+.lead-header {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.lead-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.lead-badges .badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge.parent {
+  background: #ddd6fe;
+  color: #6366f1;
+}
+
+.badge.branch {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.badge.primary {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.view-btn {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #6366f1;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.view-btn:hover {
+  background: #6366f1;
+  color: white;
+}
+
+.lead-details {
+  space-y: 16px;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.detail-item label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.detail-item span {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.lead-id {
+  background: #ede9fe;
+  color: #6366f1;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.converted {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.conversion-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0fdf4;
+  padding: 12px;
+  border-radius: 8px;
+  color: #16a34a;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 16px;
+}
+
+.notes-section {
+  margin-top: 16px;
+}
+
+.notes-section label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.notes-content {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Details Grid */
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.detail-card {
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.detail-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.detail-card label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.detail-card span {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+/* Family Cards */
+.family-list {
+  space-y: 12px;
+}
+
+.family-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.family-info h4 {
+  margin: 0 0 4px 0;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.family-info .relationship {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.family-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.family-meta .age {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.edit-family-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  padding: 6px;
+  border-radius: 4px;
+  color: #6b7280;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.edit-family-btn:hover {
+  background: #6366f1;
+  color: white;
+  border-color: #6366f1;
+}
+
+/* Document Cards */
+.documents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.document-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.document-icon {
+  width: 40px;
+  height: 40px;
+  background: #ede9fe;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6366f1;
+  font-size: 18px;
+}
+
+.document-info {
+  flex: 1;
+}
+
+.document-info h4 {
+  margin: 0 0 4px 0;
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.document-info .file-name {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.view-doc-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  padding: 8px;
+  border-radius: 6px;
+  color: #6b7280;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.view-doc-btn:hover {
+  background: #6366f1;
+  color: white;
+  border-color: #6366f1;
+}
+
+/* Policy Cards */
+.policies-list {
+  space-y: 16px;
+}
+
+.policy-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.policy-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.policy-type {
+  background: #ede9fe;
+  color: #6366f1;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.policy-status.active {
+  background: #dcfce7;
+  color: #16a34a;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.policy-status.inactive {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.policy-details h4 {
+  margin: 0 0 4px 0;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.policy-details .company {
+  margin: 0 0 8px 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.policy-meta {
+  display: flex;
+  gap: 16px;
+}
+
+.policy-meta .premium {
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.policy-meta .end-date {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.view-policy-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  padding: 8px;
+  border-radius: 6px;
+  color: #6b7280;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.view-policy-btn:hover {
+  background: #6366f1;
+  color: white;
+  border-color: #6366f1;
+}
+
+/* Common Elements */
+.section-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.add-btn {
+  background: #6366f1;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.add-btn:hover {
+  background: #4f46e5;
+  color: white;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+}
+
+.empty-state i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+/* Sidebar */
+.sidebar {
+  space-y: 24px;
+}
+
+.customer-avatar {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.avatar-circle {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px auto;
+  color: white;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.customer-avatar h3 {
+  margin: 0 0 4px 0;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.customer-avatar p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card {
+  background: white;
+  padding: 20px 16px;
+  text-align: center;
+}
+
+.stat-card:not(:last-child) {
+  border-right: 1px solid #e2e8f0;
+}
+
+.stat-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #6366f1;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.quick-actions {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+}
+
+.quick-actions h4 {
+  margin: 0 0 16px 0;
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.action-btn.edit {
+  background: #fef3c7;
+  color: #d97706;
+  border-color: #fbbf24;
+}
+
+.action-btn.edit:hover {
+  background: #d97706;
+  color: white;
+}
+
+.action-btn.summary {
+  background: #dbeafe;
+  color: #2563eb;
+  border-color: #3b82f6;
+}
+
+.action-btn.summary:hover {
+  background: #2563eb;
+  color: white;
+}
+
+.action-btn.add-policy {
+  background: #dcfce7;
+  color: #16a34a;
+  border-color: #22c55e;
+}
+
+.action-btn.add-policy:hover {
+  background: #16a34a;
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .content-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .customer-header {
+    margin-left: 0;
+  }
+
+  .customer-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-row {
+    grid-template-columns: 1fr;
+  }
+
+  .documents-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .policy-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card:not(:last-child) {
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize collapse functionality
+  const collapseElements = document.querySelectorAll('[data-bs-toggle="collapse"]');
+
+  collapseElements.forEach(element => {
+    element.addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('data-bs-target'));
+      const isExpanded = this.getAttribute('aria-expanded') === 'true';
+
+      // Close all other sections
+      collapseElements.forEach(otherElement => {
+        if (otherElement !== this) {
+          const otherTarget = document.querySelector(otherElement.getAttribute('data-bs-target'));
+          otherTarget.classList.remove('show');
+          otherElement.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      // Toggle current section
+      if (isExpanded) {
+        target.classList.remove('show');
+        this.setAttribute('aria-expanded', 'false');
+      } else {
+        target.classList.add('show');
+        this.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+});
+</script>

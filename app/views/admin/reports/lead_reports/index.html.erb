@@ -1,0 +1,525 @@
+<!-- Success/Error Messages -->
+<% if flash[:success] %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle me-2"></i>
+    <%= flash[:success] %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% end %>
+
+<% if flash[:notice] %>
+  <div class="alert alert-info alert-dismissible fade show" role="alert">
+    <i class="bi bi-info-circle me-2"></i>
+    <%= flash[:notice] %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% end %>
+
+<% if flash[:alert] %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    <%= flash[:alert] %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% end %>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Lead Reports</h2>
+    <p class="text-muted mb-0">Generate a report of leads based on stage and creation date.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-success" id="exportBtn">
+      <i class="bi bi-download me-2"></i>Export
+    </button>
+    <%= link_to new_admin_reports_lead_report_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-circle me-1"></i>Save Report
+    <% end %>
+  </div>
+</div>
+
+<!-- Filter Panel -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0 pb-0">
+    <h6 class="mb-0"><i class="bi bi-funnel me-2 text-primary"></i>Filters</h6>
+  </div>
+  <div class="card-body">
+    <%= form_with url: admin_reports_lead_reports_path, method: :get, local: true, id: "filter_form" do |f| %>
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <%= f.label :start_date, "From", class: "form-label mb-1 small fw-semibold" %>
+          <%= f.date_field :start_date, value: @filter_start_date, class: "form-control form-control-sm" %>
+        </div>
+        <div class="col-md-3">
+          <%= f.label :end_date, "To", class: "form-label mb-1 small fw-semibold" %>
+          <%= f.date_field :end_date, value: @filter_end_date, class: "form-control form-control-sm" %>
+        </div>
+        <div class="col-md-2">
+          <%= f.label :current_stage, "Stage", class: "form-label mb-1 small fw-semibold" %>
+          <%= f.select :current_stage,
+                options_for_select(@lead_stages, @filter_stage),
+                {},
+                { class: "form-select form-select-sm" } %>
+        </div>
+        <div class="col-md-2">
+          <%= f.label :product_category, "Category", class: "form-label mb-1 small fw-semibold" %>
+          <%= f.select :product_category,
+                options_for_select(@product_categories, @filter_category),
+                {},
+                { class: "form-select form-select-sm" } %>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-primary btn-sm flex-fill">
+            <i class="bi bi-search me-1"></i>Apply
+          </button>
+          <%= link_to admin_reports_lead_reports_path, class: "btn btn-outline-secondary btn-sm" do %>
+            <i class="bi bi-x-circle"></i>
+          <% end %>
+        </div>
+      </div>
+      <!-- Quick range shortcuts -->
+      <div class="mt-2 d-flex gap-2 flex-wrap">
+        <small class="text-muted me-1 align-self-center">Quick:</small>
+        <% [
+          ['Today',       Date.current,                   Date.current],
+          ['This Week',   Date.current.beginning_of_week, Date.current],
+          ['This Month',  Date.current.beginning_of_month, Date.current],
+          ['Last Month',  1.month.ago.to_date.beginning_of_month, 1.month.ago.to_date.end_of_month],
+          ['Last 3 Months', 3.months.ago.to_date, Date.current],
+        ].each do |label, from, to| %>
+          <%= link_to admin_reports_lead_reports_path(start_date: from, end_date: to, current_stage: @filter_stage, product_category: @filter_category),
+                class: "badge text-bg-light border text-decoration-none" do %>
+            <%= label %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Leads Data Table -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+    <h6 class="mb-0">
+      Leads from <%= Date.parse(@filter_start_date).strftime('%d %b %Y') %> to <%= Date.parse(@filter_end_date).strftime('%d %b %Y') %>
+      <span class="badge bg-primary ms-2"><%= @leads.count %></span>
+    </h6>
+  </div>
+  <div class="card-body p-0">
+    <% if @leads.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 small">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Lead ID</th>
+              <th class="border-0">Name</th>
+              <th class="border-0">Contact</th>
+              <th class="border-0">Affiliate</th>
+              <th class="border-0">Product</th>
+              <th class="border-0">Stage</th>
+              <th class="border-0">Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @leads.each do |lead| %>
+              <tr>
+                <td class="text-muted"><%= lead.lead_id %></td>
+                <td><%= lead.display_name %></td>
+                <td>
+                  <%= lead.contact_number %><br>
+                  <small class="text-muted"><%= lead.email %></small>
+                </td>
+                <td><%= lead.affiliate_name %></td>
+                <td><%= lead.product_display_name %></td>
+                <td>
+                  <span class="badge bg-secondary bg-opacity-75">
+                    <%= lead.current_stage&.humanize || 'N/A' %>
+                  </span>
+                </td>
+                <td class="text-muted"><%= lead.created_date&.strftime('%d %b %Y') %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+        <h6 class="text-muted">No leads found for the selected period</h6>
+        <p class="text-muted small mb-0">Try adjusting the filters above</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Reports</h6>
+            <h3 class="mb-0 text-primary"><%= number_with_delimiter(@total_reports || 0) %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-file-text text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">This Month</h6>
+            <h3 class="mb-0 text-success"><%= number_with_delimiter(@this_month_reports || 0) %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-calendar-month text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Last Generated</h6>
+            <p class="mb-0 text-info">
+              <%= @last_generated ? @last_generated.strftime('%d %b %Y') : 'Never' %>
+            </p>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-clock-history text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Leads</h6>
+            <h3 class="mb-0 text-warning"><%= number_with_delimiter(@total_leads_from_reports || 0) %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-people text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Saved Reports List -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">Saved Reports</h5>
+  </div>
+  <div class="card-body p-0">
+    <% if @saved_reports && @saved_reports.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Report Name</th>
+              <th class="border-0">Date Range</th>
+              <th class="border-0">Stage</th>
+              <th class="border-0">Created At</th>
+              <th class="border-0">Created By</th>
+              <th class="border-0 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @saved_reports.each do |report| %>
+              <tr>
+                <td>
+                  <div>
+                    <h6 class="mb-1">
+                      <i class="bi bi-file-earmark-text text-primary me-1"></i>
+                      <%= report.name %>
+                    </h6>
+                    <% if report.filters %>
+                      <div class="mt-1">
+                        <% if report.filters['current_stage'].present? %>
+                          <span class="badge bg-info me-1">
+                            <i class="bi bi-tag-fill me-1"></i><%= report.filters['current_stage'].humanize %>
+                          </span>
+                        <% end %>
+                        <% if report.filters['product_category'].present? %>
+                          <span class="badge bg-secondary me-1">
+                            <i class="bi bi-box-fill me-1"></i><%= report.filters['product_category'].humanize %>
+                          </span>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <% if report.filters && report.filters['start_date'] && report.filters['end_date'] %>
+                    <div>
+                      <i class="bi bi-calendar-range text-muted me-1"></i>
+                      <small>
+                        <%= Date.parse(report.filters['start_date'].to_s).strftime('%d %b %Y') %> -
+                        <%= Date.parse(report.filters['end_date'].to_s).strftime('%d %b %Y') %>
+                      </small>
+                    </div>
+                    <small class="text-muted">
+                      <% days = (Date.parse(report.filters['end_date'].to_s) - Date.parse(report.filters['start_date'].to_s)).to_i + 1 %>
+                      (<%= pluralize(days, 'day') %>)
+                    </small>
+                  <% else %>
+                    <small class="text-muted">
+                      <i class="bi bi-infinity me-1"></i>All Time
+                    </small>
+                  <% end %>
+                </td>
+                <td>
+                  <% stage = report.filters&.dig('current_stage') %>
+                  <% if stage.present? %>
+                    <span class="badge bg-primary">
+                      <%= stage.humanize %>
+                    </span>
+                  <% else %>
+                    <small class="text-muted">All Stages</small>
+                  <% end %>
+                </td>
+                <td>
+                  <small class="text-muted">
+                    <i class="bi bi-clock me-1"></i>
+                    <%= report.created_at.strftime('%d %b %Y') %>
+                    <br>
+                    <%= report.created_at.strftime('%I:%M %p') %>
+                  </small>
+                </td>
+                <td>
+                  <small class="text-muted">
+                    <i class="bi bi-person-circle me-1"></i>
+                    <%= report.created_by&.full_name || 'System' %>
+                  </small>
+                </td>
+                <td>
+                  <div class="d-flex gap-1 justify-content-center">
+
+                    <%= link_to export_csv_admin_reports_lead_report_path(report),
+                                class: "btn btn-sm btn-outline-success",
+                                title: "Export CSV" do %>
+                      <i class="bi bi-file-earmark-excel"></i>
+                    <% end %>
+
+                    <%= button_to destroy_saved_report_admin_reports_lead_report_path(report),
+                                method: :delete,
+                                data: { turbo_confirm: "Are you sure you want to delete this report?" },
+                                class: "btn btn-sm btn-outline-danger",
+                                title: "Delete Report",
+                                form: { style: "display: inline-block;" } do %>
+                      <i class="bi bi-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <% if @saved_reports.respond_to?(:total_pages) && @saved_reports.total_pages > 1 %>
+        <div class="card-footer bg-transparent border-0">
+          <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <small class="text-muted mb-2 mb-md-0">
+              Showing <%= @saved_reports.current_page == 1 ? 1 : ((@saved_reports.current_page - 1) * @saved_reports.limit_value + 1) %>
+              to <%= [@saved_reports.current_page * @saved_reports.limit_value, @saved_reports.total_count].min %>
+              of <%= number_with_delimiter(@saved_reports.total_count) %> reports
+            </small>
+            <div class="pagination-wrapper">
+              <%= paginate @saved_reports %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-people-fill fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No reports generated yet</h5>
+        <p class="text-muted mb-3">
+          Generate your first lead report to track conversions and performance.
+        </p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exportModalLabel">
+          <i class="bi bi-download me-2"></i>Export Lead Report
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <%= form_with url: "", method: :post, id: "exportForm", class: "needs-validation", novalidate: true do |form| %>
+          <!-- Export Format -->
+          <div class="mb-4">
+            <h6>Export Format</h6>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="export_format" value="csv" id="format_csv" checked>
+                  <label class="form-check-label" for="format_csv">
+                    <i class="bi bi-file-earmark-spreadsheet text-success me-1"></i> CSV Spreadsheet
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column Selection -->
+          <div class="mb-4">
+            <h6>Select Columns to Export</h6>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="columns[]" value="report_name" id="col_report_name" checked>
+                  <label class="form-check-label" for="col_report_name">Report Name</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="columns[]" value="date_range" id="col_date_range" checked>
+                  <label class="form-check-label" for="col_date_range">Date Range</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="columns[]" value="stage" id="col_stage" checked>
+                  <label class="form-check-label" for="col_stage">Stage</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="columns[]" value="created_at" id="col_created_at" checked>
+                  <label class="form-check-label" for="col_created_at">Created At</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="columns[]" value="created_by" id="col_created_by" checked>
+                  <label class="form-check-label" for="col_created_by">Created By</label>
+                </div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllColumns()">Select All</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllColumns()">Deselect All</button>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="performExport()">
+          <i class="bi bi-download me-2"></i>Export
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Export button click handler
+  document.getElementById('exportBtn').addEventListener('click', function() {
+    const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+    exportModal.show();
+  });
+});
+
+function selectAllColumns() {
+  const checkboxes = document.querySelectorAll('input[name="columns[]"]');
+  checkboxes.forEach(checkbox => checkbox.checked = true);
+}
+
+function deselectAllColumns() {
+  const checkboxes = document.querySelectorAll('input[name="columns[]"]');
+  checkboxes.forEach(checkbox => checkbox.checked = false);
+}
+
+function performExport() {
+  const form = document.getElementById('exportForm');
+  const selectedColumns = document.querySelectorAll('input[name="columns[]"]:checked');
+  const exportBtn = document.querySelector('#exportModal .btn-primary');
+
+  // Check if at least one column is selected
+  if (selectedColumns.length === 0) {
+    alert('Please select at least one column to export.');
+    return;
+  }
+
+  // Show loader
+  const originalBtnText = exportBtn.innerHTML;
+  exportBtn.disabled = true;
+  exportBtn.innerHTML = '<i class="bi bi-arrow-clockwise me-2 spin"></i>Exporting...';
+
+  function resetButton() {
+    exportBtn.disabled = false;
+    exportBtn.innerHTML = originalBtnText;
+  }
+
+  // Create CSV content from current table
+  let csvContent = 'Report Name,Date Range,Stage,Created At,Created By\n';
+
+  const tableRows = document.querySelectorAll('table tbody tr');
+  tableRows.forEach(row => {
+    const cells = row.querySelectorAll('td');
+    if (cells.length >= 5) {
+      const reportName = cells[0].textContent.trim().split('\n')[0];
+      const dateRange = cells[1].textContent.trim().replace(/\s+/g, ' ');
+      const stage = cells[2].textContent.trim();
+      const createdAt = cells[3].textContent.trim().replace(/\s+/g, ' ');
+      const createdBy = cells[4].textContent.trim().replace(/\s+/g, ' ');
+
+      csvContent += `"${reportName}","${dateRange}","${stage}","${createdAt}","${createdBy}"\n`;
+    }
+  });
+
+  // Download CSV
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Lead_Reports_${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+
+  // Reset button and close modal
+  resetButton();
+  const exportModal = bootstrap.Modal.getInstance(document.getElementById('exportModal'));
+  exportModal.hide();
+}
+</script>
+
+<style>
+.min-width-250 { min-width: 250px; }
+
+/* Spinning loader */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>

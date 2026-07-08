@@ -1,0 +1,719 @@
+<%
+  filter_params = {}
+  filter_params[:customer_id] = @filter_customer_id if @filter_customer_id.present?
+  filter_params[:month]       = @filter_month       if @filter_month.present?
+  filter_params[:year]        = @filter_year        if @filter_year.present?
+  filter_params[:date_from]   = @filter_date_from   if @filter_date_from.present?
+  filter_params[:date_to]     = @filter_date_to     if @filter_date_to.present?
+
+  period_label = nil
+  if @filter_month.present? && @filter_year.present?
+    period_label = Date.new(@filter_year.to_i, @filter_month.to_i, 1).strftime('%B %Y')
+  elsif @filter_date_from.present? && @filter_date_to.present?
+    from_d = Date.parse(@filter_date_from)
+    q = ((from_d.month - 1) / 3) + 1
+    period_label = "Q#{q} #{from_d.year}"
+  elsif @filter_year.present?
+    period_label = "Year #{@filter_year}"
+  end
+
+  quarters = []
+  q_start = Date.current.beginning_of_quarter
+  8.times do |i|
+    d = q_start << (i * 3)
+    q = ((d.month - 1) / 3) + 1
+    quarters << { q: q, year: d.year, from: d, to: d.end_of_quarter }
+  end
+  quarters.uniq! { |x| "#{x[:q]}:#{x[:year]}" }
+%>
+
+<style>
+/* ── Header ─────────────────────── */
+.ct-header-card {
+  background:#fff; border:1px solid #e8edf2; border-radius:14px;
+  box-shadow:0 2px 10px rgba(0,0,0,.05); margin-bottom:16px;
+}
+.stat-pill {
+  display:flex; align-items:center; gap:10px; border-radius:10px;
+  padding:10px 14px; border:1px solid transparent; transition:all .2s;
+}
+.stat-pill:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,0,0,.07); }
+.stat-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:.9rem; }
+.stat-label { font-size:.67rem; color:#94a3b8; line-height:1; margin-bottom:3px; text-transform:uppercase; letter-spacing:.4px; }
+.stat-value { font-size:.9rem; font-weight:700; line-height:1; }
+
+/* ── Filter ─────────────────────── */
+.ct-filter-card {
+  background:linear-gradient(135deg,#f8faff 0%,#fafbff 100%);
+  border:1px solid #e2e8f0; border-radius:12px;
+  box-shadow:0 2px 8px rgba(102,126,234,.06); margin-bottom:0;
+}
+.filter-label {
+  font-size:10.5px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.6px; color:#64748b; margin-bottom:5px; display:block;
+}
+.filter-select {
+  border:1.5px solid #e2e8f0; border-radius:8px; padding:.45rem .75rem;
+  font-size:13.5px; color:#1e293b; background:#fff; width:100%; height:40px;
+  transition:border-color .18s,box-shadow .18s;
+}
+.filter-select:focus { border-color:#667eea; box-shadow:0 0 0 3px rgba(102,126,234,.13); outline:none; }
+.btn-filter-apply {
+  background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); border:none;
+  border-radius:8px; height:40px; padding:0 1.4rem; font-size:13.5px;
+  font-weight:600; color:#fff; cursor:pointer; transition:all .2s; white-space:nowrap;
+}
+.btn-filter-apply:hover { transform:translateY(-1px); box-shadow:0 5px 18px rgba(102,126,234,.38); color:#fff; }
+.btn-filter-clear {
+  border:1.5px solid #e2e8f0; border-radius:8px; height:40px; padding:0 1.1rem;
+  font-size:13.5px; font-weight:500; color:#64748b; background:#fff; cursor:pointer;
+  transition:all .18s; white-space:nowrap; text-decoration:none;
+  display:inline-flex; align-items:center; gap:4px;
+}
+.btn-filter-clear:hover { border-color:#ef4444; color:#dc2626; background:#fff5f5; }
+.filter-badge {
+  display:inline-flex; align-items:center; gap:5px; border-radius:20px;
+  padding:4px 12px; font-size:11.5px; font-weight:600;
+}
+.filter-badge.blue  { background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; }
+.filter-badge.green { background:#f0fdf4; border:1px solid #bbf7d0; color:#15803d; }
+
+/* ── Tab bar ─────────────────────── */
+.ct-tab-bar {
+  background:#fff; border:1px solid #e2e8f0; border-bottom:none;
+  border-radius:10px 10px 0 0; padding:0 12px;
+  display:flex; align-items:stretch; gap:0;
+}
+.ct-tab-link {
+  color:#64748b; font-weight:500; padding:.65rem 1.1rem;
+  border-bottom:3px solid transparent; background:transparent;
+  text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+  font-size:13.5px; transition:all .18s; white-space:nowrap;
+}
+.ct-tab-link:hover { color:#667eea; border-bottom-color:#c7d2fe; background:#f8f9ff; }
+.ct-tab-link.active { color:#667eea; border-bottom-color:#667eea; font-weight:700; }
+.tab-count { font-size:11px; font-weight:700; border-radius:20px; padding:1px 8px; margin-left:2px; background:#f1f5f9; color:#64748b; }
+.ct-tab-link.active .tab-count-all  { background:#eff6ff; color:#1d4ed8; }
+.ct-tab-link.active .tab-count-paid { background:#f0fdf4; color:#15803d; }
+.ct-tab-link.active .tab-count-pend { background:#fffbeb; color:#b45309; }
+
+/* ── Table ─────────────────────── */
+.ct-table-card {
+  border:1px solid #e2e8f0; border-radius:0 0 12px 12px;
+  box-shadow:0 4px 16px rgba(0,0,0,.06); background:#fff; overflow:hidden;
+}
+.ct-table-card .table th {
+  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+  color:#64748b; background:#f8fafc; border-bottom:1px solid #e2e8f0;
+  padding:.7rem 1rem; white-space:nowrap;
+}
+.ct-table-card .table td { vertical-align:middle; border-color:#f1f5f9; padding:.7rem 1rem; }
+.ct-table-card .table tbody tr:hover { background:#f8f9ff; }
+.policy-num-link { font-weight:700; color:#667eea; font-size:13.5px; text-decoration:none; }
+.policy-num-link:hover { color:#4f46e5; text-decoration:underline; }
+.ins-badge { font-size:10px; font-weight:700; border-radius:4px; padding:2px 7px; text-transform:uppercase; letter-spacing:.3px; }
+.created-date { font-size:12.5px; font-weight:600; color:#334155; }
+.created-time { font-size:11px; color:#94a3b8; }
+.mark-paid-link { color:#2563eb; font-size:13px; font-weight:600; text-decoration:none; }
+.mark-paid-link:hover { text-decoration:underline; color:#1d4ed8; }
+
+/* ── Modal ─────────────────────── */
+.modal-backdrop { display:none !important; }
+.modal { position:fixed !important; top:0 !important; left:0 !important; width:100% !important; height:100% !important; overflow-x:hidden !important; overflow-y:auto !important; background:transparent !important; }
+.modal.show { display:block !important; z-index:9999 !important; }
+.modal-backdrop.show { display:none !important; }
+body.modal-open { overflow:visible !important; padding-right:0 !important; }
+#mainAgentCommissionModal { z-index:9999 !important; }
+#mainAgentCommissionModal .modal-dialog { max-width:480px; margin:8rem auto 2rem; z-index:10000; }
+#mainAgentCommissionModal .modal-content { border:2px solid #dee2e6; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.15); background:#fff; }
+#mainAgentCommissionModal .modal-header { background:#198754; color:#fff; padding:1rem 1.5rem; border-bottom:1px solid #e9ecef; }
+#mainAgentCommissionModal .modal-body { background:#fff; padding:1.5rem; }
+#mainAgentCommissionModal .modal-footer { background:#fff; padding:1rem 1.5rem; border-top:1px solid #e9ecef; }
+#mainAgentCommissionModal .btn-close { filter:invert(1); }
+#mainAgentCommissionModal input,
+#mainAgentCommissionModal textarea,
+#mainAgentCommissionModal button { position:relative; z-index:10010; pointer-events:auto; }
+</style>
+
+<!-- Header + Stats -->
+<div class="ct-header-card p-3 mb-3">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h5 class="mb-0 fw-bold">Payout Management</h5>
+    <%= link_to summary_admin_commission_tracking_index_path, class: "btn btn-sm btn-outline-secondary" do %>
+      <i class="bi bi-file-earmark-text me-1"></i>Summary Report
+    <% end %>
+  </div>
+  <div class="row g-2">
+    <div class="col-6 col-xl-3">
+      <div class="stat-pill" style="background:#eff6ff;border-color:#dbeafe;">
+        <div class="stat-icon bg-primary bg-opacity-10"><i class="bi bi-currency-rupee text-primary"></i></div>
+        <div><div class="stat-label">Commission Generated</div><div class="stat-value text-primary"><%= indian_currency(@total_commission_generated.to_i) %></div></div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-pill" style="background:#f0fdf4;border-color:#bbf7d0;">
+        <div class="stat-icon bg-success bg-opacity-10"><i class="bi bi-arrow-right-circle text-success"></i></div>
+        <div><div class="stat-label">Total Transferred</div><div class="stat-value text-success"><%= indian_currency(@total_transferred.to_i) %></div></div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-pill" style="background:#fffbeb;border-color:#fde68a;">
+        <div class="stat-icon bg-warning bg-opacity-10"><i class="bi bi-clock text-warning"></i></div>
+        <div><div class="stat-label">Pending Transfers</div><div class="stat-value text-warning"><%= indian_currency(@pending_transfers.to_i) %></div></div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-pill" style="background:#f0f9ff;border-color:#bae6fd;">
+        <div class="stat-icon bg-info bg-opacity-10"><i class="bi bi-building text-info"></i></div>
+        <div><div class="stat-label">Company Expenses</div><div class="stat-value text-info"><%= indian_currency(@company_expenses.to_i) %></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Panel -->
+<div class="ct-filter-card p-3 mb-3">
+  <%= form_with url: admin_commission_tracking_index_path, method: :get, local: true, id: "filterForm" do %>
+    <input type="hidden" name="tab"       value="<%= @tab %>">
+    <input type="hidden" name="month" id="hiddenMonth" value="<%= @filter_month %>">
+    <input type="hidden" name="year"  id="hiddenYear"  value="<%= @filter_year %>">
+
+    <div class="row g-2 align-items-end">
+      <div class="col-lg-3 col-md-6">
+        <label class="filter-label"><i class="bi bi-person-circle me-1"></i>Customer</label>
+        <select id="customerSelect" name="customer_id" style="width:100%">
+          <option value=""></option>
+          <% @customers_for_filter.each do |c| %>
+            <option value="<%= c.id %>" <%= 'selected' if @filter_customer_id.to_s == c.id.to_s %>><%= c.display_name %></option>
+          <% end %>
+        </select>
+      </div>
+
+      <div class="col-lg-3 col-md-6">
+        <label class="filter-label"><i class="bi bi-calendar3 me-1"></i>Period</label>
+        <select class="filter-select" id="periodSelect">
+          <option value="">— All Time —</option>
+          <optgroup label="⚡ Quick Presets">
+            <option value="this_month">This Month · <%= Date.current.strftime('%b %Y') %></option>
+            <option value="last_month">Last Month · <%= 1.month.ago.strftime('%b %Y') %></option>
+            <option value="this_quarter">This Quarter · Q<%= ((Date.current.month-1)/3)+1 %> <%= Date.current.year %></option>
+            <option value="last_quarter">Last Quarter · Q<%= ((3.months.ago.to_date.month-1)/3)+1 %> <%= 3.months.ago.to_date.year %></option>
+            <option value="this_year">This Year · <%= Date.current.year %></option>
+            <option value="last_year">Last Year · <%= Date.current.year - 1 %></option>
+          </optgroup>
+          <optgroup label="📅 Monthly (last 12)">
+            <% 12.times do |i| %>
+              <% d = i.months.ago.to_date %>
+              <option value="month:<%= d.month %>:<%= d.year %>"><%= d.strftime('%B %Y') %></option>
+            <% end %>
+          </optgroup>
+          <optgroup label="📊 Quarterly">
+            <% quarters.each do |qt| %>
+              <option value="quarter:<%= qt[:q] %>:<%= qt[:year] %>">Q<%= qt[:q] %> <%= qt[:year] %> (<%= qt[:from].strftime('%b') %>–<%= qt[:to].strftime('%b') %>)</option>
+            <% end %>
+          </optgroup>
+          <optgroup label="📆 Yearly">
+            <% (Date.current.year).downto(Date.current.year - 4) do |y| %>
+              <option value="year:<%= y %>"><%= y %></option>
+            <% end %>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="col-lg-2 col-md-6">
+        <label class="filter-label"><i class="bi bi-calendar-event me-1"></i>From</label>
+        <input type="date" id="dateFromInput" name="date_from" class="filter-select"
+               value="<%= @filter_date_from %>" placeholder="From date"
+               style="padding: 0 10px; cursor:pointer;">
+      </div>
+
+      <div class="col-lg-2 col-md-6">
+        <label class="filter-label"><i class="bi bi-calendar-event me-1"></i>To</label>
+        <input type="date" id="dateToInput" name="date_to" class="filter-select"
+               value="<%= @filter_date_to %>" placeholder="To date"
+               style="padding: 0 10px; cursor:pointer;">
+      </div>
+
+      <div class="col-lg-2 col-md-12">
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+          <button type="submit" class="btn-filter-apply">
+            <i class="bi bi-funnel-fill me-1"></i>Apply
+          </button>
+          <%= link_to admin_commission_tracking_index_path(tab: @tab), class: "btn-filter-clear" do %>
+            <i class="bi bi-x-lg"></i> Clear
+          <% end %>
+          <span class="w-100 text-muted fw-semibold mt-1" style="font-size:12px;">
+            <i class="bi bi-list-ul me-1"></i><%= number_with_delimiter(@total_policies_count.to_i) %> records
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <% if @filter_customer_id.present? || period_label.present? %>
+      <div class="d-flex flex-wrap gap-2 mt-2 pt-2 border-top">
+        <span class="text-muted fw-semibold align-self-center" style="font-size:11px;">Active:</span>
+        <% if @filter_customer_id.present? %>
+          <span class="filter-badge green"><i class="bi bi-person-fill"></i><%= @filter_customer_name %></span>
+        <% end %>
+        <% if period_label.present? %>
+          <span class="filter-badge blue"><i class="bi bi-calendar-check"></i><%= period_label %></span>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+</div>
+
+<!-- Tab Bar -->
+<div class="ct-tab-bar">
+  <%= link_to admin_commission_tracking_index_path(filter_params.merge(tab: 'all')),
+      class: "ct-tab-link #{'active' if @tab == 'all'}" do %>
+    <i class="bi bi-grid-3x3-gap-fill opacity-75"></i> All Policies
+    <span class="tab-count <%= @tab == 'all' ? 'tab-count-all' : '' %>"><%= number_with_delimiter(@all_count) %></span>
+  <% end %>
+  <%= link_to admin_commission_tracking_index_path(filter_params.merge(tab: 'paid')),
+      class: "ct-tab-link #{'active' if @tab == 'paid'}" do %>
+    <i class="bi bi-check-circle-fill" style="color:#16a34a;opacity:.85;"></i> Paid
+    <span class="tab-count <%= @tab == 'paid' ? 'tab-count-paid' : '' %>"><%= number_with_delimiter(@paid_count) %></span>
+  <% end %>
+  <%= link_to admin_commission_tracking_index_path(filter_params.merge(tab: 'pending')),
+      class: "ct-tab-link #{'active' if @tab == 'pending'}" do %>
+    <i class="bi bi-clock-fill" style="color:#d97706;opacity:.85;"></i> Pending
+    <span class="tab-count <%= @tab == 'pending' ? 'tab-count-pend' : '' %>"><%= number_with_delimiter(@pending_count) %></span>
+  <% end %>
+</div>
+
+<!-- Table -->
+<div class="ct-table-card">
+  <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom" style="background:#f8fafc;">
+    <span class="fw-bold" style="font-size:13.5px;">
+      <%= @tab == 'paid' ? 'Paid' : @tab == 'pending' ? 'Pending' : 'All' %> Policies
+      <span class="text-muted fw-normal ms-1 small">(latest first)</span>
+    </span>
+  </div>
+
+  <% if @policies_with_commission.any? %>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Policy Details</th>
+            <th><i class="bi bi-calendar-event me-1"></i>Created</th>
+            <th>Customer</th>
+            <th>Premium</th>
+            <th>Commission</th>
+            <th>Main Agent</th>
+            <th>Transfer Status</th>
+            <th>Breakdown</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @policies_with_commission.each do |policy_data| %>
+            <% policy = policy_data[:policy] %>
+            <% type   = policy_data[:type] %>
+            <% cd     = policy_data[:commission_data] %>
+            <% ts     = policy_data[:transfer_status] %>
+            <% type_color = { 'health' => 'success', 'life' => 'primary', 'motor' => 'warning', 'other' => 'info' }[type] || 'secondary' %>
+            <% policy_url = case type
+               when 'health' then admin_health_insurance_path(policy.id)
+               when 'life'   then admin_life_insurance_path(policy.id)
+               when 'motor'  then admin_motor_insurance_path(policy.id)
+               when 'other'  then admin_other_insurance_path(policy.id)
+               end rescue nil %>
+            <tr>
+              <td>
+                <% if policy_url %>
+                  <%= link_to policy_url, class: "policy-num-link" do %>
+                    <i class="bi bi-box-arrow-up-right me-1" style="font-size:10px;"></i><%= policy.policy_number %>
+                  <% end %>
+                <% else %>
+                  <span class="fw-bold"><%= policy.policy_number %></span>
+                <% end %>
+                <br>
+                <span class="text-muted" style="font-size:12px;"><%= type.titleize %> Insurance</span>
+              </td>
+
+              <td>
+                <% payout_created = policy_data[:saved_payout]&.created_at %>
+                <% if payout_created %>
+                  <div class="created-date"><%= payout_created.strftime('%d %b %Y') %></div>
+                  <div class="created-time"><%= payout_created.strftime('%I:%M %p') %></div>
+                <% else %>
+                  <span class="text-muted">—</span>
+                <% end %>
+              </td>
+
+              <td>
+                <div class="fw-semibold" style="font-size:13.5px;"><%= policy.customer&.display_name || 'N/A' %></div>
+                <div class="text-muted" style="font-size:12px;"><%= policy.insurance_company_name || 'N/A' %></div>
+                <% if policy.lead_id.present? %>
+                  <div style="font-size:11.5px;color:#2563eb;"><i class="bi bi-person-plus me-1"></i>Lead: <%= policy.lead_id %></div>
+                <% end %>
+              </td>
+
+              <td><span class="fw-bold" style="font-size:13.5px;"><%= indian_currency(policy.total_premium.to_i) %></span></td>
+
+              <td>
+                <span class="badge bg-success bg-opacity-15 text-success fw-bold" style="font-size:12px;">
+                  <%= indian_currency(cd.dig(:summary, :total_commission_generated).to_i) %>
+                </span>
+                <div class="text-muted mt-1" style="font-size:11.5px;">
+                  Agent: <%= indian_currency(cd.dig(:main_agent, :total_commission).to_f.round(2)) %>
+                  (<%= cd.dig(:percentages, :main_agent) || cd.dig(:main_agent, :percentage) || '0' %>%)
+                </div>
+              </td>
+
+              <td>
+                <%
+                  main_payout = CommissionPayout.find_by(
+                    policy_type: type, policy_id: policy.id, payout_to: 'main_agent'
+                  )
+                %>
+                <% if main_payout&.status == 'paid' %>
+                  <div class="text-success fw-semibold" style="font-size:13px;">
+                    <i class="bi bi-check-circle-fill me-1"></i><%= indian_currency(main_payout.payout_amount.to_i) %>
+                  </div>
+                  <% if main_payout.payout_date %>
+                    <div style="font-size:11.5px;color:#16a34a;"><%= main_payout.payout_date.strftime('%d %b %Y') %></div>
+                  <% end %>
+                <% elsif main_payout&.status == 'pending' %>
+                  <a href="#" class="mark-paid-link"
+                     onclick="openMainAgentCommissionModal(<%= policy.id %>, '<%= type %>', '<%= policy.policy_number %>', <%= cd.dig(:main_agent, :total_commission).to_i %>); return false;">
+                    <i class="bi bi-wallet2 me-1"></i>Mark as Paid
+                  </a>
+                <% else %>
+                  <span class="text-muted">—</span>
+                <% end %>
+              </td>
+
+              <td>
+                <div style="font-size:12.5px;">
+                  <span class="text-muted">Paid: </span>
+                  <span class="fw-bold text-primary"><%= ts[:paid_payouts] %>/<%= ts[:total_payouts] %></span>
+                </div>
+                <div class="text-muted" style="font-size:12px;"><%= indian_currency(ts[:paid_amount].to_i) %></div>
+              </td>
+
+              <td>
+                <div style="font-size:11.5px;line-height:1.7;">
+                  <span class="text-muted">Affiliate: </span><span class="fw-medium"><%= indian_currency(cd.dig(:payouts, :affiliate).to_f.round(2)) %></span> <span class="text-muted">(<%= cd.dig(:percentages, :affiliate) || '0' %>%)</span><br>
+                  <span class="text-muted">Ambassador: </span><span class="fw-medium"><%= indian_currency(cd.dig(:payouts, :ambassador).to_f.round(2)) %></span> <span class="text-muted">(<%= cd.dig(:percentages, :ambassador) || '0' %>%)</span><br>
+                  <span class="text-muted">Investor: </span><span class="fw-medium"><%= indian_currency(cd.dig(:payouts, :investor).to_f.round(2)) %></span> <span class="text-muted">(<%= cd.dig(:percentages, :investor) || '0' %>%)</span><br>
+                  <span class="text-muted">Company: </span><span class="fw-medium"><%= indian_currency(cd.dig(:payouts, :company_expense).to_f.round(2)) %></span>
+                </div>
+              </td>
+
+              <td>
+                <%= link_to admin_commission_tracking_path(policy.id, policy_type: type),
+                    class: "btn btn-sm btn-outline-primary rounded-3", title: "Commission Details" do %>
+                  <i class="bi bi-eye me-1"></i>Details
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <% if @paginated_payouts&.respond_to?(:current_page) %>
+      <div class="card-footer bg-transparent border-0">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-3">
+            <% if @paginated_payouts.respond_to?(:total_count) %>
+              <small class="text-muted">
+                Showing <strong><%= @paginated_payouts.offset_value + 1 %></strong>–<strong><%= [@paginated_payouts.offset_value + @paginated_payouts.limit_value, @paginated_payouts.total_count].min %></strong> of <strong><%= number_with_delimiter(@paginated_payouts.total_count) %></strong>
+              </small>
+            <% end %>
+            <%= render 'shared/per_page_selector' %>
+          </div>
+          <% if @paginated_payouts.respond_to?(:total_pages) && @paginated_payouts.total_pages > 1 %>
+            <%= paginate @paginated_payouts %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+  <% else %>
+    <div class="text-center py-5">
+      <i class="bi bi-wallet fs-1 text-muted d-block mb-3"></i>
+      <h5 class="text-muted">No Policies Found</h5>
+      <p class="text-muted mb-0">Try adjusting your filters or clearing them to see all records.</p>
+    </div>
+  <% end %>
+</div>
+
+<!-- Main Agent Commission Modal -->
+<div class="modal" id="mainAgentCommissionModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-wallet me-2"></i>Mark Main Agent Commission as Received</h5>
+        <button type="button" class="btn-close btn-close-white" onclick="closeMainAgentModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div id="mainAgentCommissionForm">
+          <div class="mb-3">
+            <strong>Policy:</strong> <span id="modalPolicyNumber">—</span> (<span id="modalPolicyType">—</span>)
+          </div>
+          <div class="mb-3"><strong>Commission Amount:</strong> ₹<span id="modalCommissionAmount">0</span></div>
+          <form id="commissionReceivedForm">
+            <div class="mb-3">
+              <label class="form-label">Transaction ID <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="transactionId" name="transaction_id" required placeholder="Enter transaction ID">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Date Received</label>
+              <input type="date" class="form-control" id="paidDate" name="paid_date" value="<%= Date.current.strftime('%Y-%m-%d') %>">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Notes</label>
+              <textarea class="form-control" id="commissionNotes" name="notes" rows="2" placeholder="Optional notes"></textarea>
+            </div>
+            <input type="hidden" id="modalPolicyId" name="policy_id">
+            <input type="hidden" id="modalPolicyTypeField" name="policy_type">
+          </form>
+        </div>
+        <div id="paymentProgressLoader" class="d-none text-center py-3">
+          <div class="spinner-border text-success mb-3" style="width:3rem;height:3rem;"></div>
+          <h5 class="text-success">Processing Payment...</h5>
+          <div class="progress mb-2" style="height:8px;">
+            <div id="progressBar" class="progress-bar bg-success progress-bar-striped progress-bar-animated" style="width:0%"></div>
+          </div>
+          <p id="progressText" class="text-muted small mb-0">Initializing...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeMainAgentModal()" id="cancelBtn">Cancel</button>
+        <button type="button" class="btn btn-success" onclick="markMainAgentCommissionReceived()" id="submitBtn">Mark as Received</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CURR_YEAR  = <%= Date.current.year %>;
+const CURR_MONTH = <%= Date.current.month %>;
+
+function quarterBounds(q, yr) {
+  const starts = ['','01-01','04-01','07-01','10-01'];
+  const ends   = ['','03-31','06-30','09-30','12-31'];
+  return { from: `${yr}-${starts[q]}`, to: `${yr}-${ends[q]}` };
+}
+function currentQ() { return Math.ceil(CURR_MONTH / 3); }
+
+function applyPeriod(val) {
+  const mEl = document.getElementById('hiddenMonth');
+  const yEl = document.getElementById('hiddenYear');
+  const fEl = document.getElementById('dateFromInput');
+  const tEl = document.getElementById('dateToInput');
+  mEl.value = yEl.value = fEl.value = tEl.value = '';
+
+  if (!val) return;
+  if (val === 'this_month')  { mEl.value = CURR_MONTH; yEl.value = CURR_YEAR; return; }
+  if (val === 'last_month')  {
+    const d = new Date(CURR_YEAR, CURR_MONTH - 2, 1);
+    mEl.value = d.getMonth() + 1; yEl.value = d.getFullYear(); return;
+  }
+  if (val === 'this_year')   { yEl.value = CURR_YEAR; return; }
+  if (val === 'last_year')   { yEl.value = CURR_YEAR - 1; return; }
+  if (val === 'this_quarter') {
+    const { from, to } = quarterBounds(currentQ(), CURR_YEAR);
+    fEl.value = from; tEl.value = to; return;
+  }
+  if (val === 'last_quarter') {
+    let q = currentQ() - 1, yr = CURR_YEAR;
+    if (q === 0) { q = 4; yr--; }
+    const { from, to } = quarterBounds(q, yr);
+    fEl.value = from; tEl.value = to; return;
+  }
+  if (val.startsWith('month:')) {
+    const [, m, y] = val.split(':');
+    mEl.value = m; yEl.value = y; return;
+  }
+  if (val.startsWith('quarter:')) {
+    const [, q, y] = val.split(':');
+    const { from, to } = quarterBounds(parseInt(q), parseInt(y));
+    fEl.value = from; tEl.value = to; return;
+  }
+  if (val.startsWith('year:')) { yEl.value = val.split(':')[1]; return; }
+}
+
+// Clear Period preset when user manually picks dates
+document.addEventListener('DOMContentLoaded', function() {
+  ['dateFromInput', 'dateToInput'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', function() {
+      const ps = document.getElementById('periodSelect');
+      if (ps) ps.value = '';
+      document.getElementById('hiddenMonth').value = '';
+      document.getElementById('hiddenYear').value = '';
+    });
+  });
+});
+
+function detectCurrentPeriod() {
+  const month = '<%= @filter_month %>',
+        year  = '<%= @filter_year %>',
+        from  = '<%= @filter_date_from %>';
+  if (month && year) return `month:${month}:${year}`;
+  if (year && !from) return `year:${year}`;
+  if (from) {
+    const m = parseInt(from.split('-')[1]);
+    const y = from.split('-')[0];
+    if (m === 1)  return `quarter:1:${y}`;
+    if (m === 4)  return `quarter:2:${y}`;
+    if (m === 7)  return `quarter:3:${y}`;
+    if (m === 10) return `quarter:4:${y}`;
+  }
+  return '';
+}
+
+function openMainAgentCommissionModal(policyId, policyType, policyNumber, commissionAmount) {
+  document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+  document.body.classList.remove('modal-open');
+  document.body.style.paddingRight = '';
+  document.body.style.overflow = '';
+
+  const el = document.getElementById('mainAgentCommissionModal');
+  const existing = bootstrap.Modal.getInstance(el);
+  if (existing) existing.dispose();
+
+  document.getElementById('modalPolicyNumber').textContent     = policyNumber;
+  document.getElementById('modalPolicyType').textContent       = policyType.toUpperCase();
+  document.getElementById('modalCommissionAmount').textContent = (commissionAmount || 0).toLocaleString();
+  document.getElementById('modalPolicyId').value               = policyId;
+  document.getElementById('modalPolicyTypeField').value        = policyType;
+  document.getElementById('transactionId').value               = '';
+  document.getElementById('commissionNotes').value             = '';
+
+  new bootstrap.Modal(el, { backdrop: false, keyboard: true }).show();
+  setTimeout(() => document.getElementById('transactionId').focus(), 200);
+}
+
+function closeMainAgentModal() {
+  const el = document.getElementById('mainAgentCommissionModal');
+  const m  = bootstrap.Modal.getInstance(el);
+  if (m) m.hide();
+  else { el.style.display = 'none'; el.classList.remove('show'); }
+  document.querySelectorAll('.modal-backdrop').forEach(x => x.remove());
+  document.body.classList.remove('modal-open');
+  document.body.style.overflow = '';
+}
+
+function markMainAgentCommissionReceived() {
+  const txId     = document.getElementById('transactionId').value;
+  const paidDate = document.getElementById('paidDate').value;
+  const notes    = document.getElementById('commissionNotes').value;
+  const policyId = document.getElementById('modalPolicyId').value;
+  const polType  = document.getElementById('modalPolicyTypeField').value;
+
+  if (!txId.trim()) { alert('Please enter a transaction ID'); return; }
+
+  document.getElementById('mainAgentCommissionForm').classList.add('d-none');
+  document.getElementById('submitBtn').classList.add('d-none');
+  document.getElementById('cancelBtn').classList.add('d-none');
+  document.getElementById('paymentProgressLoader').classList.remove('d-none');
+
+  const steps = [
+    { pct: 20, text: 'Validating transaction details...' },
+    { pct: 45, text: 'Updating policy records...' },
+    { pct: 70, text: 'Processing commission payout...' },
+    { pct: 90, text: 'Finalizing transaction...' },
+    { pct: 100, text: 'Payment recorded! ✓' }
+  ];
+  let si = 0;
+  const bar  = document.getElementById('progressBar');
+  const text = document.getElementById('progressText');
+  window.paymentProgressInterval = setInterval(() => {
+    if (si < steps.length) {
+      bar.style.width = steps[si].pct + '%';
+      text.textContent = steps[si].text;
+      if (steps[si].pct === 100) { clearInterval(window.paymentProgressInterval); setTimeout(() => location.reload(), 500); }
+      si++;
+    }
+  }, 400);
+
+  const fd = new FormData();
+  fd.append('transaction_id', txId);
+  fd.append('paid_date', paidDate);
+  fd.append('notes', notes);
+  fd.append('authenticity_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+
+  fetch(`/admin/commission_tracking/${policyId}/mark_main_agent_commission_received?policy_type=${polType}`, {
+    method: 'PATCH', body: fd,
+    headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
+  })
+  .then(r => r.json())
+  .then(data => { if (!data.success) { clearInterval(window.paymentProgressInterval); location.reload(); } })
+  .catch(() => { clearInterval(window.paymentProgressInterval); location.reload(); });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const ps = document.getElementById('periodSelect');
+  if (ps) {
+    const cur = detectCurrentPeriod();
+    if (cur) ps.value = cur;
+    ps.addEventListener('change', () => applyPeriod(ps.value));
+  }
+  document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+  if (window.paymentProgressInterval) clearInterval(window.paymentProgressInterval);
+});
+</script>
+
+<!-- jQuery + Select2 (Bootstrap-5 theme) -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+  .select2-container--bootstrap-5 .select2-selection--single {
+    height: 38px;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+  }
+  .select2-container--bootstrap-5 .select2-selection__rendered {
+    color: #495057;
+    padding-left: 12px;
+    line-height: 36px;
+  }
+  .select2-dropdown { border: 1px solid #ced4da; border-radius: 0.375rem; box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+  .select2-results__options { max-height: 300px !important; overflow-y: auto; }
+  .select2-search__field { border: 1px solid #ced4da !important; border-radius: 0.25rem !important; padding: 6px 10px !important; width: 100% !important; }
+  .ct-client-opt { display:flex; align-items:center; gap:10px; padding:4px 0; }
+  .ct-client-avatar { width:32px; height:32px; border-radius:50%; background:#667eea; color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .ct-client-name { font-size:13.5px; font-weight:500; color:#1e293b; }
+  .ct-client-id { font-size:11px; color:#94a3b8; }
+</style>
+
+<script>
+$(function() {
+  $('#customerSelect').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Search and select customer...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    minimumResultsForSearch: 0,
+    closeOnSelect: true,
+    templateResult: function(option) {
+      if (!option.id) return option.text;
+      var initials = option.text.trim().split(/\s+/).map(function(w){ return w.charAt(0).toUpperCase(); }).join('').substring(0,2);
+      return $(
+        '<div class="ct-client-opt">' +
+          '<div class="ct-client-avatar">' + initials + '</div>' +
+          '<div>' +
+            '<div class="ct-client-name">' + option.text + '</div>' +
+            '<div class="ct-client-id">ID #' + option.id + '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    },
+    templateSelection: function(option) {
+      return option.text || 'Search and select customer...';
+    },
+    escapeMarkup: function(m) { return m; }
+  });
+});
+</script>

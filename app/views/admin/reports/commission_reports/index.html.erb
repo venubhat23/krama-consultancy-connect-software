@@ -1,0 +1,261 @@
+<!-- Success/Error Messages -->
+<% if flash[:success] %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle me-2"></i>
+    <%= flash[:success] %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% end %>
+
+<% if flash[:notice] %>
+  <div class="alert alert-info alert-dismissible fade show" role="alert">
+    <i class="bi bi-info-circle me-2"></i>
+    <%= flash[:notice] %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% end %>
+
+<% if flash[:alert] %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    <%= flash[:alert] %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% end %>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Commission Reports</h2>
+    <p class="text-muted mb-0">View and manage generated commission reports</p>
+  </div>
+  <div>
+    <%= link_to generate_admin_reports_commission_reports_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg me-1"></i>
+      Generate Commission Report
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Reports</h6>
+            <h3 class="mb-0 text-primary"><%= number_with_delimiter(@total_reports || 0) %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-file-text text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">This Month</h6>
+            <h3 class="mb-0 text-success"><%= number_with_delimiter(@this_month_reports || 0) %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-calendar-month text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Last Generated</h6>
+            <p class="mb-0 text-info">
+              <%= @last_generated ? @last_generated.strftime('%d %b %Y') : 'Never' %>
+            </p>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-clock-history text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Commission</h6>
+            <h3 class="mb-0 text-warning"><%= indian_currency((@total_commission || 0).round(2)) %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-currency-rupee text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Saved Reports List -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">Saved Reports</h5>
+  </div>
+  <div class="card-body p-0">
+    <% if @saved_reports && @saved_reports.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Report Name</th>
+              <th class="border-0">Date Range</th>
+              <th class="border-0">Created At</th>
+              <th class="border-0">Created By</th>
+              <th class="border-0">Total Commission</th>
+              <th class="border-0 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @saved_reports.each do |report| %>
+              <tr>
+                <td>
+                  <div>
+                    <h6 class="mb-1">
+                      <i class="bi bi-file-earmark-text text-primary me-1"></i>
+                      <%= report.name %>
+                    </h6>
+                    <% if report.filters %>
+                      <div class="mt-1">
+                        <% if report.filters['policy_type'].present? %>
+                          <span class="badge bg-info me-1">
+                            <i class="bi bi-tag-fill me-1"></i><%= report.filters['policy_type'].humanize %>
+                          </span>
+                        <% end %>
+                        <% if report.filters['payout_to'].present? %>
+                          <span class="badge bg-secondary me-1">
+                            <i class="bi bi-person-fill me-1"></i><%= report.filters['payout_to'].humanize %>
+                          </span>
+                        <% end %>
+                        <% if report.filters['status'].present? %>
+                          <span class="badge bg-warning">
+                            <i class="bi bi-flag-fill me-1"></i><%= report.filters['status'].humanize %>
+                          </span>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <% if report.filters && report.filters['start_date'] && report.filters['end_date'] %>
+                    <div>
+                      <i class="bi bi-calendar-range text-muted me-1"></i>
+                      <small>
+                        <%= Date.parse(report.filters['start_date'].to_s).strftime('%d %b %Y') %> -
+                        <%= Date.parse(report.filters['end_date'].to_s).strftime('%d %b %Y') %>
+                      </small>
+                    </div>
+                    <small class="text-muted">
+                      <% days = (Date.parse(report.filters['end_date'].to_s) - Date.parse(report.filters['start_date'].to_s)).to_i + 1 %>
+                      (<%= pluralize(days, 'day') %>)
+                    </small>
+                  <% else %>
+                    <small class="text-muted">
+                      <i class="bi bi-infinity me-1"></i>All Time
+                    </small>
+                  <% end %>
+                </td>
+                <td>
+                  <small class="text-muted">
+                    <i class="bi bi-clock me-1"></i>
+                    <%= report.created_at.strftime('%d %b %Y') %>
+                    <br>
+                    <%= report.created_at.strftime('%I:%M %p') %>
+                  </small>
+                </td>
+                <td>
+                  <small class="text-muted">
+                    <i class="bi bi-person-circle me-1"></i>
+                    <%= report.created_by&.full_name || 'System' %>
+                  </small>
+                </td>
+                <td>
+                  <div class="text-end">
+                    <strong class="text-success d-block">
+                      <%= indian_currency((report.report_data&.dig('statistics', 'total_commission') || 0).to_f.round(2)) %>
+                    </strong>
+                    <% total_policies = report.report_data&.dig('statistics', 'total_policies') || 0 %>
+                    <% if total_policies > 0 %>
+                      <small class="text-muted">
+                        <%= pluralize(total_policies, 'policy', 'policies') %>
+                      </small>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex gap-1 justify-content-center">
+                    <%= link_to export_csv_admin_reports_commission_report_path(report),
+                                class: "btn btn-sm btn-outline-success",
+                                title: "Export CSV" do %>
+                      <i class="bi bi-file-earmark-excel"></i>
+                    <% end %>
+
+                    <%= button_to destroy_saved_report_admin_reports_commission_report_path(report),
+                                method: :delete,
+                                data: { turbo_confirm: "Are you sure you want to delete this report?" },
+                                class: "btn btn-sm btn-outline-danger",
+                                title: "Delete Report",
+                                form: { style: "display: inline-block;" } do %>
+                      <i class="bi bi-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <% if @saved_reports.respond_to?(:total_pages) && @saved_reports.total_pages > 1 %>
+        <div class="card-footer bg-transparent border-0">
+          <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <small class="text-muted mb-2 mb-md-0">
+              Showing <%= @saved_reports.current_page == 1 ? 1 : ((@saved_reports.current_page - 1) * @saved_reports.limit_value + 1) %>
+              to <%= [@saved_reports.current_page * @saved_reports.limit_value, @saved_reports.total_count].min %>
+              of <%= number_with_delimiter(@saved_reports.total_count) %> reports
+            </small>
+            <div class="pagination-wrapper">
+              <%= paginate @saved_reports %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-file-text fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No reports generated yet</h5>
+        <p class="text-muted mb-3">
+          Generate your first commission report to track payouts and performance.
+        </p>
+        <%= link_to generate_admin_reports_commission_reports_path, class: "btn btn-primary" do %>
+          <i class="bi bi-plus-lg me-1"></i>
+          Generate Commission Report
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+.min-width-250 { min-width: 250px; }
+</style>

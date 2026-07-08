@@ -1,0 +1,85 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><%= @forum.name %></h2>
+    <p class="text-muted mb-0">
+      <span class="badge bg-primary-subtle text-primary"><%= @forum.business_plan.name %> plan</span>
+      <span class="badge bg-<%= @forum.active? ? 'success' : 'warning' %>"><%= @forum.status.humanize %></span>
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to edit_admin_forum_path(@forum), class: "btn btn-outline-primary" do %><i class="bi bi-pencil me-1"></i>Edit<% end %>
+    <% if @forum.active? %>
+      <%= button_to "Suspend", suspend_admin_forum_path(@forum), method: :post, class: "btn btn-outline-warning", form: { data: { turbo_confirm: "Suspend #{@forum.name}?" } } %>
+    <% else %>
+      <%= button_to "Activate", activate_admin_forum_path(@forum), method: :post, class: "btn btn-outline-success" %>
+    <% end %>
+    <%= button_to "Force Logout Admin", force_logout_admin_admin_forum_path(@forum), method: :post, class: "btn btn-outline-danger", form: { data: { turbo_confirm: "Sign out #{@forum.name}'s admin from all sessions?" } } %>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted mb-2">Forum Admin</h6>
+        <h5 class="mb-0"><%= @admin&.email || "— not set —" %></h5>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted mb-2">Chapters</h6>
+        <h3 class="mb-0 text-primary"><%= @forum.chapter_count %> <% if @forum.business_plan.chapter_limit %><small class="text-muted fs-6">/ <%= @forum.business_plan.chapter_limit %></small><% end %></h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted mb-2">Members</h6>
+        <h3 class="mb-0 text-success"><%= @forum.member_count %> <% if @forum.business_plan.member_limit %><small class="text-muted fs-6">/ <%= @forum.business_plan.member_limit %></small><% end %></h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted mb-2">Change Plan</h6>
+        <%= form_with url: update_plan_admin_forum_path(@forum), method: :patch, local: true, class: "d-flex gap-2" do |form| %>
+          <%= form.select :business_plan_id, BusinessPlan.active.ordered.map { |p| [p.name, p.id] }, { selected: @forum.business_plan_id }, class: "form-select form-select-sm" %>
+          <%= form.submit "Go", class: "btn btn-sm btn-primary" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">Chapters</h5>
+  </div>
+  <div class="card-body p-0">
+    <% if @chapters.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr><th class="border-0">Chapter</th><th class="border-0">Chapter Admin</th><th class="border-0">Members</th><th class="border-0">Status</th></tr>
+          </thead>
+          <tbody>
+            <% @chapters.each do |chapter| %>
+              <tr>
+                <td><%= chapter.name %></td>
+                <td><%= chapter.users.detect { |u| u.user_type == 'chapter_admin' }&.email || "—" %></td>
+                <td><%= chapter.users.count { |u| u.user_type == 'member' } %></td>
+                <td><span class="badge bg-<%= chapter.active? ? 'success' : 'secondary' %>"><%= chapter.status.humanize %></span></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-4 text-muted">No chapters yet — the forum admin can create them.</div>
+    <% end %>
+  </div>
+</div>

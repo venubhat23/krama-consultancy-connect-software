@@ -1,0 +1,175 @@
+<!-- Brokers Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">Brokers List</h5>
+  </div>
+  <div class="card-body p-0">
+    <% if brokers.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Broker Name</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Created Date</th>
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% brokers.each do |broker| %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                      <i class="fas fa-briefcase text-primary"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-0 fw-medium"><%= broker.name %></h6>
+                      <small class="text-muted">Broker ID: #<%= broker.id %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <% if broker.active? %>
+                    <span class="badge bg-success">
+                      <i class="bi bi-check-circle me-1"></i>
+                      Active
+                    </span>
+                  <% else %>
+                    <span class="badge bg-warning">
+                      <i class="bi bi-x-circle me-1"></i>
+                      Inactive
+                    </span>
+                  <% end %>
+                </td>
+                <td>
+                  <span class="fw-medium text-dark"><%= broker.created_at.strftime("%b %d, %Y") %></span>
+                  <br>
+                  <small class="text-muted"><%= broker.created_at.strftime("%I:%M %p") %></small>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <%= link_to edit_admin_broker_path(broker),
+                        class: "btn btn-sm btn-outline-primary",
+                        title: "Edit" do %>
+                      <i class="bi bi-pencil"></i>
+                    <% end %>
+
+                    <%= link_to admin_broker_path(broker, id: broker.id) + "/toggle_status",
+                        method: :patch,
+                        class: "btn btn-sm btn-outline-warning",
+                        title: "Toggle Status",
+                        data: {
+                          "turbo-confirm": "Are you sure you want to #{broker.active? ? 'deactivate' : 'activate'} this broker?"
+                        } do %>
+                      <% if broker.active? %>
+                        <i class="bi bi-pause"></i>
+                      <% else %>
+                        <i class="bi bi-play"></i>
+                      <% end %>
+                    <% end %>
+
+                    <button type="button"
+                        class="btn btn-sm btn-outline-danger delete-broker"
+                        data-url="<%= admin_broker_path(broker) %>"
+                        data-confirm="Are you sure you want to delete <%= broker.name %>?"
+                        title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="card-footer bg-transparent border-0">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+          <small class="text-muted mb-2 mb-md-0">
+            <% if defined?(total_filtered_count) && total_filtered_count.present? %>
+              Showing <%= brokers.current_page == 1 ? 1 : ((brokers.current_page - 1) * brokers.limit_value + 1) %>
+              to <%= [brokers.current_page * brokers.limit_value, total_filtered_count].min %>
+              of <%= number_with_delimiter(total_filtered_count) %> brokers
+            <% elsif brokers.respond_to?(:total_count) %>
+              Showing <%= brokers.current_page == 1 ? 1 : ((brokers.current_page - 1) * brokers.limit_value + 1) %>
+              to <%= [brokers.current_page * brokers.limit_value, brokers.total_count].min %>
+              of <%= number_with_delimiter(brokers.total_count) %> brokers
+            <% else %>
+              Showing <%= brokers.count %> brokers
+            <% end %>
+          </small>
+
+          <% if brokers.respond_to?(:total_pages) && brokers.total_pages > 1 %>
+            <div class="pagination-wrapper">
+              <%= paginate brokers %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-briefcase fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No brokers found</h5>
+        <p class="text-muted mb-3">
+          <% if params[:search].present? %>
+            No brokers match your search criteria.
+            <%= link_to "Clear search", admin_brokers_path, class: "text-decoration-none" %>
+          <% else %>
+            Start by creating your first broker.
+          <% end %>
+        </p>
+        <% unless params[:search].present? %>
+          <%= link_to new_admin_broker_path, class: "btn btn-primary" do %>
+            <i class="bi bi-plus-lg me-1"></i>
+            Add Your First Broker
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle broker delete buttons
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-broker')) {
+      e.preventDefault();
+
+      const button = e.target.closest('.delete-broker');
+      const url = button.dataset.url;
+      const confirmMessage = button.dataset.confirm;
+
+      if (confirm(confirmMessage)) {
+        // Create and submit a form for DELETE request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        form.style.display = 'none';
+
+        // Add CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+          const csrfInput = document.createElement('input');
+          csrfInput.type = 'hidden';
+          csrfInput.name = 'authenticity_token';
+          csrfInput.value = csrfToken.content;
+          form.appendChild(csrfInput);
+        }
+
+        // Add method override for DELETE
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'DELETE';
+        form.appendChild(methodInput);
+
+        document.body.appendChild(form);
+        form.submit();
+      }
+    }
+  });
+});
+</script>

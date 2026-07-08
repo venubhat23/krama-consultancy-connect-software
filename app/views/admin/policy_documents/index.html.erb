@@ -1,0 +1,19 @@
+<%
+  # Set policy information for the document manager
+  policy_type = params[:policy_type]
+  policy_id = params[:policy_id]
+%>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <h3 class="mb-4">
+        <i class="fas fa-file-alt me-2"></i>
+        Policy Documents - <%= @policy_object&.policy_number || "Policy ##{policy_id}" %>
+      </h3>
+
+      <%= render 'shared/policy_documents_manager', policy_type: policy_type, policy_id: policy_id %>
+
+    </div>
+  </div>
+</div>

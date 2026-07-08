@@ -1,0 +1,440 @@
+<%#
+  Banner Document Manager Component
+  Usage: render 'admin/banners/banner_document_manager', banner: @banner
+%>
+
+<div class="card mt-4" id="banner-documents-manager" data-banner-id="<%= banner.id %>">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">
+      <i class="fas fa-folder-open"></i> Banner Documents & Media
+    </h5>
+    <div class="ms-auto">
+      <button type="button" class="btn btn-primary btn-sm" onclick="toggleBannerDocumentUploader()">
+        <i class="fas fa-plus"></i> ADD DOCUMENTS
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <!-- Document Upload Section -->
+    <div id="banner-document-upload-section" class="border rounded p-3 mb-3" style="display: none;">
+      <h6 class="text-primary mb-3">
+        <i class="fas fa-cloud-upload-alt"></i> Upload Banner Documents
+      </h6>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="upload-area border-dashed rounded p-4 text-center" id="banner-documents-dropzone">
+            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+            <p class="mb-2">Drop files here or <a href="#" onclick="triggerBannerFileInput()">choose files</a></p>
+            <small class="text-muted">Supports Images (JPEG, PNG, WebP, GIF) and PDFs (Max: 10MB each)</small>
+            <input type="file" id="banner-document-files" multiple accept="image/*,.pdf" style="display: none;">
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div id="banner-selected-files-preview"></div>
+        </div>
+      </div>
+
+      <!-- Upload Progress -->
+      <div id="banner-upload-progress" class="mt-3" style="display: none;">
+        <div class="progress">
+          <div class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <small id="banner-upload-status" class="text-muted"></small>
+      </div>
+
+      <!-- Upload Actions -->
+      <div class="mt-3 text-end">
+        <button type="button" class="btn btn-secondary btn-sm me-2" onclick="cancelBannerUpload()">Cancel</button>
+        <button type="button" class="btn btn-success btn-sm" id="upload-banner-selected-files" onclick="uploadBannerSelectedFiles()" disabled>
+          <i class="fas fa-upload"></i> Upload Files
+        </button>
+      </div>
+    </div>
+
+    <!-- Existing Documents List -->
+    <div id="banner-existing-documents">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <% banner_documents_count = banner.banner_documents.count %>
+        <h6 class="mb-0">Uploaded Documents (<span id="banner-document-count"><%= banner_documents_count %></span>)</h6>
+      </div>
+
+      <div id="banner-documents-list">
+        <% banner_documents = banner.banner_documents.order(created_at: :desc) %>
+        <% if banner_documents.any? %>
+          <% banner_documents.each do |document| %>
+            <div class="document-item d-flex justify-content-between align-items-center p-2 mb-2 border rounded" data-document-id="<%= document.id %>">
+              <div class="d-flex align-items-center">
+                <% if document.r2_content_type&.include?('pdf') %>
+                  <i class="fas fa-file-pdf text-danger me-2"></i>
+                <% elsif document.r2_content_type&.include?('image') %>
+                  <i class="fas fa-file-image text-primary me-2"></i>
+                <% else %>
+                  <i class="fas fa-file text-secondary me-2"></i>
+                <% end %>
+                <div>
+                  <strong><%= document.title %></strong>
+                  <small class="text-muted d-block"><%= document.document_type %></small>
+                </div>
+              </div>
+
+              <div class="btn-group btn-group-sm">
+                <% if document.document_url.present? %>
+                  <a href="<%= document.document_url %>" target="_blank" class="btn btn-outline-primary btn-sm" title="View">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                <% end %>
+                <% if document.download_url.present? %>
+                  <a href="<%= document.download_url %>" class="btn btn-outline-success btn-sm" title="Download">
+                    <i class="fas fa-download"></i>
+                  </a>
+                <% end %>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteBannerDocument(<%= document.id %>, '<%= document.title.gsub("'", "\\'") %>')" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-center text-muted py-4">
+            <i class="fas fa-folder-open fa-3x mb-3"></i>
+            <p>No documents uploaded yet.</p>
+            <button type="button" class="btn btn-primary" onclick="toggleBannerDocumentUploader()">
+              <i class="fas fa-plus"></i> Upload First Document
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Banner Document Item Template -->
+<script type="text/template" id="banner-document-item-template">
+  <div class="document-item d-flex justify-content-between align-items-center p-2 mb-2 border rounded" data-document-id="{{id}}">
+    <div class="d-flex align-items-center">
+      <i class="{{fileIcon}} text-{{iconColor}} me-2"></i>
+      <div>
+        <strong>{{title}}</strong>
+        <small class="text-muted d-block">{{document_type}}</small>
+      </div>
+    </div>
+
+    <div class="btn-group btn-group-sm">
+      <a href="{{document_url}}" target="_blank" class="btn btn-outline-primary btn-sm" title="View">
+        <i class="fas fa-eye"></i>
+      </a>
+      <button type="button" class="btn btn-outline-success btn-sm" onclick="downloadBannerDocument({{id}})" title="Download">
+        <i class="fas fa-download"></i>
+      </button>
+      <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteBannerDocument({{id}}, '{{title}}')" title="Delete">
+        <i class="fas fa-trash"></i>
+      </button>
+    </div>
+  </div>
+</script>
+
+<style>
+.upload-area {
+  border: 2px dashed #dee2e6;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.upload-area:hover {
+  border-color: #0d6efd;
+  background-color: #e7f3ff;
+}
+
+.upload-area.dragover {
+  border-color: #198754;
+  background-color: #e8f5e9;
+}
+
+.border-dashed {
+  border-style: dashed !important;
+}
+
+.document-item {
+  transition: all 0.2s ease;
+  background-color: #f8f9fa;
+}
+
+.document-item:hover {
+  background-color: #e9ecef;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.file-preview-item {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.file-preview-item .remove-file {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  cursor: pointer;
+}
+</style>
+
+<script>
+// Banner Document Manager JavaScript
+let bannerSelectedFiles = [];
+
+// Initialize the banner document manager
+function initializeBannerDocumentManager() {
+  setupBannerDragAndDrop();
+  setupBannerFileInput();
+}
+
+// Setup drag and drop
+function setupBannerDragAndDrop() {
+  const dropzone = document.getElementById('banner-documents-dropzone');
+  if (!dropzone) return;
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, preventDefaults, false);
+  });
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
+  });
+
+  dropzone.addEventListener('drop', handleBannerDrop, false);
+}
+
+// Handle file drop
+function handleBannerDrop(e) {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  handleBannerFiles(files);
+}
+
+// Setup file input
+function setupBannerFileInput() {
+  const fileInput = document.getElementById('banner-document-files');
+  if (!fileInput) return;
+
+  fileInput.addEventListener('change', function(e) {
+    handleBannerFiles(e.target.files);
+  });
+}
+
+// Trigger file input
+function triggerBannerFileInput() {
+  document.getElementById('banner-document-files').click();
+}
+
+// Handle selected files
+function handleBannerFiles(files) {
+  bannerSelectedFiles = Array.from(files);
+  updateBannerFilePreview();
+  updateBannerUploadButton();
+}
+
+// Update file preview
+function updateBannerFilePreview() {
+  const preview = document.getElementById('banner-selected-files-preview');
+  if (!preview) return;
+
+  if (bannerSelectedFiles.length === 0) {
+    preview.innerHTML = '<p class="text-muted">No files selected</p>';
+    return;
+  }
+
+  preview.innerHTML = bannerSelectedFiles.map((file, index) => `
+    <div class="file-preview-item">
+      <button type="button" class="remove-file" onclick="removeBannerFile(${index})">&times;</button>
+      <strong>${file.name}</strong><br>
+      <small class="text-muted">${formatFileSize(file.size)} • ${file.type}</small>
+      <div class="mt-2">
+        <select class="form-select form-select-sm" id="banner-doc-type-${index}">
+          <option value="Banner Image">Banner Image</option>
+          <option value="Promotional Material">Promotional Material</option>
+          <option value="Logo">Logo</option>
+          <option value="Background Image">Background Image</option>
+          <option value="Graphic Asset">Graphic Asset</option>
+          <option value="Marketing Material">Marketing Material</option>
+          <option value="Other">Other</option>
+        </select>
+        <input type="text" class="form-control form-control-sm mt-1" placeholder="Document title" id="banner-doc-title-${index}" value="${file.name}">
+        <textarea class="form-control form-control-sm mt-1" placeholder="Description (optional)" id="banner-doc-desc-${index}" rows="2"></textarea>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Remove file from selection
+function removeBannerFile(index) {
+  bannerSelectedFiles.splice(index, 1);
+  updateBannerFilePreview();
+  updateBannerUploadButton();
+}
+
+// Update upload button state
+function updateBannerUploadButton() {
+  const uploadButton = document.getElementById('upload-banner-selected-files');
+  if (uploadButton) {
+    uploadButton.disabled = bannerSelectedFiles.length === 0;
+  }
+}
+
+// Format file size
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Toggle document uploader
+function toggleBannerDocumentUploader() {
+  const uploadSection = document.getElementById('banner-document-upload-section');
+  if (!uploadSection) return;
+
+  const isVisible = uploadSection.style.display !== 'none';
+  uploadSection.style.display = isVisible ? 'none' : 'block';
+
+  if (!isVisible) {
+    document.getElementById('banner-document-files').value = '';
+    bannerSelectedFiles = [];
+    updateBannerFilePreview();
+  }
+}
+
+// Upload selected files
+function uploadBannerSelectedFiles() {
+  if (bannerSelectedFiles.length === 0) return;
+
+  const bannerId = document.querySelector('#banner-documents-manager').dataset.bannerId;
+  showBannerUploadProgress(true);
+
+  const uploadPromises = bannerSelectedFiles.map((file, index) => {
+    const formData = new FormData();
+    formData.append('banner_id', bannerId);
+
+    const docType = document.getElementById(`banner-doc-type-${index}`)?.value || 'Other';
+    const docTitle = document.getElementById(`banner-doc-title-${index}`)?.value || file.name;
+    const docDesc = document.getElementById(`banner-doc-desc-${index}`)?.value || '';
+
+    formData.append('banner_document[document_type]', docType);
+    formData.append('banner_document[title]', docTitle);
+    formData.append('banner_document[description]', docDesc);
+    formData.append('banner_document[document_file]', file);
+
+    return fetch('/admin/banner_documents', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      }
+    });
+  });
+
+  Promise.all(uploadPromises)
+    .then(responses => Promise.all(responses.map(r => r.json())))
+    .then(results => {
+      showBannerUploadProgress(false);
+
+      const errors = results.filter(r => !r.success);
+      if (errors.length > 0) {
+        alert(`Some uploads failed: ${errors.map(e => e.error).join(', ')}`);
+      } else {
+        showToast('All banner documents uploaded successfully!', 'success');
+      }
+
+      // Refresh page to reload documents
+      window.location.reload();
+    })
+    .catch(error => {
+      console.error('Upload error:', error);
+      showBannerUploadProgress(false);
+      alert('Upload failed. Please try again.');
+    });
+}
+
+// Show/hide upload progress
+function showBannerUploadProgress(show) {
+  const progressDiv = document.getElementById('banner-upload-progress');
+  const uploadButton = document.getElementById('upload-banner-selected-files');
+
+  if (progressDiv) progressDiv.style.display = show ? 'block' : 'none';
+  if (uploadButton) uploadButton.disabled = show;
+}
+
+// Cancel upload
+function cancelBannerUpload() {
+  bannerSelectedFiles = [];
+  updateBannerFilePreview();
+  updateBannerUploadButton();
+  toggleBannerDocumentUploader();
+}
+
+// Delete banner document
+function deleteBannerDocument(documentId, title) {
+  if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+
+  fetch(`/admin/banner_documents/${documentId}`, {
+    method: 'DELETE',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showToast('Banner document deleted successfully', 'success');
+      window.location.reload();
+    } else {
+      alert('Failed to delete document: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Delete error:', error);
+    alert('Failed to delete document');
+  });
+}
+
+// Download banner document
+function downloadBannerDocument(documentId) {
+  window.open(`/admin/banner_documents/${documentId}/download`, '_blank');
+}
+
+// Show toast notification
+function showToast(message, type = 'info') {
+  console.log(`Toast [${type}]: ${message}`);
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('banner-documents-manager')) {
+    initializeBannerDocumentManager();
+  }
+});
+</script>

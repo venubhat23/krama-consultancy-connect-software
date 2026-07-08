@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Dropdown Functionality</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Select2 Bootstrap 5 Theme -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Dropdown Functionality Test</h2>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">State (with Search)</label>
+                <select class="form-select searchable-select" id="test_state">
+                    <option value="">Search and select state...</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                    <option value="Karnataka">Karnataka</option>
+                    <option value="Tamil Nadu">Tamil Nadu</option>
+                    <option value="Gujarat">Gujarat</option>
+                    <option value="Rajasthan">Rajasthan</option>
+                </select>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">City (with Search)</label>
+                <select class="form-select searchable-select" id="test_city" disabled>
+                    <option value="">Select State First</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12 mb-3">
+                <label class="form-label">Affiliate (AJAX Search)</label>
+                <select class="form-select searchable-select" id="test_affiliate">
+                    <option value="">Search and select affiliate...</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            <h5>Test Instructions:</h5>
+            <ol>
+                <li>Test state dropdown search functionality</li>
+                <li>Select a state to see if city dropdown loads</li>
+                <li>Test city dropdown search</li>
+                <li>Test affiliate search (requires authentication for real data)</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Initialize Select2 for all searchable selects
+            $('.searchable-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumResultsForSearch: 0
+            });
+
+            // Mock city data
+            const cityData = {
+                'Maharashtra': ['Mumbai', 'Pune', 'Nagpur', 'Nashik', 'Aurangabad'],
+                'Karnataka': ['Bangalore', 'Mysore', 'Hubli', 'Mangalore', 'Belgaum'],
+                'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli', 'Salem'],
+                'Gujarat': ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Bhavnagar'],
+                'Rajasthan': ['Jaipur', 'Jodhpur', 'Udaipur', 'Kota', 'Bikaner']
+            };
+
+            // Handle state change
+            $('#test_state').on('select2:select', function(e) {
+                const selectedState = e.params.data.id;
+                const cityDropdown = $('#test_city');
+
+                // Destroy existing Select2
+                cityDropdown.select2('destroy');
+
+                // Clear and populate cities
+                cityDropdown.html('<option value="">Select City</option>');
+
+                if (selectedState && cityData[selectedState]) {
+                    cityData[selectedState].forEach(city => {
+                        cityDropdown.append(new Option(city, city));
+                    });
+                    cityDropdown.prop('disabled', false);
+                } else {
+                    cityDropdown.prop('disabled', true);
+                }
+
+                // Reinitialize Select2
+                cityDropdown.select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumResultsForSearch: 0
+                });
+            });
+
+            // Initialize affiliate search with default results (simulated)
+            $('#test_affiliate').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 0, // Allow opening without typing
+                placeholder: 'Search and select affiliate...',
+                data: [
+                    { id: '1', text: 'John Doe' },
+                    { id: '2', text: 'Jane Smith' },
+                    { id: '3', text: 'Mike Johnson' },
+                    { id: '4', text: 'Sarah Wilson' },
+                    { id: '5', text: 'David Brown' }
+                ],
+                templateResult: function(option) {
+                    if (!option.id) return option.text;
+
+                    // Enhanced template with avatar
+                    var initials = option.text.split(' ').map(function(name) {
+                        return name.charAt(0).toUpperCase();
+                    }).join('').substring(0, 2);
+
+                    var $option = $(
+                        '<div class="affiliate-option d-flex align-items-center">' +
+                            '<div class="affiliate-avatar bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 12px; font-weight: bold;">' +
+                                initials +
+                            '</div>' +
+                            '<div class="affiliate-details">' +
+                                '<div class="affiliate-name" style="font-weight: 500;">' + option.text + '</div>' +
+                                '<small class="text-muted">Affiliate ID: #' + option.id + '</small>' +
+                            '</div>' +
+                        '</div>'
+                    );
+                    return $option;
+                },
+                escapeMarkup: function(markup) {
+                    return markup;
+                }
+            });
+
+            console.log('Test page initialized successfully!');
+        });
+    </script>
+</body>
+</html>

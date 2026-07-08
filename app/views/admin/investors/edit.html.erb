@@ -1,0 +1,907 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Edit Investor</h2>
+    <p class="text-muted mb-0">Update investor details: <%= @investor.display_name %></p>
+  </div>
+  <div>
+    <%= link_to admin_investors_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Investors
+    <% end %>
+  </div>
+</div>
+
+<%= form_with model: [:admin, @investor], local: true, multipart: true, class: "needs-validation", novalidate: true, data: { turbo: false } do |form| %>
+  <% if @investor.errors.any? %>
+    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+      <h6>Please correct the following errors:</h6>
+      <ul class="mb-0">
+        <% @investor.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% end %>
+
+  <!-- 1. Personal Details -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-person-circle me-2 text-primary"></i>
+      <h5 class="mb-0">Personal Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <%= form.label :first_name, class: "form-label" do %>
+            First Name <span class="text-danger">*</span>
+          <% end %>
+          <%= form.text_field :first_name, class: "form-control", placeholder: "Enter first name", required: true %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :middle_name, "Middle Name", class: "form-label" %>
+          <%= form.text_field :middle_name, class: "form-control", placeholder: "Enter middle name" %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :last_name, class: "form-label" do %>
+            Last Name <span class="text-danger">*</span>
+          <% end %>
+          <%= form.text_field :last_name, class: "form-control", placeholder: "Enter last name", required: true %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :mobile, class: "form-label" do %>
+            Mobile <span class="text-danger">*</span>
+          <% end %>
+          <%= form.telephone_field :mobile, value: @investor.mobile_for_form, class: "form-control mobile-input", placeholder: "Enter 10-digit mobile number", required: true, pattern: "[6789][0-9]{9}", title: "Must be a 10-digit number starting with 6, 7, 8, or 9", autocomplete: "tel", maxlength: "10" %>
+          <div class="form-text text-muted">
+            <small>Enter 10-digit mobile number starting with 6, 7, 8, or 9 (e.g., 9876543210)</small>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :email, class: "form-label" do %>
+            Email <span class="text-danger">*</span>
+          <% end %>
+          <%= form.email_field :email, class: "form-control", placeholder: "Enter email address", required: true %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :role_id, class: "form-label" do %>
+            Role <span class="text-danger">*</span>
+          <% end %>
+          <%= form.text_field :role_id, class: "form-control", value: 'investor', readonly: true %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :birth_date, "Birth Date", class: "form-label" %>
+          <%= form.date_field :birth_date, class: "form-control" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-4">
+          <%= form.label :state, "State", class: "form-label" %>
+          <%= form.select :state,
+              options_for_select(@states_for_select || [], @investor&.state),
+              { prompt: 'Search and select state...' },
+              { class: "form-select searchable-select", id: "investor_state", data: { placeholder: "Type to search states..." } } %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :city, "City", class: "form-label" %>
+          <%= form.select :city,
+              options_for_select(@investor&.city.present? ? [[@investor.city, @investor.city]] : [], @investor&.city),
+              { prompt: 'Search and select city...' },
+              { class: "form-select searchable-select", id: "investor_city", disabled: @investor&.state.blank?, data: { placeholder: "Type to search cities...", saved_city: @investor&.city } } %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :gender, "Gender", class: "form-label" %>
+          <%= form.select :gender,
+              options_for_select([
+                ['Male', 'Male'], ['Female', 'Female'], ['Other', 'Other']
+              ], @investor.gender),
+              { prompt: 'Select Gender' },
+              { class: "form-select" } %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-4">
+          <%= form.label :pan_no, "PAN No", class: "form-label" %>
+          <%= form.text_field :pan_no, class: "form-control", placeholder: "Enter PAN number" %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :gst_no, "GST No", class: "form-label" %>
+          <%= form.text_field :gst_no, class: "form-control", placeholder: "Enter GST number" %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :company_name, "Company Name", class: "form-label" %>
+          <%= form.text_field :company_name, class: "form-control", placeholder: "Enter company name" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-12">
+          <%= form.label :address, "Address", class: "form-label" %>
+          <%= form.text_area :address, class: "form-control", rows: 3, placeholder: "Enter full address" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Bank Details -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-bank me-2 text-success"></i>
+      <h5 class="mb-0">Bank Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <%= form.label :bank_name, "Bank Name", class: "form-label" %>
+          <%= form.text_field :bank_name, class: "form-control", placeholder: "Enter bank name" %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :account_no, "Account Number", class: "form-label" %>
+          <%= form.text_field :account_no, class: "form-control", placeholder: "Enter account number" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :ifsc_code, "IFSC Code", class: "form-label" %>
+          <%= form.text_field :ifsc_code, class: "form-control", placeholder: "Enter IFSC code" %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :account_holder_name, "Account Holder Name", class: "form-label" %>
+          <%= form.text_field :account_holder_name, class: "form-control", placeholder: "Enter account holder name" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :account_type, "Account Type", class: "form-label" %>
+          <%= form.select :account_type,
+              options_for_select([
+                ['Savings', 'Savings'], ['Current', 'Current'], ['Salary', 'Salary']
+              ], @investor.account_type),
+              { prompt: 'Select Account Type' },
+              { class: "form-select" } %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :upi_id, "UPI ID", class: "form-label" %>
+          <%= form.text_field :upi_id, class: "form-control", placeholder: "Enter UPI ID" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Investment Details -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-currency-rupee me-2 text-primary"></i>
+      <h5 class="mb-0">Investment Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <%= form.label :number_of_shares, "No. of Shares", class: "form-label" %>
+          <%= form.number_field :number_of_shares, class: "form-control", placeholder: "Enter number of shares", min: 0 %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :invested_amount, "Invested Amount (Rs.)", class: "form-label" %>
+          <%= form.number_field :invested_amount, class: "form-control", placeholder: "Enter invested amount", step: :any, min: 0 %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :investment_percentage, "Investment Percentage (%)", class: "form-label" %>
+          <%= form.number_field :investment_percentage, class: "form-control", placeholder: "Enter investment percentage", step: :any, min: 0, max: 100 %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Documents & QR Code -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-file-earmark-arrow-up me-2 text-warning"></i>
+      <h5 class="mb-0">Documents & QR Code</h5>
+    </div>
+    <div class="card-body">
+      <!-- Main Document Upload -->
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <%= form.label :upload_main_document, "Upload Main Document", class: "form-label" %>
+
+          <!-- Current R2 Document Display -->
+          <% if @investor.has_r2_document? %>
+            <div class="current-document mb-3 p-3 border rounded bg-light">
+              <div class="row align-items-center">
+                <div class="col-auto">
+                  <% if @investor.main_document_content_type&.start_with?('image/') %>
+                    <%= image_tag @investor.r2_document_url, class: "img-thumbnail",
+                        style: "width: 60px; height: 60px; object-fit: cover;" %>
+                  <% elsif @investor.main_document_content_type == 'application/pdf' %>
+                    <div class="bg-danger text-white rounded d-flex align-items-center justify-content-center"
+                         style="width: 60px; height: 60px;">
+                      <i class="bi bi-file-earmark-pdf fs-4"></i>
+                    </div>
+                  <% else %>
+                    <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center"
+                         style="width: 60px; height: 60px;">
+                      <i class="bi bi-file-earmark fs-4"></i>
+                    </div>
+                  <% end %>
+                </div>
+                <div class="col">
+                  <div class="fw-medium"><%= @investor.main_document_filename %></div>
+                  <small class="text-muted">
+                    <%= (@investor.main_document_size / 1024.0 / 1024.0).round(2) %> MB •
+                    <%= @investor.main_document_content_type %>
+                  </small>
+                  <div>
+                    <small class="text-success">
+                      <i class="bi bi-cloud-check me-1"></i>
+                      Stored in Cloudflare R2
+                    </small>
+                  </div>
+                </div>
+                <div class="col-auto">
+                  <div class="d-flex gap-1">
+                    <%= link_to @investor.r2_document_url, class: "btn btn-sm btn-outline-primary",
+                        target: "_blank", title: "View" do %>
+                      <i class="bi bi-eye"></i>
+                    <% end %>
+                    <%= link_to "javascript:void(0)",
+                        class: "btn btn-sm btn-outline-danger delete-main-document",
+                        title: "Delete Document",
+                        data: {
+                          url: admin_investor_path(@investor, delete_document: true),
+                          filename: @investor.main_document_filename
+                        } do %>
+                      <i class="bi bi-trash"></i>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="mb-2">
+              <small class="text-muted">
+                <strong>Replace document:</strong> Upload a new file to replace the current document
+              </small>
+            </div>
+          <% end %>
+
+          <%= form.file_field :upload_main_document, class: "form-control", accept: "image/*,application/pdf" %>
+          <small class="form-text text-muted">
+            Upload main identification document (JPG, PNG, PDF) -
+            <% if @investor.has_r2_document? %>
+              upload new file to replace existing document
+            <% else %>
+              leave empty to keep existing
+            <% end %>
+          </small>
+        </div>
+      </div>
+
+      <!-- Existing Documents -->
+      <% if @investor.investor_documents.select(&:persisted?).any? %>
+        <div class="border-bottom pb-4 mb-4">
+          <h6 class="mb-3">Existing Documents</h6>
+          <div class="row">
+            <% @investor.investor_documents.select(&:persisted?).each do |document| %>
+              <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <div class="d-flex align-items-start">
+                      <div class="me-3">
+                        <% if document.content_type&.start_with?('image/') %>
+                          <% if document.document_url.present? %>
+                            <%= image_tag document.document_url, class: "img-thumbnail",
+                                style: "width: 50px; height: 50px; object-fit: cover;" %>
+                          <% else %>
+                            <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center"
+                                 style="width: 50px; height: 50px;">
+                              <i class="bi bi-image fs-6"></i>
+                            </div>
+                          <% end %>
+                        <% elsif document.content_type == 'application/pdf' %>
+                          <div class="bg-danger text-white rounded d-flex align-items-center justify-content-center"
+                               style="width: 50px; height: 50px;">
+                            <i class="bi bi-file-earmark-pdf fs-6"></i>
+                          </div>
+                        <% else %>
+                          <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center"
+                               style="width: 50px; height: 50px;">
+                            <i class="bi bi-file-earmark fs-6"></i>
+                          </div>
+                        <% end %>
+                      </div>
+                      <div class="flex-grow-1">
+                        <h6 class="card-title mb-1"><%= document.document_type %></h6>
+                        <p class="card-text mb-1">
+                          <small class="text-muted">
+                            <%= document.document_name %><br>
+                            <%= document.document_size %> •
+                            Uploaded: <%= document.created_at ? time_ago_in_words(document.created_at) + ' ago' : 'Date not available' %>
+                          </small>
+                        </p>
+                        <% if document.has_r2_document? %>
+                          <small class="text-success">
+                            <i class="bi bi-cloud-check me-1"></i>
+                            Stored in Cloudflare R2
+                          </small>
+                        <% elsif document.legacy_activestorage_document? %>
+                          <small class="text-info">
+                            <i class="bi bi-archive me-1"></i>
+                            Legacy storage (ActiveStorage)
+                          </small>
+                        <% end %>
+                      </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-3">
+                      <% if document.document_url.present? %>
+                        <%= link_to document.document_url, target: '_blank', class: "btn btn-sm btn-outline-primary" do %>
+                          <i class="bi bi-eye me-1"></i>View
+                        <% end %>
+                      <% end %>
+                      <% if document.persisted? %>
+                        <%= link_to "javascript:void(0)",
+                                   class: "btn btn-sm btn-outline-danger delete-document",
+                                   data: {
+                                     url: admin_investor_investor_document_path(@investor, document),
+                                     filename: document.document_name,
+                                     type: document.document_type
+                                   } do %>
+                          <i class="bi bi-trash me-1"></i>Delete
+                        <% end %>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Add New Documents Section -->
+      <div class="border-top pt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0">Add New Documents</h6>
+          <button type="button" class="btn btn-sm btn-outline-primary" id="add_document">
+            <i class="bi bi-plus-lg me-1"></i>
+            Add Document
+          </button>
+        </div>
+
+        <div id="documents_container">
+          <!-- Dynamic documents will be added here -->
+        </div>
+
+        <p class="text-muted mb-0 mt-2">
+          <small>Document types: Aadhaar Card, Pancard, Driving License, Mediclaim, RC Book, Other File</small>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-end gap-2">
+        <%= link_to "Cancel", admin_investors_path, class: "btn btn-outline-secondary" %>
+        <%= form.submit "Update Investor", class: "btn btn-primary" %>
+      </div>
+    </div>
+  </div>
+
+<% end %>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteConfirmModalLabel">
+          <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+          Confirm Delete
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex align-items-center">
+          <div class="flex-shrink-0">
+            <i class="bi bi-trash text-danger" style="font-size: 2rem;"></i>
+          </div>
+          <div class="flex-grow-1 ms-3">
+            <p class="mb-2"><strong>Are you sure you want to delete this document?</strong></p>
+            <p class="mb-1 text-muted" id="documentInfo"></p>
+            <p class="mb-0 text-danger"><small><i class="bi bi-exclamation-circle me-1"></i>This action cannot be undone and will unlink the document from the investor.</small></p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i>Cancel
+        </button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+          <i class="bi bi-trash me-1"></i>Yes, Delete Document
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.document-entry {
+  background: #f8f9fa;
+  border-radius: 8px;
+  position: relative;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+</style>
+
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<!-- jQuery and Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Include Form Enhancements -->
+<script>
+<%= File.read(Rails.root.join('app/assets/javascripts/location_data.js')).html_safe %>
+</script>
+<script>
+<%= File.read(Rails.root.join('app/assets/javascripts/form_enhancements.js')).html_safe %>
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🔄 Investor Edit: Initializing state-city dropdowns using sub_agent approach...');
+
+  // Mobile number validation - ensure 10 digits starting with 6/7/8/9
+  const mobileInput = document.querySelector('.mobile-input');
+  if (mobileInput) {
+    mobileInput.addEventListener('input', function(e) {
+      let value = e.target.value;
+
+      // Remove all non-digits
+      let cleaned = value.replace(/\D/g, '');
+
+      // Remove +91 prefix if present
+      if (cleaned.startsWith('91') && cleaned.length >= 12) {
+        cleaned = cleaned.substring(2);
+      }
+
+      // Limit to 10 digits
+      cleaned = cleaned.substring(0, 10);
+      e.target.value = cleaned;
+
+      // Validation: exactly 10 digits starting with 6/7/8/9
+      if (cleaned.length === 10 && /^[6789]/.test(cleaned)) {
+        e.target.classList.remove('is-invalid');
+        e.target.classList.add('is-valid');
+        e.target.setCustomValidity('');
+      } else if (cleaned.length > 0) {
+        e.target.classList.remove('is-valid');
+        e.target.classList.add('is-invalid');
+        if (cleaned.length < 10) {
+          e.target.setCustomValidity('Mobile number must be 10 digits');
+        } else if (!/^[6789]/.test(cleaned)) {
+          e.target.setCustomValidity('Mobile number must start with 6, 7, 8, or 9');
+        }
+      } else {
+        e.target.classList.remove('is-valid', 'is-invalid');
+        e.target.setCustomValidity('');
+      }
+    });
+
+    // Also validate on paste events
+    mobileInput.addEventListener('paste', function(e) {
+      setTimeout(() => {
+        e.target.dispatchEvent(new Event('input'));
+      }, 10);
+    });
+  }
+
+  const stateSelect = document.getElementById('investor_state');
+  const citySelect = document.getElementById('investor_city');
+
+  // Use global location data or API fallback
+  let investorCitiesData = {};
+
+  if (window.LocationData && window.LocationData.states) {
+    investorCitiesData = Object.keys(window.LocationData.states).reduce((acc, key) => {
+      acc[key] = window.LocationData.states[key].cities;
+      return acc;
+    }, {});
+  }
+
+  function loadInvestorCitiesForState(stateValue, selectedCityValue = null) {
+    console.log('Loading cities for investor edit form:', stateValue);
+    console.log('Selected city to set:', selectedCityValue);
+
+    if (!stateValue) {
+      citySelect.innerHTML = '<option value="">Select State First</option>';
+      citySelect.disabled = true;
+      return;
+    }
+
+    let cities = [];
+
+    // Try to get cities from location data using multiple methods
+    if (window.LocationData && window.LocationData.states) {
+      // Method 1: Direct key match
+      cities = investorCitiesData[stateValue] || [];
+      console.log('Direct key match cities:', cities.length);
+
+      // Method 2: Match by state name if direct key fails
+      if (cities.length === 0) {
+        Object.keys(window.LocationData.states).forEach(key => {
+          const stateData = window.LocationData.states[key];
+          if (stateData.name === stateValue || key === stateValue) {
+            cities = stateData.cities || [];
+            console.log('Found by state name match:', cities.length);
+          }
+        });
+      }
+
+      // Method 3: Case-insensitive search
+      if (cities.length === 0) {
+        const stateLower = stateValue.toLowerCase();
+        Object.keys(window.LocationData.states).forEach(key => {
+          const stateData = window.LocationData.states[key];
+          if (stateData.name.toLowerCase() === stateLower || key.toLowerCase() === stateLower) {
+            cities = stateData.cities || [];
+            console.log('Found by case-insensitive match:', cities.length);
+          }
+        });
+      }
+    }
+
+    if (cities.length > 0) {
+      populateInvestorCityDropdownWithSelection(cities, selectedCityValue);
+    } else {
+      console.warn('No cities found for state:', stateValue, 'using fallback');
+      // Fallback: populate with empty and try to preserve selected city
+      populateInvestorCityDropdownWithSelection([], selectedCityValue);
+    }
+  }
+
+  function populateInvestorCityDropdownWithSelection(cities, selectedCityValue = null) {
+    // First destroy Select2 if it exists
+    const $investorCitySelect = $(citySelect);
+    if ($investorCitySelect.hasClass('select2-hidden-accessible')) {
+      $investorCitySelect.select2('destroy');
+    }
+
+    // Get the saved city from parameter or investor data
+    const savedCity = selectedCityValue || '<%= @investor&.city || "" %>';
+    console.log('Populating investor cities with selection:', savedCity);
+
+    // Clear dropdown and add cities
+    citySelect.innerHTML = '<option value="">Select City</option>';
+
+    // Track if saved city is found in the list
+    let savedCityFound = false;
+
+    // If cities are available, populate them
+    if (cities && cities.length > 0) {
+      cities.forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        option.textContent = city;
+        if (savedCity && city === savedCity) {
+          option.selected = true;
+          savedCityFound = true;
+          console.log('Found and selected saved city:', city);
+        }
+        citySelect.appendChild(option);
+      });
+      citySelect.disabled = false;
+    }
+
+    // If saved city wasn't in the list but exists, add it as an option
+    if (savedCity && !savedCityFound) {
+      const option = document.createElement('option');
+      option.value = savedCity;
+      option.textContent = savedCity;
+      option.selected = true;
+      citySelect.appendChild(option);
+      citySelect.disabled = false;
+      console.log('Added saved city as additional option:', savedCity);
+      savedCityFound = true;
+    }
+
+    // Ensure city is disabled only if no state is selected and no saved city
+    if (!cities.length && !savedCity) {
+      citySelect.disabled = true;
+    }
+
+    console.log(`Loaded ${cities.length} cities for investor edit form, selected: ${savedCity}, found: ${savedCityFound}`);
+
+    // Reinitialize Select2
+    setTimeout(() => {
+      $investorCitySelect.select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select city...',
+        allowClear: false,
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+
+      // Add change event handler to ensure value is properly set
+      $investorCitySelect.on('select2:select', function(e) {
+        const selectedCity = e.params.data.id;
+        citySelect.value = selectedCity;
+        console.log('City selected via Select2:', selectedCity);
+      });
+
+      // Force set the saved city value in Select2
+      if (savedCity && savedCityFound) {
+        $investorCitySelect.val(savedCity);
+        $investorCitySelect.trigger('change.select2');
+        console.log('Forced Select2 to show saved city:', savedCity);
+      }
+    }, 100);
+  }
+
+  // Initialize Select2 for state and city dropdowns (only if not already initialized)
+  if (typeof $ !== 'undefined' && $.fn.select2) {
+    // State dropdown
+    if (!$(stateSelect).hasClass('select2-hidden-accessible')) {
+      $(stateSelect).select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select state...',
+        allowClear: true,
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+      console.log('✅ State Select2 initialized');
+    } else {
+      console.log('ℹ️ State Select2 already initialized');
+    }
+
+    // City dropdown (will be properly initialized in populateCityDropdownWithCity)
+    if (!$(citySelect).hasClass('select2-hidden-accessible')) {
+      $(citySelect).select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select city...',
+        allowClear: true,
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+      console.log('✅ City Select2 initially initialized');
+    } else {
+      console.log('ℹ️ City Select2 already initialized');
+    }
+  }
+
+  // Handle state change
+  stateSelect.addEventListener('change', function() {
+    loadInvestorCitiesForState(this.value);
+  });
+
+  // Handle Select2 change event specifically
+  $('#investor_state').on('select2:select', function (e) {
+    const selectedValue = e.params.data.id;
+    stateSelect.value = selectedValue;
+    console.log('State selected via Select2:', selectedValue);
+    loadInvestorCitiesForState(selectedValue);
+  });
+
+  // Add protection against unexpected city value changes
+  let lastCityValue = null;
+  $('#investor_city').on('change', function() {
+    const currentValue = $(this).val();
+    if (lastCityValue && currentValue === '' && lastCityValue !== '') {
+      console.warn('🚨 City value unexpectedly cleared! Last value:', lastCityValue);
+      // Attempt to restore if the clear was unintentional
+      setTimeout(() => {
+        if ($(this).val() === '') {
+          console.log('🔧 Attempting to restore city value:', lastCityValue);
+          $(this).val(lastCityValue).trigger('change.select2');
+        }
+      }, 100);
+    } else {
+      lastCityValue = currentValue;
+    }
+  });
+
+  // Load cities if state is pre-selected (improved initialization)
+  const savedState = '<%= @investor&.state || "" %>';
+  const savedCity = '<%= @investor&.city || "" %>';
+
+  console.log('Initializing investor edit form with saved state:', savedState, 'and city:', savedCity);
+
+  // Initialize Select2 first, then check state value
+  setTimeout(() => {
+    console.log('Starting investor edit form initialization...');
+    console.log('Saved state:', savedState);
+    console.log('Saved city:', savedCity);
+    console.log('Investor state select value:', stateSelect.value);
+
+    // Check if state is present (either from saved value or dropdown)
+    const currentState = savedState || stateSelect.value;
+
+    if (currentState && currentState !== '') {
+      console.log('Processing state:', currentState);
+
+      // Try to find the state in dropdown options
+      const stateOption = Array.from(stateSelect.options).find(option =>
+        option.value === currentState || option.text === currentState
+      );
+
+      if (stateOption) {
+        // Set the state value
+        stateSelect.value = stateOption.value;
+        $('#investor_state').val(stateOption.value).trigger('change.select2');
+        console.log('Set state dropdown to:', stateOption.value);
+
+        // Load cities for this state after a small delay to ensure Select2 is ready
+        setTimeout(() => {
+          loadInvestorCitiesForState(stateOption.value, savedCity);
+        }, 100);
+      } else {
+        // State not in dropdown, but still try to load cities
+        loadInvestorCitiesForState(currentState, savedCity);
+      }
+    } else if (savedCity) {
+      // If there's a saved city but no state, still show it
+      console.log('Saved city exists without state, adding it manually');
+      const $citySelect = $(citySelect);
+      citySelect.disabled = false;
+
+      // Add the saved city option
+      const option = document.createElement('option');
+      option.value = savedCity;
+      option.textContent = savedCity;
+      option.selected = true;
+      citySelect.appendChild(option);
+
+      // Reinitialize Select2
+      setTimeout(() => {
+        if ($citySelect.hasClass('select2-hidden-accessible')) {
+          $citySelect.select2('destroy');
+        }
+        $citySelect.select2({
+          theme: 'bootstrap-5',
+          placeholder: 'Search and select city...',
+          allowClear: true,
+          width: '100%',
+          minimumResultsForSearch: 0
+        });
+        $citySelect.val(savedCity).trigger('change.select2');
+      }, 100);
+    }
+  }, 500); // Increased delay to ensure all scripts are loaded
+
+
+
+
+
+
+  // Document management
+  let documentIndex = <%= @investor.investor_documents.size %>;
+  const addDocumentBtn = document.getElementById('add_document');
+  const documentsContainer = document.getElementById('documents_container');
+
+  addDocumentBtn?.addEventListener('click', function() {
+    const documentHtml = `
+      <div class="document-entry p-3 mb-3 border rounded position-relative" data-index="${documentIndex}">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-btn remove-document">
+          <i class="bi bi-trash"></i>
+        </button>
+        <div class="row">
+          <div class="col-md-6">
+            <label class="form-label">Document Type <span class="text-danger">*</span></label>
+            <select name="investor[investor_documents_attributes][${documentIndex}][document_type]" class="form-select" required>
+              <option value="">Select Document Type</option>
+              <option value="Aadhaar Card">Aadhaar Card</option>
+              <option value="Pancard">Pancard</option>
+              <option value="Driving License">Driving License</option>
+              <option value="Mediclaim">Mediclaim</option>
+              <option value="RC Book">RC Book</option>
+              <option value="Other File">Other File</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Document File <span class="text-danger">*</span></label>
+            <input type="file" name="investor[investor_documents_attributes][${documentIndex}][document_file]" class="form-control" accept="image/*,application/pdf" required>
+          </div>
+        </div>
+      </div>
+    `;
+    documentsContainer.insertAdjacentHTML('beforeend', documentHtml);
+    documentIndex++;
+  });
+
+  // Event delegation for remove buttons
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-document')) {
+      e.target.closest('.document-entry').remove();
+    }
+  });
+
+  // Delete confirmation modal functionality
+  let deleteUrl = '';
+  const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+  const documentInfo = document.getElementById('documentInfo');
+  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+  // Handle main document delete
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-main-document')) {
+      e.preventDefault();
+      const button = e.target.closest('.delete-main-document');
+      deleteUrl = button.dataset.url;
+      const filename = button.dataset.filename;
+
+      documentInfo.textContent = `Main Document: ${filename}`;
+      deleteModal.show();
+    }
+  });
+
+  // Handle regular document delete
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-document')) {
+      e.preventDefault();
+      const button = e.target.closest('.delete-document');
+      deleteUrl = button.dataset.url;
+      const filename = button.dataset.filename;
+      const type = button.dataset.type;
+
+      documentInfo.textContent = `${type}: ${filename}`;
+      deleteModal.show();
+    }
+  });
+
+  // Handle confirm delete
+  confirmDeleteBtn.addEventListener('click', function() {
+    if (deleteUrl) {
+      // Create form and submit
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = deleteUrl;
+
+      // Add CSRF token
+      const csrfToken = document.querySelector('meta[name="csrf-token"]');
+      if (csrfToken) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'authenticity_token';
+        csrfInput.value = csrfToken.content;
+        form.appendChild(csrfInput);
+      }
+
+      // Add method override for DELETE or PATCH
+      const methodInput = document.createElement('input');
+      methodInput.type = 'hidden';
+      methodInput.name = '_method';
+
+      if (deleteUrl.includes('delete_document=true')) {
+        // Main document delete uses PATCH
+        methodInput.value = 'PATCH';
+      } else {
+        // Regular document delete uses DELETE
+        methodInput.value = 'DELETE';
+      }
+      form.appendChild(methodInput);
+
+      // Submit form
+      document.body.appendChild(form);
+      form.submit();
+    }
+  });
+});
+</script>

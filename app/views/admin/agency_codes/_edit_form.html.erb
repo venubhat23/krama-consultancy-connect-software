@@ -1,0 +1,97 @@
+<!-- Edit Form for Modal -->
+<%= form_with model: [:admin, @agency_code], local: true, class: "needs-validation", novalidate: true do |form| %>
+  <div class="modal-body">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <%= form.label :insurance_type, "Insurance Type", class: "form-label" %>
+        <%= form.select :insurance_type,
+            options_for_select(@insurance_types.map { |type| [type, type] }, @agency_code.insurance_type),
+            { prompt: 'Select Type' },
+            { class: "form-select", required: true } %>
+        <% if @agency_code.errors[:insurance_type].any? %>
+          <div class="invalid-feedback d-block">
+            <%= @agency_code.errors[:insurance_type].first %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="col-md-6">
+        <%= form.label :company_name, "Company Name", class: "form-label" %>
+        <%= form.select :company_name,
+            options_for_select(@insurance_companies.map { |company| [company, company] }, @agency_code.company_name),
+            { prompt: 'Select Company' },
+            { class: "form-select", required: true } %>
+        <% if @agency_code.errors[:company_name].any? %>
+          <div class="invalid-feedback d-block">
+            <%= @agency_code.errors[:company_name].first %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="col-md-6">
+        <%= form.label :agent_name, "Agent Name", class: "form-label" %>
+        <%= form.text_field :agent_name,
+            class: "form-control",
+            placeholder: "Enter agent name",
+            required: true %>
+        <% if @agency_code.errors[:agent_name].any? %>
+          <div class="invalid-feedback d-block">
+            <%= @agency_code.errors[:agent_name].first %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="col-md-6">
+        <%= form.label :code, "Agency Code", class: "form-label" %>
+        <%= form.text_field :code,
+            class: "form-control",
+            placeholder: "Enter agency code",
+            required: true %>
+        <% if @agency_code.errors[:code].any? %>
+          <div class="invalid-feedback d-block">
+            <%= @agency_code.errors[:code].first %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    <%= form.submit "Update Agency Code", class: "btn btn-primary" %>
+  </div>
+<% end %>
+
+<script>
+// Handle form submission via AJAX for modal
+document.querySelector('.modal form').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const formData = new FormData(this);
+
+  fetch(this.action, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'Accept': 'application/json'
+    }
+  })
+  .then(response => {
+    if (response.ok) {
+      // Close modal and reload page
+      const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+      modal.hide();
+      window.location.reload();
+    } else {
+      return response.text().then(text => {
+        // Show validation errors
+        document.getElementById('editModalBody').innerHTML = text;
+      });
+    }
+  })
+  .catch(error => {
+    console.error('Update error:', error);
+  });
+});
+</script>

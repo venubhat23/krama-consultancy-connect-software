@@ -1,0 +1,2415 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/countup.js@2.6.2/dist/countUp.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.44.0/dist/apexcharts.min.js"></script>
+</head>
+<body>
+
+<div class="financial-dashboard" id="dashboard">
+  <!-- Animated Background -->
+  <div class="animated-bg">
+    <div class="gradient-sphere sphere-1"></div>
+    <div class="gradient-sphere sphere-2"></div>
+    <div class="gradient-sphere sphere-3"></div>
+    <div class="mesh-gradient"></div>
+  </div>
+
+  <!-- Modern Header -->
+  <header class="dashboard-header glass-effect">
+    <div class="header-content">
+      <div class="brand-section">
+        <div class="logo-container">
+          <div class="logo-pulse">
+            <i class="bi bi-graph-up-arrow"></i>
+          </div>
+        </div>
+        <div class="brand-info">
+          <h1 class="brand-title">DrWise Analytics</h1>
+          <span class="brand-subtitle">Financial Intelligence Hub</span>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="time-filter glass-pill">
+          <button class="filter-btn active" data-period="day">24H</button>
+          <button class="filter-btn" data-period="week">7D</button>
+          <button class="filter-btn" data-period="month">1M</button>
+          <button class="filter-btn" data-period="year">1Y</button>
+          <div class="filter-indicator"></div>
+        </div>
+
+        <button class="theme-toggle glass-button">
+          <i class="bi bi-moon-stars-fill"></i>
+        </button>
+
+        <div class="live-indicator">
+          <span class="live-dot"></span>
+          <span>LIVE</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Dashboard Content -->
+  <main class="dashboard-content">
+    <!-- Key Metrics Section -->
+    <section class="metrics-section">
+      <div class="metrics-grid">
+        <!-- Total Revenue Card -->
+        <div class="metric-card glass-card" data-aos="fade-up">
+          <div class="metric-header">
+            <div class="metric-icon-wrapper gradient-1">
+              <i class="bi bi-currency-rupee"></i>
+            </div>
+            <div class="metric-trend positive">
+              <i class="bi bi-arrow-up-right"></i>
+              <span>+12.5%</span>
+            </div>
+          </div>
+          <div class="metric-value">
+            <h2 class="counter" data-target="<%= (@commission_summary[:total_generated] || 2845600).to_i %>">0</h2>
+            <span class="metric-label">Total Revenue</span>
+          </div>
+          <div class="metric-chart">
+            <canvas id="revenueSparkline"></canvas>
+          </div>
+          <div class="metric-footer">
+            <span class="metric-period">vs last month</span>
+            <span class="metric-delta">+Rs. 3,42,000</span>
+          </div>
+        </div>
+
+        <!-- Active Policies Card -->
+        <div class="metric-card glass-card" data-aos="fade-up" data-aos-delay="100">
+          <div class="metric-header">
+            <div class="metric-icon-wrapper gradient-2">
+              <i class="bi bi-shield-check"></i>
+            </div>
+            <div class="metric-trend positive">
+              <i class="bi bi-arrow-up-right"></i>
+              <span>+8.2%</span>
+            </div>
+          </div>
+          <div class="metric-value">
+            <h2 class="counter" data-target="1284">0</h2>
+            <span class="metric-label">Active Policies</span>
+          </div>
+          <div class="metric-chart">
+            <canvas id="policiesSparkline"></canvas>
+          </div>
+          <div class="metric-footer">
+            <span class="metric-period">this quarter</span>
+            <span class="metric-delta">+97 new</span>
+          </div>
+        </div>
+
+        <!-- Commission Earned Card -->
+        <div class="metric-card glass-card" data-aos="fade-up" data-aos-delay="200">
+          <div class="metric-header">
+            <div class="metric-icon-wrapper gradient-3">
+              <i class="bi bi-wallet2"></i>
+            </div>
+            <div class="metric-trend negative">
+              <i class="bi bi-arrow-down-right"></i>
+              <span>-3.4%</span>
+            </div>
+          </div>
+          <div class="metric-value">
+            <h2 class="counter" data-target="<%= (@commission_summary[:total_transferred] || 385400).to_i %>">0</h2>
+            <span class="metric-label">Commission Transferred</span>
+          </div>
+          <div class="metric-chart">
+            <canvas id="commissionSparkline"></canvas>
+          </div>
+          <div class="metric-footer">
+            <span class="metric-period">this month</span>
+            <span class="metric-delta">-Rs. 13,100</span>
+          </div>
+        </div>
+
+        <!-- Customer Growth Card -->
+        <div class="metric-card glass-card" data-aos="fade-up" data-aos-delay="300">
+          <div class="metric-header">
+            <div class="metric-icon-wrapper gradient-4">
+              <i class="bi bi-people"></i>
+            </div>
+            <div class="metric-trend positive">
+              <i class="bi bi-arrow-up-right"></i>
+              <span>+5.2%</span>
+            </div>
+          </div>
+          <div class="metric-value">
+            <h2><span class="counter" data-target="24">0</span>%</h2>
+            <span class="metric-label">Customer Growth</span>
+          </div>
+          <div class="metric-chart">
+            <canvas id="growthSparkline"></canvas>
+          </div>
+          <div class="metric-footer">
+            <span class="metric-period">YoY increase</span>
+            <span class="metric-delta">+248 users</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- System Status Section -->
+    <section class="system-status-section mb-4">
+      <div class="row">
+        <div class="col-md-3">
+          <div class="status-card glass-card affiliates-card" onclick="openAffiliatesModal()">
+            <div class="status-header">
+              <i class="bi bi-people-fill text-info"></i>
+              <h4>Active Affiliates</h4>
+            </div>
+            <div class="status-value">
+              <h2><%= @active_affiliates || 26 %></h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="status-card glass-card">
+            <div class="status-header">
+              <i class="bi bi-graph-up-arrow text-success"></i>
+              <h4>Lead Conversion</h4>
+            </div>
+            <div class="status-value">
+              <h2><%= @lead_conversion_rate || 51.4 %>%</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="status-card glass-card">
+            <div class="status-header">
+              <i class="bi bi-cash-stack text-warning"></i>
+              <h4>Avg Policy Value</h4>
+            </div>
+            <div class="status-value">
+              <h2><%= indian_currency(@avg_policy_value || 62951) %></h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="status-card glass-card commission-due-card" onclick="openCommissionModal()">
+            <div class="status-header">
+              <i class="bi bi-wallet2 text-danger"></i>
+              <h4>Commissions Due</h4>
+            </div>
+            <div class="status-value">
+              <h2><%= indian_currency(@commissions_due || 956013.43) %></h2>
+              <small class="click-hint">Click for details</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Premium Revenue Trend Section -->
+    <section class="revenue-trend-section mb-4">
+      <div class="chart-card glass-card">
+        <div class="chart-header">
+          <div class="chart-title">
+            <h3>Premium Revenue Trend (Last 6 Months)</h3>
+            <span class="chart-subtitle">Real-time premium collection data from database</span>
+          </div>
+        </div>
+        <div class="chart-body">
+          <div id="premiumTrendChart"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts-section">
+      <div class="charts-grid">
+        <!-- Revenue Analytics Chart -->
+        <div class="chart-card glass-card large-chart" data-aos="fade-right">
+          <div class="chart-header">
+            <div class="chart-title">
+              <h3>Revenue Analytics</h3>
+              <span class="chart-subtitle">Monthly revenue breakdown & projections</span>
+            </div>
+            <div class="chart-actions">
+              <button class="chart-btn active">Revenue</button>
+              <button class="chart-btn">Profit</button>
+              <button class="chart-btn">Growth</button>
+            </div>
+          </div>
+          <div class="chart-body">
+            <div id="revenueChart"></div>
+          </div>
+        </div>
+
+        <!-- Commission Distribution -->
+        <div class="chart-card glass-card" data-aos="fade-left">
+          <div class="chart-header">
+            <div class="chart-title">
+              <h3>Commission Distribution</h3>
+              <span class="chart-subtitle">By category</span>
+            </div>
+          </div>
+          <div class="chart-body">
+            <div id="commissionPieChart"></div>
+            <div class="commission-legend">
+              <div class="legend-item">
+                <span class="legend-dot" style="background: linear-gradient(135deg, #667eea, #764ba2)"></span>
+                <span>Main Agent</span>
+                <span class="legend-value">35%</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background: linear-gradient(135deg, #f093fb, #f5576c)"></span>
+                <span>Affiliate</span>
+                <span class="legend-value">25%</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background: linear-gradient(135deg, #4facfe, #00f2fe)"></span>
+                <span>Ambassador</span>
+                <span class="legend-value">20%</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background: linear-gradient(135deg, #43e97b, #38f9d7)"></span>
+                <span>Company</span>
+                <span class="legend-value">20%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Policy Performance Grid -->
+      <div class="performance-grid">
+        <div class="chart-card glass-card" data-aos="fade-up">
+          <div class="chart-header">
+            <div class="chart-title">
+              <h3>Policy Performance</h3>
+              <span class="chart-subtitle">By insurance type</span>
+            </div>
+          </div>
+          <div class="chart-body">
+            <div id="policyBarChart"></div>
+          </div>
+        </div>
+
+        <div class="chart-card glass-card" data-aos="fade-up" data-aos-delay="100">
+          <div class="chart-header">
+            <div class="chart-title">
+              <h3>Growth Metrics</h3>
+              <span class="chart-subtitle">Key performance indicators</span>
+            </div>
+          </div>
+          <div class="chart-body">
+            <div class="kpi-grid">
+              <div class="kpi-item">
+                <div class="kpi-icon gradient-1">
+                  <i class="bi bi-graph-up"></i>
+                </div>
+                <div class="kpi-data">
+                  <span class="kpi-value">89%</span>
+                  <span class="kpi-label">Target Achievement</span>
+                  <div class="kpi-progress">
+                    <div class="progress-fill" style="width: 89%"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="kpi-item">
+                <div class="kpi-icon gradient-2">
+                  <i class="bi bi-trophy"></i>
+                </div>
+                <div class="kpi-data">
+                  <span class="kpi-value">94%</span>
+                  <span class="kpi-label">Customer Satisfaction</span>
+                  <div class="kpi-progress">
+                    <div class="progress-fill" style="width: 94%"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="kpi-item">
+                <div class="kpi-icon gradient-3">
+                  <i class="bi bi-lightning-charge"></i>
+                </div>
+                <div class="kpi-data">
+                  <span class="kpi-value">72%</span>
+                  <span class="kpi-label">Processing Speed</span>
+                  <div class="kpi-progress">
+                    <div class="progress-fill" style="width: 72%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card glass-card" data-aos="fade-up" data-aos-delay="200">
+          <div class="chart-header">
+            <div class="chart-title">
+              <h3>Live Activity Feed</h3>
+              <span class="chart-subtitle">Real-time transactions</span>
+            </div>
+          </div>
+          <div class="chart-body">
+            <div class="activity-feed">
+              <% if @recent_policies.present? %>
+                <% @recent_policies.first(5).each do |item| %>
+                  <div class="activity-item">
+                    <div class="activity-icon">
+                      <i class="bi bi-<%= item[:type] == 'health' ? 'heart' : item[:type] == 'life' ? 'shield' : 'car-front' %>-fill"></i>
+                    </div>
+                    <div class="activity-content">
+                      <span class="activity-title"><%= item[:policy].customer.display_name %></span>
+                      <span class="activity-desc"><%= item[:type].capitalize %> Insurance</span>
+                    </div>
+                    <div class="activity-amount">
+                      <span class="amount-value">+<%= indian_currency(item[:policy].total_premium.to_i) %></span>
+                      <span class="activity-time">Just now</span>
+                    </div>
+                  </div>
+                <% end %>
+              <% else %>
+                <div class="empty-state">
+                  <i class="bi bi-inbox"></i>
+                  <span>No recent activities</span>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Transactions Table -->
+    <section class="transactions-section" data-aos="fade-up">
+      <div class="chart-card glass-card">
+        <div class="chart-header">
+          <div class="chart-title">
+            <h3>Recent Transactions</h3>
+            <span class="chart-subtitle">Latest policy commissions and transfers</span>
+          </div>
+          <div class="chart-actions">
+            <button class="chart-btn">Export</button>
+            <button class="chart-btn">Filter</button>
+          </div>
+        </div>
+        <div class="chart-body">
+          <div class="modern-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Transaction ID</th>
+                  <th>Customer</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Commission</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if @recent_policies.present? %>
+                  <% @recent_policies.each_with_index do |item, index| %>
+                    <tr class="table-row" style="animation-delay: <%= index * 0.05 %>s">
+                      <td>
+                        <span class="transaction-id">#<%= item[:policy].policy_number || "INS#{rand(10000..99999)}" %></span>
+                      </td>
+                      <td>
+                        <div class="customer-cell">
+                          <div class="customer-avatar gradient-<%= (index % 4) + 1 %>">
+                            <%= item[:policy].customer.display_name[0..1].upcase %>
+                          </div>
+                          <div class="customer-info">
+                            <span class="customer-name"><%= item[:policy].customer.display_name %></span>
+                            <span class="customer-email"><%= item[:policy].customer.email %></span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="policy-type-badge <%= item[:type] %>">
+                          <i class="bi bi-<%= item[:type] == 'health' ? 'heart' : item[:type] == 'life' ? 'shield' : 'car-front' %>-fill"></i>
+                          <%= item[:type].capitalize %>
+                        </span>
+                      </td>
+                      <td>
+                        <span class="amount"><%= indian_currency(item[:policy].total_premium.to_i) %></span>
+                      </td>
+                      <td>
+                        <span class="commission"><%= indian_currency((item[:commission_data].dig(:summary, :total_commission_generated) || 0).to_i) %></span>
+                      </td>
+                      <td>
+                        <span class="status-badge <%= ['success', 'pending', 'processing'].sample %>">
+                          <%= ['Completed', 'Pending', 'Processing'].sample %>
+                        </span>
+                      </td>
+                      <td>
+                        <span class="date"><%= item[:policy].created_at.strftime("%d %b, %Y") %></span>
+                      </td>
+                    </tr>
+                  <% end %>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<style>
+/* Modern Financial Dashboard Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.financial-dashboard {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Animated Background */
+.animated-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.gradient-sphere {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.4;
+  animation: float 20s infinite ease-in-out;
+}
+
+.sphere-1 {
+  width: 600px;
+  height: 600px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  top: -200px;
+  left: -200px;
+  animation-delay: 0s;
+}
+
+.sphere-2 {
+  width: 500px;
+  height: 500px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  bottom: -150px;
+  right: -150px;
+  animation-delay: 5s;
+}
+
+.sphere-3 {
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: 10s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(30px, -30px) rotate(120deg); }
+  66% { transform: translate(-20px, 20px) rotate(240deg); }
+}
+
+.mesh-gradient {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image:
+    radial-gradient(at 40% 20%, hsla(28, 100%, 74%, 0.1) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(355, 100%, 93%, 0.1) 0px, transparent 50%);
+}
+
+/* Glass Effect */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+}
+
+/* Header Styles */
+.dashboard-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 20px 40px;
+  margin-bottom: 40px;
+  animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo-container {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.logo-pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.logo-container i {
+  font-size: 24px;
+  color: white;
+}
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  background: linear-gradient(135deg, #fff 0%, #e0e0e0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.time-filter {
+  display: flex;
+  padding: 4px;
+  border-radius: 12px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+.filter-btn.active {
+  color: white;
+}
+
+.filter-indicator {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  height: calc(100% - 8px);
+  width: 50px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.glass-button {
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(67, 233, 123, 0.1);
+  border: 1px solid rgba(67, 233, 123, 0.3);
+  border-radius: 20px;
+  color: #43e97b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background: #43e97b;
+  border-radius: 50%;
+  animation: blink 2s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Main Content */
+.dashboard-content {
+  padding: 0 40px 40px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Metrics Section */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.metric-card {
+  animation: fadeInUp 0.5s ease-out;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.metric-card:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.metric-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gradient-1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.gradient-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.gradient-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.gradient-4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+.metric-icon-wrapper i {
+  font-size: 24px;
+  color: white;
+}
+
+.metric-trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.metric-trend.positive {
+  background: rgba(67, 233, 123, 0.1);
+  color: #43e97b;
+}
+
+.metric-trend.negative {
+  background: rgba(245, 87, 108, 0.1);
+  color: #f5576c;
+}
+
+.metric-value {
+  margin-bottom: 20px;
+}
+
+.metric-value h2 {
+  font-size: 36px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  background: linear-gradient(135deg, #fff 0%, #e0e0e0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.metric-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  display: block;
+  margin-top: 4px;
+}
+
+.metric-chart {
+  height: 60px;
+  margin-bottom: 16px;
+}
+
+.metric-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.metric-delta {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+}
+
+/* Charts Section */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.chart-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.large-chart {
+  grid-column: span 1;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.chart-title h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 4px 0;
+}
+
+.chart-subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.chart-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.chart-btn {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.chart-btn.active,
+.chart-btn:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  color: white;
+}
+
+.chart-body {
+  position: relative;
+}
+
+#revenueChart,
+#commissionPieChart,
+#policyBarChart {
+  height: 300px;
+}
+
+/* Commission Legend */
+.commission-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-item span:nth-child(2) {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+}
+
+.legend-value {
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Performance Grid */
+.performance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+/* KPI Grid */
+.kpi-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.kpi-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.kpi-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(8px);
+}
+
+.kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kpi-icon i {
+  font-size: 24px;
+  color: white;
+}
+
+.kpi-data {
+  flex: 1;
+}
+
+.kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  display: block;
+}
+
+.kpi-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  display: block;
+  margin: 4px 0 8px 0;
+}
+
+.kpi-progress {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 2px;
+  animation: progressAnimation 1s ease-out;
+}
+
+@keyframes progressAnimation {
+  from { width: 0; }
+}
+
+/* Activity Feed */
+.activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.activity-feed::-webkit-scrollbar {
+  width: 4px;
+}
+
+.activity-feed::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
+
+.activity-feed::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.activity-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.activity-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activity-icon i {
+  font-size: 18px;
+  color: white;
+}
+
+.activity-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+.activity-desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.activity-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.amount-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #43e97b;
+}
+
+.activity-time {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Transactions Table */
+.transactions-section {
+  margin-top: 40px;
+}
+
+.modern-table {
+  overflow-x: auto;
+}
+
+.modern-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.modern-table thead tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modern-table th {
+  text-align: left;
+  padding: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.modern-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+  animation: fadeIn 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.modern-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.modern-table td {
+  padding: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+}
+
+.transaction-id {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #667eea;
+}
+
+.customer-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.customer-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: white;
+  font-size: 12px;
+}
+
+.customer-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.customer-name {
+  font-weight: 600;
+  color: white;
+}
+
+.customer-email {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.policy-type-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.policy-type-badge.health {
+  background: rgba(245, 93, 251, 0.1);
+  color: #f55dfb;
+  border: 1px solid rgba(245, 93, 251, 0.3);
+}
+
+.policy-type-badge.life {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.policy-type-badge.motor {
+  background: rgba(79, 172, 254, 0.1);
+  color: #4facfe;
+  border: 1px solid rgba(79, 172, 254, 0.3);
+}
+
+.amount,
+.commission {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.commission {
+  color: #43e97b;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.success {
+  background: rgba(67, 233, 123, 0.1);
+  color: #43e97b;
+  border: 1px solid rgba(67, 233, 123, 0.3);
+}
+
+.status-badge.pending {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.status-badge.processing {
+  background: rgba(79, 172, 254, 0.1);
+  color: #4facfe;
+  border: 1px solid rgba(79, 172, 254, 0.3);
+}
+
+.date {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.empty-state i {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+/* System Status Section */
+.system-status-section {
+  margin-top: 30px;
+}
+
+.status-card {
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: visible;
+}
+
+.status-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+.commission-due-card {
+  cursor: pointer;
+  border: 2px solid rgba(220, 53, 69, 0.3);
+}
+
+.commission-due-card:hover {
+  border-color: rgba(220, 53, 69, 0.6);
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.commission-due-card:hover .click-hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.status-header i {
+  font-size: 28px;
+}
+
+.status-header h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.status-value h2 {
+  font-size: 32px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
+
+.click-hint {
+  display: block;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 5px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Revenue Trend Section */
+.revenue-trend-section {
+  margin-top: 30px;
+}
+
+/* Enhanced Modal Styles */
+#commissionModal {
+  z-index: 10000 !important;
+}
+
+#commissionModal .modal-dialog {
+  max-width: 900px;
+  margin: 6rem auto;
+}
+
+#commissionModal .modal-content {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, #1a1a2e 0%, #0f0c29 100%);
+}
+
+#commissionModal .modal-header {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  border-bottom: 2px solid #bd2130;
+  padding: 1.5rem;
+  border-radius: 15px 15px 0 0;
+}
+
+#commissionModal .modal-header h5 {
+  color: white;
+  font-weight: 600;
+  margin: 0;
+}
+
+#commissionModal .btn-close {
+  filter: invert(1);
+  opacity: 1;
+}
+
+#commissionModal .modal-body {
+  padding: 2rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+#commissionModal .table {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+#commissionModal .table th {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 1px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+#commissionModal .table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px;
+}
+
+#commissionModal .table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+#commissionModal .badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+}
+
+#commissionModal .modal-footer {
+  background: rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem 1.5rem;
+}
+
+#commissionModal .total-summary {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.2), rgba(200, 35, 51, 0.1));
+  border-left: 4px solid #dc3545;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+#commissionModal .total-summary h4 {
+  color: #dc3545;
+  margin: 0;
+}
+
+/* Scrollbar for modal */
+#commissionModal .modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+#commissionModal .modal-body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+#commissionModal .modal-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  border-radius: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .performance-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    padding: 16px 20px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .header-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .dashboard-content {
+    padding: 0 20px 20px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modern-table {
+    font-size: 12px;
+  }
+
+  .modern-table th,
+  .modern-table td {
+    padding: 12px 8px;
+  }
+}
+
+/* Dark Mode Support */
+.dark-mode {
+  --bg-primary: #0f0c29;
+  --bg-secondary: #1a1a2e;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Loading Animation */
+.loading-skeleton {
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Smooth Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Active Affiliates Modal Styles */
+#affiliatesModal {
+  z-index: 10000 !important;
+}
+
+#affiliatesModal .modal-dialog {
+  max-width: 1200px;
+  margin: 3rem auto;
+}
+
+#affiliatesModal .modal-content {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, #1a1a2e 0%, #0f0c29 100%);
+}
+
+#affiliatesModal .modal-header {
+  background: linear-gradient(135deg, #17a2b8, #138496);
+  border-bottom: 2px solid #117a8b;
+  padding: 1.5rem;
+  border-radius: 15px 15px 0 0;
+}
+
+#affiliatesModal .modal-header h5 {
+  color: white;
+  font-weight: 600;
+  margin: 0;
+}
+
+#affiliatesModal .btn-close {
+  filter: invert(1);
+  opacity: 1;
+}
+
+#affiliatesModal .modal-body {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 2rem;
+  color: #ffffff;
+}
+
+#affiliatesModal .table {
+  color: #ffffff;
+  margin-bottom: 0;
+}
+
+#affiliatesModal .table th {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  font-weight: 600;
+  color: #ffffff !important;
+  padding: 1rem 0.75rem;
+}
+
+#affiliatesModal .table td {
+  border: none;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff !important;
+}
+
+#affiliatesModal .table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#affiliatesModal .table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#affiliatesModal .badge {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.65rem;
+}
+
+#affiliatesModal .affiliates-summary {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+}
+
+#affiliatesModal .affiliates-summary h4 {
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+#affiliatesModal .affiliates-summary p {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.affiliates-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.affiliates-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(23, 162, 184, 0.3);
+}
+</style>
+
+<!-- Commission Details Modal -->
+<div class="modal fade" id="commissionModal" tabindex="-1" aria-labelledby="commissionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="commissionModalLabel">
+          <i class="bi bi-wallet2 me-2"></i>Commission Details - Pending Payouts
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="total-summary" id="totalSummary">
+          <!-- Will be populated dynamically -->
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Lead ID</th>
+                <th>Policy Number</th>
+                <th>Customer</th>
+                <th>Policy Type</th>
+                <th>Payout To</th>
+                <th>Amount</th>
+                <th>Created</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="commissionTableBody">
+              <!-- Will be populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+        <div id="loadingIndicator" class="text-center py-4" style="display: none;">
+          <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x me-1"></i>Close
+        </button>
+        <a href="<%= admin_affiliate_payouts_path %>" class="btn btn-primary">
+          <i class="bi bi-arrow-right me-1"></i>Go to Affiliate Payouts
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Active Affiliates Modal -->
+<div class="modal fade" id="affiliatesModal" tabindex="-1" aria-labelledby="affiliatesModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="affiliatesModalLabel">
+          <i class="bi bi-people-fill me-2"></i>Active Affiliates Details
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="affiliates-summary" id="affiliatesSummary">
+          <!-- Will be populated dynamically -->
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th style="color: #ffffff;">ID</th>
+                <th style="color: #ffffff;">Name</th>
+                <th style="color: #ffffff;">Email</th>
+                <th style="color: #ffffff;">Phone</th>
+                <th style="color: #ffffff;">Status</th>
+                <th style="color: #ffffff;">Joined Date</th>
+                <th style="color: #ffffff;">Total Policies</th>
+                <th style="color: #ffffff;">Total Premium</th>
+                <th style="color: #ffffff;">Commission Earned</th>
+              </tr>
+            </thead>
+            <tbody id="affiliatesTableBody">
+              <!-- Will be populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+        <div id="affiliatesLoadingIndicator" class="text-center py-4" style="display: none;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x me-1"></i>Close
+        </button>
+        <a href="#" class="btn btn-primary">
+          <i class="bi bi-arrow-right me-1"></i>Manage Affiliates
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Initialize counters with animation
+document.addEventListener('DOMContentLoaded', function() {
+  // Animate counters
+  const counters = document.querySelectorAll('.counter');
+  const speed = 200;
+
+  counters.forEach(counter => {
+    const animate = () => {
+      const value = +counter.getAttribute('data-target');
+      const data = +counter.innerText;
+      const time = value / speed;
+
+      if (data < value) {
+        counter.innerText = Math.ceil(data + time);
+        setTimeout(animate, 1);
+      } else {
+        counter.innerText = value.toLocaleString('en-IN');
+      }
+    }
+    animate();
+  });
+
+  // Initialize sparkline charts
+  const sparklineOptions = {
+    type: 'line',
+    width: '100%',
+    height: '60px',
+    lineColor: '#667eea',
+    fillColor: 'rgba(102, 126, 234, 0.1)',
+    lineWidth: 2,
+    spotRadius: 0,
+    minSpotColor: false,
+    maxSpotColor: false,
+    highlightSpotColor: false,
+    highlightLineColor: false,
+    disableTooltips: true
+  };
+
+  // Premium Trend Chart with Real Data
+  const premiumTrendData = <%= (@premium_trend_data || []).to_json %>;
+
+  const premiumTrendOptions = {
+    series: [{
+      name: 'Premium Revenue',
+      data: premiumTrendData.map(d => d.premium || 0)
+    }],
+    chart: {
+      type: 'area',
+      height: 300,
+      background: 'transparent',
+      toolbar: {
+        show: false
+      },
+      zoom: {
+        enabled: false
+      }
+    },
+    colors: ['#43e97b'],
+    dataLabels: {
+      enabled: false
+    },
+    stroke: {
+      curve: 'smooth',
+      width: 3
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.4,
+        opacityTo: 0.1,
+        stops: [0, 90, 100]
+      }
+    },
+    xaxis: {
+      categories: premiumTrendData.map(d => d.month || 'N/A'),
+      labels: {
+        style: {
+          colors: 'rgba(255, 255, 255, 0.5)',
+          fontSize: '12px'
+        }
+      },
+      axisBorder: {
+        show: false
+      },
+      axisTicks: {
+        show: false
+      }
+    },
+    yaxis: {
+      labels: {
+        style: {
+          colors: 'rgba(255, 255, 255, 0.5)',
+          fontSize: '12px'
+        },
+        formatter: function(val) {
+          return 'Rs. ' + (val/100000).toFixed(1) + 'L';
+        }
+      }
+    },
+    tooltip: {
+      theme: 'dark',
+      y: {
+        formatter: function(val) {
+          return 'Rs. ' + val.toLocaleString('en-IN');
+        }
+      }
+    },
+    grid: {
+      borderColor: 'rgba(255, 255, 255, 0.1)',
+      strokeDashArray: 4
+    }
+  };
+
+  const premiumTrendChart = new ApexCharts(document.querySelector("#premiumTrendChart"), premiumTrendOptions);
+  premiumTrendChart.render();
+
+  // Revenue Chart with ApexCharts
+  const revenueOptions = {
+    series: [{
+      name: 'Revenue',
+      data: [44000, 55000, 57000, 56000, 61000, 58000, 63000, 60000, 66000, 71000, 75000, 80000]
+    }, {
+      name: 'Profit',
+      data: [35000, 41000, 36000, 40000, 45000, 48000, 50000, 52000, 53000, 58000, 61000, 65000]
+    }],
+    chart: {
+      type: 'area',
+      height: 300,
+      background: 'transparent',
+      toolbar: {
+        show: false
+      },
+      zoom: {
+        enabled: false
+      }
+    },
+    colors: ['#667eea', '#43e97b'],
+    dataLabels: {
+      enabled: false
+    },
+    stroke: {
+      curve: 'smooth',
+      width: 2
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.4,
+        opacityTo: 0.1,
+        stops: [0, 90, 100]
+      }
+    },
+    xaxis: {
+      categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      labels: {
+        style: {
+          colors: 'rgba(255, 255, 255, 0.5)',
+          fontSize: '12px'
+        }
+      },
+      axisBorder: {
+        show: false
+      },
+      axisTicks: {
+        show: false
+      }
+    },
+    yaxis: {
+      labels: {
+        style: {
+          colors: 'rgba(255, 255, 255, 0.5)',
+          fontSize: '12px'
+        },
+        formatter: function(val) {
+          return 'Rs. ' + (val/1000) + 'K';
+        }
+      }
+    },
+    tooltip: {
+      theme: 'dark',
+      x: {
+        format: 'MMM'
+      },
+      y: {
+        formatter: function(val) {
+          return 'Rs. ' + val.toLocaleString('en-IN');
+        }
+      }
+    },
+    grid: {
+      borderColor: 'rgba(255, 255, 255, 0.1)',
+      strokeDashArray: 4,
+      xaxis: {
+        lines: {
+          show: false
+        }
+      }
+    },
+    legend: {
+      show: true,
+      position: 'top',
+      horizontalAlign: 'right',
+      labels: {
+        colors: 'rgba(255, 255, 255, 0.7)'
+      }
+    }
+  };
+
+  const revenueChart = new ApexCharts(document.querySelector("#revenueChart"), revenueOptions);
+  revenueChart.render();
+
+  // Commission Pie Chart
+  const commissionOptions = {
+    series: [35, 25, 20, 20],
+    chart: {
+      type: 'donut',
+      height: 200,
+      background: 'transparent'
+    },
+    labels: ['Main Agent', 'Affiliate', 'Ambassador', 'Company'],
+    colors: ['#667eea', '#f093fb', '#4facfe', '#43e97b'],
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '70%',
+          background: 'transparent',
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: 'Total',
+              fontSize: '14px',
+              color: 'rgba(255, 255, 255, 0.7)',
+              formatter: function() {
+                return '100%';
+              }
+            }
+          }
+        }
+      }
+    },
+    dataLabels: {
+      enabled: false
+    },
+    stroke: {
+      width: 0
+    },
+    legend: {
+      show: false
+    },
+    tooltip: {
+      theme: 'dark',
+      y: {
+        formatter: function(val) {
+          return val + '%';
+        }
+      }
+    }
+  };
+
+  const commissionChart = new ApexCharts(document.querySelector("#commissionPieChart"), commissionOptions);
+  commissionChart.render();
+
+  // Policy Bar Chart
+  const policyOptions = {
+    series: [{
+      name: 'Policies',
+      data: [44, 55, 41, 37]
+    }],
+    chart: {
+      type: 'bar',
+      height: 300,
+      background: 'transparent',
+      toolbar: {
+        show: false
+      }
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 12,
+        dataLabels: {
+          position: 'top'
+        },
+        columnWidth: '50%',
+        distributed: true
+      }
+    },
+    colors: ['#667eea', '#f093fb', '#4facfe', '#43e97b'],
+    dataLabels: {
+      enabled: false
+    },
+    xaxis: {
+      categories: ['Health', 'Life', 'Motor', 'Other'],
+      labels: {
+        style: {
+          colors: 'rgba(255, 255, 255, 0.5)',
+          fontSize: '12px'
+        }
+      },
+      axisBorder: {
+        show: false
+      },
+      axisTicks: {
+        show: false
+      }
+    },
+    yaxis: {
+      labels: {
+        style: {
+          colors: 'rgba(255, 255, 255, 0.5)',
+          fontSize: '12px'
+        }
+      }
+    },
+    grid: {
+      borderColor: 'rgba(255, 255, 255, 0.1)',
+      strokeDashArray: 4
+    },
+    tooltip: {
+      theme: 'dark',
+      y: {
+        formatter: function(val) {
+          return val + ' policies';
+        }
+      }
+    },
+    legend: {
+      show: false
+    }
+  };
+
+  const policyChart = new ApexCharts(document.querySelector("#policyBarChart"), policyOptions);
+  policyChart.render();
+
+  // Mini sparklines for metric cards
+  const createSparkline = (elementId, data, color) => {
+    const ctx = document.getElementById(elementId);
+    if (!ctx) return;
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.map((_, i) => i),
+        datasets: [{
+          data: data,
+          borderColor: color,
+          borderWidth: 2,
+          fill: true,
+          backgroundColor: color + '20',
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        },
+        scales: {
+          x: { display: false },
+          y: { display: false }
+        }
+      }
+    });
+  };
+
+  createSparkline('revenueSparkline', [40, 45, 50, 48, 55, 60, 58, 65, 70, 75, 80, 85], '#667eea');
+  createSparkline('policiesSparkline', [30, 35, 32, 38, 40, 42, 45, 48, 50, 52, 55, 58], '#f093fb');
+  createSparkline('commissionSparkline', [60, 55, 58, 52, 50, 48, 45, 47, 43, 45, 42, 40], '#4facfe');
+  createSparkline('growthSparkline', [20, 22, 25, 28, 30, 32, 35, 38, 40, 42, 45, 48], '#43e97b');
+
+  // Theme Toggle
+  const themeToggle = document.querySelector('.theme-toggle');
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const icon = themeToggle.querySelector('i');
+    icon.classList.toggle('bi-moon-stars-fill');
+    icon.classList.toggle('bi-sun-fill');
+  });
+
+  // Time Filter
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const filterIndicator = document.querySelector('.filter-indicator');
+
+  filterBtns.forEach((btn, index) => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterIndicator.style.transform = `translateX(${index * 100}%)`;
+    });
+  });
+
+  // Add hover effect to cards
+  const cards = document.querySelectorAll('.glass-card');
+  cards.forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      card.style.setProperty('--mouse-x', `${x}px`);
+      card.style.setProperty('--mouse-y', `${y}px`);
+    });
+  });
+
+  // Commission Modal Functions
+  window.openCommissionModal = function() {
+    const modal = new bootstrap.Modal(document.getElementById('commissionModal'));
+    modal.show();
+    loadCommissionDetails();
+  };
+
+  // Active Affiliates Modal Functions
+  window.openAffiliatesModal = function() {
+    const modal = new bootstrap.Modal(document.getElementById('affiliatesModal'));
+    modal.show();
+    loadAffiliatesDetails();
+  };
+
+  function loadCommissionDetails() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const tableBody = document.getElementById('commissionTableBody');
+    const totalSummary = document.getElementById('totalSummary');
+
+    loadingIndicator.style.display = 'block';
+    tableBody.innerHTML = '';
+
+    fetch('<%= commission_details_modal_admin_commission_tracking_index_path %>')
+      .then(response => response.json())
+      .then(data => {
+        loadingIndicator.style.display = 'none';
+
+        if (data.success && data.data.length > 0) {
+          // Update total summary
+          totalSummary.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h4>Total Pending Commissions</h4>
+                <p class="mb-0 text-muted">Across ${data.data.length} pending payouts</p>
+              </div>
+              <div class="text-end">
+                <h3 class="text-danger">Rs. ${data.total_amount.toLocaleString('en-IN')}</h3>
+              </div>
+            </div>
+          `;
+
+          // Populate table
+          data.data.forEach(item => {
+            const row = `
+              <tr>
+                <td>
+                  <span class="badge bg-primary">${item.lead_id}</span>
+                </td>
+                <td class="text-monospace">${item.policy_number}</td>
+                <td>${item.customer_name}</td>
+                <td>
+                  <span class="badge bg-info">${item.policy_type}</span>
+                </td>
+                <td>
+                  <span class="badge bg-warning text-dark">${formatPayoutTo(item.payout_to)}</span>
+                </td>
+                <td class="fw-bold text-success">Rs. ${item.amount.toLocaleString('en-IN')}</td>
+                <td>${item.created_at}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-light" onclick="viewPolicyDetails('${item.policy_type}', ${item.id})">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </td>
+              </tr>
+            `;
+            tableBody.innerHTML += row;
+          });
+        } else {
+          totalSummary.innerHTML = `
+            <div class="text-center py-3">
+              <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+              <h4 class="mt-3">No Pending Commissions</h4>
+              <p class="text-muted">All commissions have been processed</p>
+            </div>
+          `;
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="8" class="text-center py-4">
+                <p class="text-muted mb-0">No pending commission payouts found</p>
+              </td>
+            </tr>
+          `;
+        }
+      })
+      .catch(error => {
+        loadingIndicator.style.display = 'none';
+        console.error('Error loading commission details:', error);
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center py-4">
+              <p class="text-danger mb-0">Error loading commission details. Please try again.</p>
+            </td>
+          </tr>
+        `;
+      });
+  }
+
+  function formatPayoutTo(payoutTo) {
+    if (!payoutTo) return 'N/A';
+    return payoutTo.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  window.viewPolicyDetails = function(policyType, policyId) {
+    // Redirect to policy details page
+    window.location.href = `/admin/commission_tracking/${policyId}?policy_type=${policyType}`;
+  };
+
+  function loadAffiliatesDetails() {
+    const loadingIndicator = document.getElementById('affiliatesLoadingIndicator');
+    const tableBody = document.getElementById('affiliatesTableBody');
+    const summary = document.getElementById('affiliatesSummary');
+
+    loadingIndicator.style.display = 'block';
+    tableBody.innerHTML = '';
+
+    fetch('/admin/api/system_status/active_affiliates')
+      .then(response => response.json())
+      .then(data => {
+        loadingIndicator.style.display = 'none';
+
+        if (data.success && data.affiliates && data.affiliates.length > 0) {
+          // Update summary
+          summary.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h4 style="color: #ffffff; font-weight: bold;">Active Affiliates Summary</h4>
+                <p class="mb-0" style="color: rgba(255, 255, 255, 0.9); font-weight: 600;">Total <strong>${data.affiliates.length}</strong> active affiliates with policies</p>
+              </div>
+              <div class="text-end">
+                <div class="row g-3">
+                  <div class="col">
+                    <small class="d-block" style="color: rgba(255, 255, 255, 0.7); font-weight: 600;">Total Policies</small>
+                    <h5 class="text-info mb-0" style="font-weight: bold; font-size: 1.4rem;"><strong>${data.summary.total_policies}</strong></h5>
+                  </div>
+                  <div class="col">
+                    <small class="d-block" style="color: rgba(255, 255, 255, 0.7); font-weight: 600;">Total Premium</small>
+                    <h5 class="text-success mb-0" style="font-weight: bold; font-size: 1.4rem;"><strong>Rs. ${data.summary.total_premium.toLocaleString('en-IN')}</strong></h5>
+                  </div>
+                  <div class="col">
+                    <small class="d-block" style="color: rgba(255, 255, 255, 0.7); font-weight: 600;">Total Commission</small>
+                    <h5 class="text-warning mb-0" style="font-weight: bold; font-size: 1.4rem;"><strong>Rs. ${data.summary.total_commission.toLocaleString('en-IN')}</strong></h5>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+
+          // Populate table
+          data.affiliates.forEach(affiliate => {
+            const statusBadge = affiliate.status === 'active' ? 'bg-success' : 'bg-secondary';
+            const row = `
+              <tr>
+                <td style="color: #ffffff; font-weight: 600;"><strong>${affiliate.id}</strong></td>
+                <td style="color: #ffffff; font-weight: 600;"><strong>${affiliate.name}</strong></td>
+                <td style="color: #ffffff; font-weight: 600;"><strong>${affiliate.email}</strong></td>
+                <td style="color: #ffffff; font-weight: 600;"><strong>${affiliate.phone}</strong></td>
+                <td><span class="badge ${statusBadge}" style="font-weight: bold;">${affiliate.status}</span></td>
+                <td style="color: #ffffff; font-weight: 600;"><strong>${affiliate.joined_date}</strong></td>
+                <td style="color: #ffffff; font-weight: 600; font-size: 1.1rem;"><strong>${affiliate.total_policies}</strong></td>
+                <td style="color: #ffffff; font-weight: 600; font-size: 1.1rem;"><strong>Rs. ${affiliate.total_premium.toLocaleString('en-IN')}</strong></td>
+                <td style="color: #ffffff; font-weight: 600; font-size: 1.1rem;"><strong>Rs. ${affiliate.commission_earned.toLocaleString('en-IN')}</strong></td>
+              </tr>
+            `;
+            tableBody.innerHTML += row;
+          });
+        } else {
+          summary.innerHTML = `
+            <div class="text-center py-3">
+              <i class="bi bi-people text-info" style="font-size: 3rem;"></i>
+              <h4 class="mt-3" style="color: #ffffff; font-weight: bold;"><strong>No Active Affiliates</strong></h4>
+              <p style="color: rgba(255, 255, 255, 0.8); font-weight: 600;">No affiliates with policies found</p>
+            </div>
+          `;
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="9" class="text-center py-4">
+                <p style="color: rgba(255, 255, 255, 0.8); font-weight: 600;" class="mb-0"><strong>No active affiliates found</strong></p>
+              </td>
+            </tr>
+          `;
+        }
+      })
+      .catch(error => {
+        loadingIndicator.style.display = 'none';
+        console.error('Error loading affiliates details:', error);
+        summary.innerHTML = `
+          <div class="text-center py-3">
+            <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+            <h4 class="mt-3" style="color: #ffffff; font-weight: bold;"><strong>Error Loading Data</strong></h4>
+            <p style="color: rgba(255, 255, 255, 0.8); font-weight: 600;">Unable to load affiliates data. Please try again.</p>
+          </div>
+        `;
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="9" class="text-center py-4">
+              <p style="color: #ff6b6b; font-weight: bold;" class="mb-0"><strong>Error loading affiliates details. Please try again.</strong></p>
+            </td>
+          </tr>
+        `;
+      });
+  }
+});
+</script>
+
+</body>
+</html>

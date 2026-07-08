@@ -1,0 +1,2 @@
+class AgencyBroker < ApplicationRecord
+end

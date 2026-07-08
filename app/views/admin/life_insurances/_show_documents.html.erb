@@ -1,0 +1,392 @@
+<%#
+  Life Insurance Documents Display - Show Page
+  Shows all document types: main policy document, uploaded_documents, policy_documents_records, life_insurance_documents
+%>
+
+<%
+  # Calculate document statistics
+  total_documents = 0
+  total_documents += 1 if @life_insurance.has_main_policy_r2_document?
+  total_documents += @life_insurance.uploaded_documents.count if @life_insurance.respond_to?(:uploaded_documents)
+  total_documents += @life_insurance.policy_documents_records.count if @life_insurance.respond_to?(:policy_documents_records)
+  total_documents += @life_insurance.life_insurance_documents.count if @life_insurance.respond_to?(:life_insurance_documents)
+
+  total_size = 0
+  total_size += @life_insurance.main_policy_document_size || 0 if @life_insurance.has_main_policy_r2_document?
+  total_size += @life_insurance.uploaded_documents.sum { |doc| doc.file&.byte_size || 0 } if @life_insurance.respond_to?(:uploaded_documents)
+  total_size += @life_insurance.policy_documents_records.sum { |doc| doc.r2_file_size || 0 } if @life_insurance.respond_to?(:policy_documents_records)
+  total_size += @life_insurance.life_insurance_documents.sum { |doc| doc.r2_file_size || 0 } if @life_insurance.respond_to?(:life_insurance_documents)
+
+  document_types = []
+  document_types += ['Main Policy Document'] if @life_insurance.has_main_policy_r2_document?
+  document_types += @life_insurance.uploaded_documents.pluck(:document_type).compact.uniq if @life_insurance.respond_to?(:uploaded_documents)
+  document_types += ['Policy Document'] if @life_insurance.respond_to?(:policy_documents_records) && @life_insurance.policy_documents_records.any?
+  document_types += ['Life Insurance Document'] if @life_insurance.respond_to?(:life_insurance_documents) && @life_insurance.life_insurance_documents.any?
+  document_types = document_types.uniq
+%>
+
+<% if total_documents > 0 %>
+<!-- Policy Documents Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#policyDocumentsCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-folder"></i>
+      </div>
+      <h5 class="section-title">Policy Documents</h5>
+      <span class="section-count"><%= total_documents %> files</span>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="policyDocumentsCollapse" class="collapse">
+    <div class="section-body">
+
+      <!-- Document Overview Statistics -->
+      <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h6 class="text-muted mb-2">Total Documents</h6>
+                  <h3 class="mb-0 text-primary"><%= total_documents %></h3>
+                </div>
+                <div class="bg-primary bg-opacity-10 rounded p-3">
+                  <i class="bi bi-files text-primary fs-4"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h6 class="text-muted mb-2">Document Types</h6>
+                  <h3 class="mb-0 text-info"><%= document_types.count %></h3>
+                </div>
+                <div class="bg-info bg-opacity-10 rounded p-3">
+                  <i class="bi bi-collection text-info fs-4"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h6 class="text-muted mb-2">Total Size</h6>
+                  <h3 class="mb-0 text-success"><%= number_to_human_size(total_size) %></h3>
+                </div>
+                <div class="bg-success bg-opacity-10 rounded p-3">
+                  <i class="bi bi-hdd-stack text-success fs-4"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h6 class="text-muted mb-2">Storage</h6>
+                  <h3 class="mb-0 text-warning">R2 Cloud</h3>
+                </div>
+                <div class="bg-warning bg-opacity-10 rounded p-3">
+                  <i class="bi bi-cloud text-warning fs-4"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Policy Document (R2 Storage) -->
+      <% if @life_insurance.has_main_policy_r2_document? %>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-transparent border-0">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0 text-success">
+                <i class="bi bi-cloud-check me-2"></i>
+                Main Policy Document
+              </h5>
+              <span class="badge bg-success">R2 Storage</span>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+              <div class="list-group-item border-0">
+                <div class="d-flex align-items-center py-2">
+                  <div class="flex-shrink-0 me-4">
+                    <% if @life_insurance.main_policy_document_content_type&.start_with?('image/') %>
+                      <%= image_tag @life_insurance.main_policy_r2_document_url, class: "img-thumbnail",
+                          style: "width: 60px; height: 60px; object-fit: cover;" if @life_insurance.main_policy_r2_document_url %>
+                    <% elsif @life_insurance.main_policy_document_content_type == 'application/pdf' %>
+                      <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-file-earmark-pdf text-danger fs-4"></i>
+                      </div>
+                    <% else %>
+                      <div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-file-earmark text-secondary fs-4"></i>
+                      </div>
+                    <% end %>
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div>
+                        <h6 class="mb-1 fw-bold"><%= @life_insurance.main_policy_document_filename %></h6>
+                        <div class="mb-2">
+                          <span class="badge bg-light text-dark me-2">Main Policy Document</span>
+                          <span class="text-muted small">
+                            <i class="bi bi-file-earmark me-1"></i><%= number_to_human_size(@life_insurance.main_policy_document_size) if @life_insurance.main_policy_document_size %>
+                          </span>
+                        </div>
+                        <small class="text-success d-block">
+                          <i class="bi bi-cloud-check me-1"></i>
+                          Stored in Cloudflare R2 • <%= @life_insurance.main_policy_document_content_type %>
+                        </small>
+                      </div>
+                      <div class="btn-group" role="group">
+                        <% if @life_insurance.main_policy_r2_document_url %>
+                          <%= link_to @life_insurance.main_policy_r2_document_url, class: "btn btn-outline-primary btn-sm", target: "_blank", title: "View Document" do %>
+                            <i class="bi bi-eye me-1"></i>View
+                          <% end %>
+                          <%= link_to @life_insurance.main_policy_r2_document_url, class: "btn btn-outline-success btn-sm", title: "Download Document", download: @life_insurance.main_policy_document_filename do %>
+                            <i class="bi bi-download me-1"></i>Download
+                          <% end %>
+                        <% end %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Uploaded Documents -->
+      <% if @life_insurance.respond_to?(:uploaded_documents) && @life_insurance.uploaded_documents.any? %>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-transparent border-0">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0 text-primary">
+                <i class="bi bi-folder2-open me-2"></i>
+                Additional Documents
+              </h5>
+              <span class="badge bg-primary"><%= @life_insurance.uploaded_documents.count %> files</span>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+              <% @life_insurance.uploaded_documents.each_with_index do |document, index| %>
+                <div class="list-group-item border-0 <%= 'border-bottom' unless index == @life_insurance.uploaded_documents.count - 1 %>">
+                  <div class="d-flex align-items-center py-2">
+                    <div class="flex-shrink-0 me-4">
+                      <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-<%= document.respond_to?(:file_icon) ? document.file_icon : 'file-earmark' %> text-primary fs-4"></i>
+                      </div>
+                    </div>
+                    <div class="flex-grow-1">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                          <h6 class="mb-1 fw-bold"><%= document.title %></h6>
+                          <div class="mb-2">
+                            <span class="badge bg-light text-dark me-2"><%= document.respond_to?(:human_document_type) ? document.human_document_type : document.document_type %></span>
+                            <% if document.file&.byte_size %>
+                              <span class="text-muted small">
+                                <i class="bi bi-file-earmark me-1"></i><%= number_to_human_size(document.file.byte_size) %>
+                              </span>
+                            <% end %>
+                          </div>
+                          <% if document.description.present? %>
+                            <p class="text-muted mb-1 small"><%= truncate(document.description, length: 100) %></p>
+                          <% end %>
+                          <small class="text-primary d-block">
+                            <i class="bi bi-calendar-check me-1"></i>Uploaded by <%= document.uploaded_by || "Admin User" %> on <%= document.created_at.strftime("%B %d, %Y at %I:%M %p") %>
+                          </small>
+                        </div>
+                        <div class="btn-group" role="group">
+                          <% if document.has_file? %>
+                            <%= link_to document.document_url,
+                                class: "btn btn-outline-primary btn-sm",
+                                target: "_blank",
+                                title: "Preview Document" do %>
+                              <i class="bi bi-eye me-1"></i>Preview
+                            <% end %>
+                            <%= link_to document.download_url,
+                                class: "btn btn-outline-success btn-sm",
+                                title: "Download Document" do %>
+                              <i class="bi bi-download me-1"></i>Download
+                            <% end %>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- R2 Policy Documents -->
+      <% if @life_insurance.respond_to?(:policy_documents_records) && @life_insurance.policy_documents_records.any? %>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-transparent border-0">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0 text-info">
+                <i class="bi bi-cloud-check me-2"></i>
+                R2 Policy Documents
+              </h5>
+              <span class="badge bg-info"><%= @life_insurance.policy_documents_records.count %> files</span>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+              <% @life_insurance.policy_documents_records.each_with_index do |document, index| %>
+                <div class="list-group-item border-0 <%= 'border-bottom' unless index == @life_insurance.policy_documents_records.count - 1 %>">
+                  <div class="d-flex align-items-center py-2">
+                    <div class="flex-shrink-0 me-4">
+                      <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-file-earmark-pdf text-info fs-4"></i>
+                      </div>
+                    </div>
+                    <div class="flex-grow-1">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                          <h6 class="mb-1 fw-bold"><%= document.title %></h6>
+                          <div class="mb-2">
+                            <span class="badge bg-light text-dark me-2"><%= document.document_type %></span>
+                            <% if document.r2_file_size %>
+                              <span class="text-muted small">
+                                <i class="bi bi-file-earmark me-1"></i><%= number_to_human_size(document.r2_file_size) %>
+                              </span>
+                            <% end %>
+                          </div>
+                          <% if document.description.present? %>
+                            <p class="text-muted mb-1 small"><%= truncate(document.description, length: 100) %></p>
+                          <% end %>
+                          <small class="text-info d-block">
+                            <i class="bi bi-cloud-check me-1"></i>Stored in Cloudflare R2 • Uploaded on <%= document.created_at.strftime("%B %d, %Y at %I:%M %p") %>
+                          </small>
+                        </div>
+                        <div class="btn-group" role="group">
+                          <% if document.r2_file_key.present? %>
+                            <% if defined?(R2Service) %>
+                              <% r2_url = R2Service.public_url(document.r2_file_key) rescue nil %>
+                              <% if r2_url %>
+                                <%= link_to r2_url, class: "btn btn-outline-info btn-sm", target: "_blank", title: "View Document" do %>
+                                  <i class="bi bi-eye me-1"></i>View
+                                <% end %>
+                                <%= link_to r2_url, class: "btn btn-outline-success btn-sm", download: document.r2_filename, title: "Download Document" do %>
+                                  <i class="bi bi-download me-1"></i>Download
+                                <% end %>
+                              <% end %>
+                            <% end %>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Life Insurance Documents -->
+      <% if @life_insurance.respond_to?(:life_insurance_documents) && @life_insurance.life_insurance_documents.any? %>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-transparent border-0">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0 text-warning">
+                <i class="bi bi-cloud-check me-2"></i>
+                Life Insurance Documents
+              </h5>
+              <span class="badge bg-warning"><%= @life_insurance.life_insurance_documents.count %> files</span>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+              <% @life_insurance.life_insurance_documents.each_with_index do |document, index| %>
+                <div class="list-group-item border-0 <%= 'border-bottom' unless index == @life_insurance.life_insurance_documents.count - 1 %>">
+                  <div class="d-flex align-items-center py-2">
+                    <div class="flex-shrink-0 me-4">
+                      <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-file-earmark-medical text-warning fs-4"></i>
+                      </div>
+                    </div>
+                    <div class="flex-grow-1">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                          <h6 class="mb-1 fw-bold"><%= document.title %></h6>
+                          <div class="mb-2">
+                            <span class="badge bg-light text-dark me-2"><%= document.document_type %></span>
+                            <% if document.r2_file_size %>
+                              <span class="text-muted small">
+                                <i class="bi bi-file-earmark me-1"></i><%= number_to_human_size(document.r2_file_size) %>
+                              </span>
+                            <% end %>
+                          </div>
+                          <% if document.description.present? %>
+                            <p class="text-muted mb-1 small"><%= truncate(document.description, length: 100) %></p>
+                          <% end %>
+                          <small class="text-warning d-block">
+                            <i class="bi bi-cloud-check me-1"></i>Stored in Cloudflare R2 • Uploaded on <%= document.created_at.strftime("%B %d, %Y at %I:%M %p") %>
+                          </small>
+                        </div>
+                        <div class="btn-group" role="group">
+                          <% if document.r2_file_key.present? %>
+                            <% if defined?(R2Service) %>
+                              <% r2_url = R2Service.public_url(document.r2_file_key) rescue nil %>
+                              <% if r2_url %>
+                                <%= link_to r2_url, class: "btn btn-outline-warning btn-sm", target: "_blank", title: "View Document" do %>
+                                  <i class="bi bi-eye me-1"></i>View
+                                <% end %>
+                                <%= link_to r2_url, class: "btn btn-outline-success btn-sm", download: document.r2_filename, title: "Download Document" do %>
+                                  <i class="bi bi-download me-1"></i>Download
+                                <% end %>
+                              <% end %>
+                            <% end %>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+    </div>
+  </div>
+</div>
+<% else %>
+  <!-- No Documents Available -->
+  <div class="info-section-card">
+    <div class="section-header">
+      <div class="d-flex align-items-center">
+        <div class="section-icon">
+          <i class="bi bi-folder"></i>
+        </div>
+        <h5 class="section-title">Policy Documents</h5>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="text-center text-muted py-4">
+        <i class="bi bi-folder-x" style="font-size: 3rem; opacity: 0.5;"></i>
+        <h6 class="mt-3 text-muted">No documents uploaded</h6>
+        <p class="mb-0">No policy documents have been uploaded for this life insurance policy.</p>
+      </div>
+    </div>
+  </div>
+<% end %>

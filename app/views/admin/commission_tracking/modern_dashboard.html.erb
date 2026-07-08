@@ -1,0 +1,2050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DrWise Financial Analytics</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.44.0/dist/apexcharts.min.js"></script>
+</head>
+<body>
+
+<div class="modern-dashboard">
+  <!-- Animated Background Elements -->
+  <div class="bg-animation">
+    <div class="floating-element element-1"></div>
+    <div class="floating-element element-2"></div>
+    <div class="floating-element element-3"></div>
+    <div class="floating-element element-4"></div>
+    <div class="floating-element element-5"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <!-- Top Navigation Bar -->
+  <nav class="top-nav">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <path d="M20 5 L35 15 L35 25 L20 35 L5 25 L5 15 Z" fill="url(#iconGradient)" opacity="0.9"/>
+            <path d="M20 10 L30 16 L30 24 L20 30 L10 24 L10 16 Z" fill="#ffffff" opacity="0.3"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">DrWise</span>
+          <span class="brand-tagline">Financial Intelligence</span>
+        </div>
+      </div>
+
+      <div class="nav-center">
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Search policies, customers, transactions...">
+          <span class="search-shortcut">⌘K</span>
+        </div>
+      </div>
+
+      <div class="nav-right">
+        <div class="nav-stats">
+          <div class="stat-item">
+            <span class="stat-label">Market Status</span>
+            <span class="stat-value positive">
+              <i class="bi bi-arrow-up"></i> Active
+            </span>
+          </div>
+        </div>
+        <button class="notification-btn">
+          <i class="bi bi-bell"></i>
+          <span class="notification-badge">3</span>
+        </button>
+        <div class="user-menu">
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%236366f1;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23ec4899;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='50' fill='url(%23grad)'/%3E%3Ctext x='50' y='65' text-anchor='middle' fill='white' font-size='40' font-family='Arial'%3EA%3C/text%3E%3C/svg%3E" alt="User">
+          <i class="bi bi-chevron-down"></i>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Dashboard Container -->
+  <div class="dashboard-container">
+    <!-- Performance Overview Cards -->
+    <section class="overview-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="title-gradient">Performance Overview</span>
+          <span class="title-badge">Real-time</span>
+        </h2>
+        <div class="time-selector">
+          <button class="time-btn active">Today</button>
+          <button class="time-btn">Week</button>
+          <button class="time-btn">Month</button>
+          <button class="time-btn">Quarter</button>
+          <button class="time-btn">Year</button>
+        </div>
+      </div>
+
+      <div class="metrics-container">
+        <!-- Total Revenue Card -->
+        <div class="metric-tile" data-metric="revenue">
+          <div class="tile-background">
+            <div class="tile-gradient gradient-purple"></div>
+          </div>
+          <div class="tile-content">
+            <div class="tile-header">
+              <div class="tile-icon">
+                <i class="bi bi-cash-stack"></i>
+              </div>
+              <div class="tile-badge success">
+                <i class="bi bi-graph-up-arrow"></i>
+                +24.5%
+              </div>
+            </div>
+            <div class="tile-body">
+              <div class="tile-value">
+                Rs. <span class="animated-number" data-value="<%= (@commission_summary&.dig(:total_generated) || 5847300).to_i %>">0</span>
+              </div>
+              <div class="tile-label">Total Revenue</div>
+              <div class="tile-comparison">
+                <span class="comparison-value">+Rs. 8,42,000</span>
+                <span class="comparison-label">vs last month</span>
+              </div>
+            </div>
+            <div class="tile-chart">
+              <canvas id="revenueMinichart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Commission Earned Card -->
+        <div class="metric-tile" data-metric="commission">
+          <div class="tile-background">
+            <div class="tile-gradient gradient-blue"></div>
+          </div>
+          <div class="tile-content">
+            <div class="tile-header">
+              <div class="tile-icon">
+                <i class="bi bi-wallet2"></i>
+              </div>
+              <div class="tile-badge success">
+                <i class="bi bi-graph-up-arrow"></i>
+                +18.2%
+              </div>
+            </div>
+            <div class="tile-body">
+              <div class="tile-value">
+                Rs. <span class="animated-number" data-value="<%= (@commission_summary&.dig(:total_transferred) || 847300).to_i %>">0</span>
+              </div>
+              <div class="tile-label">Commission Earned</div>
+              <div class="tile-comparison">
+                <span class="comparison-value">+Rs. 1,24,500</span>
+                <span class="comparison-label">this quarter</span>
+              </div>
+            </div>
+            <div class="tile-chart">
+              <canvas id="commissionMinichart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Policies Card -->
+        <div class="metric-tile" data-metric="policies">
+          <div class="tile-background">
+            <div class="tile-gradient gradient-green"></div>
+          </div>
+          <div class="tile-content">
+            <div class="tile-header">
+              <div class="tile-icon">
+                <i class="bi bi-file-earmark-check"></i>
+              </div>
+              <div class="tile-badge warning">
+                <i class="bi bi-dash"></i>
+                +5.8%
+              </div>
+            </div>
+            <div class="tile-body">
+              <div class="tile-value">
+                <span class="animated-number" data-value="2456">0</span>
+              </div>
+              <div class="tile-label">Active Policies</div>
+              <div class="tile-comparison">
+                <span class="comparison-value">+142</span>
+                <span class="comparison-label">new policies</span>
+              </div>
+            </div>
+            <div class="tile-chart">
+              <canvas id="policiesMinichart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conversion Rate Card -->
+        <div class="metric-tile" data-metric="conversion">
+          <div class="tile-background">
+            <div class="tile-gradient gradient-orange"></div>
+          </div>
+          <div class="tile-content">
+            <div class="tile-header">
+              <div class="tile-icon">
+                <i class="bi bi-bullseye"></i>
+              </div>
+              <div class="tile-badge danger">
+                <i class="bi bi-graph-down-arrow"></i>
+                -2.3%
+              </div>
+            </div>
+            <div class="tile-body">
+              <div class="tile-value">
+                <span class="animated-number" data-value="68">0</span>%
+              </div>
+              <div class="tile-label">Conversion Rate</div>
+              <div class="tile-comparison">
+                <span class="comparison-value">68/100</span>
+                <span class="comparison-label">leads converted</span>
+              </div>
+            </div>
+            <div class="tile-chart">
+              <canvas id="conversionMinichart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Advanced Analytics Section -->
+    <section class="analytics-section">
+      <div class="analytics-grid">
+        <!-- Revenue Trends Chart -->
+        <div class="analytics-card large">
+          <div class="card-header">
+            <div class="header-left">
+              <h3 class="card-title">Revenue Analytics</h3>
+              <p class="card-subtitle">Comprehensive financial performance metrics</p>
+            </div>
+            <div class="header-right">
+              <div class="chart-controls">
+                <button class="control-btn active">
+                  <i class="bi bi-bar-chart"></i>
+                </button>
+                <button class="control-btn">
+                  <i class="bi bi-graph-up"></i>
+                </button>
+                <button class="control-btn">
+                  <i class="bi bi-pie-chart"></i>
+                </button>
+              </div>
+              <button class="action-btn">
+                <i class="bi bi-download"></i>
+                Export
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="revenueAnalyticsChart"></div>
+          </div>
+        </div>
+
+        <!-- Policy Distribution -->
+        <div class="analytics-card">
+          <div class="card-header">
+            <h3 class="card-title">Policy Distribution</h3>
+            <button class="more-btn">
+              <i class="bi bi-three-dots"></i>
+            </button>
+          </div>
+          <div class="card-body">
+            <div id="policyDistributionChart"></div>
+            <div class="distribution-stats">
+              <div class="dist-item">
+                <span class="dist-color" style="background: #6366f1"></span>
+                <span class="dist-label">Health</span>
+                <span class="dist-value">42%</span>
+              </div>
+              <div class="dist-item">
+                <span class="dist-color" style="background: #ec4899"></span>
+                <span class="dist-label">Life</span>
+                <span class="dist-value">28%</span>
+              </div>
+              <div class="dist-item">
+                <span class="dist-color" style="background: #10b981"></span>
+                <span class="dist-label">Motor</span>
+                <span class="dist-value">20%</span>
+              </div>
+              <div class="dist-item">
+                <span class="dist-color" style="background: #f59e0b"></span>
+                <span class="dist-label">Other</span>
+                <span class="dist-value">10%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Commission Breakdown -->
+        <div class="analytics-card">
+          <div class="card-header">
+            <h3 class="card-title">Commission Structure</h3>
+            <span class="card-badge">Updated</span>
+          </div>
+          <div class="card-body">
+            <div class="commission-breakdown">
+              <div class="breakdown-item">
+                <div class="breakdown-header">
+                  <span class="breakdown-title">Main Agent</span>
+                  <span class="breakdown-amount">Rs. 3,24,500</span>
+                </div>
+                <div class="breakdown-progress">
+                  <div class="progress-bar" style="width: 75%; background: linear-gradient(90deg, #6366f1, #8b5cf6)"></div>
+                </div>
+                <span class="breakdown-percentage">35%</span>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-header">
+                  <span class="breakdown-title">Affiliate</span>
+                  <span class="breakdown-amount">Rs. 2,18,300</span>
+                </div>
+                <div class="breakdown-progress">
+                  <div class="progress-bar" style="width: 55%; background: linear-gradient(90deg, #ec4899, #f43f5e)"></div>
+                </div>
+                <span class="breakdown-percentage">25%</span>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-header">
+                  <span class="breakdown-title">Ambassador</span>
+                  <span class="breakdown-amount">Rs. 1,74,600</span>
+                </div>
+                <div class="breakdown-progress">
+                  <div class="progress-bar" style="width: 45%; background: linear-gradient(90deg, #10b981, #14b8a6)"></div>
+                </div>
+                <span class="breakdown-percentage">20%</span>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-header">
+                  <span class="breakdown-title">Company</span>
+                  <span class="breakdown-amount">Rs. 1,74,600</span>
+                </div>
+                <div class="breakdown-progress">
+                  <div class="progress-bar" style="width: 45%; background: linear-gradient(90deg, #f59e0b, #fbbf24)"></div>
+                </div>
+                <span class="breakdown-percentage">20%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="analytics-card">
+          <div class="card-header">
+            <h3 class="card-title">Key Performance Indicators</h3>
+          </div>
+          <div class="card-body">
+            <div class="kpi-container">
+              <div class="kpi-card">
+                <div class="kpi-icon purple">
+                  <i class="bi bi-speedometer2"></i>
+                </div>
+                <div class="kpi-content">
+                  <span class="kpi-value">92%</span>
+                  <span class="kpi-label">Efficiency Rate</span>
+                </div>
+                <div class="kpi-chart">
+                  <div class="mini-progress">
+                    <div class="mini-fill" style="width: 92%"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon blue">
+                  <i class="bi bi-star-fill"></i>
+                </div>
+                <div class="kpi-content">
+                  <span class="kpi-value">4.8/5</span>
+                  <span class="kpi-label">Customer Rating</span>
+                </div>
+                <div class="kpi-chart">
+                  <div class="star-rating">
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-half"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon green">
+                  <i class="bi bi-clock-history"></i>
+                </div>
+                <div class="kpi-content">
+                  <span class="kpi-value">24h</span>
+                  <span class="kpi-label">Avg Response</span>
+                </div>
+                <div class="kpi-chart">
+                  <div class="mini-progress">
+                    <div class="mini-fill green" style="width: 75%"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-icon orange">
+                  <i class="bi bi-trophy-fill"></i>
+                </div>
+                <div class="kpi-content">
+                  <span class="kpi-value">156</span>
+                  <span class="kpi-label">Goals Met</span>
+                </div>
+                <div class="kpi-chart">
+                  <div class="mini-progress">
+                    <div class="mini-fill orange" style="width: 85%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Live Transactions Section -->
+    <section class="transactions-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="title-gradient">Recent Transactions</span>
+          <span class="live-badge">
+            <span class="live-dot"></span>
+            Live
+          </span>
+        </h2>
+        <div class="table-controls">
+          <div class="search-filter">
+            <i class="bi bi-search"></i>
+            <input type="text" placeholder="Search transactions...">
+          </div>
+          <button class="filter-btn">
+            <i class="bi bi-funnel"></i>
+            Filter
+          </button>
+          <button class="export-btn">
+            <i class="bi bi-download"></i>
+            Export
+          </button>
+        </div>
+      </div>
+
+      <div class="transactions-table">
+        <table>
+          <thead>
+            <tr>
+              <th>
+                <div class="th-content">
+                  <input type="checkbox" class="select-all">
+                  <span>Transaction</span>
+                </div>
+              </th>
+              <th>Customer</th>
+              <th>Policy Type</th>
+              <th>Amount</th>
+              <th>Commission</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if @recent_policies.present? %>
+              <% @recent_policies.first(8).each_with_index do |item, index| %>
+                <tr class="transaction-row">
+                  <td>
+                    <div class="transaction-info">
+                      <input type="checkbox" class="row-select">
+                      <div class="transaction-id">
+                        <span class="id-badge">#<%= item[:policy].policy_number || "TRX#{rand(100000..999999)}" %></span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="customer-info">
+                      <div class="customer-avatar <%= ['avatar-purple', 'avatar-blue', 'avatar-green', 'avatar-orange'][index % 4] %>">
+                        <%= item[:policy].customer.display_name[0..1].upcase %>
+                      </div>
+                      <div class="customer-details">
+                        <span class="customer-name"><%= item[:policy].customer.display_name %></span>
+                        <span class="customer-email"><%= item[:policy].customer.email %></span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="policy-badge <%= item[:type] %>-badge">
+                      <i class="bi bi-<%= item[:type] == 'health' ? 'heart' : item[:type] == 'life' ? 'shield-check' : 'car-front' %>"></i>
+                      <%= item[:type].capitalize %>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="amount-cell">
+                      <span class="amount-value"><%= indian_currency(item[:policy].total_premium.to_i) %></span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="commission-cell">
+                      <span class="commission-value"><%= indian_currency((item[:commission_data].dig(:summary, :total_commission_generated) || rand(10000..50000)).to_i) %></span>
+                      <span class="commission-percentage">12%</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="status-cell">
+                      <span class="status-indicator <%= ['completed', 'processing', 'pending'][index % 3] %>">
+                        <%= ['Completed', 'Processing', 'Pending'][index % 3] %>
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="date-cell">
+                      <span class="date-value"><%= item[:policy].created_at.strftime("%d %b") %></span>
+                      <span class="time-value"><%= item[:policy].created_at.strftime("%H:%M") %></span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="actions-cell">
+                      <button class="action-btn view-btn" title="View">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <button class="action-btn edit-btn" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button class="action-btn more-btn" title="More">
+                        <i class="bi bi-three-dots-vertical"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<style>
+/* Ultra Modern Dashboard Styles */
+:root {
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --secondary: #ec4899;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --dark: #1e293b;
+  --light: #f8fafc;
+  --border: #e2e8f0;
+  --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: #0f172a;
+  color: #334155;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+.modern-dashboard {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  position: relative;
+}
+
+/* Animated Background */
+.bg-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floating-element {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  animation: float-random 20s infinite ease-in-out;
+}
+
+.element-1 {
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  top: 10%;
+  left: 10%;
+  animation-duration: 25s;
+}
+
+.element-2 {
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(135deg, #10b981, #14b8a6);
+  top: 60%;
+  right: 10%;
+  animation-duration: 30s;
+}
+
+.element-3 {
+  width: 250px;
+  height: 250px;
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  bottom: 10%;
+  left: 30%;
+  animation-duration: 20s;
+}
+
+.element-4 {
+  width: 350px;
+  height: 350px;
+  background: linear-gradient(135deg, #ec4899, #f43f5e);
+  top: 30%;
+  right: 30%;
+  animation-duration: 35s;
+}
+
+.element-5 {
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+  top: 50%;
+  left: 50%;
+  animation-duration: 28s;
+}
+
+@keyframes float-random {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(50px, -50px) scale(1.1);
+  }
+  50% {
+    transform: translate(-30px, 30px) scale(0.9);
+  }
+  75% {
+    transform: translate(40px, 40px) scale(1.05);
+  }
+}
+
+.grid-overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image:
+    linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: grid-move 10s linear infinite;
+}
+
+@keyframes grid-move {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
+}
+
+/* Top Navigation */
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1rem 0;
+  animation: slideDown 0.5s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.nav-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  animation: rotate-slow 10s linear infinite;
+}
+
+@keyframes rotate-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.5px;
+}
+
+.brand-tagline {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.nav-center {
+  flex: 1;
+  max-width: 500px;
+  margin: 0 2rem;
+}
+
+.search-box {
+  position: relative;
+  width: 100%;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: white;
+  font-size: 0.875rem;
+  transition: all 0.3s;
+}
+
+.search-box input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.search-box i {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.search-shortcut {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.nav-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stat-value.positive {
+  color: var(--success);
+}
+
+.notification-btn {
+  position: relative;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.notification-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+  background: var(--danger);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: white;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.user-menu:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.user-menu img {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+/* Dashboard Container */
+.dashboard-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Section Headers */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.title-gradient {
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.title-badge {
+  padding: 0.25rem 0.75rem;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 20px;
+  color: #6366f1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 20px;
+  color: var(--success);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--success);
+  border-radius: 50%;
+  animation: pulse-live 2s infinite;
+}
+
+@keyframes pulse-live {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* Time Selector */
+.time-selector {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.time-btn {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.time-btn:hover {
+  color: white;
+}
+
+.time-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* Metrics Container */
+.metrics-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.metric-tile {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s;
+  animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.metric-tile:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.tile-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.05;
+}
+
+.tile-gradient {
+  width: 100%;
+  height: 100%;
+}
+
+.gradient-purple {
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+}
+
+.gradient-blue {
+  background: linear-gradient(135deg, #3b82f6, #0ea5e9);
+}
+
+.gradient-green {
+  background: linear-gradient(135deg, #10b981, #14b8a6);
+}
+
+.gradient-orange {
+  background: linear-gradient(135deg, #f59e0b, #fb923c);
+}
+
+.tile-content {
+  position: relative;
+  padding: 1.5rem;
+}
+
+.tile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.tile-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.tile-icon i {
+  font-size: 1.5rem;
+  color: white;
+}
+
+.tile-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.tile-badge.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.tile-badge.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.tile-badge.danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.tile-body {
+  margin-bottom: 1rem;
+}
+
+.tile-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.25rem;
+}
+
+.tile-label {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tile-comparison {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.comparison-value {
+  color: white;
+  font-weight: 600;
+}
+
+.comparison-label {
+  color: #64748b;
+}
+
+.tile-chart {
+  height: 60px;
+  margin-top: 1rem;
+}
+
+/* Analytics Section */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.analytics-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 1.5rem;
+  animation: fadeInUp 0.6s ease;
+}
+
+.analytics-card.large {
+  grid-column: span 2;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: white;
+}
+
+.card-subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.control-btn {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.control-btn:hover {
+  color: white;
+}
+
+.control-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.action-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.more-btn {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+}
+
+/* Chart Styles */
+#revenueAnalyticsChart,
+#policyDistributionChart {
+  height: 350px;
+}
+
+/* Distribution Stats */
+.distribution-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.dist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+}
+
+.dist-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.dist-label {
+  flex: 1;
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+.dist-value {
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* Commission Breakdown */
+.commission-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.breakdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.breakdown-title {
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+.breakdown-amount {
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.breakdown-progress {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  animation: progressFill 1s ease;
+}
+
+@keyframes progressFill {
+  from {
+    width: 0;
+  }
+}
+
+.breakdown-percentage {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* KPI Container */
+.kpi-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  transition: all 0.3s;
+}
+
+.kpi-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.kpi-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.kpi-icon.purple {
+  background: rgba(139, 92, 246, 0.2);
+  color: #8b5cf6;
+}
+
+.kpi-icon.blue {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.kpi-icon.green {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--success);
+}
+
+.kpi-icon.orange {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--warning);
+}
+
+.kpi-content {
+  flex: 1;
+}
+
+.kpi-value {
+  display: block;
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.kpi-label {
+  display: block;
+  color: #64748b;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.25rem;
+}
+
+.mini-progress {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.mini-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #ec4899);
+  border-radius: 2px;
+  animation: progressFill 1s ease;
+}
+
+.mini-fill.green {
+  background: linear-gradient(90deg, #10b981, #14b8a6);
+}
+
+.mini-fill.orange {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.star-rating {
+  color: #fbbf24;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+/* Transactions Section */
+.table-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.search-filter {
+  position: relative;
+  flex: 1;
+  max-width: 300px;
+}
+
+.search-filter input {
+  width: 100%;
+  padding: 0.625rem 1rem 0.625rem 2.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: white;
+  font-size: 0.875rem;
+}
+
+.search-filter input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.search-filter i {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+}
+
+.filter-btn,
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.filter-btn:hover,
+.export-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Transactions Table */
+.transactions-table {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  overflow: hidden;
+  animation: fadeInUp 0.7s ease;
+}
+
+.transactions-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.transactions-table thead {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.transactions-table th {
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.th-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.select-all,
+.row-select {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.transaction-row {
+  transition: all 0.3s;
+  animation: fadeInLeft 0.5s ease;
+  animation-fill-mode: both;
+}
+
+.transaction-row:nth-child(1) { animation-delay: 0.1s; }
+.transaction-row:nth-child(2) { animation-delay: 0.15s; }
+.transaction-row:nth-child(3) { animation-delay: 0.2s; }
+.transaction-row:nth-child(4) { animation-delay: 0.25s; }
+.transaction-row:nth-child(5) { animation-delay: 0.3s; }
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.transaction-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.transactions-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.transaction-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.id-badge {
+  padding: 0.25rem 0.75rem;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  color: #818cf8;
+  font-family: 'SF Mono', 'Monaco', monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.customer-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.customer-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: white;
+}
+
+.avatar-purple {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.avatar-blue {
+  background: linear-gradient(135deg, #3b82f6, #0ea5e9);
+}
+
+.avatar-green {
+  background: linear-gradient(135deg, #10b981, #14b8a6);
+}
+
+.avatar-orange {
+  background: linear-gradient(135deg, #f59e0b, #fb923c);
+}
+
+.customer-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.customer-name {
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.customer-email {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.policy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.health-badge {
+  background: rgba(236, 72, 153, 0.1);
+  border: 1px solid rgba(236, 72, 153, 0.2);
+  color: #ec4899;
+}
+
+.life-badge {
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+}
+
+.motor-badge {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+.amount-value,
+.commission-value {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: white;
+}
+
+.commission-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.commission-percentage {
+  font-size: 0.75rem;
+  color: var(--success);
+  font-weight: 600;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-indicator.completed {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--success);
+}
+
+.status-indicator.processing {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+.status-indicator.pending {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: var(--warning);
+}
+
+.date-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.date-value {
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.time-value {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.view-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.edit-btn:hover {
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-card.large {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .nav-center,
+  .nav-right {
+    width: 100%;
+  }
+
+  .metrics-container {
+    grid-template-columns: 1fr;
+  }
+
+  .distribution-stats,
+  .kpi-container {
+    grid-template-columns: 1fr;
+  }
+
+  .transactions-table {
+    overflow-x: auto;
+  }
+}
+
+/* Loading States */
+.loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  to {
+    left: 100%;
+  }
+}
+
+/* Smooth Number Animation */
+.animated-number {
+  display: inline-block;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Animate numbers
+  const animateNumbers = () => {
+    const numbers = document.querySelectorAll('.animated-number');
+
+    numbers.forEach(num => {
+      const target = parseInt(num.getAttribute('data-value'));
+      const duration = 2000;
+      const step = target / (duration / 16);
+      let current = 0;
+
+      const timer = setInterval(() => {
+        current += step;
+        if (current >= target) {
+          current = target;
+          clearInterval(timer);
+        }
+        num.textContent = Math.floor(current).toLocaleString('en-IN');
+      }, 16);
+    });
+  };
+
+  animateNumbers();
+
+  // Mini Charts
+  const createMiniChart = (canvasId, color1, color2, data) => {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    gradient.addColorStop(0, color1);
+    gradient.addColorStop(1, color2);
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: Array(12).fill(''),
+        datasets: [{
+          data: data || [30, 45, 35, 50, 40, 60, 55, 70, 65, 80, 75, 90],
+          borderColor: gradient,
+          backgroundColor: gradient + '20',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        },
+        scales: {
+          x: { display: false },
+          y: { display: false }
+        }
+      }
+    });
+  };
+
+  createMiniChart('revenueMinichart', '#6366f1', '#ec4899', null);
+  createMiniChart('commissionMinichart', '#3b82f6', '#0ea5e9', [40, 35, 45, 40, 50, 48, 55, 52, 60, 58, 65, 70]);
+  createMiniChart('policiesMinichart', '#10b981', '#14b8a6', [20, 25, 22, 30, 28, 35, 33, 40, 38, 45, 43, 50]);
+  createMiniChart('conversionMinichart', '#f59e0b', '#fb923c', [60, 58, 62, 55, 58, 52, 55, 50, 53, 48, 50, 45]);
+
+  // Revenue Analytics Chart
+  const revenueOptions = {
+    series: [{
+      name: 'Revenue',
+      type: 'area',
+      data: [31000, 40000, 28000, 51000, 42000, 60000, 55000, 69000, 62000, 75000, 72000, 85000]
+    }, {
+      name: 'Commission',
+      type: 'column',
+      data: [11000, 17000, 15000, 15000, 21000, 25000, 24000, 28000, 27000, 31000, 30000, 35000]
+    }],
+    chart: {
+      height: 350,
+      type: 'line',
+      background: 'transparent',
+      toolbar: { show: false }
+    },
+    stroke: {
+      width: [3, 0],
+      curve: 'smooth'
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 8,
+        columnWidth: '30%'
+      }
+    },
+    colors: ['#6366f1', '#ec4899'],
+    fill: {
+      type: ['gradient', 'solid'],
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.4,
+        opacityTo: 0.1
+      }
+    },
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    xaxis: {
+      labels: {
+        style: {
+          colors: '#64748b',
+          fontSize: '12px'
+        }
+      },
+      axisBorder: { show: false },
+      axisTicks: { show: false }
+    },
+    yaxis: {
+      labels: {
+        style: {
+          colors: '#64748b',
+          fontSize: '12px'
+        },
+        formatter: (val) => 'Rs. ' + (val/1000) + 'K'
+      }
+    },
+    grid: {
+      borderColor: 'rgba(255, 255, 255, 0.05)',
+      strokeDashArray: 5
+    },
+    tooltip: {
+      theme: 'dark',
+      y: {
+        formatter: (val) => 'Rs. ' + val.toLocaleString('en-IN')
+      }
+    },
+    legend: {
+      position: 'top',
+      horizontalAlign: 'right',
+      labels: {
+        colors: '#94a3b8'
+      }
+    }
+  };
+
+  const revenueChart = new ApexCharts(document.querySelector("#revenueAnalyticsChart"), revenueOptions);
+  revenueChart.render();
+
+  // Policy Distribution Chart
+  const policyOptions = {
+    series: [42, 28, 20, 10],
+    chart: {
+      type: 'donut',
+      height: 250,
+      background: 'transparent'
+    },
+    labels: ['Health', 'Life', 'Motor', 'Other'],
+    colors: ['#6366f1', '#ec4899', '#10b981', '#f59e0b'],
+    stroke: {
+      width: 0
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '75%',
+          background: 'transparent',
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: 'Total',
+              fontSize: '14px',
+              color: '#94a3b8',
+              formatter: () => '2,456'
+            }
+          }
+        }
+      }
+    },
+    dataLabels: {
+      enabled: false
+    },
+    legend: {
+      show: false
+    },
+    tooltip: {
+      theme: 'dark',
+      y: {
+        formatter: (val) => val + '%'
+      }
+    }
+  };
+
+  const policyChart = new ApexCharts(document.querySelector("#policyDistributionChart"), policyOptions);
+  policyChart.render();
+
+  // Time selector functionality
+  const timeBtns = document.querySelectorAll('.time-btn');
+  timeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      timeBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+});
+</script>
+
+</body>
+</html>

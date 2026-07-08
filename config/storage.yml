@@ -1,0 +1,46 @@
+# ActiveStorage configuration with Cloudflare R2 support
+# Direct uploads via R2Service for most documents, ActiveStorage R2 for banners
+
+test:
+  service: Disk
+  root: <%= Rails.root.join("tmp/storage") %>
+
+# Cloudflare R2 configuration for ActiveStorage
+cloudflare_r2:
+  service: S3
+  access_key_id: <%= ENV.fetch("R2_ACCESS_KEY_ID") { "52ed60ae0a0776fb357299dede45ab9f" } %>
+  secret_access_key: <%= ENV.fetch("R2_SECRET_ACCESS_KEY") { "5b19ea5dede62f503eebb2b57de7719962f38d6b86ef387f993bcf0d6102f657" } %>
+  region: auto
+  bucket: <%= ENV.fetch("R2_BUCKET") { "insurebook-uploads" } %>
+  endpoint: <%= ENV.fetch("R2_ENDPOINT") { "https://1f8982473cb9a48a41c053ca18db87ca.r2.cloudflarestorage.com" } %>
+  force_path_style: true
+  public: true
+
+development:
+  service: S3
+  access_key_id: 52ed60ae0a0776fb357299dede45ab9f
+  secret_access_key: 5b19ea5dede62f503eebb2b57de7719962f38d6b86ef387f993bcf0d6102f657
+  region: auto
+  bucket: insurebook-uploads
+  endpoint: https://1f8982473cb9a48a41c053ca18db87ca.r2.cloudflarestorage.com
+  force_path_style: true
+  public: true
+
+production:
+  service: S3
+  access_key_id: 52ed60ae0a0776fb357299dede45ab9f
+  secret_access_key: 5b19ea5dede62f503eebb2b57de7719962f38d6b86ef387f993bcf0d6102f657
+  region: auto
+  bucket: insurebook-uploads
+  endpoint: https://1f8982473cb9a48a41c053ca18db87ca.r2.cloudflarestorage.com
+  force_path_style: true
+  public: true
+
+# Legacy service for existing blobs
+local:
+  service: Disk
+  root: <%= Rails.root.join("storage") %>
+
+local_persistent:
+  service: Disk
+  root: <%= Rails.root.join("storage") %>

@@ -1,0 +1,111 @@
+<div class="mb-4">
+  <h2 class="mb-1">Platform Reports</h2>
+  <p class="text-muted mb-0">Forums, revenue, requests and tickets at a glance</p>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0"><h5 class="mb-0">Forums Report</h5></div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th class="border-0">Forum</th>
+            <th class="border-0">Plan</th>
+            <th class="border-0">Admin</th>
+            <th class="border-0">Chapters</th>
+            <th class="border-0">Members</th>
+            <th class="border-0">Usage</th>
+            <th class="border-0">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @forums.each do |forum| %>
+            <% members = @member_counts[forum.id] || 0 %>
+            <% limit = forum.business_plan.member_limit %>
+            <% pct = limit ? [(members.to_f / limit * 100).round, 100].min : nil %>
+            <tr>
+              <td><%= link_to forum.name, admin_forum_path(forum) %></td>
+              <td><span class="badge bg-primary-subtle text-primary"><%= forum.business_plan.name %></span></td>
+              <td><%= @admin_by_forum[forum.id]&.email || "—" %></td>
+              <td><%= @chapter_counts[forum.id] || 0 %></td>
+              <td><%= members %></td>
+              <td style="min-width: 140px;">
+                <% if limit %>
+                  <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-<%= pct >= 100 ? 'danger' : pct >= 75 ? 'warning' : 'success' %>" style="width: <%= pct %>%"></div>
+                  </div>
+                  <small class="text-muted"><%= members %>/<%= limit %></small>
+                <% else %>
+                  <span class="badge bg-info-subtle text-info">Unlimited</span>
+                <% end %>
+              </td>
+              <td><span class="badge bg-<%= forum.active? ? 'success' : 'warning' %>"><%= forum.status.humanize %></span></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0"><h5 class="mb-0">Revenue Report</h5></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="bg-light"><tr><th class="border-0">Plan</th><th class="border-0">Active Forums</th><th class="border-0">Price</th><th class="border-0">MRR</th></tr></thead>
+            <tbody>
+              <% @revenue_rows.each do |row| %>
+                <tr>
+                  <td><%= row[:plan].name %></td>
+                  <td><%= row[:active_forums] %></td>
+                  <td>₹<%= number_with_delimiter(row[:plan].price.to_i) %></td>
+                  <td class="fw-medium">₹<%= number_with_delimiter(row[:mrr].to_i) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+            <tfoot>
+              <tr class="fw-bold">
+                <td colspan="3">Total MRR</td>
+                <td>₹<%= number_with_delimiter(@total_mrr.to_i) %></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0"><h5 class="mb-0">Forum Requests</h5></div>
+      <div class="card-body">
+        <% @request_status_counts.each do |status, count| %>
+          <div class="d-flex justify-content-between border-bottom py-2">
+            <span class="badge bg-<%= { 'pending' => 'warning', 'approved' => 'success', 'rejected' => 'secondary' }[status] %>"><%= status.humanize %></span>
+            <strong><%= count %></strong>
+          </div>
+        <% end %>
+        <%= link_to "View all requests", admin_forum_requests_path, class: "d-block mt-3 small" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0"><h5 class="mb-0">Support Tickets</h5></div>
+      <div class="card-body">
+        <% @ticket_status_counts.each do |status, count| %>
+          <div class="d-flex justify-content-between border-bottom py-2">
+            <span class="badge bg-<%= { 'open' => 'warning', 'in_progress' => 'primary', 'resolved' => 'success', 'closed' => 'secondary' }[status] %>"><%= status.humanize %></span>
+            <strong><%= count %></strong>
+          </div>
+        <% end %>
+        <%= link_to "View all tickets", admin_platform_support_tickets_path, class: "d-block mt-3 small" %>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,4074 @@
+{
+  "info": {
+    "_postman_id": "3e2795e6-dd3c-4998-ab51-18f386c64854",
+    "name": "InsureBook \u2014 Customer Mobile API",
+    "description": "All customer-facing mobile APIs for the InsureBook platform.\n\n**Setup:**\n1. Set `base_url` collection variable to your server (e.g. `https://your-domain.com`)\n2. Call Login and copy the `token` from the response\n3. Set `token` collection variable \u2014 all protected endpoints auto-use it\n\n**Auth header:** `Authorization: Bearer {{token}}`\n\n**Sections:**\n1. Authentication\n2. Customer \u2014 Portfolio & Insurance\n3. Settings\n4. Investments (Mutual Funds, Fixed Deposits, Other)\n5. Taxation (ITR, Tax Planning)\n6. Loans (Personal, Home, Mortgage, Business)\n7. Travel (Domestic, International)\n8. Credit Cards (Rewards, Business, Travel)\n9. Common Error Responses",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://your-domain.com",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"customer@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"client\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Login successful\",\n  \"token\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMiLCJyb2xlIjoiY3VzdG9tZXIifQ.abc123\",\n  \"user\": {\n    \"id\": 123,\n    \"name\": \"Rahul Sharma\",\n    \"email\": \"customer@example.com\",\n    \"mobile\": \"+919876543210\",\n    \"role\": \"client\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rahul Sharma\",\n  \"email\": \"rahul@example.com\",\n  \"mobile\": \"9876543210\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Registration successful\",\n  \"token\": \"eyJhbGciOiJIUzI1NiJ9...\",\n  \"user\": {\n    \"id\": 124,\n    \"name\": \"Rahul Sharma\",\n    \"email\": \"rahul@example.com\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rahul@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/auth/forgot_password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "auth",
+                "forgot_password"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Password reset instructions sent to your email\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Customer \u2014 Portfolio & Insurance",
+      "item": [
+        {
+          "name": "Get Portfolio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/customer/portfolio",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "customer",
+                "portfolio"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"insurance_name\": \"Star Health Comprehensive\",\n      \"insurance_type\": \"Health\",\n      \"policy_number\": \"SH-2024-001\",\n      \"policy_holder\": \"Rahul Sharma\",\n      \"start_date\": \"2024-01-01\",\n      \"end_date\": \"2025-01-01\",\n      \"total_premium\": \"\u20b912,500\",\n      \"sum_insured\": \"\u20b95,00,000\",\n      \"insurance_company\": \"Star Health Insurance\",\n      \"payment_mode\": \"Yearly\",\n      \"status\": \"Active\",\n      \"days_until_expiry\": 180,\n      \"drwise\": true,\n      \"dr_wise\": true,\n      \"document\": null,\n      \"documents\": []\n    },\n    {\n      \"id\": 2,\n      \"insurance_name\": \"LIC Jeevan Anand\",\n      \"insurance_type\": \"Life\",\n      \"policy_number\": \"LIC-2024-002\",\n      \"policy_holder\": \"Rahul Sharma\",\n      \"start_date\": \"2023-06-01\",\n      \"end_date\": \"2043-06-01\",\n      \"total_premium\": \"\u20b925,000\",\n      \"sum_insured\": \"\u20b910,00,000\",\n      \"insurance_company\": \"LIC of India\",\n      \"payment_mode\": \"Yearly\",\n      \"status\": \"Active\",\n      \"days_until_expiry\": 6900,\n      \"drwise\": true,\n      \"dr_wise\": true,\n      \"nominee_name\": \"Priya Sharma\",\n      \"nominee_relationship\": \"Spouse\",\n      \"policy_term\": 20,\n      \"premium_payment_term\": 20\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Upcoming Installments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/customer/upcoming_installments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "customer",
+                "upcoming_installments"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"policy_number\": \"LIC-2024-002\",\n      \"insurance_type\": \"Life\",\n      \"next_due_date\": \"2024-07-01\",\n      \"installment_amount\": \"\u20b925,000\",\n      \"overdue\": false\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Upcoming Renewals",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/customer/upcoming_renewals",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "customer",
+                "upcoming_renewals"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"policy_number\": \"SH-2024-001\",\n      \"insurance_type\": \"Health\",\n      \"expiry_date\": \"2025-01-01\",\n      \"days_until_expiry\": 30,\n      \"total_premium\": \"\u20b912,500\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Add Policy (Customer Self-Submit)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"insurance_type\": \"health\",\n  \"policy_number\": \"SH-2024-999\",\n  \"policy_holder\": \"Rahul Sharma\",\n  \"plan_name\": \"Family Floater\",\n  \"insurance_company_name\": \"Star Health\",\n  \"total_premium\": 15000,\n  \"sum_insured\": 500000,\n  \"policy_start_date\": \"2024-06-01\",\n  \"policy_end_date\": \"2025-06-01\",\n  \"payment_mode\": \"Yearly\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/customer/add_policy",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "customer",
+                "add_policy"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Policy added successfully. Our team will review and confirm the details.\",\n  \"data\": {\n    \"id\": 55,\n    \"insurance_type\": \"health\",\n    \"policy_number\": \"SH-2024-999\",\n    \"drwise\": false,\n    \"dr_wise\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Helpdesk Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"Policy document not received\",\n  \"description\": \"I paid my premium but have not received the policy document yet.\",\n  \"category\": \"Documents\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/customer/helpdesk",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "customer",
+                "helpdesk"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Helpdesk ticket created\",\n  \"data\": {\n    \"id\": 10,\n    \"subject\": \"Policy document not received\",\n    \"status\": \"open\",\n    \"created_at\": \"2024-06-13 10:00:00\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Helpdesk Tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/customer/helpdesk_tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "customer",
+                "helpdesk_tickets"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 10,\n      \"subject\": \"Policy document not received\",\n      \"status\": \"open\",\n      \"created_at\": \"2024-06-13 10:00:00\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Helpdesk Ticket Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/customer/helpdesk_tickets/10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "customer",
+                "helpdesk_tickets",
+                "10"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 10,\n    \"subject\": \"Policy document not received\",\n    \"description\": \"I paid my premium but have not received the policy document yet.\",\n    \"category\": \"Documents\",\n    \"status\": \"open\",\n    \"created_at\": \"2024-06-13 10:00:00\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Settings",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/settings/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "settings",
+                "profile"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 123,\n    \"name\": \"Rahul Sharma\",\n    \"email\": \"rahul@example.com\",\n    \"mobile\": \"+919876543210\",\n    \"pan_number\": \"ABCDE1234F\",\n    \"date_of_birth\": \"1990-01-15\",\n    \"address\": \"123 MG Road, Bangalore\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rahul Kumar Sharma\",\n  \"mobile\": \"9876543210\",\n  \"address\": \"456 Brigade Road, Bangalore\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/settings/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "settings",
+                "profile"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Profile updated successfully\",\n  \"data\": {\n    \"id\": 123,\n    \"name\": \"Rahul Kumar Sharma\",\n    \"email\": \"rahul@example.com\",\n    \"mobile\": \"+919876543210\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"oldpassword123\",\n  \"password\": \"newpassword456\",\n  \"password_confirmation\": \"newpassword456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/settings/change_password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "settings",
+                "change_password"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Password changed successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Notification Settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/settings/notifications",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "settings",
+                "notifications"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"renewal_reminders\": true,\n    \"installment_reminders\": true,\n    \"promotional\": false,\n    \"email_notifications\": true,\n    \"sms_notifications\": true\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Notification Settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"renewal_reminders\": true,\n  \"installment_reminders\": true,\n  \"promotional\": true,\n  \"email_notifications\": true,\n  \"sms_notifications\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/settings/notifications",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "settings",
+                "notifications"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Notification settings updated\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Investments",
+      "item": [
+        {
+          "name": "Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/summary",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "summary"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"total_investments\": 5,\n    \"total_invested_amount\": \"\u20b93,50,000\",\n    \"total_invested_raw\": 350000.0,\n    \"mutual_funds\": {\n      \"count\": 2,\n      \"total_amount\": \"\u20b92,00,000\",\n      \"total_amount_raw\": 200000.0,\n      \"active_count\": 2,\n      \"drwise_count\": 1,\n      \"non_drwise_count\": 1\n    },\n    \"fixed_deposits\": {\n      \"count\": 2,\n      \"total_amount\": \"\u20b91,00,000\",\n      \"total_amount_raw\": 100000.0,\n      \"active_count\": 2\n    },\n    \"other_investments\": {\n      \"count\": 1,\n      \"total_amount\": \"\u20b950,000\",\n      \"total_amount_raw\": 50000.0,\n      \"active_count\": 1\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mutual Funds \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/mutual_funds",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "mutual_funds"
+              ],
+              "query": [
+                {
+                  "key": "investment_type",
+                  "value": "SIP",
+                  "disabled": true,
+                  "description": "Filter by type: SIP, Lumpsum, etc."
+                },
+                {
+                  "key": "active",
+                  "value": "true",
+                  "disabled": true,
+                  "description": "Filter by active status"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"mutual_funds\": [\n      {\n        \"id\": 1,\n        \"record_type\": \"mutual_fund\",\n        \"investment_type\": \"SIP\",\n        \"amount\": 5000.0,\n        \"amount_formatted\": \"\u20b95,000\",\n        \"fund_name\": \"Axis Bluechip Fund\",\n        \"folio_number\": \"AX-123456\",\n        \"plan_name\": \"Growth Direct\",\n        \"start_date\": \"2024-01-01\",\n        \"maturity_date\": null,\n        \"active\": true,\n        \"drwise\": false,\n        \"dr_wise\": false,\n        \"created_at\": \"2024-06-13 10:00:00\",\n        \"updated_at\": \"2024-06-13 10:00:00\"\n      }\n    ],\n    \"total\": 1,\n    \"total_amount\": \"\u20b95,000\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mutual Funds \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investment_type\": \"SIP\",\n  \"amount\": 5000,\n  \"fund_name\": \"Axis Bluechip Fund\",\n  \"folio_number\": \"AX-123456\",\n  \"plan_name\": \"Growth Direct\",\n  \"start_date\": \"2024-06-01\",\n  \"maturity_date\": null,\n  \"drwise\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/mutual_funds",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "mutual_funds"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Mutual fund added successfully. Our team will review and update details.\",\n  \"data\": {\n    \"id\": 2,\n    \"record_type\": \"mutual_fund\",\n    \"investment_type\": \"SIP\",\n    \"amount\": 5000.0,\n    \"amount_formatted\": \"\u20b95,000\",\n    \"fund_name\": \"Axis Bluechip Fund\",\n    \"folio_number\": \"AX-123456\",\n    \"plan_name\": \"Growth Direct\",\n    \"start_date\": \"2024-06-01\",\n    \"maturity_date\": null,\n    \"active\": true,\n    \"drwise\": false,\n    \"dr_wise\": false,\n    \"created_at\": \"2024-06-13 10:00:00\",\n    \"updated_at\": \"2024-06-13 10:00:00\"\n  }\n}"
+            },
+            {
+              "name": "422 Missing investment_type",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"investment_type is required\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mutual Funds \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/mutual_funds/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "mutual_funds",
+                "2"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 2,\n    \"record_type\": \"mutual_fund\",\n    \"investment_type\": \"SIP\",\n    \"amount\": 5000.0,\n    \"amount_formatted\": \"\u20b95,000\",\n    \"fund_name\": \"Axis Bluechip Fund\",\n    \"folio_number\": \"AX-123456\",\n    \"plan_name\": \"Growth Direct\",\n    \"start_date\": \"2024-06-01\",\n    \"maturity_date\": null,\n    \"active\": true,\n    \"drwise\": false,\n    \"dr_wise\": false\n  }\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Mutual fund not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mutual Funds \u2014 Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 6000,\n  \"fund_name\": \"Axis Bluechip Fund \u2014 Updated\",\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/mutual_funds/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "mutual_funds",
+                "2"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Mutual fund updated\",\n  \"data\": {\n    \"id\": 2,\n    \"amount\": 6000.0,\n    \"amount_formatted\": \"\u20b96,000\",\n    \"fund_name\": \"Axis Bluechip Fund \u2014 Updated\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mutual Funds \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/mutual_funds/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "mutual_funds",
+                "2"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Mutual fund removed\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Fixed Deposits \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/fd",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "fd"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "active",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"fixed_deposits\": [\n      {\n        \"id\": 10,\n        \"record_type\": \"investments_fd\",\n        \"type_label\": \"Fixed Deposit\",\n        \"category\": \"Investments\",\n        \"amount\": 50000.0,\n        \"amount_formatted\": \"\u20b950,000\",\n        \"status\": \"active\",\n        \"reference_number\": \"FD-HDFC-2024-001\",\n        \"start_date\": \"2024-01-01\",\n        \"notes\": \"HDFC 1-year FD at 7.25%\",\n        \"created_at\": \"2024-06-13 10:00:00\",\n        \"updated_at\": \"2024-06-13 10:00:00\"\n      }\n    ],\n    \"total\": 1,\n    \"total_amount\": \"\u20b950,000\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Fixed Deposits \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 50000,\n  \"reference_number\": \"FD-HDFC-2024-001\",\n  \"start_date\": \"2024-06-01\",\n  \"status\": \"pending\",\n  \"notes\": \"HDFC 1-year FD at 7.25%\",\n  \"drwise\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/fd",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "fd"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Fixed deposit added\",\n  \"data\": {\n    \"id\": 10,\n    \"record_type\": \"investments_fd\",\n    \"type_label\": \"Fixed Deposit\",\n    \"amount\": 50000.0,\n    \"amount_formatted\": \"\u20b950,000\",\n    \"status\": \"active\",\n    \"reference_number\": \"FD-HDFC-2024-001\",\n    \"start_date\": \"2024-06-01\",\n    \"notes\": \"HDFC 1-year FD at 7.25%\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Fixed Deposits \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/fd/10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "fd",
+                "10"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 10,\n    \"record_type\": \"investments_fd\",\n    \"type_label\": \"Fixed Deposit\",\n    \"amount\": 50000.0,\n    \"amount_formatted\": \"\u20b950,000\",\n    \"status\": \"active\",\n    \"reference_number\": \"FD-HDFC-2024-001\",\n    \"start_date\": \"2024-06-01\",\n    \"notes\": \"HDFC 1-year FD at 7.25%\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Fixed Deposits \u2014 Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 55000,\n  \"notes\": \"Renewed at 7.5%\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/fd/10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "fd",
+                "10"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Updated successfully\",\n  \"data\": { \"id\": 10, \"amount\": 55000.0, \"amount_formatted\": \"\u20b955,000\", \"notes\": \"Renewed at 7.5%\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Fixed Deposits \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/fd/10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "fd",
+                "10"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Fixed deposit removed\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Other Investments \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/other",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "other"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"other_investments\": [\n      {\n        \"id\": 20,\n        \"record_type\": \"investments_other\",\n        \"type_label\": \"Other Investment\",\n        \"amount\": 25000.0,\n        \"amount_formatted\": \"\u20b925,000\",\n        \"status\": \"active\",\n        \"reference_number\": \"NPS-2024-001\",\n        \"notes\": \"NPS contribution\"\n      }\n    ],\n    \"total\": 1,\n    \"total_amount\": \"\u20b925,000\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Other Investments \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 25000,\n  \"reference_number\": \"NPS-2024-001\",\n  \"start_date\": \"2024-06-01\",\n  \"status\": \"pending\",\n  \"notes\": \"NPS contribution\",\n  \"drwise\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/other",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "other"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Other investment added\",\n  \"data\": { \"id\": 20, \"record_type\": \"investments_other\", \"amount\": 25000.0, \"amount_formatted\": \"\u20b925,000\", \"status\": \"active\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Other Investments \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/other/20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "other",
+                "20"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"id\": 20, \"record_type\": \"investments_other\", \"amount\": 25000.0, \"amount_formatted\": \"\u20b925,000\", \"status\": \"active\", \"notes\": \"NPS contribution\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Other Investments \u2014 Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 30000,\n  \"notes\": \"Additional NPS top-up\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/other/20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "other",
+                "20"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Updated successfully\",\n  \"data\": { \"id\": 20, \"amount\": 30000.0, \"amount_formatted\": \"\u20b930,000\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Other Investments \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/other/20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "other",
+                "20"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Investment removed\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Taxation",
+      "item": [
+        {
+          "name": "Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/taxation/summary",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "taxation",
+                "summary"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"total\": 3,\n    \"total_amount\": \"\u20b945,000\",\n    \"total_amount_raw\": 45000.0,\n    \"by_type\": {\n      \"taxation_itr\": {\n        \"label\": \"ITR Filing\",\n        \"count\": 2,\n        \"total_amount\": \"\u20b930,000\",\n        \"total_amount_raw\": 30000.0\n      },\n      \"taxation_tax_planning\": {\n        \"label\": \"Tax Planning\",\n        \"count\": 1,\n        \"total_amount\": \"\u20b915,000\",\n        \"total_amount_raw\": 15000.0\n      }\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "ITR \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/taxation/itr",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "taxation",
+                "itr"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"records\": [\n      {\n        \"id\": 30,\n        \"record_type\": \"taxation_itr\",\n        \"type_label\": \"ITR Filing\",\n        \"category\": \"Taxation\",\n        \"amount\": 15000.0,\n        \"amount_formatted\": \"\u20b915,000\",\n        \"status\": \"active\",\n        \"reference_number\": \"ITR-2024-001\",\n        \"start_date\": \"2024-04-01\",\n        \"notes\": \"FY 2023-24 ITR filing\"\n      }\n    ],\n    \"total\": 1,\n    \"total_amount\": \"\u20b915,000\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "ITR \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 15000,\n  \"reference_number\": \"ITR-2024-001\",\n  \"start_date\": \"2024-04-01\",\n  \"status\": \"pending\",\n  \"notes\": \"FY 2023-24 ITR filing\",\n  \"drwise\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/taxation/itr",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "taxation",
+                "itr"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record created successfully\",\n  \"data\": { \"id\": 30, \"record_type\": \"taxation_itr\", \"type_label\": \"ITR Filing\", \"amount\": 15000.0, \"amount_formatted\": \"\u20b915,000\", \"status\": \"pending\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "ITR \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/taxation/itr/30",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "taxation",
+                "itr",
+                "30"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"id\": 30, \"record_type\": \"taxation_itr\", \"amount\": 15000.0, \"status\": \"pending\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "ITR \u2014 Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\",\n  \"notes\": \"Filing submitted successfully\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/taxation/itr/30",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "taxation",
+                "itr",
+                "30"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Updated successfully\",\n  \"data\": { \"id\": 30, \"status\": \"active\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "ITR \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/taxation/itr/30",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "taxation",
+                "itr",
+                "30"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record removed\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tax Planning \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/taxation/tax_planning",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "taxation",
+                "tax_planning"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"records\": [\n      {\n        \"id\": 31,\n        \"record_type\": \"taxation_tax_planning\",\n        \"type_label\": \"Tax Planning\",\n        \"amount\": 15000.0,\n        \"amount_formatted\": \"\u20b915,000\",\n        \"status\": \"active\",\n        \"notes\": \"Section 80C investment planning\"\n      }\n    ],\n    \"total\": 1,\n    \"total_amount\": \"\u20b915,000\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tax Planning \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 15000,\n  \"start_date\": \"2024-04-01\",\n  \"status\": \"pending\",\n  \"notes\": \"Section 80C investment planning\",\n  \"drwise\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/taxation/tax_planning",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "taxation",
+                "tax_planning"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record created successfully\",\n  \"data\": { \"id\": 31, \"record_type\": \"taxation_tax_planning\", \"amount\": 15000.0, \"status\": \"pending\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tax Planning \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/taxation/tax_planning/31",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "taxation",
+                "tax_planning",
+                "31"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"id\": 31, \"record_type\": \"taxation_tax_planning\", \"amount\": 15000.0 }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tax Planning \u2014 Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\",\n  \"amount\": 20000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/taxation/tax_planning/31",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "taxation",
+                "tax_planning",
+                "31"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Updated successfully\",\n  \"data\": { \"id\": 31, \"amount\": 20000.0, \"status\": \"active\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tax Planning \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/taxation/tax_planning/31",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "taxation",
+                "tax_planning",
+                "31"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record removed\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Loans",
+      "item": [
+        {
+          "name": "Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/summary",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "summary"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"total\": 4,\n    \"total_amount\": \"\u20b935,00,000\",\n    \"total_amount_raw\": 3500000.0,\n    \"by_type\": {\n      \"loans_personal\":  { \"label\": \"Personal Loan\",  \"count\": 1, \"total_amount\": \"\u20b92,00,000\",  \"total_amount_raw\": 200000.0 },\n      \"loans_home\":      { \"label\": \"Home Loan\",       \"count\": 1, \"total_amount\": \"\u20b930,00,000\", \"total_amount_raw\": 3000000.0 },\n      \"loans_mortgage\":  { \"label\": \"Mortgage Loan\",  \"count\": 1, \"total_amount\": \"\u20b92,00,000\",  \"total_amount_raw\": 200000.0 },\n      \"loans_business\":  { \"label\": \"Business Loan\",  \"count\": 1, \"total_amount\": \"\u20b91,00,000\",  \"total_amount_raw\": 100000.0 }\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Personal Loan \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/personal",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "personal"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"records\": [\n      {\n        \"id\": 40,\n        \"record_type\": \"loans_personal\",\n        \"type_label\": \"Personal Loan\",\n        \"category\": \"Loans\",\n        \"amount\": 200000.0,\n        \"amount_formatted\": \"\u20b92,00,000\",\n        \"status\": \"active\",\n        \"reference_number\": \"PL-HDFC-2024-001\",\n        \"start_date\": \"2024-01-01\",\n        \"notes\": \"Personal loan for home renovation\"\n      }\n    ],\n    \"total\": 1,\n    \"total_amount\": \"\u20b92,00,000\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Personal Loan \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 200000,\n  \"reference_number\": \"PL-HDFC-2024-001\",\n  \"start_date\": \"2024-06-01\",\n  \"status\": \"pending\",\n  \"notes\": \"Personal loan for home renovation\",\n  \"drwise\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/personal",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "personal"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record created successfully\",\n  \"data\": { \"id\": 40, \"record_type\": \"loans_personal\", \"amount\": 200000.0, \"amount_formatted\": \"\u20b92,00,000\", \"status\": \"pending\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Personal Loan \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/personal/40",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "personal",
+                "40"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"id\": 40, \"record_type\": \"loans_personal\", \"amount\": 200000.0, \"status\": \"pending\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Personal Loan \u2014 Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\",\n  \"notes\": \"Loan disbursed\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/personal/40",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "personal",
+                "40"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Updated successfully\",\n  \"data\": { \"id\": 40, \"status\": \"active\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Personal Loan \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/personal/40",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "personal",
+                "40"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record removed\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Home Loan \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/home",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "home"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"records\": [], \"total\": 0, \"total_amount\": \"\u20b90\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Home Loan \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 3000000,\n  \"reference_number\": \"HL-SBI-2024-001\",\n  \"start_date\": \"2024-03-01\",\n  \"status\": \"pending\",\n  \"notes\": \"SBI home loan 8.5% p.a.\",\n  \"drwise\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/home",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "home"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record created successfully\",\n  \"data\": { \"id\": 41, \"record_type\": \"loans_home\", \"amount\": 3000000.0, \"amount_formatted\": \"\u20b930,00,000\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Home Loan \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/home/41",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "home",
+                "41"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"id\": 41, \"record_type\": \"loans_home\", \"amount\": 3000000.0 }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Home Loan \u2014 Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"EMI: \u20b928,500/month\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/home/41",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "home",
+                "41"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Updated successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Home Loan \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/home/41",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "home",
+                "41"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record removed\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mortgage Loan \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/mortgage",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "mortgage"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"records\": [], \"total\": 0, \"total_amount\": \"\u20b90\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mortgage Loan \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 200000,\n  \"reference_number\": \"MG-ICICI-2024-001\",\n  \"start_date\": \"2024-06-01\",\n  \"status\": \"pending\",\n  \"notes\": \"Loan against property\",\n  \"drwise\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/mortgage",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "mortgage"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record created successfully\",\n  \"data\": { \"id\": 42, \"record_type\": \"loans_mortgage\", \"amount\": 200000.0 }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mortgage Loan \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/mortgage/42",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "mortgage",
+                "42"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"id\": 42, \"record_type\": \"loans_mortgage\", \"amount\": 200000.0 }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mortgage Loan \u2014 Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/mortgage/42",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "mortgage",
+                "42"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Updated successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mortgage Loan \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/mortgage/42",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "mortgage",
+                "42"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record removed\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Business Loan \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/business",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "business"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"records\": [], \"total\": 0, \"total_amount\": \"\u20b90\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Business Loan \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 100000,\n  \"reference_number\": \"BL-KOTAK-2024-001\",\n  \"start_date\": \"2024-06-01\",\n  \"status\": \"pending\",\n  \"notes\": \"Business expansion loan\",\n  \"drwise\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/business",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "business"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record created successfully\",\n  \"data\": { \"id\": 43, \"record_type\": \"loans_business\", \"amount\": 100000.0 }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Business Loan \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/business/43",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "business",
+                "43"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"id\": 43, \"record_type\": \"loans_business\", \"amount\": 100000.0 }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Business Loan \u2014 Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\",\n  \"notes\": \"Loan approved and disbursed\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/business/43",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "business",
+                "43"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Updated successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Business Loan \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/loans/business/43",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "loans",
+                "business",
+                "43"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record removed\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Travel",
+      "item": [
+        {
+          "name": "Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/travel/summary",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "travel",
+                "summary"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"total\": 2,\n    \"total_amount\": \"\u20b925,000\",\n    \"total_amount_raw\": 25000.0,\n    \"by_type\": {\n      \"travel_domestic\":      { \"label\": \"Domestic Travel\",      \"count\": 1, \"total_amount\": \"\u20b910,000\", \"total_amount_raw\": 10000.0 },\n      \"travel_international\": { \"label\": \"International Travel\", \"count\": 1, \"total_amount\": \"\u20b915,000\", \"total_amount_raw\": 15000.0 }\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Domestic Travel \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/travel/domestic",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "travel",
+                "domestic"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"records\": [\n      {\n        \"id\": 50,\n        \"record_type\": \"travel_domestic\",\n        \"type_label\": \"Domestic Travel\",\n        \"category\": \"Travel\",\n        \"amount\": 10000.0,\n        \"amount_formatted\": \"\u20b910,000\",\n        \"status\": \"active\",\n        \"reference_number\": \"TD-2024-GOA-001\",\n        \"start_date\": \"2024-12-20\",\n        \"notes\": \"Goa trip insurance\"\n      }\n    ],\n    \"total\": 1,\n    \"total_amount\": \"\u20b910,000\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Domestic Travel \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 10000,\n  \"reference_number\": \"TD-2024-GOA-001\",\n  \"start_date\": \"2024-12-20\",\n  \"status\": \"pending\",\n  \"notes\": \"Goa trip insurance\",\n  \"drwise\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/travel/domestic",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "travel",
+                "domestic"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record created successfully\",\n  \"data\": { \"id\": 50, \"record_type\": \"travel_domestic\", \"amount\": 10000.0, \"status\": \"pending\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Domestic Travel \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/travel/domestic/50",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "travel",
+                "domestic",
+                "50"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"id\": 50, \"record_type\": \"travel_domestic\", \"amount\": 10000.0 }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Domestic Travel \u2014 Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/travel/domestic/50",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "travel",
+                "domestic",
+                "50"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Updated successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Domestic Travel \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/travel/domestic/50",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "travel",
+                "domestic",
+                "50"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record removed\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "International Travel \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/travel/international",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "travel",
+                "international"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"records\": [\n      {\n        \"id\": 51,\n        \"record_type\": \"travel_international\",\n        \"type_label\": \"International Travel\",\n        \"amount\": 15000.0,\n        \"amount_formatted\": \"\u20b915,000\",\n        \"status\": \"active\",\n        \"notes\": \"Europe trip travel insurance\"\n      }\n    ],\n    \"total\": 1,\n    \"total_amount\": \"\u20b915,000\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "International Travel \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 15000,\n  \"reference_number\": \"TI-2024-EU-001\",\n  \"start_date\": \"2024-11-01\",\n  \"status\": \"pending\",\n  \"notes\": \"Europe trip travel insurance\",\n  \"drwise\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/travel/international",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "travel",
+                "international"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record created successfully\",\n  \"data\": { \"id\": 51, \"record_type\": \"travel_international\", \"amount\": 15000.0 }\n}"
+            }
+          ]
+        },
+        {
+          "name": "International Travel \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/travel/international/51",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "travel",
+                "international",
+                "51"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"id\": 51, \"record_type\": \"travel_international\", \"amount\": 15000.0 }\n}"
+            }
+          ]
+        },
+        {
+          "name": "International Travel \u2014 Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\",\n  \"notes\": \"Policy confirmed\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/travel/international/51",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "travel",
+                "international",
+                "51"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Updated successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "International Travel \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/travel/international/51",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "travel",
+                "international",
+                "51"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record removed\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8. Credit Cards",
+      "item": [
+        {
+          "name": "Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/summary",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "summary"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"total\": 3,\n    \"total_amount\": \"\u20b90\",\n    \"total_amount_raw\": 0.0,\n    \"by_type\": {\n      \"credit_card_rewards\":  { \"label\": \"Rewards Card\",  \"count\": 1, \"total_amount\": \"\u20b90\", \"total_amount_raw\": 0.0 },\n      \"credit_card_business\": { \"label\": \"Business Card\", \"count\": 1, \"total_amount\": \"\u20b90\", \"total_amount_raw\": 0.0 },\n      \"credit_card_travel\":   { \"label\": \"Travel Card\",   \"count\": 1, \"total_amount\": \"\u20b90\", \"total_amount_raw\": 0.0 }\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Rewards Card \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/rewards",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "rewards"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"records\": [\n      {\n        \"id\": 60,\n        \"record_type\": \"credit_card_rewards\",\n        \"type_label\": \"Rewards Card\",\n        \"category\": \"Credit Cards\",\n        \"amount\": 0.0,\n        \"amount_formatted\": \"\u20b90\",\n        \"status\": \"active\",\n        \"reference_number\": \"CC-HDFC-MILLENIA-001\",\n        \"notes\": \"HDFC Millennia rewards card\"\n      }\n    ],\n    \"total\": 1,\n    \"total_amount\": \"\u20b90\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Rewards Card \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 0,\n  \"reference_number\": \"CC-HDFC-MILLENIA-001\",\n  \"status\": \"pending\",\n  \"notes\": \"HDFC Millennia rewards card\",\n  \"drwise\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/rewards",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "rewards"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record created successfully\",\n  \"data\": { \"id\": 60, \"record_type\": \"credit_card_rewards\", \"status\": \"active\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Rewards Card \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/rewards/60",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "rewards",
+                "60"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"id\": 60, \"record_type\": \"credit_card_rewards\", \"status\": \"active\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Rewards Card \u2014 Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Card limit increased to \u20b92,00,000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/rewards/60",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "rewards",
+                "60"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Updated successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Rewards Card \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/rewards/60",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "rewards",
+                "60"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record removed\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Business Card \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/business",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "business"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"records\": [], \"total\": 0, \"total_amount\": \"\u20b90\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Business Card \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 0,\n  \"reference_number\": \"CC-AXIS-BIZ-001\",\n  \"status\": \"pending\",\n  \"notes\": \"Axis Bank business credit card\",\n  \"drwise\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/business",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "business"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record created successfully\",\n  \"data\": { \"id\": 61, \"record_type\": \"credit_card_business\", \"status\": \"active\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Business Card \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/business/61",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "business",
+                "61"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"id\": 61, \"record_type\": \"credit_card_business\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Business Card \u2014 Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Card upgraded to premium\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/business/61",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "business",
+                "61"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Updated successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Business Card \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/business/61",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "business",
+                "61"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record removed\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Travel Card \u2014 List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/travel",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "travel"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"records\": [], \"total\": 0, \"total_amount\": \"\u20b90\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Travel Card \u2014 Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 0,\n  \"reference_number\": \"CC-ICICI-SAPPHIRO-001\",\n  \"status\": \"pending\",\n  \"notes\": \"ICICI Sapphiro travel card with lounge access\",\n  \"drwise\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/travel",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "travel"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record created successfully\",\n  \"data\": { \"id\": 62, \"record_type\": \"credit_card_travel\", \"status\": \"active\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Travel Card \u2014 Show",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/travel/62",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "travel",
+                "62"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": { \"id\": 62, \"record_type\": \"credit_card_travel\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Travel Card \u2014 Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Renewal completed for next year\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/travel/62",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "travel",
+                "62"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Updated successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Travel Card \u2014 Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/credit_cards/travel/62",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "credit_cards",
+                "travel",
+                "62"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Record removed\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "9. Common Error Responses",
+      "item": [
+        {
+          "name": "401 Unauthorized",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/summary",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "summary"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "401 \u2014 No or invalid token",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Unauthorized. Please login to continue.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "404 Not Found",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/mutual_funds/9999",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "mutual_funds",
+                "9999"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "404 \u2014 Record not found or belongs to another customer",
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Mutual fund not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "422 Missing Required Field",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mobile/investments/fd",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "investments",
+                "fd"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "422 \u2014 amount missing",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"amount is required\"\n}"
+            },
+            {
+              "name": "422 \u2014 validation errors",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Failed to create record\",\n  \"errors\": [\"Amount can't be blank\"]\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

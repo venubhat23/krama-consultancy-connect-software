@@ -1,0 +1,57 @@
+<div class="mb-4">
+  <h2 class="mb-1">Onboard a New Forum</h2>
+  <p class="text-muted mb-0">This creates the forum and its forum admin login in one step.</p>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <%= form_with model: @forum, url: admin_forums_path, local: true do |form| %>
+      <% if @forum.errors.any? %>
+        <div class="alert alert-danger">
+          <ul class="mb-0"><% @forum.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %></ul>
+        </div>
+      <% end %>
+
+      <h6 class="text-muted mb-3">Forum Details</h6>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label">Forum Name</label>
+          <%= form.text_field :name, class: "form-control", required: true %>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Business Plan</label>
+          <%= form.select :business_plan_id, @business_plans.map { |p| ["#{p.name} (₹#{p.price})", p.id] }, {}, class: "form-select", required: true %>
+        </div>
+      </div>
+
+      <h6 class="text-muted mb-3">Forum Admin Login</h6>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">First Name</label>
+          <%= text_field_tag "admin[first_name]", nil, class: "form-control", required: true %>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Last Name</label>
+          <%= text_field_tag "admin[last_name]", nil, class: "form-control", required: true %>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Mobile</label>
+          <%= text_field_tag "admin[mobile]", nil, class: "form-control", required: true %>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Email</label>
+          <%= email_field_tag "admin[email]", nil, class: "form-control", required: true %>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Password</label>
+          <%= password_field_tag "admin[password]", nil, class: "form-control", required: true %>
+        </div>
+      </div>
+
+      <div class="mt-4 d-flex gap-2">
+        <%= form.submit "Create Forum", class: "btn btn-primary" %>
+        <%= link_to "Cancel", admin_forums_path, class: "btn btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

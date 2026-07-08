@@ -1,0 +1,5 @@
+class AddInsuranceCompanyToBrokers < ActiveRecord::Migration[8.0]
+  def change
+    add_reference :brokers, :insurance_company, null: true, foreign_key: true
+  end
+end

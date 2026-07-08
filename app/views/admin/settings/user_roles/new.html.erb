@@ -1,0 +1,687 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Create New User</h2>
+    <p class="text-muted mb-0">Add a new user to the system with role-based permissions</p>
+  </div>
+  <div>
+    <%= link_to admin_settings_user_roles_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Users
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">User Information</h5>
+      </div>
+      <div class="card-body">
+        <%= form_with model: @user, url: admin_settings_user_roles_path, local: true, class: "needs-validation", novalidate: true do |form| %>
+          <% if @user.errors.any? %>
+            <div class="alert alert-danger" role="alert">
+              <h6 class="alert-heading">Please fix the following errors:</h6>
+              <ul class="mb-0">
+                <% @user.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="row">
+            <!-- First Name -->
+            <div class="col-md-6 mb-3">
+              <%= form.label :first_name, class: "form-label" do %>
+                Name <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :first_name, class: "form-control", placeholder: "Enter first name", required: true %>
+              <div class="invalid-feedback">
+                Please provide a valid first name.
+              </div>
+            </div>
+
+            <!-- Last Name -->
+            <div class="col-md-6 mb-3">
+              <%= form.label :last_name, class: "form-label" do %>
+                Last Name
+              <% end %>
+              <%= form.text_field :last_name, class: "form-control", placeholder: "Enter last name" %>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Email -->
+            <div class="col-md-6 mb-3">
+              <%= form.label :email, class: "form-label" do %>
+                Email <span class="text-danger">*</span>
+              <% end %>
+              <%= form.email_field :email, class: "form-control", placeholder: "Enter email address", required: true %>
+              <div class="invalid-feedback">
+                Please provide a valid email address.
+              </div>
+            </div>
+
+            <!-- Phone Number -->
+            <div class="col-md-6 mb-3">
+              <%= form.label :mobile, "Phone Number", class: "form-label" do %>
+                Phone Number <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :mobile, type: "tel", class: "form-control", placeholder: "Enter phone number", required: true %>
+              <div class="invalid-feedback">
+                Please provide a valid phone number.
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Password -->
+            <div class="col-md-6 mb-3">
+              <%= form.label :password, class: "form-label" do %>
+                Password <span class="text-danger">*</span>
+              <% end %>
+              <%= form.password_field :password, class: "form-control", placeholder: "Enter password", required: true, minlength: 6 %>
+              <div class="invalid-feedback">
+                Password must be at least 6 characters long.
+              </div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="col-md-6 mb-3">
+              <%= form.label :password_confirmation, "Confirm Password", class: "form-label" do %>
+                Confirm Password <span class="text-danger">*</span>
+              <% end %>
+              <%= form.password_field :password_confirmation, class: "form-control", placeholder: "Confirm password", required: true %>
+              <div class="invalid-feedback">
+                Password confirmation must match password.
+              </div>
+            </div>
+          </div>
+
+          <!-- Role -->
+          <div class="mb-4">
+            <%= form.label :role_name, "Role", class: "form-label" do %>
+              Role <span class="text-danger">*</span>
+            <% end %>
+            <%= form.select :role_name,
+                [
+                  ['Data Entry', 'Data entry'],
+                  ['Tele Calling', 'Tele calling'],
+                  ['Accounts', 'Accounts']
+                ],
+                { prompt: 'Select a role' },
+                { class: "form-select", required: true } %>
+            <div class="invalid-feedback">
+              Please select a role.
+            </div>
+          </div>
+
+          <!-- Sidebar Permissions with Mixed CRUD/All Access -->
+          <div class="mb-4">
+            <h6 class="mb-3">
+              <i class="bi bi-shield-check text-primary me-2"></i>
+              Module Permissions
+            </h6>
+            <p class="text-muted mb-3">Configure detailed access permissions for each module. <strong>Client-related modules</strong> (Clients, Affiliates, Ambassadors) support individual CRUD permissions, while <strong>other modules</strong> use simplified 'All Access' permissions.</p>
+
+            <!-- Permission Types Legend -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <div class="d-flex align-items-center p-2 rounded" style="background: linear-gradient(90deg, rgba(13, 110, 253, 0.03) 0%, rgba(255, 255, 255, 1) 100%); border-left: 3px solid rgba(13, 110, 253, 0.2);">
+                  <div class="bg-primary bg-opacity-10 rounded p-2 me-2">
+                    <i class="bi bi-grid-3x3-gap text-primary"></i>
+                  </div>
+                  <div>
+                    <small class="fw-semibold text-primary">CRUD Permissions</small>
+                    <div class="text-muted" style="font-size: 0.75rem;">Individual View, Create, Edit, Delete controls</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-center p-2 rounded" style="background: linear-gradient(90deg, rgba(108, 117, 125, 0.02) 0%, rgba(255, 255, 255, 1) 100%); border-left: 3px solid rgba(108, 117, 125, 0.1);">
+                  <div class="bg-secondary bg-opacity-10 rounded p-2 me-2">
+                    <i class="bi bi-unlock text-secondary"></i>
+                  </div>
+                  <div>
+                    <small class="fw-semibold text-secondary">All Access</small>
+                    <div class="text-muted" style="font-size: 0.75rem;">Simplified all-or-nothing access control</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-transparent border-0">
+                <div class="row align-items-center">
+                  <div class="col">
+                    <h6 class="mb-0">Permission Matrix</h6>
+                  </div>
+                  <div class="col-auto">
+                    <div class="d-flex gap-3">
+                      <button type="button" class="btn btn-sm btn-outline-success" id="selectAllBtn">
+                        <i class="bi bi-check-all me-1"></i>
+                        Select All
+                      </button>
+                      <button type="button" class="btn btn-sm btn-outline-danger" id="clearAllBtn">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0 permissions-table">
+                    <thead class="bg-light">
+                      <tr>
+                        <th width="25%" class="border-0">
+                          <div class="fw-semibold text-dark">
+                            <i class="bi bi-grid-3x3-gap me-2"></i>
+                            Module
+                          </div>
+                        </th>
+                        <th width="15%" class="text-center border-0">
+                          <div class="form-check d-flex justify-content-center">
+                            <input class="form-check-input" type="checkbox" id="selectAllView">
+                            <label class="form-check-label ms-2 fw-semibold" for="selectAllView">
+                              <i class="bi bi-eye me-1"></i>View
+                            </label>
+                          </div>
+                        </th>
+                        <th width="15%" class="text-center border-0">
+                          <div class="form-check d-flex justify-content-center">
+                            <input class="form-check-input" type="checkbox" id="selectAllCreate">
+                            <label class="form-check-label ms-2 fw-semibold" for="selectAllCreate">
+                              <i class="bi bi-plus-circle me-1"></i>Create
+                            </label>
+                          </div>
+                        </th>
+                        <th width="15%" class="text-center border-0">
+                          <div class="form-check d-flex justify-content-center">
+                            <input class="form-check-input" type="checkbox" id="selectAllEdit">
+                            <label class="form-check-label ms-2 fw-semibold" for="selectAllEdit">
+                              <i class="bi bi-pencil me-1"></i>Edit
+                            </label>
+                          </div>
+                        </th>
+                        <th width="15%" class="text-center border-0">
+                          <div class="form-check d-flex justify-content-center">
+                            <input class="form-check-input" type="checkbox" id="selectAllDelete">
+                            <label class="form-check-label ms-2 fw-semibold" for="selectAllDelete">
+                              <i class="bi bi-trash me-1"></i>Delete
+                            </label>
+                          </div>
+                        </th>
+                        <th width="15%" class="text-center border-0">
+                          <div class="fw-semibold text-primary">
+                            <i class="bi bi-check-all me-1"></i>
+                            All Access
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% @sidebar_options.each do |section_name, options| %>
+                        <tr class="table-section-header">
+                          <td colspan="6" class="py-3 border-0">
+                            <div class="d-flex align-items-center">
+                              <div class="section-indicator bg-primary"></div>
+                              <h6 class="mb-0 ms-3 text-dark fw-bold">
+                                <i class="bi bi-folder me-2"></i>
+                                <%= section_name %>
+                              </h6>
+                            </div>
+                          </td>
+                        </tr>
+                        <% options.each do |option| %>
+                          <%
+                            # Only show CRUD permissions for client-related modules
+                            crud_modules = ['customers', 'sub_agents', 'distributors']
+                            is_crud_module = crud_modules.include?(option[:key])
+                          %>
+                          <tr class="module-row" data-module="<%= option[:key] %>" data-is-crud="<%= is_crud_module %>">
+                            <td class="border-0">
+                              <div class="d-flex align-items-center">
+                                <div class="module-icon">
+                                  <i class="bi bi-<%= option[:icon] || 'circle' %> text-primary"></i>
+                                </div>
+                                <div class="ms-3">
+                                  <div class="fw-medium text-dark"><%= option[:name] %></div>
+                                  <small class="text-muted"><%= option[:description] || 'Module permissions' %></small>
+                                </div>
+                              </div>
+                            </td>
+
+                            <% if is_crud_module %>
+                              <!-- Client-related modules get individual CRUD checkboxes -->
+                              <td class="text-center border-0">
+                                <div class="form-check d-inline-block">
+                                  <input class="form-check-input permission-view" type="checkbox"
+                                         name="user[crud_permissions][<%= option[:key] %>][view]"
+                                         id="<%= option[:key] %>_view"
+                                         data-module="<%= option[:key] %>">
+                                  <label class="form-check-label" for="<%= option[:key] %>_view"></label>
+                                </div>
+                              </td>
+                              <td class="text-center border-0">
+                                <div class="form-check d-inline-block">
+                                  <input class="form-check-input permission-create" type="checkbox"
+                                         name="user[crud_permissions][<%= option[:key] %>][create]"
+                                         id="<%= option[:key] %>_create"
+                                         data-module="<%= option[:key] %>">
+                                  <label class="form-check-label" for="<%= option[:key] %>_create"></label>
+                                </div>
+                              </td>
+                              <td class="text-center border-0">
+                                <div class="form-check d-inline-block">
+                                  <input class="form-check-input permission-edit" type="checkbox"
+                                         name="user[crud_permissions][<%= option[:key] %>][edit]"
+                                         id="<%= option[:key] %>_edit"
+                                         data-module="<%= option[:key] %>">
+                                  <label class="form-check-label" for="<%= option[:key] %>_edit"></label>
+                                </div>
+                              </td>
+                              <td class="text-center border-0">
+                                <div class="form-check d-inline-block">
+                                  <input class="form-check-input permission-delete" type="checkbox"
+                                         name="user[crud_permissions][<%= option[:key] %>][delete]"
+                                         id="<%= option[:key] %>_delete"
+                                         data-module="<%= option[:key] %>">
+                                  <label class="form-check-label" for="<%= option[:key] %>_delete"></label>
+                                </div>
+                              </td>
+                              <td class="text-center border-0">
+                                <div class="form-check d-inline-block">
+                                  <input class="form-check-input select-all-row" type="checkbox"
+                                         data-module="<%= option[:key] %>">
+                                  <label class="form-check-label fw-medium text-primary">
+                                    <i class="bi bi-check-all me-1"></i>
+                                    All
+                                  </label>
+                                </div>
+                              </td>
+                            <% else %>
+                              <!-- Other modules show disabled/grayed out CRUD columns and active All Access -->
+                              <td class="text-center border-0 opacity-50">
+                                <i class="bi bi-dash text-muted"></i>
+                              </td>
+                              <td class="text-center border-0 opacity-50">
+                                <i class="bi bi-dash text-muted"></i>
+                              </td>
+                              <td class="text-center border-0 opacity-50">
+                                <i class="bi bi-dash text-muted"></i>
+                              </td>
+                              <td class="text-center border-0 opacity-50">
+                                <i class="bi bi-dash text-muted"></i>
+                              </td>
+                              <td class="text-center border-0">
+                                <div class="form-check d-inline-block">
+                                  <input class="form-check-input all-access-checkbox" type="checkbox"
+                                         name="user[crud_permissions][<%= option[:key] %>][all_access]"
+                                         id="<%= option[:key] %>_all_access"
+                                         data-module="<%= option[:key] %>">
+                                  <label class="form-check-label fw-medium text-primary" for="<%= option[:key] %>_all_access">
+                                    <i class="bi bi-unlock me-1"></i>
+                                    All Access
+                                  </label>
+                                </div>
+                              </td>
+                            <% end %>
+                          </tr>
+                        <% end %>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Buttons -->
+          <div class="d-flex gap-2 justify-content-end">
+            <%= link_to "Cancel", admin_settings_user_roles_path, class: "btn btn-outline-secondary" %>
+            <%= form.submit "Add User", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Enhanced Permissions Table Styling */
+.permissions-table {
+  font-size: 0.95rem;
+}
+
+.permissions-table thead th {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+  border: none !important;
+  padding: 1rem 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: #475569;
+}
+
+.table-section-header td {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+  border-left: 4px solid var(--bs-primary) !important;
+}
+
+.section-indicator {
+  width: 4px;
+  height: 30px;
+  border-radius: 2px;
+}
+
+.module-row {
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent !important;
+}
+
+.module-row:hover {
+  background-color: #f8fafc !important;
+  border-left-color: var(--bs-primary) !important;
+  transform: translateX(2px);
+}
+
+/* CRUD Module Styling */
+.module-row[data-is-crud="true"] {
+  background: linear-gradient(90deg, rgba(13, 110, 253, 0.03) 0%, rgba(255, 255, 255, 1) 100%);
+  border-left: 3px solid rgba(13, 110, 253, 0.2) !important;
+}
+
+.module-row[data-is-crud="true"]:hover {
+  background: linear-gradient(90deg, rgba(13, 110, 253, 0.08) 0%, rgba(248, 250, 252, 1) 100%) !important;
+  border-left-color: var(--bs-primary) !important;
+}
+
+/* All Access Module Styling */
+.module-row[data-is-crud="false"] {
+  background: linear-gradient(90deg, rgba(108, 117, 125, 0.02) 0%, rgba(255, 255, 255, 1) 100%);
+  border-left: 3px solid rgba(108, 117, 125, 0.1) !important;
+}
+
+.module-row[data-is-crud="false"]:hover {
+  background: linear-gradient(90deg, rgba(108, 117, 125, 0.05) 0%, rgba(248, 250, 252, 1) 100%) !important;
+  border-left-color: rgba(108, 117, 125, 0.3) !important;
+}
+
+.module-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0.05) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.form-check-input {
+  width: 1.2em;
+  height: 1.2em;
+  border-radius: 0.3em;
+  border-width: 2px;
+  transition: all 0.15s ease-in-out;
+}
+
+.form-check-input:checked {
+  background-color: var(--bs-success);
+  border-color: var(--bs-success);
+  transform: scale(1.05);
+}
+
+.form-check-input:focus {
+  border-color: var(--bs-primary);
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.form-check-input:disabled {
+  opacity: 0.4;
+  transform: scale(0.95);
+}
+
+.form-check-input:checked:disabled {
+  opacity: 0.8;
+  transform: scale(1);
+}
+
+.all-access-checkbox:checked {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+}
+
+/* Action buttons */
+#selectAllBtn:hover, #clearAllBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .permissions-table {
+    font-size: 0.875rem;
+  }
+
+  .module-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+  }
+
+  .form-check-input {
+    width: 1em;
+    height: 1em;
+  }
+}
+
+/* Animation for permission changes */
+@keyframes permissionChange {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.form-check-input.animate-change {
+  animation: permissionChange 0.3s ease-in-out;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Form validation
+  const forms = document.querySelectorAll('.needs-validation');
+  Array.from(forms).forEach(function(form) {
+    form.addEventListener('submit', function(event) {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  });
+
+  // Password confirmation validation
+  const password = document.getElementById('user_password');
+  const passwordConfirmation = document.getElementById('user_password_confirmation');
+
+  function validatePasswordMatch() {
+    if (password.value !== passwordConfirmation.value) {
+      passwordConfirmation.setCustomValidity("Passwords don't match");
+    } else {
+      passwordConfirmation.setCustomValidity('');
+    }
+  }
+
+  if (password && passwordConfirmation) {
+    password.addEventListener('change', validatePasswordMatch);
+    passwordConfirmation.addEventListener('input', validatePasswordMatch);
+  }
+
+  // Animation helper
+  function animateCheckbox(checkbox) {
+    checkbox.classList.add('animate-change');
+    setTimeout(() => checkbox.classList.remove('animate-change'), 300);
+  }
+
+  // CRUD Permission Logic for client modules - Independent checkboxes
+  function updateAllCheckbox(module) {
+    // Only update for CRUD modules (customers, sub_agents, distributors)
+    const crudModules = ['customers', 'sub_agents', 'distributors'];
+    if (!crudModules.includes(module)) {
+      return; // Don't process non-CRUD modules
+    }
+
+    const viewCheckbox = document.getElementById(module + '_view');
+    const createCheckbox = document.getElementById(module + '_create');
+    const editCheckbox = document.getElementById(module + '_edit');
+    const deleteCheckbox = document.getElementById(module + '_delete');
+    const allCheckbox = document.querySelector(`.select-all-row[data-module="${module}"]`);
+
+    // Ensure all checkboxes exist before proceeding
+    if (allCheckbox && viewCheckbox && createCheckbox && editCheckbox && deleteCheckbox) {
+      const allChecked = viewCheckbox.checked && createCheckbox.checked && editCheckbox.checked && deleteCheckbox.checked;
+      allCheckbox.checked = allChecked;
+    }
+  }
+
+  // Handle individual checkbox changes for client modules (independent)
+  document.querySelectorAll('.permission-view, .permission-create, .permission-edit, .permission-delete').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+      const module = this.dataset.module;
+      animateCheckbox(this);
+
+      // Auto-check view when create/edit/delete is enabled
+      if (this.checked && !this.classList.contains('permission-view')) {
+        const viewCheckbox = document.getElementById(module + '_view');
+        if (viewCheckbox && !viewCheckbox.checked) {
+          viewCheckbox.checked = true;
+          animateCheckbox(viewCheckbox);
+        }
+      }
+
+      const crudModules = ['customers', 'sub_agents', 'distributors'];
+      if (crudModules.includes(module)) {
+        updateAllCheckbox(module);
+      }
+    });
+  });
+
+  // Handle "All" checkbox for client module rows
+  document.querySelectorAll('.select-all-row').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+      const module = this.dataset.module;
+      const viewCheckbox = document.getElementById(module + '_view');
+      const createCheckbox = document.getElementById(module + '_create');
+      const editCheckbox = document.getElementById(module + '_edit');
+      const deleteCheckbox = document.getElementById(module + '_delete');
+
+      animateCheckbox(this);
+
+      if (this.checked) {
+        // When "All Access" is checked, select all permissions
+        if (viewCheckbox) { viewCheckbox.checked = true; animateCheckbox(viewCheckbox); }
+        if (createCheckbox) { createCheckbox.checked = true; animateCheckbox(createCheckbox); }
+        if (editCheckbox) { editCheckbox.checked = true; animateCheckbox(editCheckbox); }
+        if (deleteCheckbox) { deleteCheckbox.checked = true; animateCheckbox(deleteCheckbox); }
+      } else {
+        // When "All Access" is unchecked, uncheck all permissions but keep them enabled for independent selection
+        if (viewCheckbox) { viewCheckbox.checked = false; animateCheckbox(viewCheckbox); }
+        if (createCheckbox) { createCheckbox.checked = false; animateCheckbox(createCheckbox); }
+        if (editCheckbox) { editCheckbox.checked = false; animateCheckbox(editCheckbox); }
+        if (deleteCheckbox) { deleteCheckbox.checked = false; animateCheckbox(deleteCheckbox); }
+
+        // Make sure all checkboxes remain enabled for independent selection
+        if (createCheckbox) createCheckbox.disabled = false;
+        if (editCheckbox) editCheckbox.disabled = false;
+        if (deleteCheckbox) deleteCheckbox.disabled = false;
+        if (viewCheckbox) viewCheckbox.disabled = false;
+      }
+    });
+  });
+
+  // Handle "All Access" checkboxes for non-CRUD modules
+  document.querySelectorAll('.all-access-checkbox').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+      animateCheckbox(this);
+    });
+  });
+
+
+  // Select All / Clear All buttons
+  document.getElementById('selectAllBtn').addEventListener('click', function() {
+    // Select all CRUD permissions for client modules
+    document.querySelectorAll('.permission-view, .permission-create, .permission-edit, .permission-delete').forEach(function(checkbox) {
+      checkbox.checked = true;
+      animateCheckbox(checkbox);
+    });
+
+    // Select all "All Access" checkboxes for other modules
+    document.querySelectorAll('.all-access-checkbox').forEach(function(checkbox) {
+      checkbox.checked = true;
+      animateCheckbox(checkbox);
+    });
+
+    // Update All checkboxes
+    document.querySelectorAll('.select-all-row').forEach(function(checkbox) {
+      checkbox.checked = true;
+      animateCheckbox(checkbox);
+    });
+  });
+
+  document.getElementById('clearAllBtn').addEventListener('click', function() {
+    // Clear all CRUD checkboxes but keep them enabled for independent selection
+    document.querySelectorAll('.permission-view, .permission-create, .permission-edit, .permission-delete, .select-all-row').forEach(function(checkbox) {
+      checkbox.checked = false;
+      checkbox.disabled = false; // Keep all checkboxes enabled for independent selection
+      animateCheckbox(checkbox);
+    });
+
+    // Clear all "All Access" checkboxes
+    document.querySelectorAll('.all-access-checkbox').forEach(function(checkbox) {
+      checkbox.checked = false;
+      animateCheckbox(checkbox);
+    });
+  });
+
+  // Column header Select All checkboxes
+  document.getElementById('selectAllView').addEventListener('change', function() {
+    document.querySelectorAll('.permission-view').forEach(function(checkbox) {
+      checkbox.checked = document.getElementById('selectAllView').checked;
+      animateCheckbox(checkbox);
+      updateAllCheckbox(checkbox.dataset.module);
+    });
+  });
+
+  document.getElementById('selectAllCreate').addEventListener('change', function() {
+    document.querySelectorAll('.permission-create').forEach(function(checkbox) {
+      checkbox.checked = document.getElementById('selectAllCreate').checked;
+      animateCheckbox(checkbox);
+      updateAllCheckbox(checkbox.dataset.module);
+    });
+  });
+
+  document.getElementById('selectAllEdit').addEventListener('change', function() {
+    document.querySelectorAll('.permission-edit').forEach(function(checkbox) {
+      checkbox.checked = document.getElementById('selectAllEdit').checked;
+      animateCheckbox(checkbox);
+      updateAllCheckbox(checkbox.dataset.module);
+    });
+  });
+
+  document.getElementById('selectAllDelete').addEventListener('change', function() {
+    document.querySelectorAll('.permission-delete').forEach(function(checkbox) {
+      checkbox.checked = document.getElementById('selectAllDelete').checked;
+      animateCheckbox(checkbox);
+      updateAllCheckbox(checkbox.dataset.module);
+    });
+  });
+});
+</script>

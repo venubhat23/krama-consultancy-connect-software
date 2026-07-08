@@ -1,0 +1,520 @@
+<% content_for :title, "Drwise - Customer Helpdesk Tickets" %>
+
+<div class="customer-helpdesk-tickets">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="page-title mb-0">
+        <i class="bi bi-people me-3 text-primary"></i>
+        Customer Helpdesk Tickets
+      </h2>
+      <p class="text-muted mb-0">All support tickets and requests submitted by customers</p>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to admin_helpdesk_index_path, class: "btn btn-outline-secondary" do %>
+        <i class="bi bi-arrow-left me-2"></i>
+        Back to Dashboard
+      <% end %>
+      <%= link_to admin_client_requests_path, class: "btn btn-outline-primary" do %>
+        <i class="bi bi-list-ul me-2"></i>
+        All Tickets
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Customer Statistics Cards -->
+  <div class="row g-4 mb-4">
+    <div class="col-xl-2 col-md-4">
+      <div class="stats-card gradient-blue">
+        <div class="stats-card-body">
+          <div class="stats-icon">
+            <i class="bi bi-people"></i>
+          </div>
+          <div class="stats-content">
+            <h3 class="stats-number"><%= @customer_stats[:total] %></h3>
+            <p class="stats-label">Total Customer Tickets</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4">
+      <div class="stats-card gradient-orange">
+        <div class="stats-card-body">
+          <div class="stats-icon">
+            <i class="bi bi-hourglass-split"></i>
+          </div>
+          <div class="stats-content">
+            <h3 class="stats-number"><%= @customer_stats[:pending] %></h3>
+            <p class="stats-label">Pending</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4">
+      <div class="stats-card gradient-purple">
+        <div class="stats-card-body">
+          <div class="stats-icon">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <div class="stats-content">
+            <h3 class="stats-number"><%= @customer_stats[:in_progress] %></h3>
+            <p class="stats-label">In Progress</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4">
+      <div class="stats-card gradient-green">
+        <div class="stats-card-body">
+          <div class="stats-icon">
+            <i class="bi bi-check-circle"></i>
+          </div>
+          <div class="stats-content">
+            <h3 class="stats-number"><%= @customer_stats[:resolved] %></h3>
+            <p class="stats-label">Resolved</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4">
+      <div class="stats-card gradient-gray">
+        <div class="stats-card-body">
+          <div class="stats-icon">
+            <i class="bi bi-archive"></i>
+          </div>
+          <div class="stats-content">
+            <h3 class="stats-number"><%= @customer_stats[:closed] %></h3>
+            <p class="stats-label">Closed</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Tickets Table -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card modern-card">
+        <div class="card-header border-0">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h5 class="card-title mb-0">
+                <i class="bi bi-list-task me-2 text-primary"></i>
+                Customer Support Tickets
+              </h5>
+              <p class="text-muted small mb-0">All tickets submitted by customers through the mobile app</p>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#exportModal">
+                <i class="bi bi-download me-1"></i>
+                Export
+              </button>
+              <button class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i>
+                New Ticket
+              </button>
+            </div>
+          </div>
+
+          <!-- Search and Filters -->
+          <div class="row g-3 align-items-end">
+            <%= form_with url: customer_tickets_admin_helpdesk_index_path, method: :get, local: true, class: "d-contents" do |form| %>
+              <div class="col-md-4">
+                <%= form.text_field :search, placeholder: "Search tickets, customers, or descriptions...",
+                    value: params[:search], class: "form-control form-control-sm" %>
+              </div>
+              <div class="col-md-2">
+                <%= form.select :status,
+                    options_for_select([
+                      ['All Status', ''],
+                      ['Pending', 'pending'],
+                      ['In Progress', 'in_progress'],
+                      ['Resolved', 'resolved'],
+                      ['Closed', 'closed']
+                    ], params[:status]),
+                    {}, {class: "form-select form-select-sm"} %>
+              </div>
+              <div class="col-md-2">
+                <%= form.select :priority,
+                    options_for_select([
+                      ['All Priority', ''],
+                      ['Low', 'low'],
+                      ['Medium', 'medium'],
+                      ['High', 'high'],
+                      ['Urgent', 'urgent']
+                    ], params[:priority]),
+                    {}, {class: "form-select form-select-sm"} %>
+              </div>
+              <div class="col-md-2">
+                <%= form.select :category,
+                    options_for_select([
+                      ['All Categories', ''],
+                      ['General', 'general'],
+                      ['Policy Inquiry', 'policy_inquiry'],
+                      ['Claims', 'claims'],
+                      ['Technical Support', 'technical_support'],
+                      ['Billing', 'billing'],
+                      ['Other', 'other']
+                    ], params[:category]),
+                    {}, {class: "form-select form-select-sm"} %>
+              </div>
+              <div class="col-md-2">
+                <div class="d-flex gap-2">
+                  <%= form.submit "Filter", class: "btn btn-outline-primary btn-sm" %>
+                  <%= link_to customer_tickets_admin_helpdesk_index_path, class: "btn btn-outline-secondary btn-sm" do %>
+                    <i class="bi bi-arrow-clockwise"></i>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Ticket ID</th>
+                  <th>Customer Details</th>
+                  <th>Subject & Description</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                  <th>Priority</th>
+                  <th>Assigned To</th>
+                  <th>Submitted</th>
+                  <th>Last Updated</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if @tickets&.any? %>
+                  <% @tickets.each do |ticket| %>
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <span class="ticket-id text-primary fw-bold"><%= ticket.ticket_number %></span>
+                          <% if ticket.days_since_submission > 7 %>
+                            <span class="badge bg-warning ms-2 small">Old</span>
+                          <% end %>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="customer-info">
+                          <div class="d-flex align-items-center">
+                            <div class="user-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                                 style="width: 36px; height: 36px; font-size: 14px;">
+                              <%= (ticket.submitter&.display_name || ticket.name).first.upcase %>
+                            </div>
+                            <div>
+                              <div class="user-name fw-medium"><%= ticket.submitter&.display_name || ticket.name %></div>
+                              <div class="text-muted small">
+                                <i class="bi bi-envelope me-1"></i><%= ticket.email %>
+                              </div>
+                              <div class="text-muted small">
+                                <i class="bi bi-telephone me-1"></i><%= ticket.phone_number %>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="ticket-content">
+                          <div class="subject fw-medium mb-1"><%= ticket.subject %></div>
+                          <div class="description text-muted small">
+                            <%= truncate(ticket.description, length: 80) %>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="badge bg-light text-dark">
+                          <%= ticket.category&.humanize || 'General' %>
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge <%= ticket.status_badge_class %>">
+                          <%= ticket.status.humanize %>
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge <%= ticket.priority_badge_class %>">
+                          <% case ticket.priority %>
+                          <% when 'urgent' %>
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                          <% when 'high' %>
+                            <i class="bi bi-arrow-up me-1"></i>
+                          <% end %>
+                          <%= ticket.priority.humanize %>
+                        </span>
+                      </td>
+                      <td>
+                        <div class="assigned-info">
+                          <% if ticket.resolved_by.present? %>
+                            <div class="d-flex align-items-center">
+                              <div class="user-avatar bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                                   style="width: 24px; height: 24px; font-size: 10px;">
+                                <%= ticket.resolved_by.name.first.upcase %>
+                              </div>
+                              <span class="small"><%= ticket.resolved_by.name %></span>
+                            </div>
+                          <% else %>
+                            <span class="text-muted small">
+                              <i class="bi bi-person-x me-1"></i>
+                              Unassigned
+                            </span>
+                          <% end %>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="timestamp">
+                          <div class="date small"><%= ticket.submitted_at.strftime("%b %d, %Y") %></div>
+                          <div class="time text-muted small"><%= ticket.submitted_at.strftime("%I:%M %p") %></div>
+                          <div class="time text-muted small">
+                            <%= pluralize(ticket.days_since_submission, 'day') %> ago
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="timestamp">
+                          <div class="date small"><%= ticket.updated_at.strftime("%b %d, %Y") %></div>
+                          <div class="time text-muted small"><%= ticket.updated_at.strftime("%I:%M %p") %></div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="action-buttons d-flex gap-1">
+                          <%= link_to admin_client_request_path(ticket), class: "btn btn-sm btn-outline-primary", title: "View Details" do %>
+                            <i class="bi bi-eye"></i>
+                          <% end %>
+                          <%= link_to edit_admin_client_request_path(ticket), class: "btn btn-sm btn-outline-secondary", title: "Edit Ticket" do %>
+                            <i class="bi bi-pencil"></i>
+                          <% end %>
+                          <div class="dropdown d-inline">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" title="More Actions">
+                              <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                              <li>
+                                <h6 class="dropdown-header">Update Status</h6>
+                              </li>
+                              <li><a class="dropdown-item" href="#" onclick="updateTicketStatus('<%= ticket.id %>', 'pending')">
+                                <i class="bi bi-hourglass me-2"></i>Mark Pending</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateTicketStatus('<%= ticket.id %>', 'in_progress')">
+                                <i class="bi bi-play-circle me-2"></i>Mark In Progress</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateTicketStatus('<%= ticket.id %>', 'resolved')">
+                                <i class="bi bi-check-circle me-2"></i>Mark Resolved</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateTicketStatus('<%= ticket.id %>', 'closed')">
+                                <i class="bi bi-x-circle me-2"></i>Close Ticket</a></li>
+                              <li><hr class="dropdown-divider"></li>
+                              <li>
+                                <h6 class="dropdown-header">Actions</h6>
+                              </li>
+                              <li><a class="dropdown-item" href="#" onclick="assignTicket('<%= ticket.id %>')">
+                                <i class="bi bi-person-plus me-2"></i>Assign Agent</a></li>
+                              <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#responseModal<%= ticket.id %>">
+                                <i class="bi bi-chat-dots me-2"></i>Add Response</a></li>
+                              <li><hr class="dropdown-divider"></li>
+                              <li><%= link_to admin_client_request_path(ticket), method: :delete,
+                                      class: "dropdown-item text-danger",
+                                      confirm: "Are you sure you want to delete this ticket? This action cannot be undone.",
+                                      title: "Delete Ticket" do %>
+                                <i class="bi bi-trash me-2"></i>Delete
+                              <% end %></li>
+                            </ul>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                <% else %>
+                  <tr>
+                    <td colspan="10" class="text-center py-5">
+                      <div class="empty-state">
+                        <i class="bi bi-inbox display-1 text-muted"></i>
+                        <h5 class="mt-3 text-muted">No Customer Tickets Found</h5>
+                        <p class="text-muted">There are no customer helpdesk tickets matching your search criteria.</p>
+                        <%= link_to customer_tickets_admin_helpdesk_index_path, class: "btn btn-outline-primary mt-2" do %>
+                          <i class="bi bi-arrow-clockwise me-2"></i>Clear Filters
+                        <% end %>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <% if @tickets.respond_to?(:current_page) %>
+            <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light">
+              <small class="text-muted">
+                Showing <%= @tickets.offset_value + 1 %> to <%= [@tickets.offset_value + @tickets.limit_value, @tickets.total_count].min %>
+                of <%= @tickets.total_count %> customer tickets
+              </small>
+              <%= paginate @tickets, theme: 'bootstrap_5', pagination_class: "pagination-sm" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript for actions -->
+<script>
+function updateTicketStatus(ticketId, status) {
+  if (confirm(`Are you sure you want to update this ticket status to "${status.replace('_', ' ')}"?`)) {
+    fetch(`/admin/client_requests/${ticketId}/update_status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ status: status })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Failed to update ticket status: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while updating the ticket status.');
+    });
+  }
+}
+
+function assignTicket(ticketId) {
+  const userId = prompt('Enter User ID to assign this ticket to:');
+  if (userId) {
+    fetch(`/admin/client_requests/${ticketId}/assign_to`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ user_id: userId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Failed to assign ticket: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while assigning the ticket.');
+    });
+  }
+}
+</script>
+
+<style>
+.customer-helpdesk-tickets .stats-card {
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+  color: white;
+  overflow: hidden;
+  position: relative;
+}
+
+.customer-helpdesk-tickets .stats-card.gradient-blue {
+  --gradient-from: #667eea;
+  --gradient-to: #764ba2;
+}
+
+.customer-helpdesk-tickets .stats-card.gradient-orange {
+  --gradient-from: #f093fb;
+  --gradient-to: #f5576c;
+}
+
+.customer-helpdesk-tickets .stats-card.gradient-purple {
+  --gradient-from: #4facfe;
+  --gradient-to: #00f2fe;
+}
+
+.customer-helpdesk-tickets .stats-card.gradient-green {
+  --gradient-from: #43e97b;
+  --gradient-to: #38f9d7;
+}
+
+.customer-helpdesk-tickets .stats-card.gradient-gray {
+  --gradient-from: #868f96;
+  --gradient-to: #596164;
+}
+
+.customer-helpdesk-tickets .stats-card-body {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.customer-helpdesk-tickets .stats-icon {
+  font-size: 2rem;
+  opacity: 0.9;
+}
+
+.customer-helpdesk-tickets .stats-content h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.customer-helpdesk-tickets .stats-content p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 0.9rem;
+}
+
+.customer-helpdesk-tickets .modern-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.customer-helpdesk-tickets .user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.customer-helpdesk-tickets .empty-state {
+  padding: 3rem 1rem;
+}
+
+.customer-helpdesk-tickets .table th {
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #495057;
+  padding: 1rem 0.75rem;
+}
+
+.customer-helpdesk-tickets .table td {
+  padding: 1rem 0.75rem;
+  vertical-align: middle;
+}
+
+.customer-helpdesk-tickets .ticket-id {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-size: 0.85rem;
+}
+
+.customer-helpdesk-tickets .action-buttons .btn {
+  border-radius: 6px;
+}
+</style>

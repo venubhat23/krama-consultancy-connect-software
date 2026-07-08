@@ -1,0 +1,497 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Ambassadors Management</h2>
+  </div>
+  <div class="d-flex gap-2 align-items-center">
+    <div class="dropdown download-dropdown">
+      <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-download me-1"></i> Download
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <a class="dropdown-item" data-turbo="false" href="<%= download_admin_distributors_path(request.query_parameters.merge(format_type: 'csv')) %>">
+            <i class="bi bi-filetype-csv text-success me-2"></i>CSV
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" data-turbo="false" href="<%= download_admin_distributors_path(request.query_parameters.merge(format_type: 'excel')) %>">
+            <i class="bi bi-file-earmark-excel text-success me-2"></i>Excel
+          </a>
+        </li>
+      </ul>
+    </div>
+    <% if can_create?('distributors') %>
+      <%= link_to new_admin_distributor_path, class: "btn btn-primary" do %>
+        <i class="bi bi-plus-lg me-1"></i>
+        Create Ambassador
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-4 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Ambassadors</h6>
+            <h3 class="mb-0 text-primary"><%= number_with_delimiter(@total_distributors) %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-people text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Active Ambassadors</h6>
+            <h3 class="mb-0 text-success"><%= number_with_delimiter(@active_distributors) %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-person-check text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Inactive Ambassadors</h6>
+            <h3 class="mb-0 text-warning"><%= number_with_delimiter(@inactive_distributors) %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-person-x text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <%= form_with url: admin_distributors_path, method: :get, local: true, class: "d-flex flex-wrap gap-3 align-items-end", id: "search_form" do |form| %>
+      <!-- Search -->
+      <div class="flex-grow-1 min-width-250">
+        <%= form.text_field :search, placeholder: "Search by name or mobile... (min 3 characters)",
+                           value: params[:search],
+                           class: "form-control",
+                           id: "search_input",
+                           data: { min_length: 3 } %>
+      </div>
+
+      <!-- Status Filter -->
+      <div>
+        <%= form.select :status,
+                       options_for_select([
+                         ['All Statuses', ''],
+                         ['Active', 'active'],
+                         ['Inactive', 'inactive']
+                       ], params[:status]),
+                       {},
+                       { class: "form-select", id: "status_filter" } %>
+      </div>
+
+      <!-- Actions -->
+      <div class="d-flex gap-2">
+        <%= link_to "Clear", admin_distributors_path, class: "btn btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Ambassadors List -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">Ambassador List</h5>
+  </div>
+  <div class="card-body p-0">
+    <% if @distributors.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Ambassador</th>
+              <th class="border-0">Contact</th>
+              <th class="border-0">Affiliates</th>
+              <th class="border-0">Created</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @distributors.each do |distributor| %>
+              <tr class="<%= distributor.deactivated? ? 'table-warning opacity-75' : '' %>">
+                <td>
+                  <div class="d-flex align-items-center">
+                    <!-- Profile Image Circle -->
+                    <div class="me-3 <%= 'r2-profile-image' if distributor.has_r2_profile_image? %>">
+                      <% if distributor.has_r2_profile_image? %>
+                        <%= image_tag distributor.r2_profile_image_url,
+                            class: "rounded-circle",
+                            style: "width: 40px; height: 40px; object-fit: cover;",
+                            alt: "Profile",
+                            onerror: "this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiBmaWxsPSJub25lIj4KICA8Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2Y4ZjlmYSIvPgogIDxjaXJjbGUgY3g9IjIwIiBjeT0iMTYiIHI9IjYiIGZpbGw9IiM2YzY5N2QiLz4KICA8cGF0aCBkPSJtIDEwLDMyIGMgMCwtNiA0LjUsLTEwIDEwLC0xMCA1LjUsMCAxMCw0IDEwLDEwIiBmaWxsPSIjNmM2OTdkIi8+Cjwvc3ZnPgo=';" %>
+                      <% elsif distributor.respond_to?(:profile_image) && distributor.profile_image.attached? %>
+                        <%= image_tag url_for(distributor.profile_image),
+                            class: "rounded-circle",
+                            style: "width: 40px; height: 40px; object-fit: cover;",
+                            alt: "Profile",
+                            onerror: "this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiBmaWxsPSJub25lIj4KICA8Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2Y4ZjlmYSIvPgogIDxjaXJjbGUgY3g9IjIwIiBjeT0iMTYiIHI9IjYiIGZpbGw9IiM2YzY5N2QiLz4KICA8cGF0aCBkPSJtIDEwLDMyIGMgMCwtNiA0LjUsLTEwIDEwLC0xMCA1LjUsMCAxMCw0IDEwLDEwIiBmaWxsPSIjNmM2OTdkIi8+Cjwvc3ZnPgo=';" %>
+                      <% else %>
+                        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center"
+                             style="width: 40px; height: 40px;">
+                          <span class="text-primary fw-bold">
+                            <%= distributor.display_name.present? ? distributor.display_name[0].upcase : "?" %>
+                          </span>
+                        </div>
+                      <% end %>
+                    </div>
+                    <!-- Ambassador Details -->
+                    <div>
+                      <h6 class="mb-0">
+                        <%= distributor.display_name.present? ? distributor.display_name : "Unnamed Ambassador" %>
+                      </h6>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <%
+                      if distributor.mobile.present?
+                        # Extract only 10 digits from mobile, removing any prefix like +91 or 0
+                        clean_mobile = distributor.mobile.to_s.gsub(/[^\d]/, '')
+                        if clean_mobile.start_with?('91') && clean_mobile.length == 12
+                          clean_mobile = clean_mobile[2..-1]
+                        elsif clean_mobile.start_with?('0') && clean_mobile.length == 11
+                          clean_mobile = clean_mobile[1..-1]
+                        end
+
+                        if clean_mobile.length == 10
+                    %>
+                      <%= clean_mobile %>
+                    <%
+                        else
+                    %>
+                      <%= distributor.mobile %>
+                    <%
+                        end
+                      else
+                    %>
+                      No mobile number
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <%= @sub_agent_counts[distributor.id].to_i %>
+                </td>
+                <td>
+                  <small class="text-muted">
+                    <i class="bi bi-calendar me-1"></i><%= distributor.created_at.strftime('%d %b %Y') %>
+                  </small>
+                </td>
+                <td>
+                  <% if distributor.deactivated? %>
+                    Deactivated
+                  <% elsif distributor.active? %>
+                    Active
+                  <% else %>
+                    Inactive
+                  <% end %>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <% if can_view?('distributors') %>
+                      <%= link_to admin_distributor_path(distributor), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                        <i class="bi bi-eye"></i>
+                      <% end %>
+                    <% end %>
+
+                    <% if can_edit?('distributors') %>
+                      <%= link_to edit_admin_distributor_path(distributor), class: "btn btn-sm btn-outline-warning", title: "Edit" do %>
+                        <i class="bi bi-pencil"></i>
+                      <% end %>
+                    <% end %>
+
+                    <% if can_edit?('distributors') %>
+                      <% if distributor.deactivated? %>
+                        <button type="button"
+                            class="btn btn-sm btn-success"
+                            title="Activate"
+                            onclick="handleDeactivationAction('<%= activate_admin_distributor_path(distributor) %>', 'PATCH', 'Are you sure you want to activate this ambassador?')">
+                          <i class="bi bi-check-circle me-1"></i>Activate
+                        </button>
+                      <% else %>
+                        <button type="button"
+                            class="btn btn-sm btn-outline-danger"
+                            title="Deactivate"
+                            onclick="handleDeactivationAction('<%= deactivate_admin_distributor_path(distributor) %>', 'PATCH', 'Are you sure you want to deactivate this ambassador?')">
+                          <i class="bi bi-x-circle"></i>
+                        </button>
+                      <% end %>
+                    <% end %>
+
+                    <% if can_delete?('distributors') %>
+                      <button type="button"
+                          class="btn btn-sm btn-outline-danger delete-distributor"
+                          data-url="<%= admin_distributor_path(distributor) %>"
+                          data-confirm="Are you sure you want to delete this ambassador?"
+                          title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="card-footer bg-transparent border-0">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-3 flex-wrap">
+            <small class="text-muted">
+              <% total = defined?(@total_filtered_count) && @total_filtered_count.present? ? @total_filtered_count : (@distributors.respond_to?(:total_count) ? @distributors.total_count : @distributors.count) %>
+              <% if @distributors.respond_to?(:offset_value) %>
+                Showing <strong><%= @distributors.offset_value + 1 %></strong>–<strong><%= [@distributors.offset_value + @distributors.limit_value, total].min %></strong> of <strong><%= number_with_delimiter(total) %></strong> ambassadors
+              <% else %>
+                Showing <strong><%= number_with_delimiter(total) %></strong> ambassadors
+              <% end %>
+            </small>
+            <%= render 'shared/per_page_selector' %>
+          </div>
+          <% if @distributors.respond_to?(:total_pages) && @distributors.total_pages > 1 %>
+            <div class="pagination-wrapper">
+              <%= paginate @distributors %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-people fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No ambassadors found</h5>
+        <p class="text-muted mb-3">
+          <% if params[:search].present? || params[:status].present? %>
+            Try adjusting your search criteria or
+            <%= link_to "view all ambassadors", admin_distributors_path, class: "text-decoration-none" %>.
+          <% else %>
+            Start by adding your first ambassador to the system.
+          <% end %>
+        </p>
+        <%= link_to new_admin_distributor_path, class: "btn btn-primary" do %>
+          <i class="bi bi-plus-lg me-1"></i>
+          Add First Ambassador
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+.min-width-250 {
+  min-width: 250px;
+}
+
+/* Ambassador Profile Image Styles */
+.rounded-circle {
+  border: 2px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.rounded-circle img {
+  border-radius: 50%;
+}
+
+/* Hover effect for profile images */
+tr:hover .rounded-circle {
+  border-color: #007bff;
+  transition: border-color 0.3s ease;
+}
+
+/* Initial letter avatar */
+.bg-primary.bg-opacity-10 {
+  background-color: rgba(13, 110, 253, 0.1) !important;
+  border: 2px solid #e9ecef;
+}
+
+tr:hover .bg-primary.bg-opacity-10 {
+  border-color: #007bff;
+  transition: border-color 0.3s ease;
+}
+
+/* R2 Profile Image Indicator */
+.r2-profile-image {
+  position: relative;
+}
+
+.r2-profile-image::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  background-color: #28a745;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Profile Image Loading State */
+.profile-image-loading {
+  opacity: 0.7;
+  filter: blur(1px);
+}
+</style>
+
+<script>
+// Global function to handle deactivation/activation
+function handleDeactivationAction(url, method, confirmMessage) {
+  if (confirm(confirmMessage)) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    form.style.display = 'none';
+
+    // Add CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfToken) {
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'authenticity_token';
+      csrfInput.value = csrfToken.getAttribute('content');
+      form.appendChild(csrfInput);
+    }
+
+    // Add method override
+    const methodInput = document.createElement('input');
+    methodInput.type = 'hidden';
+    methodInput.name = '_method';
+    methodInput.value = method;
+    form.appendChild(methodInput);
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('search_input');
+  const statusFilter = document.getElementById('status_filter');
+  const searchForm = document.getElementById('search_form');
+  let searchTimeout;
+
+  // Auto-search on typing after 3 characters
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const searchValue = this.value;
+
+    searchTimeout = setTimeout(() => {
+      if (searchValue.length >= 3 || searchValue.length === 0) {
+        searchForm.submit();
+      }
+    }, 500); // 500ms delay after typing stops
+  });
+
+  // Auto-submit on status filter change
+  statusFilter.addEventListener('change', function() {
+    searchForm.submit();
+  });
+
+  // Handle deactivation/activation actions
+  const deactivationActions = document.querySelectorAll('.deactivation-action');
+  deactivationActions.forEach(action => {
+    action.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      const url = this.dataset.url;
+      const method = this.dataset.method;
+      const confirmMessage = this.dataset.confirm;
+
+      if (confirm(confirmMessage)) {
+        // Create and submit form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+
+        // Add CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+          const csrfInput = document.createElement('input');
+          csrfInput.type = 'hidden';
+          csrfInput.name = 'authenticity_token';
+          csrfInput.value = csrfToken.getAttribute('content');
+          form.appendChild(csrfInput);
+        }
+
+        // Add method override for PATCH
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = method.toUpperCase();
+        form.appendChild(methodInput);
+
+        document.body.appendChild(form);
+        form.submit();
+      }
+    });
+  });
+
+  // Handle distributor delete buttons
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-distributor')) {
+      e.preventDefault();
+
+      const button = e.target.closest('.delete-distributor');
+      const url = button.dataset.url;
+      const confirmMessage = button.dataset.confirm;
+
+      if (confirm(confirmMessage)) {
+        // Create and submit a form for DELETE request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        form.style.display = 'none';
+
+        // Add CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+          const csrfInput = document.createElement('input');
+          csrfInput.type = 'hidden';
+          csrfInput.name = 'authenticity_token';
+          csrfInput.value = csrfToken.content;
+          form.appendChild(csrfInput);
+        }
+
+        // Add method override for DELETE
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'DELETE';
+        form.appendChild(methodInput);
+
+        document.body.appendChild(form);
+        form.submit();
+      }
+    }
+  });
+
+});
+</script>

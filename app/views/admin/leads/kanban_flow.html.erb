@@ -1,0 +1,659 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">
+      <i class="bi bi-diagram-3 me-2 text-success"></i>
+      Kanban Flow
+    </h2>
+    <p class="text-muted mb-0">Visual workflow management for leads</p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to admin_leads_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Leads
+    <% end %>
+    <%= link_to new_admin_lead_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg me-1"></i>
+      Add New Lead
+    <% end %>
+  </div>
+</div>
+
+<!-- Kanban Board -->
+<div class="kanban-board" id="kanban-board">
+  <div class="kanban-columns">
+    <% @stages.each do |stage_key, stage_info| %>
+      <div class="kanban-column" data-stage="<%= stage_key %>">
+        <div class="kanban-column-header bg-<%= stage_info[:color] %>">
+          <div class="column-title">
+            <h6 class="mb-0 text-white fw-bold">
+              <%= stage_info[:name] %>
+            </h6>
+            <span class="badge bg-white text-<%= stage_info[:color] %> ms-2">
+              <%= (@leads_by_stage[stage_key] || []).count %>
+            </span>
+          </div>
+        </div>
+
+        <div class="kanban-column-body" data-drop-target="<%= stage_key %>">
+          <% leads_in_stage = @leads_by_stage[stage_key] || [] %>
+          <% if leads_in_stage.any? %>
+            <% leads_in_stage.each do |lead| %>
+              <div class="kanban-card"
+                   draggable="true"
+                   data-lead-id="<%= lead.id %>"
+                   data-current-stage="<%= lead.current_stage %>">
+
+                <!-- Lead ID Badge -->
+                <div class="card-header">
+                  <span class="badge bg-primary fs-7">
+                    <%= lead.lead_id.presence || "LEAD-#{lead.id}" %>
+                  </span>
+                  <% if lead.is_branch_out? %>
+                    <span class="badge bg-success fs-7">
+                      <i class="bi bi-diagram-3"></i> Branch
+                    </span>
+                  <% end %>
+                </div>
+
+                <!-- Lead Details -->
+                <div class="card-body">
+                  <h6 class="card-title mb-2"><%= lead.name %></h6>
+
+                  <div class="lead-meta">
+                    <div class="meta-item">
+                      <i class="bi bi-telephone text-muted"></i>
+                      <small><%= lead.contact_number %></small>
+                    </div>
+
+                    <% if lead.email.present? %>
+                      <div class="meta-item">
+                        <i class="bi bi-envelope text-muted"></i>
+                        <small><%= truncate(lead.email, length: 20) %></small>
+                      </div>
+                    <% end %>
+
+                    <div class="meta-item">
+                      <i class="bi bi-tag text-muted"></i>
+                      <small><%= lead.product_category&.humanize || 'N/A' %></small>
+                    </div>
+
+                    <% if lead.product_subcategory.present? %>
+                      <div class="meta-item">
+                        <i class="bi bi-tags text-muted"></i>
+                        <small><%= truncate(lead.product_subcategory, length: 15) %></small>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <!-- Affiliate Info -->
+                  <div class="affiliate-info mt-2">
+                    <% if lead.is_direct %>
+                      <span class="badge bg-warning text-dark fs-8">Direct</span>
+                    <% elsif lead.affiliate %>
+                      <span class="badge bg-info fs-8">
+                        <i class="bi bi-person"></i>
+                        <%= truncate(lead.affiliate.full_name, length: 15) %>
+                      </span>
+                    <% end %>
+                  </div>
+
+                  <!-- Date Info -->
+                  <div class="date-info mt-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <small class="text-muted">
+                        <i class="bi bi-calendar"></i>
+                        Created: <%= lead.created_date&.strftime('%d/%m/%Y') || lead.created_at&.strftime('%d/%m/%Y') %>
+                      </small>
+                      <% if lead.stage_updated_at.present? %>
+                        <small class="text-muted">
+                          <i class="bi bi-clock"></i>
+                          Updated: <%= lead.stage_updated_at.strftime('%d/%m') %>
+                        </small>
+                      <% end %>
+                    </div>
+                    <% if lead.created_at > 24.hours.ago %>
+                      <div class="mt-1">
+                        <span class="badge bg-success fs-8 pulse">
+                          <i class="bi bi-star-fill"></i> New
+                        </span>
+                      </div>
+                    <% elsif lead.stage_updated_at.present? && lead.stage_updated_at > 24.hours.ago %>
+                      <div class="mt-1">
+                        <span class="badge bg-info fs-8 pulse">
+                          <i class="bi bi-arrow-clockwise"></i> Recently Updated
+                        </span>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card-footer">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <%= link_to admin_lead_path(lead),
+                        class: "btn btn-sm btn-outline-primary",
+                        title: "View Details" do %>
+                      <i class="bi bi-eye"></i>
+                    <% end %>
+
+                    <%= link_to edit_admin_lead_path(lead),
+                        class: "btn btn-sm btn-outline-warning",
+                        title: "Edit" do %>
+                      <i class="bi bi-pencil"></i>
+                    <% end %>
+
+                    <% if lead.can_convert_to_customer? %>
+                      <%= link_to convert_to_customer_admin_lead_path(lead),
+                          method: :patch,
+                          class: "btn btn-sm btn-success",
+                          title: "Convert" do %>
+                        <i class="bi bi-person-plus"></i>
+                      <% end %>
+                    <% elsif lead.converted_customer.present? %>
+                      <%= link_to admin_customer_path(lead.converted_customer),
+                          class: "btn btn-sm btn-info",
+                          title: "View Customer" do %>
+                        <i class="bi bi-person-check"></i>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="empty-column">
+              <i class="bi bi-inbox text-muted"></i>
+              <p class="text-muted mb-0">No leads</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="kanban-loading" class="d-none position-fixed top-0 start-0 w-100 h-100" style="background: rgba(0,0,0,0.5); z-index: 9999;">
+  <div class="d-flex justify-content-center align-items-center h-100">
+    <div class="spinner-border text-light" role="status">
+      <span class="visually-hidden">Updating...</span>
+    </div>
+  </div>
+</div>
+
+<!-- Kanban Board Styles -->
+<style>
+/* Kanban Board Container */
+.kanban-board {
+  height: calc(100vh - 200px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.kanban-columns {
+  display: flex;
+  gap: 20px;
+  min-height: 100%;
+  align-items: flex-start;
+}
+
+/* Kanban Columns */
+.kanban-column {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-width: 280px;
+  max-width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+  max-height: calc(100vh - 260px);
+}
+
+.kanban-column-header {
+  padding: 16px 20px;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.column-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kanban-column-body {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  max-height: calc(100vh - 340px);
+  min-height: 200px;
+}
+
+/* Kanban Cards */
+.kanban-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: grab;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.kanban-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #007bff;
+}
+
+.kanban-card.dragging {
+  opacity: 0.8;
+  transform: rotate(2deg);
+  cursor: grabbing;
+  z-index: 1000;
+}
+
+.kanban-card .card-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 12px 16px 8px;
+  border-radius: 8px 8px 0 0;
+}
+
+.kanban-card .card-body {
+  padding: 12px 16px;
+}
+
+.kanban-card .card-footer {
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  padding: 8px 16px;
+  border-radius: 0 0 8px 8px;
+}
+
+.kanban-card .card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #212529;
+}
+
+/* Lead Meta Information */
+.lead-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+}
+
+.meta-item i {
+  width: 12px;
+  flex-shrink: 0;
+}
+
+/* Badges */
+.fs-7 {
+  font-size: 0.75rem !important;
+}
+
+.fs-8 {
+  font-size: 0.7rem !important;
+}
+
+/* Empty Column State */
+.empty-column {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+}
+
+.empty-column i {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+
+/* Drop Zone Styling */
+.kanban-column-body.drag-over {
+  background: rgba(13, 110, 253, 0.1);
+  border: 2px dashed #007bff;
+  border-radius: 8px;
+}
+
+.kanban-column-body.drop-valid {
+  background: rgba(25, 135, 84, 0.1);
+  border: 2px dashed #28a745;
+}
+
+.kanban-column-body.drop-invalid {
+  background: rgba(220, 53, 69, 0.1);
+  border: 2px dashed #dc3545;
+}
+
+/* Action Buttons */
+.kanban-card .btn-sm {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .kanban-columns {
+    gap: 16px;
+  }
+
+  .kanban-column {
+    min-width: 260px;
+    max-width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .kanban-board {
+    padding: 12px;
+    height: calc(100vh - 180px);
+  }
+
+  .kanban-columns {
+    gap: 12px;
+  }
+
+  .kanban-column {
+    min-width: 240px;
+    max-width: 260px;
+  }
+}
+
+/* Scrollbar Styling */
+.kanban-column-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.kanban-column-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.kanban-column-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.kanban-column-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Animation for card movement */
+@keyframes cardMove {
+  0% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.kanban-card.just-moved {
+  animation: cardMove 0.3s ease-out;
+}
+
+/* Pulse animation for new/updated badges */
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Enhanced date info styling */
+.date-info {
+  border-top: 1px solid rgba(0,0,0,0.1);
+  padding-top: 0.5rem;
+}
+
+.date-info small {
+  font-size: 0.7rem;
+}
+</style>
+
+<!-- Kanban Drag & Drop Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🎯 Kanban Drag & Drop: Initializing...');
+
+  // Global variables for drag state
+  let draggedCard = null;
+  let draggedLeadId = null;
+  let draggedCurrentStage = null;
+
+  // Find all cards and drop zones
+  const cards = document.querySelectorAll('.kanban-card[data-lead-id]');
+  const dropZones = document.querySelectorAll('[data-drop-target]');
+
+  console.log(`📋 Found ${cards.length} cards and ${dropZones.length} drop zones`);
+
+  // Setup drag events for cards
+  cards.forEach((card, index) => {
+    console.log(`🎴 Setting up card ${index + 1}: Lead ${card.dataset.leadId}`);
+
+    card.addEventListener('dragstart', (e) => {
+      console.log('🖱️ DRAG START: Lead', card.dataset.leadId);
+      draggedCard = card;
+      draggedLeadId = card.dataset.leadId;
+      draggedCurrentStage = card.dataset.currentStage;
+
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', draggedLeadId);
+    });
+
+    card.addEventListener('dragend', (e) => {
+      console.log('🛑 DRAG END: Lead', card.dataset.leadId);
+      card.classList.remove('dragging');
+
+      // Clean up all drop zone styling
+      dropZones.forEach(zone => {
+        zone.classList.remove('drag-over');
+      });
+    });
+  });
+
+  // Setup drop events for drop zones
+  dropZones.forEach((zone, index) => {
+    console.log(`🎯 Setting up drop zone ${index + 1}: ${zone.dataset.dropTarget}`);
+
+    zone.addEventListener('dragover', (e) => {
+      console.log('🎯 DRAGOVER on zone:', zone.dataset.dropTarget);
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+
+    zone.addEventListener('dragenter', (e) => {
+      console.log('🚪 DRAGENTER on zone:', zone.dataset.dropTarget);
+      e.preventDefault();
+      zone.classList.add('drag-over');
+    });
+
+    zone.addEventListener('dragleave', (e) => {
+      if (!zone.contains(e.relatedTarget)) {
+        console.log('🚪 DRAGLEAVE from zone:', zone.dataset.dropTarget);
+        zone.classList.remove('drag-over');
+      }
+    });
+
+    zone.addEventListener('drop', async (e) => {
+      console.log('📥 DROP EVENT: Target zone', zone.dataset.dropTarget);
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+
+      const targetStage = zone.dataset.dropTarget;
+
+      if (!draggedLeadId || !targetStage) {
+        console.error('❌ Missing drag data');
+        return;
+      }
+
+      if (targetStage === draggedCurrentStage) {
+        console.log('⚠️ Same stage - no change needed');
+        return;
+      }
+
+      console.log(`🔄 Moving lead ${draggedLeadId} from ${draggedCurrentStage} to ${targetStage}`);
+
+      try {
+        const success = await updateLeadStage(draggedLeadId, targetStage);
+
+        if (success) {
+          console.log('✅ Backend update successful');
+          moveCardToColumn(draggedLeadId, targetStage);
+          showMessage('✅ Lead stage updated successfully!', 'success');
+        } else {
+          console.log('❌ Backend update failed');
+          showMessage('❌ Failed to update lead stage', 'error');
+        }
+      } catch (error) {
+        console.error('💥 Error updating lead:', error);
+        showMessage('❌ Error: ' + error.message, 'error');
+      }
+    });
+  });
+
+  async function updateLeadStage(leadId, newStage) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (!csrfToken) {
+      console.error('❌ No CSRF token found');
+      return false;
+    }
+
+    const url = `/admin/leads/${leadId}/convert_stage`;
+    console.log(`🌐 AJAX: ${url} with stage=${newStage}`);
+
+    try {
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ stage: newStage })
+      });
+
+      console.log(`📨 Response: ${response.status} ${response.statusText}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Server error:', errorText);
+        return false;
+      }
+
+      const result = await response.json();
+      console.log('📬 Server response:', result);
+      return result.success !== false;
+
+    } catch (error) {
+      console.error('💥 Network error:', error);
+      return false;
+    }
+  }
+
+  function moveCardToColumn(leadId, targetStage) {
+    const card = document.querySelector(`[data-lead-id="${leadId}"]`);
+    const targetColumn = document.querySelector(`[data-drop-target="${targetStage}"]`);
+
+    if (!card || !targetColumn) {
+      console.error('❌ Could not find card or target column');
+      return;
+    }
+
+    console.log('🔄 Moving card in DOM');
+
+    // Update card's stage data
+    card.dataset.currentStage = targetStage;
+
+    // Remove any empty state from target column
+    const emptyState = targetColumn.querySelector('.empty-column');
+    if (emptyState) {
+      emptyState.remove();
+    }
+
+    // Move card to new column
+    targetColumn.appendChild(card);
+
+    // Update column counts
+    updateColumnCounts();
+
+    console.log('✅ Card moved successfully');
+  }
+
+  function updateColumnCounts() {
+    document.querySelectorAll('.kanban-column').forEach(column => {
+      const stage = column.querySelector('[data-drop-target]')?.dataset.dropTarget;
+      const cardCount = column.querySelectorAll('.kanban-card').length;
+      const badge = column.querySelector('.badge');
+
+      if (badge && stage) {
+        badge.textContent = cardCount;
+      }
+    });
+  }
+
+  function showMessage(message, type) {
+    console.log(`💬 ${type}: ${message}`);
+
+    // Create a toast notification
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 10000; min-width: 300px; border-radius: 8px;';
+    notification.innerHTML = `
+      <div class="d-flex align-items-center">
+        <i class="bi bi-${type === 'success' ? 'check-circle' : 'x-circle'} me-2"></i>
+        ${message}
+      </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+
+    // Visual feedback
+    if (type === 'success') {
+      document.body.style.border = '3px solid #28a745';
+    } else {
+      document.body.style.border = '3px solid #dc3545';
+    }
+
+    setTimeout(() => {
+      document.body.style.border = 'none';
+    }, 1500);
+  }
+
+  console.log('🚀 Kanban Drag & Drop: Ready!');
+});
+</script>

@@ -1,0 +1,284 @@
+<!-- Following the same modern styling as index page -->
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-2">
+        <li class="breadcrumb-item">
+          <%= link_to "Insurance Summary", admin_commission_tracking_index_path %>
+        </li>
+        <li class="breadcrumb-item active">Policy <%= @commission_breakdown[:policy][:number] %></li>
+      </ol>
+    </nav>
+    <h2 class="mb-1">Commission Details</h2>
+    <p class="text-muted mb-0">Policy <%= @commission_breakdown[:policy][:number] %> - <%= @commission_breakdown[:policy][:type].titleize %> Insurance</p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to admin_commission_tracking_index_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to List
+    <% end %>
+  </div>
+</div>
+
+<!-- Policy Information Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Policy Number</h6>
+            <h4 class="mb-0 text-primary"><%= @commission_breakdown[:policy][:number] %></h4>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-file-earmark-text text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Policy Type</h6>
+            <h4 class="mb-0 text-success"><%= @commission_breakdown[:policy][:type].titleize %></h4>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-shield-check text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Customer</h6>
+            <h4 class="mb-0 text-info"><%= @commission_breakdown[:policy][:customer] %></h4>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-person text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Premium Amount</h6>
+            <h4 class="mb-0 text-warning"><%= indian_currency(@commission_breakdown[:policy][:premium].to_i) %></h4>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-currency-rupee text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Commission Breakdown -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0"><i class="bi bi-calculator me-2"></i>Commission Breakdown</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <!-- Main Agent Commission -->
+      <div class="col-md-6 mb-4">
+        <div class="bg-light rounded p-4 h-100">
+          <h6 class="text-primary fw-bold mb-3">
+            <i class="bi bi-person-badge me-2"></i>Main Agent Commission (<%= @saved_payout&.main_agent_percentage || 10 %>%)
+          </h6>
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span>Total Commission</span>
+            <strong class="text-success"><%= indian_currency(@commission_breakdown[:commission_breakdown][:main_agent][:total_commission].to_i) %></strong>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span>Less: Affiliate Share</span>
+            <span class="text-danger">-<%= indian_currency(@commission_breakdown[:commission_breakdown][:main_agent][:deductions][:affiliate].to_i) %></span>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span>Less: Ambassador Share</span>
+            <span class="text-danger">-<%= indian_currency(@commission_breakdown[:commission_breakdown][:main_agent][:deductions][:ambassador].to_i) %></span>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span>Less: Investor Share</span>
+            <span class="text-danger">-<%= indian_currency(@commission_breakdown[:commission_breakdown][:main_agent][:deductions][:investor].to_i) %></span>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span>Less: Company Expense</span>
+            <span class="text-danger">-<%= indian_currency(@commission_breakdown[:commission_breakdown][:main_agent][:deductions][:company_expense].to_i) %></span>
+          </div>
+          <div class="d-flex justify-content-between py-2 fw-bold text-primary">
+            <span>Final Profit</span>
+            <span><%= indian_currency(@commission_breakdown[:commission_breakdown][:main_agent][:final_profit].to_i) %></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Transfer Status and Manual Transfer Forms -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0"><i class="bi bi-arrow-right-circle me-2"></i>Manual Transfer Management</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <!-- Affiliate Transfer -->
+      <div class="col-lg-6 mb-4">
+        <div class="card <%= @commission_breakdown[:payout_status][:affiliate][:status] == 'paid' ? 'border-success' : 'border-warning' %> h-100">
+          <div class="card-header <%= @commission_breakdown[:payout_status][:affiliate][:status] == 'paid' ? 'bg-success' : 'bg-warning' %> bg-opacity-10">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0 fw-bold">Affiliate Transfer</h6>
+              <span class="badge <%= @commission_breakdown[:payout_status][:affiliate][:status] == 'paid' ? 'bg-success' : 'bg-warning' %>">
+                <%= @commission_breakdown[:payout_status][:affiliate][:status].titleize %>
+              </span>
+            </div>
+          </div>
+          <div class="card-body">
+            <% if @commission_breakdown[:payout_status][:affiliate][:status] == 'paid' %>
+              <p class="mb-2"><strong>Amount:</strong> <%= indian_currency(@commission_breakdown[:payout_status][:affiliate][:amount].to_i) %></p>
+              <p class="mb-2"><strong>Transfer Date:</strong> <%= @commission_breakdown[:payout_status][:affiliate][:payout_date] %></p>
+              <p class="mb-0"><strong>Transaction ID:</strong> <%= @commission_breakdown[:payout_status][:affiliate][:transaction_id] %></p>
+            <% else %>
+              <%= form_with url: transfer_to_affiliate_admin_commission_tracking_path(@policy.id, policy_type: @policy.class.name.underscore.gsub('_insurance', '')), method: :patch, local: true do |form| %>
+                <div class="mb-3">
+                  <label class="form-label">Amount</label>
+                  <%= form.number_field :amount, value: @commission_breakdown[:commission_breakdown][:payouts][:affiliate].to_i, readonly: true, class: "form-control" %>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Transaction ID</label>
+                  <%= form.text_field :transaction_id, placeholder: "Enter transaction ID", class: "form-control", required: true %>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Notes</label>
+                  <%= form.text_area :notes, placeholder: "Transfer notes", rows: 2, class: "form-control" %>
+                </div>
+                <%= form.submit "Complete Transfer", class: "btn btn-success w-100" %>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ambassador Transfer -->
+      <div class="col-lg-6 mb-4">
+        <div class="card <%= @commission_breakdown[:payout_status][:ambassador][:status] == 'paid' ? 'border-success' : 'border-warning' %> h-100">
+          <div class="card-header <%= @commission_breakdown[:payout_status][:ambassador][:status] == 'paid' ? 'bg-success' : 'bg-warning' %> bg-opacity-10">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0 fw-bold">Ambassador Transfer</h6>
+              <span class="badge <%= @commission_breakdown[:payout_status][:ambassador][:status] == 'paid' ? 'bg-success' : 'bg-warning' %>">
+                <%= @commission_breakdown[:payout_status][:ambassador][:status].titleize %>
+              </span>
+            </div>
+          </div>
+          <div class="card-body">
+            <% if @commission_breakdown[:payout_status][:ambassador][:status] == 'paid' %>
+              <p class="mb-2"><strong>Amount:</strong> <%= indian_currency(@commission_breakdown[:payout_status][:ambassador][:amount].to_i) %></p>
+              <p class="mb-2"><strong>Transfer Date:</strong> <%= @commission_breakdown[:payout_status][:ambassador][:payout_date] %></p>
+              <p class="mb-0"><strong>Transaction ID:</strong> <%= @commission_breakdown[:payout_status][:ambassador][:transaction_id] %></p>
+            <% else %>
+              <%= form_with url: transfer_to_ambassador_admin_commission_tracking_path(@policy.id, policy_type: @policy.class.name.underscore.gsub('_insurance', '')), method: :patch, local: true do |form| %>
+                <div class="mb-3">
+                  <label class="form-label">Amount</label>
+                  <%= form.number_field :amount, value: @commission_breakdown[:commission_breakdown][:payouts][:ambassador].to_i, readonly: true, class: "form-control" %>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Transaction ID</label>
+                  <%= form.text_field :transaction_id, placeholder: "Enter transaction ID", class: "form-control", required: true %>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Notes</label>
+                  <%= form.text_area :notes, placeholder: "Transfer notes", rows: 2, class: "form-control" %>
+                </div>
+                <%= form.submit "Complete Transfer", class: "btn btn-success w-100" %>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Transfer History -->
+<% if @transfer_history.any? %>
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0">
+      <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Transfer History</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Transfer Type</th>
+              <th class="border-0">Amount</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Transaction ID</th>
+              <th class="border-0">Date</th>
+              <th class="border-0">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @transfer_history.each do |transfer| %>
+              <tr>
+                <td>
+                  <h6 class="mb-0"><%= transfer.payout_to.humanize %> Transfer</h6>
+                </td>
+                <td>
+                  <strong class="text-success"><%= indian_currency(transfer.payout_amount.to_i) %></strong>
+                </td>
+                <td>
+                  <span class="badge <%= transfer.status == 'paid' ? 'bg-success' : 'bg-warning' %>">
+                    <%= transfer.status.titleize %>
+                  </span>
+                </td>
+                <td>
+                  <%= transfer.transaction_id.present? ? transfer.transaction_id : '-' %>
+                </td>
+                <td>
+                  <small class="text-muted">
+                    <% if transfer.payout_date %>
+                      <%= transfer.payout_date.strftime("%b %d, %Y") %>
+                    <% else %>
+                      <%= transfer.created_at.strftime("%b %d, %Y") %>
+                    <% end %>
+                  </small>
+                </td>
+                <td>
+                  <%= transfer.notes.present? ? truncate(transfer.notes, length: 50) : '-' %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<!-- Action Buttons -->
+<div class="d-flex gap-3 mb-4">
+  <%= link_to admin_commission_tracking_index_path, class: "btn btn-outline-secondary" do %>
+    <i class="bi bi-arrow-left me-1"></i>
+    Back to Insurance Summary
+  <% end %>
+</div>

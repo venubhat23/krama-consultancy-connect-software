@@ -1,0 +1,1369 @@
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Create Ambassador</h2>
+    <p class="text-muted mb-0">Fill in the details to create a new ambassador account</p>
+  </div>
+  <div>
+    <%= link_to admin_distributors_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Ambassadors
+    <% end %>
+  </div>
+</div>
+
+<%= form_with model: [:admin, @distributor], local: true, multipart: true, class: "needs-validation", novalidate: true, data: { turbo: false } do |form| %>
+  <% if @distributor.errors.any? %>
+    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+      <h6>Please correct the following errors:</h6>
+      <ul class="mb-0">
+        <% @distributor.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% end %>
+
+  <!-- 1. Personal Details -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-person-circle me-2 text-primary"></i>
+      <h5 class="mb-0">Personal Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <%= form.label :first_name, class: "form-label" do %>
+            First Name <span class="text-danger">*</span>
+          <% end %>
+          <%= form.text_field :first_name, class: "form-control", placeholder: "Enter first name", required: true %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :middle_name, "Middle Name", class: "form-label" %>
+          <%= form.text_field :middle_name, class: "form-control", placeholder: "Enter middle name" %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :last_name, class: "form-label" do %>
+            Last Name <span class="text-danger">*</span>
+          <% end %>
+          <%= form.text_field :last_name, class: "form-control", placeholder: "Enter last name", required: true %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :mobile, class: "form-label" do %>
+            Mobile <span class="text-danger">*</span>
+          <% end %>
+          <%= form.telephone_field :mobile,
+              class: "form-control",
+              placeholder: "+91 81718 19191 or 81718 19191",
+              required: true,
+              title: "Enter mobile number with or without +91 prefix" %>
+          <small class="form-text text-muted">Enter mobile number with or without +91 (e.g., +91 8171819191 or 8171819191)</small>
+          <div class="invalid-feedback">
+            Please enter a valid mobile number starting with 6, 7, 8, or 9
+          </div>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :email, class: "form-label" do %>
+            Email <span class="text-danger">*</span>
+          <% end %>
+          <%= form.email_field :email, class: "form-control", placeholder: "Enter email address", required: true %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-4">
+          <%= form.label :role_id, class: "form-label" do %>
+            Role <span class="text-danger">*</span>
+          <% end %>
+          <%= form.text_field :role_id, class: "form-control", value: 'distributor', readonly: true %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :investor_id, "Investor (Optional)", class: "form-label" %>
+          <%= form.select :investor_id,
+              options_for_select([['Select Investor', '']] + @investors.map { |investor| [investor.display_name, investor.id] }, @distributor.investor_id),
+              {},
+              { class: "form-select searchable-select", data: { placeholder: "Choose investor..." } } %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :birth_date, "Birth Date", class: "form-label" %>
+          <%= form.date_field :birth_date, class: "form-control", min: "1900-01-01", max: "2099-12-31" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-4">
+          <%= form.label :state, "State", class: "form-label" %>
+          <%= form.select :state,
+              options_for_select(LocationData.states_for_select, @distributor.state),
+              { prompt: 'Search and select state...' },
+              { class: "form-select searchable-select", id: "distributor_state", data: { placeholder: "Type to search states..." } } %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :city, "City", class: "form-label" %>
+          <%= form.select :city,
+              options_for_select([], @distributor.city),
+              { prompt: 'Search and select city...' },
+              { class: "form-select searchable-select", id: "distributor_city", disabled: true, data: { placeholder: "Type to search cities..." } } %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :gender, "Gender", class: "form-label" %>
+          <%= form.select :gender,
+              options_for_select([
+                ['Male', 'Male'], ['Female', 'Female'], ['Other', 'Other']
+              ], @distributor.gender),
+              { prompt: 'Select Gender' },
+              { class: "form-select" } %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-3">
+          <%= form.label :pan_no, "PAN No", class: "form-label" %>
+          <%= form.text_field :pan_no, class: "form-control", placeholder: "Enter PAN number" %>
+        </div>
+        <div class="col-md-3">
+          <%= form.label :gst_no, "GST No", class: "form-label" %>
+          <%= form.text_field :gst_no, class: "form-control", placeholder: "Enter GST number" %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :company_name, "Company Name", class: "form-label" %>
+          <%= form.text_field :company_name, class: "form-control", placeholder: "Enter company name" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-12">
+          <%= form.label :address, "Address", class: "form-label" %>
+          <%= form.text_area :address, class: "form-control", rows: 3, placeholder: "Enter full address" %>
+        </div>
+      </div>
+
+      <!-- Profile Picture Section -->
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="card bg-light border-0">
+            <div class="card-body">
+              <h6 class="card-title mb-3">
+                <i class="bi bi-image me-2 text-primary"></i>Profile Picture
+              </h6>
+
+              <!-- Profile Picture Upload -->
+              <div class="row">
+                <div class="col-md-12">
+                  <%= form.label :profile_image, "Upload Profile Picture", class: "form-label" %>
+                  <%= form.file_field :profile_image,
+                      class: "form-control",
+                      accept: "image/*",
+                      id: "distributor_profile_image" %>
+                  <small class="form-text text-muted">
+                    Supported formats: JPG, PNG, GIF (Max 5MB) - Optional
+                  </small>
+
+                  <!-- Profile Picture Preview -->
+                  <div id="profile_picture_preview" class="mt-3" style="display: none;">
+                    <div class="card border-success">
+                      <div class="card-body p-3">
+                        <div class="d-flex align-items-center">
+                          <div class="me-3">
+                            <img id="profile_preview_image"
+                                 class="rounded-circle"
+                                 style="width: 80px; height: 80px; object-fit: cover; border: 3px solid #28a745;"
+                                 alt="Profile Preview">
+                          </div>
+                          <div class="flex-grow-1">
+                            <h6 class="mb-1 text-success">
+                              <i class="bi bi-check-circle me-1"></i>Profile Picture Ready
+                            </h6>
+                            <div class="small text-muted">
+                              <div><strong>Name:</strong> <span id="profile_file_name"></span></div>
+                              <div><strong>Size:</strong> <span id="profile_file_size"></span></div>
+                            </div>
+                          </div>
+                          <div>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    id="remove_profile_picture"
+                                    title="Remove Profile Picture">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1.5. Login Credentials Section -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-key me-2 text-success"></i>
+      <h5 class="mb-0">Login Credentials</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-12">
+          <h6 class="text-primary mb-3">
+            <i class="bi bi-shield-check me-2"></i>Ambassador Account Creation
+          </h6>
+          <p class="text-muted small mb-3">Create login account for this ambassador to access the system</p>
+        </div>
+
+        <!-- Password Creation Options -->
+        <div class="col-12 mb-4">
+          <label class="form-label mb-3">Password Creation Method</label>
+
+          <!-- Auto Generate Option (Default) -->
+          <div class="form-check mb-3 p-3 border rounded bg-light">
+            <input class="form-check-input" type="radio" name="password_option" id="auto_generate_password" value="auto_generate" checked>
+            <label class="form-check-label w-100" for="auto_generate_password">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-cpu me-2 text-primary"></i>
+                <strong>Auto Generate Password (Recommended)</strong>
+              </div>
+              <small class="text-muted d-block mt-1">
+                System will automatically generate a secure password: <strong>Ganesha@123</strong>
+              </small>
+            </label>
+          </div>
+
+          <!-- Manual Entry Option -->
+          <div class="form-check mb-3 p-3 border rounded">
+            <input class="form-check-input" type="radio" name="password_option" id="manual_password" value="manual">
+            <label class="form-check-label w-100" for="manual_password">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-pencil me-2 text-success"></i>
+                <strong>Set Custom Password</strong>
+              </div>
+              <small class="text-muted d-block mt-1">
+                Manually enter a custom password for the ambassador
+              </small>
+            </label>
+          </div>
+        </div>
+
+        <!-- Manual Password Fields (hidden by default) -->
+        <div id="manual_password_fields" class="col-12" style="display: none;">
+          <div class="card bg-light border-0">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <label class="form-label" for="distributor_password">
+                    Password <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <input type="password" class="form-control" id="distributor_password" name="distributor[password]" placeholder="Enter password" minlength="8">
+                    <button class="btn btn-outline-secondary" type="button" id="toggle_password">
+                      <i class="bi bi-eye" id="password_icon"></i>
+                    </button>
+                  </div>
+                  <small class="form-text text-muted">Minimum 8 characters with letters and numbers</small>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="distributor_password_confirmation">
+                    Confirm Password <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <input type="password" class="form-control" id="distributor_password_confirmation" name="distributor[password_confirmation]" placeholder="Confirm password">
+                    <button class="btn btn-outline-secondary" type="button" id="toggle_confirm_password">
+                      <i class="bi bi-eye" id="confirm_password_icon"></i>
+                    </button>
+                  </div>
+                  <small class="form-text text-muted">Must match the password above</small>
+                </div>
+              </div>
+
+              <!-- Password Strength Indicator -->
+              <div class="mt-3">
+                <label class="form-label small">Password Strength:</label>
+                <div class="progress" style="height: 8px;">
+                  <div class="progress-bar" id="password_strength_bar" role="progressbar" style="width: 0%"></div>
+                </div>
+                <small id="password_strength_text" class="text-muted"></small>
+              </div>
+
+              <!-- Generate Password Button -->
+              <div class="mt-3">
+                <button type="button" class="btn btn-outline-primary btn-sm" id="generate_password">
+                  <i class="bi bi-arrow-clockwise me-1"></i>Generate Strong Password
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm ms-2" id="copy_generated_password" style="display: none;">
+                  <i class="bi bi-clipboard me-1"></i>Copy Password
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Auto Generated Password Info -->
+        <div id="auto_password_info" class="col-12">
+          <div class="alert alert-info d-flex align-items-center">
+            <i class="bi bi-shield-check fs-4 me-3 text-primary"></i>
+            <div>
+              <strong>Default Password: Ganesha@123</strong><br>
+              <small class="text-muted">This password will be assigned to the ambassador. They can change it after their first login.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Bank Details -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-bank me-2 text-success"></i>
+      <h5 class="mb-0">Bank Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <%= form.label :bank_name, "Bank Name", class: "form-label" %>
+          <%= form.text_field :bank_name, class: "form-control", placeholder: "Enter bank name" %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :account_no, "Account Number", class: "form-label" %>
+          <%= form.text_field :account_no, class: "form-control", placeholder: "Enter account number" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :ifsc_code, "IFSC Code", class: "form-label" %>
+          <%= form.text_field :ifsc_code, class: "form-control", placeholder: "Enter IFSC code" %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :account_holder_name, "Account Holder Name", class: "form-label" %>
+          <%= form.text_field :account_holder_name, class: "form-control", placeholder: "Enter account holder name" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :account_type, "Account Type", class: "form-label" %>
+          <%= form.select :account_type,
+              options_for_select([
+                ['Savings', 'Savings'], ['Current', 'Current'], ['Salary', 'Salary']
+              ], @distributor.account_type),
+              { prompt: 'Select Account Type' },
+              { class: "form-select" } %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :upi_id, "UPI ID", class: "form-label" %>
+          <%= form.text_field :upi_id, class: "form-control", placeholder: "Enter UPI ID" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Affiliate Assignment -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-people me-2 text-info"></i>
+        <h5 class="mb-0">Affiliate Assignment</h5>
+      </div>
+      <div class="text-muted small">
+        <span id="assigned-count">0</span> affiliates selected
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-12">
+          <%= form.label :assigned_affiliate_ids, "Assign Affiliates", class: "form-label" %>
+
+          <!-- Search Box -->
+          <div class="mb-3">
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text"
+                     class="form-control"
+                     id="affiliate-search"
+                     placeholder="Search affiliates by name, email, or mobile..."
+                     autocomplete="off">
+              <button class="btn btn-outline-secondary" type="button" id="clear-search">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Select/Deselect All Controls -->
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <button type="button" class="btn btn-sm btn-outline-primary" id="select-all-visible">
+                <i class="bi bi-check-square me-1"></i>Select All Visible
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="deselect-all">
+                <i class="bi bi-square me-1"></i>Deselect All
+              </button>
+            </div>
+            <div class="text-muted small">
+              <span id="visible-count"><%= SubAgent.where(status: :active).count %></span> affiliates found
+            </div>
+          </div>
+
+          <!-- Affiliates List -->
+          <div class="border rounded p-3" id="affiliates-container" style="max-height: 400px; overflow-y: auto;">
+            <% SubAgent.where(status: :active).each do |sub_agent| %>
+              <div class="form-check mb-3 affiliate-item"
+                   data-name="<%= sub_agent.display_name.downcase %>"
+                   data-email="<%= sub_agent.email.downcase %>"
+                   data-mobile="<%= sub_agent.mobile %>">
+                <%= check_box_tag "distributor[assigned_affiliate_ids][]", sub_agent.id, false,
+                    class: "form-check-input affiliate-checkbox", id: "affiliate_#{sub_agent.id}" %>
+                <%= label_tag "affiliate_#{sub_agent.id}", class: "form-check-label ms-2 w-100" do %>
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                      <div class="d-flex align-items-center">
+                        <strong class="affiliate-name"><%= sub_agent.display_name %></strong>
+                      </div>
+                      <small class="text-muted d-block mt-1">
+                        <i class="bi bi-envelope"></i> <span class="affiliate-email"><%= sub_agent.email %></span>
+                        <span class="ms-3">
+                          <i class="bi bi-telephone"></i> <span class="affiliate-mobile"><%= sub_agent.mobile %></span>
+                        </span>
+                      </small>
+                      <% if sub_agent.address.present? %>
+                        <small class="text-muted d-block">
+                          <i class="bi bi-geo-alt"></i>
+                          <%= sub_agent.address %>
+                        </small>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- No Results Message -->
+          <div id="no-results-message" class="text-center py-4 text-muted" style="display: none;">
+            <i class="bi bi-search fs-1 mb-2"></i>
+            <h6>No affiliates found</h6>
+            <p class="mb-0">Try adjusting your search criteria</p>
+          </div>
+
+          <small class="form-text text-muted mt-2">
+            <i class="bi bi-info-circle me-1"></i>
+            Use the search box to quickly find and select affiliates for this Ambassador.
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Documents & QR Code -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-file-earmark-arrow-up me-2 text-warning"></i>
+      <h5 class="mb-0">Documents & QR Code</h5>
+    </div>
+    <div class="card-body">
+      <!-- Main Document Upload -->
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <%= form.label :upload_main_document, "Upload Main Document", class: "form-label" %>
+          <%= form.file_field :upload_main_document, class: "form-control", accept: "image/*,application/pdf", id: "main_document_upload" %>
+          <small class="form-text text-muted">Upload main identification document (JPG, PNG, PDF)</small>
+
+          <!-- Main Document Preview -->
+          <%= render 'shared/file_upload_preview',
+                     field_id: 'main_document_upload',
+                     preview_id: 'main_document_preview',
+                     accept: 'image/*,application/pdf',
+                     show_file_info: true,
+                     max_file_size: '10MB' %>
+        </div>
+      </div>
+
+      <!-- Repeatable Documents Section -->
+      <div class="border-top pt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0">Upload Documents</h6>
+          <div>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="add_document">
+              <i class="bi bi-plus-lg me-1"></i>
+              Add Document
+            </button>
+          </div>
+        </div>
+
+        <div id="documents_container">
+          <!-- Dynamic documents will be added here -->
+        </div>
+
+        <p class="text-muted mb-0 mt-2">
+          <small>Document types: Aadhaar Card, Pancard, Driving License, Mediclaim, RC Book, Other File</small>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-end gap-2">
+        <%= link_to "Cancel", admin_distributors_path, class: "btn btn-outline-secondary" %>
+        <%= form.submit "Create Ambassador", class: "btn btn-primary" %>
+      </div>
+    </div>
+  </div>
+
+<% end %>
+
+<style>
+.document-entry {
+  background: #f8f9fa;
+  border-radius: 8px;
+  position: relative;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+</style>
+
+<!-- jQuery and Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Include Location Data and Form Enhancements -->
+<script>
+<%= File.read(Rails.root.join('app/assets/javascripts/location_data.js')).html_safe %>
+</script>
+<script>
+<%= File.read(Rails.root.join('app/assets/javascripts/form_enhancements.js')).html_safe %>
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize searchable state-city dropdowns
+  const stateSelect = document.getElementById('distributor_state');
+  const citySelect = document.getElementById('distributor_city');
+
+  // Use global location data
+  let citiesData = {};
+  if (window.LocationData && window.LocationData.states) {
+    citiesData = Object.keys(window.LocationData.states).reduce((acc, key) => {
+      acc[key] = window.LocationData.states[key].cities;
+      return acc;
+    }, {});
+  }
+
+  function loadCitiesForState(stateValue) {
+    console.log('Loading cities for distributor state:', stateValue);
+    if (!stateValue) {
+      populateCityDropdown([]);
+      citySelect.disabled = true;
+      return;
+    }
+
+    // Get cities for this state from local data
+    let cities = citiesData[stateValue] || [];
+    populateCityDropdown(cities);
+  }
+
+  function populateCityDropdown(cities) {
+    // First destroy Select2 if it exists
+    const $citySelect = $(citySelect);
+    if ($citySelect.hasClass('select2-hidden-accessible')) {
+      $citySelect.select2('destroy');
+    }
+
+    // Clear dropdown and add cities
+    citySelect.innerHTML = '<option value="">Select City</option>';
+    cities.forEach(city => {
+      const option = document.createElement('option');
+      option.value = city;
+      option.textContent = city;
+      citySelect.appendChild(option);
+    });
+
+    citySelect.disabled = false;
+    console.log(`Loaded ${cities.length} cities for distributor`);
+
+    // Reinitialize Select2
+    setTimeout(() => {
+      $citySelect.select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select city...',
+        allowClear: true,
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+    }, 50);
+  }
+
+  // Initialize Select2 for state and city dropdowns
+  if (typeof $ !== 'undefined' && $.fn.select2) {
+    $(stateSelect).select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select state...',
+      allowClear: true,
+      width: '100%',
+      minimumResultsForSearch: 0
+    });
+
+    $(citySelect).select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select city...',
+      allowClear: true,
+      width: '100%',
+      minimumResultsForSearch: 0
+    });
+  }
+
+  // Handle state change
+  stateSelect.addEventListener('change', function() {
+    loadCitiesForState(this.value);
+  });
+
+  // Handle Select2 change event specifically
+  $('#distributor_state').on('select2:select', function (e) {
+    const selectedValue = e.params.data.id;
+    loadCitiesForState(selectedValue);
+  });
+
+  // Load cities if state is pre-selected
+  if (stateSelect.value) {
+    loadCitiesForState(stateSelect.value);
+  }
+
+  // Document management
+  let documentIndex = 0;
+  const addDocumentBtn = document.getElementById('add_document');
+  const documentsContainer = document.getElementById('documents_container');
+
+  addDocumentBtn?.addEventListener('click', function() {
+    const documentHtml = `
+      <div class="document-entry p-3 mb-3 border rounded position-relative" data-index="${documentIndex}" style="background: #f8f9fa;">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-btn remove-document">
+          <i class="bi bi-trash"></i>
+        </button>
+        <div class="row">
+          <div class="col-md-6">
+            <label class="form-label">Document Type <span class="text-danger">*</span></label>
+            <select name="distributor[distributor_documents_attributes][${documentIndex}][document_type]" class="form-select" required>
+              <option value="">Select Document Type</option>
+              <option value="Aadhaar Card">Aadhaar Card</option>
+              <option value="Pancard">Pancard</option>
+              <option value="Driving License">Driving License</option>
+              <option value="Mediclaim">Mediclaim</option>
+              <option value="RC Book">RC Book</option>
+              <option value="Other File">Other File</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Document File <span class="text-danger">*</span></label>
+            <input type="file" name="distributor[distributor_documents_attributes][${documentIndex}][document_file]" class="form-control" accept="image/*,application/pdf" required id="distributor_doc_file_${documentIndex}">
+          </div>
+        </div>
+
+        <!-- Document Preview Container -->
+        <div id="distributor_doc_preview_${documentIndex}" class="mt-3" style="display: none;">
+          <div class="card border-light bg-light">
+            <div class="card-body p-3">
+              <div class="d-flex align-items-start">
+                <!-- Preview Content -->
+                <div class="preview-content me-3">
+                  <!-- Image Preview -->
+                  <div class="image-preview" style="display: none;">
+                    <img class="preview-image rounded" style="max-width: 120px; max-height: 120px; object-fit: cover; border: 2px solid #e9ecef;" alt="Preview">
+                  </div>
+
+                  <!-- Document Preview -->
+                  <div class="document-preview" style="display: none;">
+                    <div class="d-flex align-items-center p-2 border rounded" style="background-color: #f8f9fa; min-width: 120px;">
+                      <i class="file-icon bi bi-file-earmark text-primary fs-3 me-2"></i>
+                      <div>
+                        <div class="fw-bold file-name text-truncate small" style="max-width: 100px;"></div>
+                        <small class="text-muted file-type"></small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- File Information -->
+                <div class="file-info flex-grow-1">
+                  <h6 class="mb-1 small">
+                    <i class="bi bi-file-earmark-check text-success me-1"></i>
+                    <span class="file-title">Document Ready</span>
+                  </h6>
+                  <div class="file-details small text-muted">
+                    <div><strong>Name:</strong> <span class="file-name-detail"></span></div>
+                    <div><strong>Size:</strong> <span class="file-size-detail"></span></div>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="file-actions">
+                  <button type="button" class="btn btn-sm btn-outline-danger remove-file" title="Remove File">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    documentsContainer.insertAdjacentHTML('beforeend', documentHtml);
+
+    // Add event listener for the new file input
+    setupDistributorDocumentPreview(documentIndex);
+
+    documentIndex++;
+  });
+
+
+  // Function to setup preview functionality for distributor documents
+  function setupDistributorDocumentPreview(index) {
+    const fileInput = document.getElementById(`distributor_doc_file_${index}`);
+    const previewContainer = document.getElementById(`distributor_doc_preview_${index}`);
+
+    if (!fileInput || !previewContainer) return;
+
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+
+      if (!file) {
+        previewContainer.style.display = 'none';
+        return;
+      }
+
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        showDistributorDocError(fileInput, 'File size exceeds 10MB limit');
+        fileInput.value = '';
+        previewContainer.style.display = 'none';
+        return;
+      }
+
+      showDistributorDocumentPreview(file, previewContainer);
+    });
+
+    // Remove file button
+    previewContainer.querySelector('.remove-file')?.addEventListener('click', function() {
+      fileInput.value = '';
+      previewContainer.style.display = 'none';
+    });
+  }
+
+  function showDistributorDocumentPreview(file, previewContainer) {
+    const imagePreview = previewContainer.querySelector('.image-preview');
+    const documentPreview = previewContainer.querySelector('.document-preview');
+    const fileNameElement = previewContainer.querySelector('.file-name-detail');
+    const fileSizeElement = previewContainer.querySelector('.file-size-detail');
+
+    // Hide both previews initially
+    imagePreview.style.display = 'none';
+    documentPreview.style.display = 'none';
+
+    // Show preview container
+    previewContainer.style.display = 'block';
+
+    // Update file details
+    if (fileNameElement) fileNameElement.textContent = file.name;
+    if (fileSizeElement) fileSizeElement.textContent = formatDistributorFileSize(file.size);
+
+    // Check if file is an image
+    if (file.type && file.type.startsWith('image/')) {
+      showDistributorImagePreview(file, imagePreview);
+    } else {
+      showDistributorDocPreview(file, documentPreview);
+    }
+
+    // Add smooth animation
+    previewContainer.style.opacity = '0';
+    setTimeout(() => {
+      previewContainer.style.transition = 'opacity 0.3s ease';
+      previewContainer.style.opacity = '1';
+    }, 10);
+  }
+
+  function showDistributorImagePreview(file, container) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = container.querySelector('.preview-image');
+      img.src = e.target.result;
+      container.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function showDistributorDocPreview(file, container) {
+    const fileIcon = container.querySelector('.file-icon');
+    const fileName = container.querySelector('.file-name');
+    const fileType = container.querySelector('.file-type');
+
+    fileName.textContent = file.name;
+    fileType.textContent = file.type || 'Unknown type';
+
+    // Set appropriate icon
+    fileIcon.className = 'file-icon bi fs-3 me-2 ' + getDistributorFileIcon(file.type || file.name);
+
+    container.style.display = 'block';
+  }
+
+  function formatDistributorFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  function getDistributorFileIcon(fileType) {
+    if (fileType.includes('pdf')) return 'bi-file-earmark-pdf text-danger';
+    if (fileType.includes('word') || fileType.includes('document')) return 'bi-file-earmark-word text-primary';
+    if (fileType.includes('excel') || fileType.includes('spreadsheet')) return 'bi-file-earmark-excel text-success';
+    if (fileType.includes('image')) return 'bi-file-earmark-image text-info';
+    return 'bi-file-earmark text-muted';
+  }
+
+  function showDistributorDocError(inputElement, message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'alert alert-danger alert-dismissible fade show mt-2';
+    errorDiv.innerHTML = `
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    inputElement.parentNode.insertBefore(errorDiv, inputElement.nextSibling);
+    setTimeout(() => errorDiv.remove(), 5000);
+  }
+
+  // Event delegation for remove buttons
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-document')) {
+      e.target.closest('.document-entry').remove();
+    }
+  });
+});
+
+// Affiliate Search Functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('affiliate-search');
+  const clearSearchBtn = document.getElementById('clear-search');
+  const selectAllBtn = document.getElementById('select-all-visible');
+  const deselectAllBtn = document.getElementById('deselect-all');
+  const affiliatesContainer = document.getElementById('affiliates-container');
+  const noResultsMessage = document.getElementById('no-results-message');
+  const visibleCountSpan = document.getElementById('visible-count');
+  const assignedCountSpan = document.getElementById('assigned-count');
+
+  if (!searchInput) return; // Exit if elements don't exist
+
+  // Function to update counts
+  function updateCounts() {
+    const visibleItems = document.querySelectorAll('.affiliate-item:not([style*="display: none"])');
+    const checkedItems = document.querySelectorAll('.affiliate-checkbox:checked');
+
+    visibleCountSpan.textContent = visibleItems.length;
+    assignedCountSpan.textContent = checkedItems.length;
+
+    // Show/hide no results message
+    if (visibleItems.length === 0) {
+      noResultsMessage.style.display = 'block';
+      affiliatesContainer.style.display = 'none';
+    } else {
+      noResultsMessage.style.display = 'none';
+      affiliatesContainer.style.display = 'block';
+    }
+  }
+
+  // Search functionality
+  function performSearch() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const affiliateItems = document.querySelectorAll('.affiliate-item');
+
+    affiliateItems.forEach(item => {
+      const name = item.dataset.name || '';
+      const email = item.dataset.email || '';
+      const mobile = item.dataset.mobile || '';
+
+      // Search in name, email, and mobile
+      const matches = searchTerm === '' ||
+                     name.includes(searchTerm) ||
+                     email.includes(searchTerm) ||
+                     mobile.includes(searchTerm);
+
+      item.style.display = matches ? 'block' : 'none';
+    });
+
+    updateCounts();
+
+    // Show/hide clear button
+    clearSearchBtn.style.display = searchTerm ? 'inline-block' : 'none';
+  }
+
+  // Event listeners
+  searchInput.addEventListener('input', performSearch);
+  searchInput.addEventListener('keyup', performSearch);
+
+  // Clear search
+  clearSearchBtn.addEventListener('click', function() {
+    searchInput.value = '';
+    performSearch();
+    searchInput.focus();
+  });
+
+  // Select all visible
+  selectAllBtn.addEventListener('click', function() {
+    const visibleCheckboxes = document.querySelectorAll('.affiliate-item:not([style*="display: none"]) .affiliate-checkbox');
+    visibleCheckboxes.forEach(checkbox => {
+      checkbox.checked = true;
+    });
+    updateCounts();
+  });
+
+  // Deselect all
+  deselectAllBtn.addEventListener('click', function() {
+    const allCheckboxes = document.querySelectorAll('.affiliate-checkbox');
+    allCheckboxes.forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    updateCounts();
+  });
+
+  // Update count when checkboxes change
+  document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('affiliate-checkbox')) {
+      updateCounts();
+    }
+  });
+
+  // Initialize
+  updateCounts();
+  clearSearchBtn.style.display = 'none';
+
+  // Auto-focus search on page load
+  setTimeout(() => {
+    searchInput.focus();
+  }, 500);
+
+  // Profile Picture Preview Functionality
+  const profileImageInput = document.getElementById('distributor_profile_image');
+  const profilePreviewContainer = document.getElementById('profile_picture_preview');
+  const profilePreviewImage = document.getElementById('profile_preview_image');
+  const profileFileName = document.getElementById('profile_file_name');
+  const profileFileSize = document.getElementById('profile_file_size');
+  const removeProfileBtn = document.getElementById('remove_profile_picture');
+
+  if (profileImageInput) {
+    profileImageInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+
+      if (!file) {
+        profilePreviewContainer.style.display = 'none';
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showProfileError('Please select a valid image file (JPG, PNG, GIF)');
+        profileImageInput.value = '';
+        profilePreviewContainer.style.display = 'none';
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        showProfileError('File size exceeds 5MB limit');
+        profileImageInput.value = '';
+        profilePreviewContainer.style.display = 'none';
+        return;
+      }
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        profilePreviewImage.src = e.target.result;
+        profileFileName.textContent = file.name;
+        profileFileSize.textContent = formatFileSize(file.size);
+        profilePreviewContainer.style.display = 'block';
+
+        // Smooth animation
+        profilePreviewContainer.style.opacity = '0';
+        setTimeout(() => {
+          profilePreviewContainer.style.transition = 'opacity 0.3s ease';
+          profilePreviewContainer.style.opacity = '1';
+        }, 10);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (removeProfileBtn) {
+    removeProfileBtn.addEventListener('click', function() {
+      profileImageInput.value = '';
+      profilePreviewContainer.style.display = 'none';
+    });
+  }
+
+  function showProfileError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'alert alert-danger alert-dismissible fade show mt-2';
+    errorDiv.innerHTML = `
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    profileImageInput.parentNode.insertBefore(errorDiv, profileImageInput.nextSibling);
+    setTimeout(() => errorDiv.remove(), 5000);
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+});
+
+// Password type toggle functionality for distributors
+document.addEventListener('DOMContentLoaded', function() {
+  const distributorUserEnterPasswordCheckbox = document.getElementById('distributor_user_enter_password');
+  const distributorManualPasswordFields = document.getElementById('distributor_manual_password_fields');
+  const distributorSystemPasswordInfo = document.getElementById('distributor_system_password_info');
+  const distributorPasswordField = document.getElementById('distributor_password');
+  const distributorPasswordConfirmationField = document.getElementById('distributor_password_confirmation');
+
+  if (distributorUserEnterPasswordCheckbox) {
+    distributorUserEnterPasswordCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        // User wants to enter password manually
+        distributorManualPasswordFields.style.display = 'block';
+        distributorSystemPasswordInfo.style.display = 'none';
+        distributorPasswordField.setAttribute('required', 'required');
+        distributorPasswordConfirmationField.setAttribute('required', 'required');
+      } else {
+        // System will generate password (Ganesha@123)
+        distributorManualPasswordFields.style.display = 'none';
+        distributorSystemPasswordInfo.style.display = 'block';
+        distributorPasswordField.removeAttribute('required');
+        distributorPasswordConfirmationField.removeAttribute('required');
+        distributorPasswordField.value = '';
+        distributorPasswordConfirmationField.value = '';
+      }
+    });
+  }
+
+  // Password strength validation
+  if (distributorPasswordField) {
+    distributorPasswordField.addEventListener('input', function() {
+      const password = this.value;
+      const confirmField = distributorPasswordConfirmationField;
+
+      if (password.length < 8) {
+        this.classList.add('is-invalid');
+        this.classList.remove('is-valid');
+      } else {
+        this.classList.remove('is-invalid');
+        this.classList.add('is-valid');
+      }
+
+      // Check password confirmation match
+      if (confirmField.value && confirmField.value !== password) {
+        confirmField.classList.add('is-invalid');
+        confirmField.classList.remove('is-valid');
+      } else if (confirmField.value === password && password.length >= 8) {
+        confirmField.classList.remove('is-invalid');
+        confirmField.classList.add('is-valid');
+      }
+    });
+  }
+
+  if (distributorPasswordConfirmationField) {
+    distributorPasswordConfirmationField.addEventListener('input', function() {
+      const password = distributorPasswordField.value;
+      const confirmation = this.value;
+
+      if (confirmation !== password) {
+        this.classList.add('is-invalid');
+        this.classList.remove('is-valid');
+      } else if (confirmation === password && password.length >= 8) {
+        this.classList.remove('is-invalid');
+        this.classList.add('is-valid');
+      }
+    });
+  }
+
+  // Password Option Toggle Functionality
+  const autoGenerateRadio = document.getElementById('auto_generate_password');
+  const manualPasswordRadio = document.getElementById('manual_password');
+  const manualPasswordFields = document.getElementById('manual_password_fields');
+  const autoPasswordInfo = document.getElementById('auto_password_info');
+
+  function togglePasswordFields() {
+    if (manualPasswordRadio.checked) {
+      manualPasswordFields.style.display = 'block';
+      autoPasswordInfo.style.display = 'none';
+      // Make password fields required
+      document.getElementById('distributor_password').required = true;
+      document.getElementById('distributor_password_confirmation').required = true;
+    } else {
+      manualPasswordFields.style.display = 'none';
+      autoPasswordInfo.style.display = 'block';
+      // Remove required attribute
+      document.getElementById('distributor_password').required = false;
+      document.getElementById('distributor_password_confirmation').required = false;
+      // Clear password fields
+      document.getElementById('distributor_password').value = '';
+      document.getElementById('distributor_password_confirmation').value = '';
+    }
+  }
+
+  // Event listeners for radio buttons
+  autoGenerateRadio?.addEventListener('change', togglePasswordFields);
+  manualPasswordRadio?.addEventListener('change', togglePasswordFields);
+
+  // Password visibility toggle
+  const togglePasswordBtn = document.getElementById('toggle_password');
+  const toggleConfirmPasswordBtn = document.getElementById('toggle_confirm_password');
+  const passwordField = document.getElementById('distributor_password');
+  const confirmPasswordField = document.getElementById('distributor_password_confirmation');
+  const passwordIcon = document.getElementById('password_icon');
+  const confirmPasswordIcon = document.getElementById('confirm_password_icon');
+
+  togglePasswordBtn?.addEventListener('click', function() {
+    const type = passwordField.type === 'password' ? 'text' : 'password';
+    passwordField.type = type;
+    passwordIcon.classList.toggle('bi-eye');
+    passwordIcon.classList.toggle('bi-eye-slash');
+  });
+
+  toggleConfirmPasswordBtn?.addEventListener('click', function() {
+    const type = confirmPasswordField.type === 'password' ? 'text' : 'password';
+    confirmPasswordField.type = type;
+    confirmPasswordIcon.classList.toggle('bi-eye');
+    confirmPasswordIcon.classList.toggle('bi-eye-slash');
+  });
+
+  // Password strength checker
+  const strengthBar = document.getElementById('password_strength_bar');
+  const strengthText = document.getElementById('password_strength_text');
+
+  function checkPasswordStrength(password) {
+    let strength = 0;
+    const checks = {
+      length: password.length >= 8,
+      lower: /[a-z]/.test(password),
+      upper: /[A-Z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+
+    strength = Object.values(checks).filter(Boolean).length;
+
+    let strengthLevel = '';
+    let colorClass = '';
+    let widthPercent = 0;
+
+    switch(strength) {
+      case 0:
+      case 1:
+        strengthLevel = 'Very Weak';
+        colorClass = 'bg-danger';
+        widthPercent = 20;
+        break;
+      case 2:
+        strengthLevel = 'Weak';
+        colorClass = 'bg-warning';
+        widthPercent = 40;
+        break;
+      case 3:
+        strengthLevel = 'Fair';
+        colorClass = 'bg-info';
+        widthPercent = 60;
+        break;
+      case 4:
+        strengthLevel = 'Good';
+        colorClass = 'bg-primary';
+        widthPercent = 80;
+        break;
+      case 5:
+        strengthLevel = 'Strong';
+        colorClass = 'bg-success';
+        widthPercent = 100;
+        break;
+    }
+
+    strengthBar.className = `progress-bar ${colorClass}`;
+    strengthBar.style.width = `${widthPercent}%`;
+    strengthText.textContent = strengthLevel;
+  }
+
+  passwordField?.addEventListener('input', function() {
+    checkPasswordStrength(this.value);
+  });
+
+  // Password generator
+  const generatePasswordBtn = document.getElementById('generate_password');
+  const copyPasswordBtn = document.getElementById('copy_generated_password');
+
+  function generateStrongPassword() {
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const numbers = '0123456789';
+    const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+    let password = '';
+    password += lowercase[Math.floor(Math.random() * lowercase.length)];
+    password += uppercase[Math.floor(Math.random() * uppercase.length)];
+    password += numbers[Math.floor(Math.random() * numbers.length)];
+    password += symbols[Math.floor(Math.random() * symbols.length)];
+
+    const allChars = lowercase + uppercase + numbers + symbols;
+    for (let i = 4; i < 12; i++) {
+      password += allChars[Math.floor(Math.random() * allChars.length)];
+    }
+
+    return password.split('').sort(() => Math.random() - 0.5).join('');
+  }
+
+  generatePasswordBtn?.addEventListener('click', function() {
+    const newPassword = generateStrongPassword();
+    passwordField.value = newPassword;
+    confirmPasswordField.value = newPassword;
+    checkPasswordStrength(newPassword);
+    copyPasswordBtn.style.display = 'inline-block';
+
+    // Trigger validation
+    passwordField.dispatchEvent(new Event('input'));
+    confirmPasswordField.dispatchEvent(new Event('input'));
+  });
+
+  // Copy password to clipboard
+  copyPasswordBtn?.addEventListener('click', async function() {
+    try {
+      await navigator.clipboard.writeText(passwordField.value);
+      this.innerHTML = '<i class="bi bi-check me-1"></i>Copied!';
+      this.classList.replace('btn-outline-secondary', 'btn-success');
+
+      setTimeout(() => {
+        this.innerHTML = '<i class="bi bi-clipboard me-1"></i>Copy Password';
+        this.classList.replace('btn-success', 'btn-outline-secondary');
+      }, 2000);
+    } catch (err) {
+      // Fallback for older browsers
+      passwordField.select();
+      document.execCommand('copy');
+      this.innerHTML = '<i class="bi bi-check me-1"></i>Copied!';
+      setTimeout(() => {
+        this.innerHTML = '<i class="bi bi-clipboard me-1"></i>Copy Password';
+      }, 2000);
+    }
+  });
+
+  // Initialize the form state
+  togglePasswordFields();
+
+  // Mobile number handling with improved formatting
+  const mobileInput = document.querySelector('input[name="distributor[mobile]"]');
+
+  // Function to format mobile number similar to backend logic
+  function formatMobileNumber(input) {
+    if (!input) return '';
+
+    // Remove all non-digit characters first
+    let cleanMobile = input.replace(/[^\d]/g, '');
+
+    // Handle different input formats - always extract 10-digit number
+    if (cleanMobile.length === 12 && cleanMobile.startsWith('91')) {
+      // 91XXXXXXXXXX format - extract 10-digit part
+      let digitsPath = cleanMobile.substring(2);
+      if (digitsPath.length === 10 && /^[6789]\d{9}$/.test(digitsPath)) {
+        return digitsPath;
+      }
+      return cleanMobile;
+    } else if (cleanMobile.length === 11 && cleanMobile.startsWith('0')) {
+      // 0XXXXXXXXXX format - remove leading zero
+      let digitsPath = cleanMobile.substring(1);
+      if (digitsPath.length === 10 && /^[6789]\d{9}$/.test(digitsPath)) {
+        return digitsPath;
+      }
+      return cleanMobile;
+    } else if (cleanMobile.length === 10 && /^[6789]\d{9}$/.test(cleanMobile)) {
+      // XXXXXXXXXX format - valid 10 digit number starting with 6, 7, 8, or 9
+      return cleanMobile;
+    } else {
+      // Any other format - return as-is for validation to handle
+      return cleanMobile;
+    }
+  }
+
+  // Initialize mobile field value if present
+  if (mobileInput && mobileInput.value) {
+    let formattedValue = formatMobileNumber(mobileInput.value);
+    mobileInput.value = formattedValue;
+  }
+
+  // Add input validation for mobile number
+  if (mobileInput) {
+    mobileInput.addEventListener('input', function(e) {
+      // Format the input using our function
+      let formattedValue = formatMobileNumber(this.value);
+
+      // Limit to reasonable length to prevent excessive input
+      if (formattedValue.length > 15) {
+        formattedValue = formattedValue.slice(0, 15);
+      }
+
+      this.value = formattedValue;
+
+      // Remove validation classes
+      this.classList.remove('is-invalid', 'is-valid');
+
+      // Check if valid (must be exactly 10 digits starting with 6, 7, 8, or 9)
+      if (formattedValue.length === 10 && /^[6789]\d{9}$/.test(formattedValue)) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+      } else if (formattedValue.length > 0) {
+        this.classList.add('is-invalid');
+        this.classList.remove('is-valid');
+      }
+    });
+
+    // Also handle paste events
+    mobileInput.addEventListener('paste', function(e) {
+      setTimeout(() => {
+        let formattedValue = formatMobileNumber(this.value);
+        this.value = formattedValue;
+
+        // Trigger input event to update validation
+        this.dispatchEvent(new Event('input'));
+      }, 10);
+    });
+  }
+
+  // Bootstrap form validation
+  const forms = document.querySelectorAll('.needs-validation');
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  });
+});
+</script>

@@ -1,0 +1,1854 @@
+<style>
+.modern-sidebar {
+  position: fixed !important;
+  top: 70px !important;
+  left: 0 !important;
+  width: 260px !important;
+  height: calc(100vh - 70px) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%) !important;
+  border-right: 2px solid #e2e8f0 !important;
+  z-index: 1040 !important;
+  overflow: hidden !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  backdrop-filter: blur(10px) !important;
+  transition: width 0.3s ease !important;
+}
+
+.nav-link-modern {
+  display: flex !important;
+  align-items: center !important;
+  padding: 12px 20px !important;
+  margin: 6px 12px !important;
+  border-radius: 16px !important;
+  color: #64748b !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  background: rgba(248, 250, 252, 0.8) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+}
+
+.nav-link-modern::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 4px !important;
+  height: 100% !important;
+  background: linear-gradient(to bottom, #3b82f6, #8b5cf6) !important;
+  transform: scaleY(0) !important;
+  transition: transform 0.3s ease !important;
+}
+
+.nav-link-modern:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%) !important;
+  color: #1e293b !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.15) !important;
+  border: 1px solid rgba(59, 130, 246, 0.2) !important;
+}
+
+.nav-link-modern:hover::before {
+  transform: scaleY(1) !important;
+}
+
+.nav-link-modern:hover .nav-text {
+  color: #1e293b !important;
+  font-weight: 600 !important;
+}
+
+.nav-link-modern.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(-2px) !important;
+}
+
+.nav-link-modern.active::before {
+  transform: scaleY(1) !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.nav-link-modern.active .nav-text {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.nav-link-modern.active .icon-bg {
+  background: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3) !important;
+}
+
+.nav-text {
+  color: #64748b !important;
+  font-weight: 500 !important;
+  margin-left: 12px !important;
+  font-size: 14px !important;
+  display: inline-block !important;
+  transition: all 0.3s ease, opacity 0.2s ease, width 0.2s ease !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+}
+
+.nav-section-title {
+  color: #3b82f6 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  padding: 20px 24px 8px 24px !important;
+  margin-bottom: 8px !important;
+  position: relative !important;
+}
+
+.nav-section-title::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 24px !important;
+  width: 60px !important;
+  height: 3px !important;
+  background: linear-gradient(to right, #3b82f6, #8b5cf6) !important;
+  border-radius: 2px !important;
+}
+
+.icon-bg {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
+}
+
+.icon-bg::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: 1px !important;
+  border-radius: 9px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.3s ease !important;
+}
+
+.nav-link-modern:not(.collapsed) .nav-link-modern:hover .icon-bg {
+  transform: scale(1.1) rotate(2deg) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Collapsed state - NO hover scaling */
+.modern-sidebar.collapsed .nav-link-modern:hover .icon-bg {
+  transform: none !important; /* NO transform on hover */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.nav-link-modern:hover .icon-bg::after {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.nav-link-modern.active .icon-bg {
+  transform: scale(1.1) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+.nav-link-modern.active .icon-bg::after {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.user-name {
+  color: #f8fafc !important;
+  font-weight: 600 !important;
+  text-shadow: 0 0 8px rgba(248, 250, 252, 0.3) !important;
+}
+
+/* Bright & Vibrant Gradient Backgrounds */
+.gradient-blue {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%) !important;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
+}
+.gradient-green {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%) !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
+}
+.gradient-purple {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%) !important;
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4) !important;
+}
+.gradient-orange {
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%) !important;
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4) !important;
+}
+.gradient-violet {
+  background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%) !important;
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4) !important;
+}
+.gradient-emerald {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4) !important;
+}
+.gradient-red {
+  background: linear-gradient(135deg, #ef4444 0%, #f87171 100%) !important;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important;
+}
+.gradient-cyan {
+  background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%) !important;
+  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4) !important;
+}
+.gradient-yellow {
+  background: linear-gradient(135deg, #fbbf24 0%, #fcd34d 100%) !important;
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4) !important;
+}
+.gradient-teal {
+  background: linear-gradient(135deg, #14b8a6 0%, #2dd4bf 100%) !important;
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4) !important;
+}
+.gradient-indigo {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4) !important;
+}
+.gradient-amber {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%) !important;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4) !important;
+}
+.gradient-lime {
+  background: linear-gradient(135deg, #84cc16 0%, #a3e635 100%) !important;
+  box-shadow: 0 6px 20px rgba(132, 204, 22, 0.4) !important;
+}
+.gradient-pink {
+  background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%) !important;
+  box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4) !important;
+}
+.gradient-rose {
+  background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%) !important;
+  box-shadow: 0 6px 20px rgba(244, 63, 94, 0.4) !important;
+}
+.gradient-gray {
+  background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%) !important;
+  box-shadow: 0 6px 20px rgba(107, 114, 128, 0.3) !important;
+}
+
+.sidebar-nav {
+  padding: 1rem 0 !important;
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.nav-section {
+  margin-bottom: 1.5rem !important;
+}
+
+.nav-menu {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.nav-item {
+  margin-bottom: 4px !important;
+}
+
+.user-profile-modern {
+  display: flex !important;
+  align-items: center !important;
+  padding: 1.5rem !important;
+  border-bottom: 1px solid #2d3748 !important;
+}
+
+.avatar-circle {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: white !important;
+  margin-right: 12px !important;
+}
+
+.role-badge {
+  background: linear-gradient(135deg, #06b6d4, #8b5cf6) !important;
+  color: #ffffff !important;
+  padding: 3px 10px !important;
+  border-radius: 6px !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3) !important;
+}
+
+/* Sidebar Brand */
+.sidebar-brand {
+  display: flex !important;
+  align-items: center !important;
+  padding: 18px 20px 14px 20px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  gap: 10px !important;
+  flex-shrink: 0 !important;
+}
+
+.sidebar-brand-icon {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #ffffff !important;
+  font-size: 18px !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+}
+
+.sidebar-brand-text {
+  font-family: 'Poppins', sans-serif !important;
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.3px !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  white-space: nowrap !important;
+  transition: opacity 0.2s ease, width 0.2s ease !important;
+}
+
+/* Hide brand text when sidebar is collapsed */
+.modern-sidebar.collapsed .sidebar-brand {
+  justify-content: center !important;
+  padding: 12px 0 10px 0 !important;
+}
+
+.modern-sidebar.collapsed .sidebar-brand-text {
+  display: none !important;
+}
+
+.sidebar-footer {
+  margin-top: auto !important;
+  padding: 1rem !important;
+  border-top: 1px solid #e2e8f0 !important;
+  position: relative !important;
+  flex-shrink: 0 !important;
+  background: rgba(248, 250, 252, 0.8) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.sidebar-footer::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 20% !important;
+  width: 60% !important;
+  height: 2px !important;
+  background: linear-gradient(to right, transparent, #06b6d4, #8b5cf6, transparent) !important;
+}
+
+.logout-btn-modern {
+  display: flex !important;
+  align-items: center !important;
+  padding: 12px 16px !important;
+  border-radius: 12px !important;
+  color: #f87171 !important;
+  text-decoration: none !important;
+  width: 100% !important;
+  transition: all 0.3s ease !important;
+  background: rgba(248, 113, 113, 0.05) !important;
+  border: 1px solid rgba(248, 113, 113, 0.2) !important;
+}
+
+.logout-btn-modern:hover {
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.15), rgba(251, 113, 133, 0.15)) !important;
+  color: #ffffff !important;
+  transform: translateX(4px) !important;
+  box-shadow: 0 6px 20px rgba(248, 113, 113, 0.3) !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.4) !important;
+}
+
+.logout-btn-modern .nav-text {
+  margin-left: 12px !important;
+  font-weight: 500 !important;
+}
+
+/* Main content removed - defined below with proper layout control */
+
+/* Desktop Sidebar Toggle Button Styles */
+.desktop-sidebar-toggle {
+  background: none !important;
+  border: none !important;
+  color: #64748b !important;
+  font-size: 18px !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  transition: all 0.3s ease !important;
+  margin-right: 15px !important;
+}
+
+.desktop-sidebar-toggle:hover {
+  background: rgba(102, 126, 234, 0.1) !important;
+  color: #3b82f6 !important;
+  transform: scale(1.05) !important;
+}
+
+/* Collapsed Sidebar - STRICT 52px width, NO icon scaling */
+.modern-sidebar.collapsed {
+  width: 52px !important; /* STRICT narrow width */
+  min-width: 52px !important;
+  max-width: 52px !important;
+  overflow: hidden !important;
+  padding: 0 !important; /* NO padding */
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.modern-sidebar.collapsed .sidebar-nav {
+  padding: 8px 0 !important; /* Minimal vertical padding only */
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.modern-sidebar.collapsed .nav-text {
+  display: none !important; /* REMOVE text completely */
+}
+
+.modern-sidebar.collapsed .nav-section-title {
+  display: none !important; /* REMOVE section titles */
+}
+
+.modern-sidebar.collapsed .nav-section {
+  margin: 0 !important; /* NO margin */
+  width: 100% !important;
+}
+
+.modern-sidebar.collapsed .nav-menu {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding: 0 !important; /* NO padding */
+  margin: 0 !important; /* NO margin */
+}
+
+.modern-sidebar.collapsed .nav-link-modern {
+  margin: 2px 0 !important; /* Minimal vertical spacing */
+  padding: 6px !important; /* Small click area padding */
+  justify-content: center !important;
+  display: flex !important;
+  align-items: center !important;
+  min-height: 40px !important;
+  width: 40px !important; /* Tight fit around icon */
+  border-radius: 8px !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.modern-sidebar.collapsed .nav-icon-modern {
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* CRITICAL: Icons MUST stay EXACT same size as expanded */
+.modern-sidebar.collapsed .icon-bg {
+  margin: 0 !important;
+  width: 36px !important; /* EXACT same as expanded */
+  height: 36px !important; /* EXACT same as expanded */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 10px !important;
+  transform: scale(1) !important; /* NO scaling */
+  font-size: 1rem !important; /* Lock font size */
+}
+
+/* PREVENT any icon resizing */
+.modern-sidebar.collapsed .icon-bg i,
+.modern-sidebar.collapsed .icon-bg svg,
+.modern-sidebar.collapsed .icon-bg .bi,
+.modern-sidebar.collapsed .icon-bg .fas,
+.modern-sidebar.collapsed .icon-bg .fa {
+  font-size: 1rem !important; /* LOCK icon font size */
+  width: auto !important;
+  height: auto !important;
+  transform: none !important; /* NO transform */
+  scale: 1 !important; /* NO scale */
+}
+
+.modern-sidebar.collapsed .dropdown-arrow {
+  display: none !important;
+}
+
+.modern-sidebar.collapsed .submenu {
+  display: none !important;
+}
+
+.modern-sidebar.collapsed .dropdown-toggle[data-bs-toggle="collapse"] {
+  pointer-events: none !important;
+}
+
+/* CRITICAL: Main content MUST use ALL available space */
+.main-content {
+  position: absolute !important;
+  left: 260px !important;
+  right: 0 !important;
+  top: 70px !important;
+  bottom: 0 !important;
+  padding: 2rem !important;
+  transition: left 0.3s ease !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* When sidebar is collapsed, main content expands automatically */
+body.sidebar-collapsed .main-content {
+  left: 52px !important; /* Match STRICT collapsed sidebar width */
+  width: calc(100% - 52px) !important; /* Use all available space */
+}
+
+/* Tooltip for collapsed sidebar items */
+.modern-sidebar.collapsed .nav-link-modern {
+  position: relative !important;
+}
+
+.modern-sidebar.collapsed .nav-link-modern:hover::after {
+  content: attr(data-tooltip) !important;
+  position: absolute !important;
+  left: calc(100% + 15px) !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: #1e293b !important;
+  color: white !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  z-index: 9999 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  pointer-events: none !important;
+}
+
+.modern-sidebar.collapsed .nav-link-modern:hover::before {
+  content: '' !important;
+  position: absolute !important;
+  left: calc(100% + 5px) !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  border: 5px solid transparent !important;
+  border-right-color: #1e293b !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+}
+
+/* Responsive behavior */
+@media (max-width: 991.98px) {
+  .desktop-sidebar-toggle {
+    display: none !important;
+  }
+
+  .modern-sidebar.collapsed {
+    width: 260px !important;
+    transform: translateX(-100%) !important;
+  }
+
+  .modern-sidebar.collapsed .nav-text {
+    opacity: 1 !important;
+    width: auto !important;
+    margin-left: 12px !important;
+  }
+
+  .modern-sidebar.collapsed .nav-section-title {
+    opacity: 1 !important;
+    height: auto !important;
+    padding: 20px 24px 8px 24px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .modern-sidebar.collapsed .nav-section-title::after {
+    display: block !important;
+  }
+
+  .modern-sidebar.collapsed .nav-link-modern {
+    margin: 6px 12px !important;
+    padding: 12px 20px !important;
+    justify-content: flex-start !important;
+  }
+
+  .modern-sidebar.collapsed .icon-bg {
+    margin-right: 12px !important;
+  }
+
+  .modern-sidebar.collapsed .dropdown-arrow {
+    opacity: 1 !important;
+    width: auto !important;
+  }
+
+  .modern-sidebar.collapsed .submenu {
+    display: block !important;
+  }
+
+  /* Mobile: Reset to normal layout */
+  .main-content {
+    position: relative !important;
+    left: 0 !important;
+    right: auto !important;
+    top: 0 !important;
+    bottom: auto !important;
+    margin-left: 0 !important;
+    margin-top: 70px !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  body.sidebar-collapsed .main-content {
+    position: relative !important;
+    left: 0 !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Mobile: Force normal sidebar width */
+  .modern-sidebar.collapsed {
+    width: 260px !important;
+  }
+
+  /* Mobile-specific collapsed sidebar behavior */
+  .modern-sidebar.mobile-open {
+    transform: translateX(0) !important;
+  }
+}
+
+/* Dropdown and Submenu Styles */
+.dropdown-arrow {
+  transition: transform 0.3s ease !important;
+  font-size: 12px !important;
+  color: #64748b !important;
+}
+
+.dropdown-toggle[aria-expanded="true"] .dropdown-arrow {
+  transform: rotate(90deg) !important;
+  color: #3b82f6 !important;
+}
+
+.submenu {
+  margin-left: 1rem !important;
+  margin-top: 0.5rem !important;
+  border-left: 2px solid #e2e8f0 !important;
+  transition: all 0.3s ease !important;
+}
+
+.submenu-list {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.submenu-link {
+  padding: 8px 16px !important;
+  margin: 2px 8px !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease !important;
+}
+
+.submenu-link:hover {
+  background: rgba(59, 130, 246, 0.1) !important;
+  color: #3b82f6 !important;
+  transform: translateX(4px) !important;
+}
+
+.submenu-link.active {
+  background: rgba(59, 130, 246, 0.15) !important;
+  color: #3b82f6 !important;
+  font-weight: 600 !important;
+}
+
+.submenu-bullet {
+  margin-right: 8px !important;
+  font-size: 16px !important;
+  color: #64748b !important;
+  transition: color 0.2s ease !important;
+}
+
+.submenu-link:hover .submenu-bullet,
+.submenu-link.active .submenu-bullet {
+  color: #3b82f6 !important;
+}
+
+/* Insurance submenu icons styling */
+.submenu-link i {
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+}
+
+.submenu-link:hover i {
+  transform: scale(1.1) !important;
+}
+
+.submenu-link.disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.submenu-link.disabled:hover {
+  background: transparent !important;
+  transform: none !important;
+}
+
+.dropdown-menu-item .nav-link-modern {
+  position: relative !important;
+}
+
+.dropdown-toggle:hover .dropdown-arrow {
+  color: #3b82f6 !important;
+}
+
+/* AI Assistant Pulse Animation */
+.ai-pulse-indicator {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(45deg, #00ff88, #00ccff);
+  border-radius: 50%;
+  animation: aiPulse 2s infinite;
+  box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.3);
+}
+
+@keyframes aiPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* AI Assistant Hover Effects */
+.nav-link-modern:has(.ai-pulse-indicator):hover .icon-bg {
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%) !important;
+  transform: scale(1.1) rotate(5deg) !important;
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5) !important;
+}
+
+.nav-link-modern:has(.ai-pulse-indicator):hover .ai-pulse-indicator {
+  animation-duration: 0.8s;
+  background: linear-gradient(45deg, #ffffff, #f0f0f0);
+}
+
+/* =========================================================
+   Dark Mode — defined here (same <style> block) so they
+   always win over the light-theme rules above via
+   higher specificity ([0,2,0] vs [0,1,0]).
+   ========================================================= */
+[data-theme="dark"] .modern-sidebar {
+  background: linear-gradient(180deg, #1a1d2e 0%, #161827 100%) !important;
+  border-right: 2px solid #2d3154 !important;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .nav-link-modern {
+  background: rgba(30, 33, 48, 0.45) !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme="dark"] .nav-link-modern:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.18) 0%, rgba(139, 92, 246, 0.18) 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.15) !important;
+}
+
+[data-theme="dark"] .nav-link-modern.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35) !important;
+}
+
+[data-theme="dark"] .nav-text {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+[data-theme="dark"] .nav-link-modern:hover .nav-text,
+[data-theme="dark"] .nav-link-modern.active .nav-text {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .nav-section-title {
+  color: rgba(149, 171, 255, 0.75) !important;
+}
+
+[data-theme="dark"] .nav-section-title::after {
+  background: linear-gradient(to right, #818cf8, #a78bfa) !important;
+}
+
+[data-theme="dark"] .sidebar-brand {
+  border-bottom: 1px solid #2d3154 !important;
+}
+
+[data-theme="dark"] .sidebar-footer {
+  background: rgba(22, 24, 39, 0.9) !important;
+  border-top: 1px solid #2d3154 !important;
+}
+
+[data-theme="dark"] .submenu {
+  border-left: 2px solid #3a3f6b !important;
+}
+
+[data-theme="dark"] .submenu-link {
+  color: rgba(255, 255, 255, 0.68) !important;
+  background: transparent !important;
+}
+
+[data-theme="dark"] .submenu-link:hover {
+  background: rgba(99, 102, 241, 0.12) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .submenu-link.active {
+  background: rgba(99, 102, 241, 0.2) !important;
+  color: #a5b4fc !important;
+}
+
+[data-theme="dark"] .submenu-bullet {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+[data-theme="dark"] .dropdown-arrow {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+[data-theme="dark"] .desktop-sidebar-toggle {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+[data-theme="dark"] .desktop-sidebar-toggle:hover {
+  background: rgba(99, 102, 241, 0.15) !important;
+  color: #a5b4fc !important;
+}
+</style>
+
+<div class="modern-sidebar" id="sidebar" data-controller="sidebar">
+  <!-- Sidebar Toggle Button for Mobile -->
+  <button class="sidebar-toggle d-lg-none" onclick="toggleSidebar()">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Navigation Menu -->
+  <nav class="sidebar-nav">
+    <!-- Forum Platform: Super Admin -->
+    <% if current_user&.super_admin? %>
+    <div class="nav-section">
+      <div class="nav-section-title">Platform</div>
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <%= link_to admin_platform_dashboard_path, class: "nav-link-modern #{'active' if current_page?(admin_platform_dashboard_path)}", data: { tooltip: "Dashboard" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-indigo"><i class="bi bi-speedometer2"></i></div></div>
+            <span class="nav-text">Dashboard</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to admin_platform_analytics_path, class: "nav-link-modern #{'active' if current_page?(admin_platform_analytics_path)}", data: { tooltip: "Analytics" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-purple"><i class="bi bi-bar-chart-line-fill"></i></div></div>
+            <span class="nav-text">Analytics</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to admin_platform_reports_path, class: "nav-link-modern #{'active' if current_page?(admin_platform_reports_path)}", data: { tooltip: "Reports" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-teal"><i class="bi bi-file-earmark-bar-graph"></i></div></div>
+            <span class="nav-text">Reports</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to admin_forums_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/forums')}", data: { tooltip: "Forums" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-blue"><i class="bi bi-diagram-3"></i></div></div>
+            <span class="nav-text">Forums</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to admin_business_plans_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/business_plans')}", data: { tooltip: "Business Plans" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-amber"><i class="bi bi-award"></i></div></div>
+            <span class="nav-text">Business Plans</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to admin_forum_requests_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/forum_requests')}", data: { tooltip: "Forum Requests" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-violet"><i class="bi bi-inbox"></i></div></div>
+            <span class="nav-text">Forum Requests</span>
+            <% pending_count = ForumRequest.pending.count %>
+            <% if pending_count > 0 %><span class="badge bg-danger ms-auto"><%= pending_count %></span><% end %>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to admin_platform_announcements_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/platform_announcements')}", data: { tooltip: "Announcements" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-cyan"><i class="bi bi-megaphone"></i></div></div>
+            <span class="nav-text">Announcements</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to admin_platform_support_tickets_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/platform_support_tickets')}", data: { tooltip: "Support Tickets" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-rose"><i class="bi bi-life-preserver"></i></div></div>
+            <span class="nav-text">Support Tickets</span>
+          <% end %>
+        </li>
+      </ul>
+    </div>
+    <% end %>
+
+    <!-- Forum Platform: Forum Admin / Chapter Admin -->
+    <% if current_user&.forum_admin? || current_user&.chapter_admin? %>
+    <div class="nav-section">
+      <div class="nav-section-title"><%= current_user.chapter_admin? ? "Chapter Admin" : "Forum Admin" %></div>
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <%= link_to forum_portal_dashboard_path, class: "nav-link-modern #{'active' if current_page?(forum_portal_dashboard_path)}", data: { tooltip: "Dashboard" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-blue"><i class="bi bi-speedometer2"></i></div></div>
+            <span class="nav-text">Dashboard</span>
+          <% end %>
+        </li>
+        <% if current_user.forum_admin? %>
+        <li class="nav-item">
+          <%= link_to forum_portal_chapters_path, class: "nav-link-modern #{'active' if request.path.include?('/forum_portal/chapters')}", data: { tooltip: "Chapters" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-indigo"><i class="bi bi-diagram-3"></i></div></div>
+            <span class="nav-text">Chapters</span>
+          <% end %>
+        </li>
+        <% end %>
+        <li class="nav-item">
+          <%= link_to forum_portal_members_path, class: "nav-link-modern #{'active' if request.path.include?('/forum_portal/members')}", data: { tooltip: "Members" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-green"><i class="bi bi-people-fill"></i></div></div>
+            <span class="nav-text">Members</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to forum_portal_events_path, class: "nav-link-modern #{'active' if request.path.include?('/forum_portal/events')}", data: { tooltip: "Events" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-teal"><i class="bi bi-calendar-event"></i></div></div>
+            <span class="nav-text">Events</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to forum_portal_announcements_path, class: "nav-link-modern #{'active' if request.path.include?('/forum_portal/announcements')}", data: { tooltip: "Announcements" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-cyan"><i class="bi bi-megaphone"></i></div></div>
+            <span class="nav-text">Announcements</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to forum_portal_support_tickets_path, class: "nav-link-modern #{'active' if request.path.include?('/forum_portal/support_tickets')}", data: { tooltip: "Support Tickets" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-rose"><i class="bi bi-life-preserver"></i></div></div>
+            <span class="nav-text">Support Tickets</span>
+          <% end %>
+        </li>
+      </ul>
+    </div>
+    <% end %>
+
+    <!-- Forum Platform: Member -->
+    <% if current_user&.member? %>
+    <div class="nav-section">
+      <div class="nav-section-title">My Forum</div>
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <%= link_to member_portal_dashboard_path, class: "nav-link-modern #{'active' if current_page?(member_portal_dashboard_path)}", data: { tooltip: "Dashboard" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-blue"><i class="bi bi-speedometer2"></i></div></div>
+            <span class="nav-text">Dashboard</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to member_portal_events_path, class: "nav-link-modern #{'active' if request.path.include?('/member_portal/events')}", data: { tooltip: "Events" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-teal"><i class="bi bi-calendar-event"></i></div></div>
+            <span class="nav-text">Events</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to member_portal_announcements_path, class: "nav-link-modern #{'active' if request.path.include?('/member_portal/announcements')}", data: { tooltip: "Announcements" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-cyan"><i class="bi bi-megaphone"></i></div></div>
+            <span class="nav-text">Announcements</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to member_portal_support_tickets_path, class: "nav-link-modern #{'active' if request.path.include?('/member_portal/support_tickets')}", data: { tooltip: "My Tickets" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-rose"><i class="bi bi-life-preserver"></i></div></div>
+            <span class="nav-text">My Tickets</span>
+          <% end %>
+        </li>
+      </ul>
+    </div>
+    <% end %>
+
+    <!-- Main Menu Section -->
+    <% if false # show_sidebar_section?(['dashboard', 'analytics', 'customers', 'sub_agents', 'distributors', 'leads', 'appointments']) %>
+    <div class="nav-section">
+      <div class="nav-section-title">Main Menu</div>
+      <ul class="nav-menu">
+        <!-- Dashboard -->
+        <% if false # show_sidebar_item?('dashboard') %>
+          <li class="nav-item">
+            <%= link_to dashboard_path, class: "nav-link-modern #{'active' if current_page?(dashboard_path)}", data: { tooltip: "Dashboard" } do %>
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-blue">
+                  <i class="bi bi-speedometer2"></i>
+                </div>
+              </div>
+              <span class="nav-text">Dashboard</span>
+              <div class="nav-indicator"></div>
+            <% end %>
+          </li>
+        <% end %>
+
+        <!-- Analytics (disabled: only Dashboard + Clients are active in this build) -->
+        <% if false # show_sidebar_item?('analytics') %>
+          <li class="nav-item">
+            <%= link_to admin_analytics_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/analytics')}", data: { tooltip: "Analytics" } do %>
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-purple">
+                  <i class="bi bi-bar-chart-line-fill"></i>
+                </div>
+              </div>
+              <span class="nav-text">Analytics</span>
+              <div class="nav-indicator"></div>
+            <% end %>
+          </li>
+        <% end %>
+
+        <!-- Leads (disabled) -->
+        <% if false # show_sidebar_item?('leads') %>
+          <li class="nav-item">
+            <%= link_to admin_leads_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/leads')}", data: { tooltip: "Leads" } do %>
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-pink">
+                  <i class="bi bi-funnel-fill"></i>
+                </div>
+              </div>
+              <span class="nav-text">Leads</span>
+              <div class="nav-indicator"></div>
+            <% end %>
+          </li>
+        <% end %>
+
+        <!-- Appointments (disabled) -->
+        <% if false # show_sidebar_item?('appointments') %>
+        <li class="nav-item">
+          <%= link_to admin_appointments_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/appointments')}", data: { tooltip: "Appointments" } do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-indigo">
+                <i class="bi bi-calendar3"></i>
+              </div>
+            </div>
+            <span class="nav-text">Appointments</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+        <% end %>
+
+        <!-- Clients (renamed from Customers) -->
+        <% if false # show_sidebar_item?('customers') %>
+          <li class="nav-item">
+            <%= link_to admin_customers_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/customers')}", data: { tooltip: "Clients" } do %>
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-green">
+                  <i class="bi bi-people-fill"></i>
+                </div>
+              </div>
+              <span class="nav-text">Clients</span>
+              <div class="nav-indicator"></div>
+            <% end %>
+          </li>
+        <% end %>
+
+        <!-- Affiliates (disabled) -->
+        <% if false # show_sidebar_item?('sub_agents') %>
+          <li class="nav-item">
+            <%= link_to admin_sub_agents_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/affiliates') || request.path.include?('/admin/sub_agents')}", data: { tooltip: "Affiliates" } do %>
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-violet">
+                  <i class="bi bi-people"></i>
+                </div>
+              </div>
+              <span class="nav-text">Affiliates</span>
+              <div class="nav-indicator"></div>
+            <% end %>
+          </li>
+        <% end %>
+
+        <!-- Ambassadors (disabled) -->
+        <% if false # show_sidebar_item?('distributors') %>
+          <li class="nav-item">
+            <%= link_to admin_distributors_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/ambassadors') || request.path.include?('/admin/distributors')}" do %>
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-indigo">
+                  <i class="bi bi-diagram-3"></i>
+                </div>
+              </div>
+              <span class="nav-text">Ambassadors</span>
+              <div class="nav-indicator"></div>
+            <% end %>
+          </li>
+        <% end %>
+
+      </ul>
+    </div>
+    <% end %>
+
+    <!-- Services Section -->
+    <% if false # show_sidebar_section?(['services', 'life_insurance', 'health_insurance', 'motor_insurance', 'other_insurance', 'investments', 'taxation', 'loans', 'travel', 'credit_card']) %>
+    <div class="nav-section">
+      <div class="nav-section-title">Services</div>
+      <ul class="nav-menu">
+
+        <!-- Insurance Submenu -->
+        <li class="nav-item dropdown-menu-item">
+          <div class="nav-link-modern dropdown-toggle" data-bs-toggle="collapse" data-bs-target="#insurance-menu" aria-expanded="false" style="cursor: pointer;" data-tooltip="Insurance">
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-cyan">
+                <i class="bi bi-shield-check"></i>
+              </div>
+            </div>
+            <span class="nav-text">Insurance</span>
+            <i class="bi bi-chevron-right dropdown-arrow ms-auto"></i>
+          </div>
+          <div class="collapse submenu" id="insurance-menu">
+            <ul class="nav-menu submenu-list">
+              <!-- Life Insurance -->
+              <% if show_sidebar_item?('life_insurance') %>
+                <li class="nav-item">
+                  <%= link_to admin_life_insurances_path, class: "nav-link-modern submenu-link #{'active' if request.path.include?('/life_insurances')}" do %>
+                    <i class="bi bi-heart-fill text-danger me-2"></i>
+                    <span class="nav-text">Life</span>
+                  <% end %>
+                </li>
+              <% end %>
+
+              <!-- Health Insurance -->
+              <% if show_sidebar_item?('health_insurance') %>
+                <li class="nav-item">
+                  <%= link_to admin_health_insurances_path, class: "nav-link-modern submenu-link #{'active' if request.path.include?('/health_insurances')}" do %>
+                    <i class="bi bi-heart-pulse-fill text-success me-2"></i>
+                    <span class="nav-text">Health</span>
+                  <% end %>
+                </li>
+              <% end %>
+
+              <!-- Motor Insurance -->
+              <% if show_sidebar_item?('motor_insurance') %>
+                <li class="nav-item">
+                  <%= link_to admin_motor_insurances_path, class: "nav-link-modern submenu-link #{'active' if request.path.include?('/motor_insurances')}" do %>
+                    <i class="bi bi-car-front-fill text-primary me-2"></i>
+                    <span class="nav-text">Motor</span>
+                  <% end %>
+                </li>
+              <% end %>
+
+              <!-- General Insurance -->
+              <% if show_sidebar_item?('other_insurance') %>
+                <li class="nav-item">
+                  <%= link_to admin_other_insurances_path, class: "nav-link-modern submenu-link #{'active' if request.path.include?('/other_insurances')}" do %>
+                    <i class="bi bi-shield-plus text-warning me-2"></i>
+                    <span class="nav-text">General</span>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        </li>
+
+        <!-- Investments Submenu -->
+        <% if show_sidebar_item?('investments') %>
+        <li class="nav-item dropdown-menu-item">
+          <div class="nav-link-modern dropdown-toggle" data-bs-toggle="collapse" data-bs-target="#investments-menu" aria-expanded="false" style="cursor: pointer;">
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-amber">
+                <i class="bi bi-graph-up"></i>
+              </div>
+            </div>
+            <span class="nav-text">Investments</span>
+            <i class="bi bi-chevron-right dropdown-arrow ms-auto"></i>
+          </div>
+          <div class="collapse submenu" id="investments-menu">
+            <ul class="nav-menu submenu-list">
+              <li class="nav-item">
+                <%= link_to admin_mutual_funds_path, class: "nav-link-modern submenu-link #{'active' if request.path.include?('/investments/mutual-funds')}" do %>
+                  <i class="bi bi-pie-chart-fill text-success me-2"></i>
+                  <span class="nav-text">Mutual Fund</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to admin_client_services_path(service_type: 'investments_fd'), class: "nav-link-modern submenu-link #{'active' if params[:service_type] == 'investments_fd'}" do %>
+                  <i class="bi bi-bank text-primary me-2"></i>
+                  <span class="nav-text">FD</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to admin_client_services_path(service_type: 'investments_other'), class: "nav-link-modern submenu-link #{'active' if params[:service_type] == 'investments_other'}" do %>
+                  <i class="bi bi-collection text-warning me-2"></i>
+                  <span class="nav-text">Other</span>
+                <% end %>
+              </li>
+            </ul>
+          </div>
+        </li>
+        <% end %>
+
+        <!-- Taxation Submenu -->
+        <% if show_sidebar_item?('taxation') %>
+        <li class="nav-item dropdown-menu-item">
+          <div class="nav-link-modern dropdown-toggle" data-bs-toggle="collapse" data-bs-target="#taxation-menu" aria-expanded="false" style="cursor: pointer;">
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-orange">
+                <i class="bi bi-calculator"></i>
+              </div>
+            </div>
+            <span class="nav-text">Taxation</span>
+            <i class="bi bi-chevron-right dropdown-arrow ms-auto"></i>
+          </div>
+          <div class="collapse submenu" id="taxation-menu">
+            <ul class="nav-menu submenu-list">
+              <li class="nav-item">
+                <%= link_to admin_client_services_path(service_type: 'taxation_itr'), class: "nav-link-modern submenu-link #{'active' if request.path.include?('/admin/client_services') && params[:service_type] == 'taxation_itr'}" do %>
+                  <i class="bi bi-file-text text-info me-2"></i>
+                  <span class="nav-text">ITR</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to admin_client_services_path(service_type: 'taxation_tax_planning'), class: "nav-link-modern submenu-link #{'active' if request.path.include?('/admin/client_services') && params[:service_type] == 'taxation_tax_planning'}" do %>
+                  <i class="bi bi-calendar-check text-success me-2"></i>
+                  <span class="nav-text">Tax Planning</span>
+                <% end %>
+              </li>
+            </ul>
+          </div>
+        </li>
+        <% end %>
+
+        <!-- Loans Submenu -->
+        <% if show_sidebar_item?('loans') %>
+        <li class="nav-item dropdown-menu-item">
+          <div class="nav-link-modern dropdown-toggle" data-bs-toggle="collapse" data-bs-target="#loans-menu" aria-expanded="false" style="cursor: pointer;">
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-pink">
+                <i class="bi bi-cash-stack"></i>
+              </div>
+            </div>
+            <span class="nav-text">Loans</span>
+            <i class="bi bi-chevron-right dropdown-arrow ms-auto"></i>
+          </div>
+          <div class="collapse submenu" id="loans-menu">
+            <ul class="nav-menu submenu-list">
+              <li class="nav-item">
+                <%= link_to admin_client_services_path(service_type: 'loans_personal'), class: "nav-link-modern submenu-link #{'active' if params[:service_type] == 'loans_personal'}" do %>
+                  <i class="bi bi-person-fill text-primary me-2"></i>
+                  <span class="nav-text">Personal</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to admin_client_services_path(service_type: 'loans_home'), class: "nav-link-modern submenu-link #{'active' if params[:service_type] == 'loans_home'}" do %>
+                  <i class="bi bi-house-fill text-success me-2"></i>
+                  <span class="nav-text">Home</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to admin_client_services_path(service_type: 'loans_mortgage'), class: "nav-link-modern submenu-link #{'active' if params[:service_type] == 'loans_mortgage'}" do %>
+                  <i class="bi bi-building text-warning me-2"></i>
+                  <span class="nav-text">Mortgage</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to admin_client_services_path(service_type: 'loans_business'), class: "nav-link-modern submenu-link #{'active' if params[:service_type] == 'loans_business'}" do %>
+                  <i class="bi bi-briefcase-fill text-info me-2"></i>
+                  <span class="nav-text">Business</span>
+                <% end %>
+              </li>
+            </ul>
+          </div>
+        </li>
+        <% end %>
+
+        <!-- Travel Submenu -->
+        <% if show_sidebar_item?('travel') %>
+        <li class="nav-item dropdown-menu-item">
+          <div class="nav-link-modern dropdown-toggle" data-bs-toggle="collapse" data-bs-target="#travel-menu" aria-expanded="false" style="cursor: pointer;">
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-emerald">
+                <i class="bi bi-airplane"></i>
+              </div>
+            </div>
+            <span class="nav-text">Travel</span>
+            <i class="bi bi-chevron-right dropdown-arrow ms-auto"></i>
+          </div>
+          <div class="collapse submenu" id="travel-menu">
+            <ul class="nav-menu submenu-list">
+              <li class="nav-item">
+                <%= link_to admin_client_services_path(service_type: 'travel_domestic'), class: "nav-link-modern submenu-link #{'active' if params[:service_type] == 'travel_domestic'}" do %>
+                  <i class="bi bi-geo-alt-fill text-primary me-2"></i>
+                  <span class="nav-text">Domestic</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to admin_client_services_path(service_type: 'travel_international'), class: "nav-link-modern submenu-link #{'active' if params[:service_type] == 'travel_international'}" do %>
+                  <i class="bi bi-globe text-success me-2"></i>
+                  <span class="nav-text">International</span>
+                <% end %>
+              </li>
+            </ul>
+          </div>
+        </li>
+        <% end %>
+
+        <!-- Credit Card Submenu -->
+        <% if show_sidebar_item?('credit_card') %>
+        <li class="nav-item dropdown-menu-item">
+          <div class="nav-link-modern dropdown-toggle" data-bs-toggle="collapse" data-bs-target="#credit-card-menu" aria-expanded="false" style="cursor: pointer;">
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-teal">
+                <i class="bi bi-credit-card"></i>
+              </div>
+            </div>
+            <span class="nav-text">Credit Card</span>
+            <i class="bi bi-chevron-right dropdown-arrow ms-auto"></i>
+          </div>
+          <div class="collapse submenu" id="credit-card-menu">
+            <ul class="nav-menu submenu-list">
+              <li class="nav-item">
+                <%= link_to admin_client_services_path(service_type: 'credit_card_rewards'), class: "nav-link-modern submenu-link #{'active' if params[:service_type] == 'credit_card_rewards'}" do %>
+                  <i class="bi bi-star-fill text-warning me-2"></i>
+                  <span class="nav-text">Rewards Card</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to admin_client_services_path(service_type: 'credit_card_business'), class: "nav-link-modern submenu-link #{'active' if params[:service_type] == 'credit_card_business'}" do %>
+                  <i class="bi bi-briefcase-fill text-info me-2"></i>
+                  <span class="nav-text">Business Card</span>
+                <% end %>
+              </li>
+              <li class="nav-item">
+                <%= link_to admin_client_services_path(service_type: 'credit_card_travel'), class: "nav-link-modern submenu-link #{'active' if params[:service_type] == 'credit_card_travel'}" do %>
+                  <i class="bi bi-airplane-fill text-primary me-2"></i>
+                  <span class="nav-text">Travel Card</span>
+                <% end %>
+              </li>
+            </ul>
+          </div>
+        </li>
+        <% end %>
+
+      </ul>
+    </div>
+    <% end %>
+
+    <!-- Vendor Section (renamed from Business Partners) -->
+    <% if false # show_sidebar_section?(['brokers', 'agency_codes']) %>
+    <div class="nav-section">
+      <div class="nav-section-title">Vendor</div>
+      <ul class="nav-menu">
+        <!-- Brokers -->
+        <% if show_sidebar_item?('brokers') %>
+          <li class="nav-item">
+            <%= link_to admin_brokers_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/brokers')}" do %>
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-emerald">
+                  <i class="bi bi-briefcase"></i>
+                </div>
+              </div>
+              <span class="nav-text">Broker</span>
+              <div class="nav-indicator"></div>
+            <% end %>
+          </li>
+        <% end %>
+
+        <!-- Agency Code -->
+        <% if show_sidebar_item?('agency_codes') %>
+          <li class="nav-item">
+            <%= link_to admin_agency_codes_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/agency_codes')}" do %>
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-blue">
+                  <i class="bi bi-code-slash"></i>
+                </div>
+              </div>
+              <span class="nav-text">Agency Code</span>
+              <div class="nav-indicator"></div>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+    <% end %>
+
+    <!-- Payouts Section -->
+    <% if false # show_sidebar_section?(['payouts', 'affiliate_payouts', 'distributor_payouts']) %>
+    <div class="nav-section">
+      <div class="nav-section-title">Payouts</div>
+      <ul class="nav-menu">
+
+        <!-- Commission Tracking -->
+        <% if show_sidebar_item?('payouts') %>
+          <li class="nav-item">
+            <%= link_to admin_commission_tracking_index_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/commission_tracking')}" do %>
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-purple">
+                  <i class="bi bi-diagram-3"></i>
+                </div>
+              </div>
+              <span class="nav-text">Commissions</span>
+              <div class="nav-indicator"></div>
+            <% end %>
+          </li>
+        <% end %>
+
+        <!-- Affiliate Payout -->
+        <% if show_sidebar_item?('affiliate_payouts') %>
+          <li class="nav-item">
+            <%= link_to admin_affiliate_payouts_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/affiliate_payouts')}" do %>
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-rose">
+                  <i class="bi bi-person-heart"></i>
+                </div>
+              </div>
+              <span class="nav-text">Affiliate Payout</span>
+              <div class="nav-indicator"></div>
+            <% end %>
+          </li>
+        <% end %>
+
+        <!-- Ambassador Payout -->
+        <% if show_sidebar_item?('distributor_payouts') %>
+          <li class="nav-item">
+            <%= link_to admin_distributor_payouts_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/distributor_payouts')}" do %>
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-lime">
+                  <i class="bi bi-building-check"></i>
+                </div>
+              </div>
+              <span class="nav-text">Ambassador Payout</span>
+              <div class="nav-indicator"></div>
+            <% end %>
+          </li>
+        <% end %>
+
+      </ul>
+    </div>
+    <% end %>
+
+    <!-- Transactions Section (renamed from Invoice) -->
+    <% if false # show_sidebar_section?(['invoices']) %>
+    <div class="nav-section">
+      <div class="nav-section-title">Transactions</div>
+      <ul class="nav-menu">
+        <!-- Invoices -->
+        <% if show_sidebar_item?('invoices') %>
+          <li class="nav-item">
+            <%= link_to admin_invoices_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/invoices')}" do %>
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-orange">
+                  <i class="bi bi-receipt"></i>
+                </div>
+              </div>
+              <span class="nav-text">Invoices</span>
+              <div class="nav-indicator"></div>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+    <% end %>
+
+
+    <!-- Reports & Analytics Section -->
+    <% if false # show_sidebar_section?(['reports', 'all_policy_reports', 'profit_reports', 'expired_insurance_reports', 'upcoming_renewal_reports', 'lead_reports']) %>
+      <div class="nav-section">
+        <div class="nav-section-title">Reports & Analytics</div>
+        <ul class="nav-menu">
+        <!-- Commission Report -->
+        <% if show_sidebar_item?('reports') %>
+        <li class="nav-item">
+          <%= link_to admin_reports_commission_reports_advanced_index_path, class: "nav-link-modern #{'active' if request.path.include?('/reports/commission_reports_advanced')}" do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-cyan">
+                <i class="bi bi-graph-up-arrow"></i>
+              </div>
+            </div>
+            <span class="nav-text">Commission Reports</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+        <% end %>
+
+        <!-- All Policy Reports -->
+        <% if show_sidebar_item?('all_policy_reports') %>
+        <li class="nav-item">
+          <%= link_to admin_reports_all_policy_reports_path, class: "nav-link-modern #{'active' if request.path.include?('/reports/all_policy_reports')}" do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-blue">
+                <i class="bi bi-file-text"></i>
+              </div>
+            </div>
+            <span class="nav-text">All Policy Reports</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+        <% end %>
+
+        <!-- Profit Reports -->
+        <% if show_sidebar_item?('profit_reports') %>
+        <li class="nav-item">
+          <%= link_to admin_reports_profit_reports_path, class: "nav-link-modern #{'active' if request.path.include?('/reports/profit_reports')}" do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-green">
+                <i class="bi bi-graph-up"></i>
+              </div>
+            </div>
+            <span class="nav-text">Profit Reports</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+        <% end %>
+
+        <!-- Expired Insurance -->
+        <% if show_sidebar_item?('expired_insurance_reports') %>
+        <li class="nav-item">
+          <%= link_to admin_reports_expired_insurance_reports_path, class: "nav-link-modern #{'active' if request.path.include?('/reports/expired_insurance_reports')}" do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-red">
+                <i class="bi bi-clock-history"></i>
+              </div>
+            </div>
+            <span class="nav-text">Expired Insurance</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+        <% end %>
+
+        <!-- Upcoming Renewal -->
+        <% if show_sidebar_item?('upcoming_renewal_reports') %>
+        <li class="nav-item">
+          <%= link_to admin_reports_upcoming_renewal_reports_path, class: "nav-link-modern #{'active' if request.path.include?('/reports/upcoming_renewal_reports')}" do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-orange">
+                <i class="bi bi-arrow-clockwise"></i>
+              </div>
+            </div>
+            <span class="nav-text">Upcoming Renewal</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+        <% end %>
+
+        <!-- Lead Reports -->
+        <% if show_sidebar_item?('lead_reports') %>
+        <li class="nav-item">
+          <%= link_to admin_reports_lead_reports_path, class: "nav-link-modern #{'active' if request.path.include?('/reports/lead_reports')}" do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-purple">
+                <i class="bi bi-person-lines-fill"></i>
+              </div>
+            </div>
+            <span class="nav-text">Lead Reports</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+        <% end %>
+
+        </ul>
+      </div>
+    <% end %>
+
+    <!-- Management Section -->
+    <% if false # show_sidebar_section?(['investors', 'client_requests', 'user_roles', 'banners', 'insurance_companies', 'management']) %>
+      <div class="nav-section">
+        <div class="nav-section-title">Management</div>
+      <ul class="nav-menu">
+
+        <!-- Investors -->
+        <% if show_sidebar_item?('investors') %>
+          <li class="nav-item">
+            <%= link_to admin_investors_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/investors')}" do %>
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-amber">
+                  <i class="bi bi-bar-chart"></i>
+                </div>
+              </div>
+              <span class="nav-text">Investors</span>
+              <div class="nav-indicator"></div>
+            <% end %>
+          </li>
+        <% end %>
+
+        <!-- Client Request -->
+        <% if show_sidebar_item?('client_requests') %>
+        <li class="nav-item">
+          <%= link_to admin_client_requests_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/client_requests')}" do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-orange">
+                <i class="bi bi-headset"></i>
+              </div>
+            </div>
+            <span class="nav-text">Client Request</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+        <% end %>
+
+        <!-- Users -->
+        <% if show_sidebar_item?('user_roles') %>
+        <li class="nav-item">
+          <%= link_to admin_settings_user_roles_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/settings/user_roles')}" do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-blue">
+                <i class="bi bi-people-fill"></i>
+              </div>
+            </div>
+            <span class="nav-text">Users</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+        <% end %>
+
+        <!-- Banner Management -->
+        <% if show_sidebar_item?('banners') %>
+        <li class="nav-item">
+          <%= link_to admin_banners_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/banners')}" do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-indigo">
+                <i class="bi bi-image-fill"></i>
+              </div>
+            </div>
+            <span class="nav-text">Banner Management</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+        <% end %>
+
+        <!-- Companies -->
+        <% if show_sidebar_item?('insurance_companies') %>
+        <li class="nav-item">
+          <%= link_to admin_insurance_companies_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/insurance_companies')}" do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-emerald">
+                <i class="bi bi-building-fill"></i>
+              </div>
+            </div>
+            <span class="nav-text">Companies</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+        <% end %>
+
+        <!-- Import Data (with dropdown submenu) -->
+        <% if show_sidebar_item?('management') %>
+          <li class="nav-item dropdown-menu-item">
+            <div class="nav-link-modern dropdown-toggle" data-bs-toggle="collapse" data-bs-target="#import-menu" aria-expanded="false" style="cursor: pointer;">
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-amber">
+                  <i class="bi bi-cloud-upload-fill"></i>
+                </div>
+              </div>
+              <span class="nav-text">Import Data</span>
+              <i class="bi bi-chevron-right dropdown-arrow ms-auto"></i>
+            </div>
+            <div class="collapse submenu" id="import-menu">
+              <ul class="nav-menu submenu-list">
+                <!-- Import Affiliates -->
+                <li class="nav-item">
+                  <%= link_to sub_agents_form_admin_imports_path, class: "nav-link-modern submenu-link #{'active' if request.path.include?('/imports/sub_agents_form')}" do %>
+                    <i class="bi bi-people text-violet me-2"></i>
+                    <span class="nav-text">Affiliate</span>
+                  <% end %>
+                </li>
+
+                <!-- Import Distributors -->
+                <li class="nav-item">
+                  <%= link_to distributors_form_admin_imports_path, class: "nav-link-modern submenu-link #{'active' if request.path.include?('/imports/distributors_form')}" do %>
+                    <i class="bi bi-diagram-3 text-indigo me-2"></i>
+                    <span class="nav-text">Distributor</span>
+                  <% end %>
+                </li>
+
+                <!-- Import Clients -->
+                <li class="nav-item">
+                  <%= link_to customers_form_admin_imports_path, class: "nav-link-modern submenu-link #{'active' if request.path.include?('/imports/customers_form')}" do %>
+                    <i class="bi bi-people-fill text-green me-2"></i>
+                    <span class="nav-text">Client</span>
+                  <% end %>
+                </li>
+
+                <!-- Import Client & Policy -->
+                <li class="nav-item dropdown-menu-item">
+                  <div class="nav-link-modern dropdown-toggle submenu-link" data-bs-toggle="collapse" data-bs-target="#client-policy-menu" aria-expanded="false" style="cursor: pointer;">
+                    <i class="bi bi-shield-check text-cyan me-2"></i>
+                    <span class="nav-text">Client & Policy</span>
+                    <i class="bi bi-chevron-right dropdown-arrow ms-auto" style="font-size: 10px;"></i>
+                  </div>
+                  <div class="collapse submenu" id="client-policy-menu" style="margin-left: 1rem;">
+                    <ul class="nav-menu submenu-list">
+                      <!-- Health Insurance -->
+                      <li class="nav-item">
+                        <%= link_to health_insurances_form_admin_imports_path, class: "nav-link-modern submenu-link #{'active' if request.path.include?('/imports/health_insurances_form')}" do %>
+                          <i class="bi bi-heart-pulse-fill text-success me-2" style="font-size: 12px;"></i>
+                          <span class="nav-text" style="font-size: 12px;">Health</span>
+                        <% end %>
+                      </li>
+
+                      <!-- Life Insurance -->
+                      <li class="nav-item">
+                        <%= link_to life_insurances_form_admin_imports_path, class: "nav-link-modern submenu-link #{'active' if request.path.include?('/imports/life_insurances_form')}" do %>
+                          <i class="bi bi-heart-fill text-danger me-2" style="font-size: 12px;"></i>
+                          <span class="nav-text" style="font-size: 12px;">Life</span>
+                        <% end %>
+                      </li>
+
+                      <!-- Motor Insurance -->
+                      <li class="nav-item">
+                        <%= link_to motor_insurances_form_admin_imports_path, class: "nav-link-modern submenu-link #{'active' if request.path.include?('/imports/motor_insurances_form')}" do %>
+                          <i class="bi bi-car-front-fill text-primary me-2" style="font-size: 12px;"></i>
+                          <span class="nav-text" style="font-size: 12px;">Motor</span>
+                        <% end %>
+                      </li>
+                    </ul>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </li>
+        <% end %>
+
+        </ul>
+      </div>
+    <% end %>
+
+
+    <!-- Settings Section -->
+    <% if false # show_sidebar_section?(['settings']) %>
+      <div class="nav-section">
+        <div class="nav-section-title">Settings</div>
+      <ul class="nav-menu">
+        <% if show_sidebar_item?('settings') %>
+
+          <!-- System Settings -->
+          <li class="nav-item">
+            <%= link_to admin_settings_system_path, class: "nav-link-modern #{'active' if request.path.include?('/admin/settings/system')}" do %>
+              <div class="nav-icon-modern">
+                <div class="icon-bg gradient-gray">
+                  <i class="bi bi-gear-fill"></i>
+                </div>
+              </div>
+              <span class="nav-text">System Settings</span>
+              <div class="nav-indicator"></div>
+            <% end %>
+          </li>
+        <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <!-- Investor Section for Investors -->
+    <% if false # current_user&.investor? %>
+    <div class="nav-section">
+      <div class="nav-section-title">Investor Portal</div>
+      <ul class="nav-menu">
+        <!-- Profit Summary -->
+        <li class="nav-item">
+          <%= link_to investor_profit_summary_path, class: "nav-link-modern #{'active' if request.path.include?('/investor/profit_summary') || request.path.include?('/summary-investor')}" do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-indigo">
+                <i class="bi bi-cash-stack"></i>
+              </div>
+            </div>
+            <span class="nav-text">Profit Summary</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+      </ul>
+    </div>
+    <% end %>
+
+    <!-- Commission Section for Ambassadors -->
+    <% if false # current_user&.ambassador? %>
+    <div class="nav-section">
+      <div class="nav-section-title">Commission</div>
+      <ul class="nav-menu">
+        <!-- My Commission Dashboard -->
+        <li class="nav-item">
+          <%= link_to ambassador_dashboard_path, class: "nav-link-modern #{'active' if request.path.include?('/ambassador/dashboard')}" do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-emerald">
+                <i class="bi bi-grid-3x3-gap-fill"></i>
+              </div>
+            </div>
+            <span class="nav-text">Commission Dashboard</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+
+        <!-- Commission Details -->
+        <li class="nav-item">
+          <%= link_to ambassador_commission_details_path, class: "nav-link-modern #{'active' if request.path.include?('/ambassador/commission_details')}" do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-cyan">
+                <i class="bi bi-list-columns-reverse"></i>
+              </div>
+            </div>
+            <span class="nav-text">Commission Details</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+
+        <!-- Payout History -->
+        <li class="nav-item">
+          <%= link_to ambassador_payout_history_path, class: "nav-link-modern #{'active' if request.path.include?('/ambassador/payout_history')}" do %>
+            <div class="nav-icon-modern">
+              <div class="icon-bg gradient-yellow">
+                <i class="bi bi-wallet2"></i>
+              </div>
+            </div>
+            <span class="nav-text">Payout History</span>
+            <div class="nav-indicator"></div>
+          <% end %>
+        </li>
+      </ul>
+    </div>
+    <% end %>
+  </nav>
+
+  <!-- Profile Section - fixed at bottom of sidebar -->
+  <% if current_user %>
+    <div class="sidebar-footer">
+      <div class="d-flex align-items-center">
+        <div class="avatar-circle">
+          <%= current_user.first_name.to_s.first.to_s.upcase.presence || "U" %>
+        </div>
+        <div class="ms-2 flex-grow-1" style="overflow: hidden; min-width: 0;">
+          <div class="fw-semibold text-truncate nav-text"><%= current_user.full_name %></div>
+          <span class="badge <%= sidebar_role_badge_class(current_user) %>"><%= sidebar_role_label(current_user) %></span>
+          <% if current_user.chapter_admin? || current_user.member? %>
+            <div class="small text-muted text-truncate nav-text mt-1"><%= current_user.chapter&.name %></div>
+          <% elsif current_user.forum_admin? %>
+            <div class="small text-muted text-truncate nav-text mt-1"><%= current_user.forum&.name %></div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

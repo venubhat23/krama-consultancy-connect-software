@@ -1,0 +1,450 @@
+<%= form_with model: [:admin, @mutual_fund], local: true, class: "needs-validation", novalidate: true,
+    id: "mutual-fund-form", html: { enctype: "multipart/form-data" } do |form| %>
+
+  <!-- Client & Agent Details -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-person me-2 text-primary"></i>
+        Client & Agent Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <% if @mutual_fund.errors.any? %>
+        <div class="alert alert-danger alert-dismissible fade show">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <strong>Please correct the following errors:</strong>
+          <ul class="mb-0 mt-2">
+            <% @mutual_fund.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
+          </ul>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% end %>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <%= form.label :customer_id, "Client Name *", class: "form-label" %>
+          <%= form.select :customer_id,
+              options_for_select(@customers.map { |c| [c.display_name, c.id] }, @selected_customer&.id || @mutual_fund.customer_id),
+              { prompt: 'Search and select client...' },
+              { class: "form-control select2-customer #{'is-invalid' if @mutual_fund.errors[:customer_id].any?}",
+                required: true, id: "mf_customer_select" } %>
+          <% if @mutual_fund.errors[:customer_id].any? %>
+            <div class="invalid-feedback"><%= @mutual_fund.errors[:customer_id].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <%= form.label :sub_agent_id, "Affiliate Name", class: "form-label" %>
+          <%= form.select :sub_agent_id,
+              options_for_select([['Self', '']] + @sub_agents.map { |a| [a.display_name, a.id] }, (@auto_select_affiliate == 'self' ? '' : @auto_select_affiliate)),
+              { prompt: 'Search and select affiliate...' },
+              { class: "form-control select2-affiliate", id: "mf_affiliate_select" } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fund / Investment Details -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-graph-up me-2 text-success"></i>
+        Investment Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <!-- Investment Type -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :investment_type, "Investment Type *", class: "form-label" %>
+          <div class="d-flex gap-3 mt-1">
+            <% MutualFund::INVESTMENT_TYPES.each do |type| %>
+              <div class="form-check form-check-inline">
+                <%= form.radio_button :investment_type, type,
+                    class: "form-check-input",
+                    id: "investment_type_#{type.downcase}",
+                    required: @mutual_fund.investment_type.blank? %>
+                <label class="form-check-label fw-semibold" for="investment_type_<%= type.downcase %>">
+                  <%= type %>
+                </label>
+              </div>
+            <% end %>
+          </div>
+          <% if @mutual_fund.errors[:investment_type].any? %>
+            <div class="text-danger small mt-1"><%= @mutual_fund.errors[:investment_type].first %></div>
+          <% end %>
+        </div>
+
+        <!-- Amount -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :amount, "Amount *", class: "form-label" %>
+          <%= form.number_field :amount,
+              class: "form-control #{'is-invalid' if @mutual_fund.errors[:amount].any?}",
+              placeholder: "0.00", step: 0.01, min: 0, required: true, id: "mf_amount" %>
+          <% if @mutual_fund.errors[:amount].any? %>
+            <div class="invalid-feedback"><%= @mutual_fund.errors[:amount].first %></div>
+          <% end %>
+        </div>
+
+        <!-- Fund Name (AMC) -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :fund_name, "Fund Name / AMC", class: "form-label" %>
+          <%= form.text_field :fund_name,
+              class: "form-control",
+              placeholder: "e.g. HDFC AMC, SBI Mutual Fund" %>
+        </div>
+
+        <!-- Folio Number -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :folio_number, "Folio Number", class: "form-label" %>
+          <%= form.text_field :folio_number,
+              class: "form-control",
+              placeholder: "Enter folio number" %>
+        </div>
+
+        <!-- Plan Name -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :plan_name, "Plan Name", class: "form-label" %>
+          <%= form.text_field :plan_name,
+              class: "form-control",
+              placeholder: "e.g. Growth, Dividend" %>
+        </div>
+
+        <!-- Start Date -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :start_date, "Start Date", class: "form-label" %>
+          <%= form.date_field :start_date,
+              class: "form-control",
+              min: "1900-01-01", max: "2099-12-31" %>
+        </div>
+
+        <!-- Maturity Date -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :maturity_date, "Maturity Date", class: "form-label" %>
+          <%= form.date_field :maturity_date,
+              class: "form-control",
+              min: "1900-01-01", max: "2099-12-31" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Commission Calculation -->
+  <div class="card mb-4 shadow-sm commission-table">
+    <div class="card-header" style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-dark fw-bold">
+          <i class="bi bi-calculator me-2 text-primary"></i>Commission Calculation
+        </h5>
+        <div class="text-end">
+          <small class="text-muted fw-bold">Profit Formula:</small>
+          <div class="badge bg-light text-dark border" style="font-size: 0.8rem;">
+            Main Agent Commission - Total Distribution - Company Expenses
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table mb-0" style="font-size: 0.95rem;">
+          <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+            <tr>
+              <th class="py-3 px-4 fw-bold text-dark border-0" style="width: 20%;">COMMISSION DETAILS</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 12%;">(%)</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 18%;">COMMISSION</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 12%;">TDS (%)</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 15%;">TDS AMOUNT</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 23%;">ACTUAL AMOUNT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Main Agent -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark bg-light">Main Agent</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :main_agent_commission_percentage,
+                    class: "form-control border-1 text-center fw-bold", value: @mutual_fund.main_agent_commission_percentage || 0,
+                    step: 0.01, id: "mf_commission_pct" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :commission_amount, class: "form-control border-1 text-center",
+                    value: @mutual_fund.commission_amount || 0, step: 0.01, readonly: true, id: "mf_commission_amt" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :tds_percentage, class: "form-control border-1 text-center",
+                    value: @mutual_fund.tds_percentage || 0, step: 0.01, id: "mf_tds_pct" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :tds_amount, class: "form-control border-1 text-center",
+                    value: @mutual_fund.tds_amount || 0, step: 0.01, readonly: true, id: "mf_tds_amt" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :after_tds_value, class: "form-control border-1 text-center fw-bold",
+                    value: @mutual_fund.after_tds_value || 0, step: 0.01, readonly: true, id: "mf_after_tds" %>
+              </td>
+            </tr>
+
+            <!-- Affiliate -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark">Affiliate</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_commission_percentage,
+                    class: "form-control border-1 text-center sub-agent-commission-percentage",
+                    value: @mutual_fund.sub_agent_commission_percentage || 2.0, step: 0.01 %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_commission_amount, class: "form-control border-1 text-center",
+                    value: @mutual_fund.sub_agent_commission_amount || 0, step: 0.01, readonly: true %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_tds_percentage, class: "form-control border-1 text-center",
+                    value: @mutual_fund.sub_agent_tds_percentage || 0, step: 0.01 %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_tds_amount, class: "form-control border-1 text-center",
+                    value: @mutual_fund.sub_agent_tds_amount || 0, step: 0.01, readonly: true %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_after_tds_value, class: "form-control border-1 text-center",
+                    value: @mutual_fund.sub_agent_after_tds_value || 0, step: 0.01, readonly: true %>
+              </td>
+            </tr>
+
+            <!-- Ambassador -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark">Ambassador</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :distributor_commission_percentage,
+                    class: "form-control border-1 text-center ambassador-commission-percentage",
+                    value: @mutual_fund.distributor_commission_percentage || 0, step: 0.01 %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :distributor_commission_amount, class: "form-control border-1 text-center",
+                    value: @mutual_fund.distributor_commission_amount || 0, step: 0.01, readonly: true %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :distributor_tds_percentage, class: "form-control border-1 text-center",
+                    value: @mutual_fund.distributor_tds_percentage || 0, step: 0.01 %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :distributor_tds_amount, class: "form-control border-1 text-center",
+                    value: @mutual_fund.distributor_tds_amount || 0, step: 0.01, readonly: true %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :distributor_after_tds_value, class: "form-control border-1 text-center",
+                    value: @mutual_fund.distributor_after_tds_value || 0, step: 0.01, readonly: true %>
+              </td>
+            </tr>
+
+            <!-- Investor -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark">Investor</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :investor_commission_percentage,
+                    class: "form-control border-1 text-center investor-commission-percentage",
+                    value: @mutual_fund.investor_commission_percentage || 2.0, step: 0.01 %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :investor_commission_amount, class: "form-control border-1 text-center",
+                    value: @mutual_fund.investor_commission_amount || 0, step: 0.01, readonly: true %>
+              </td>
+              <td class="py-2 px-1 text-center text-muted">—</td>
+              <td class="py-2 px-1 text-center text-muted">—</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :investor_commission_amount, class: "form-control border-1 text-center",
+                    value: @mutual_fund.investor_commission_amount || 0, step: 0.01, readonly: true,
+                    id: "mf_investor_actual", name: nil %>
+              </td>
+            </tr>
+
+            <!-- Company -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark">Company</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :company_expenses_percentage,
+                    class: "form-control border-1 text-center company-expenses-percentage",
+                    value: @mutual_fund.company_expenses_percentage || 0, step: 0.01 %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :company_expenses_amount, class: "form-control border-1 text-center",
+                    value: @mutual_fund.company_expenses_amount || 0, step: 0.01, readonly: true %>
+              </td>
+              <td class="py-2 px-1 text-center text-muted">—</td>
+              <td class="py-2 px-1 text-center text-muted">—</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :company_expenses_amount, class: "form-control border-1 text-center",
+                    value: @mutual_fund.company_expenses_amount || 0, step: 0.01, readonly: true,
+                    id: "mf_company_actual", name: nil %>
+              </td>
+            </tr>
+
+            <!-- Profit -->
+            <tr style="background: #f0fff4;">
+              <td class="py-3 px-4 fw-bold text-success">Profit</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :profit_percentage, class: "form-control border-1 text-center fw-bold text-success",
+                    value: @mutual_fund.profit_percentage || 0, step: 0.01, readonly: true, id: "mf_profit_pct" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :profit_amount, class: "form-control border-1 text-center fw-bold text-success",
+                    value: @mutual_fund.profit_amount || 0, step: 0.01, readonly: true, id: "mf_profit_amt" %>
+              </td>
+              <td class="py-2 px-1 text-center text-muted">—</td>
+              <td class="py-2 px-1 text-center text-muted">—</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :profit_amount, class: "form-control border-1 text-center fw-bold text-success",
+                    value: @mutual_fund.profit_amount || 0, step: 0.01, readonly: true,
+                    id: "mf_profit_actual", name: nil %>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Hidden fields for total distribution -->
+      <%= form.hidden_field :total_distribution_percentage, id: "mf_total_dist_pct" %>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="d-flex gap-2 justify-content-end mb-4">
+    <%= link_to admin_mutual_funds_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-x-circle me-1"></i>Cancel
+    <% end %>
+    <%= form.submit @mutual_fund.new_record? ? "Create Mutual Fund" : "Update Mutual Fund",
+        class: "btn btn-primary px-4" %>
+  </div>
+
+<% end %>
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+// Commission calculation
+(function() {
+  function getVal(id) { return parseFloat(document.getElementById(id)?.value) || 0; }
+  function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v.toFixed(2); }
+
+  function recalculate() {
+    const amount = getVal('mf_amount');
+    const mainPct = getVal('mf_commission_pct');
+    const tdsPct = getVal('mf_tds_pct');
+
+    // Main agent
+    const commAmt = amount * mainPct / 100;
+    const tdsAmt = commAmt * tdsPct / 100;
+    const afterTds = commAmt - tdsAmt;
+    setVal('mf_commission_amt', commAmt);
+    setVal('mf_tds_amt', tdsAmt);
+    setVal('mf_after_tds', afterTds);
+
+    // Sub totals
+    const subPct = parseFloat(document.querySelector('.sub-agent-commission-percentage')?.value) || 0;
+    const ambPct = parseFloat(document.querySelector('.ambassador-commission-percentage')?.value) || 0;
+    const invPct = parseFloat(document.querySelector('.investor-commission-percentage')?.value) || 0;
+    const expPct = parseFloat(document.querySelector('.company-expenses-percentage')?.value) || 0;
+
+    // Sub agent amount
+    const subAmt = amount * subPct / 100;
+    const ambAmt = amount * ambPct / 100;
+    const invAmt = amount * invPct / 100;
+    const expAmt = amount * expPct / 100;
+
+    // Update sub-agent amounts (readonly fields after pct)
+    const rows = document.querySelectorAll('.commission-table tbody tr');
+    if (rows[1]) {
+      const inputs = rows[1].querySelectorAll('input[type="number"]');
+      if (inputs[1]) inputs[1].value = subAmt.toFixed(2);
+      const subTdsPct = parseFloat(inputs[2]?.value) || 0;
+      const subTdsAmt = subAmt * subTdsPct / 100;
+      if (inputs[3]) inputs[3].value = subTdsAmt.toFixed(2);
+      if (inputs[4]) inputs[4].value = (subAmt - subTdsAmt).toFixed(2);
+    }
+    if (rows[2]) {
+      const inputs = rows[2].querySelectorAll('input[type="number"]');
+      if (inputs[1]) inputs[1].value = ambAmt.toFixed(2);
+      const ambTdsPct = parseFloat(inputs[2]?.value) || 0;
+      const ambTdsAmt = ambAmt * ambTdsPct / 100;
+      if (inputs[3]) inputs[3].value = ambTdsAmt.toFixed(2);
+      if (inputs[4]) inputs[4].value = (ambAmt - ambTdsAmt).toFixed(2);
+    }
+    if (rows[3]) {
+      const inputs = rows[3].querySelectorAll('input[type="number"]');
+      if (inputs[1]) inputs[1].value = invAmt.toFixed(2);
+      if (inputs[2]) inputs[2].value = invAmt.toFixed(2);
+    }
+    if (rows[4]) {
+      const inputs = rows[4].querySelectorAll('input[type="number"]');
+      if (inputs[1]) inputs[1].value = expAmt.toFixed(2);
+      if (inputs[2]) inputs[2].value = expAmt.toFixed(2);
+    }
+
+    // Profit
+    const totalDist = subPct + ambPct + invPct;
+    const profitPct = mainPct - totalDist - expPct;
+    const profitAmt = amount * profitPct / 100;
+    setVal('mf_profit_pct', profitPct);
+    setVal('mf_profit_amt', profitAmt);
+
+    const distField = document.getElementById('mf_total_dist_pct');
+    if (distField) distField.value = totalDist.toFixed(2);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.commission-table input[type="number"]:not([readonly])').forEach(el => {
+      el.addEventListener('input', recalculate);
+    });
+    document.getElementById('mf_amount')?.addEventListener('input', recalculate);
+    recalculate();
+  });
+})();
+
+// Select2 + affiliate auto-load
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof $ === 'undefined') return;
+
+  $('#mf_customer_select').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Type to search clients...',
+    width: '100%',
+    allowClear: true,
+    dropdownParent: $('body')
+  });
+
+  $('#mf_affiliate_select').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Type to search affiliates...',
+    width: '100%',
+    allowClear: true,
+    dropdownParent: $('body')
+  });
+
+  $('#mf_customer_select').on('select2:select', function(e) {
+    var customerId = e.params.data.id;
+    if (!customerId) return;
+    autoLoadAffiliate(customerId);
+  });
+
+  $('#mf_customer_select').on('select2:clear', function() {
+    $('#mf_affiliate_select').val(null).trigger('change');
+  });
+
+  function autoLoadAffiliate(customerId) {
+    $.ajax({
+      url: '/admin/customers/' + customerId + '/affiliate_info',
+      type: 'GET',
+      success: function(data) {
+        var affiliateId = data.affiliate_id;
+        $('#mf_affiliate_select').val(affiliateId || '').trigger('change');
+      },
+      error: function() {
+        $('#mf_affiliate_select').val('').trigger('change');
+      }
+    });
+  }
+});
+</script>

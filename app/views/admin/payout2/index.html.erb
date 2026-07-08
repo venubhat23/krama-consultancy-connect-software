@@ -1,0 +1,571 @@
+<% content_for :title, "Payout Management 2" %>
+
+<!-- Commission Distribution & Traceability Dashboard - Payout 2 -->
+<style>
+.commission-flow-timeline {
+  position: relative;
+  padding: 20px 0;
+}
+
+.flow-step {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.flow-step::after {
+  content: '';
+  position: absolute;
+  left: 30px;
+  top: 60px;
+  width: 2px;
+  height: 40px;
+  background: linear-gradient(to bottom, #e3f2fd, #bbdefb);
+  border-radius: 1px;
+}
+
+.flow-step:last-child::after {
+  display: none;
+}
+
+.flow-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.flow-icon.paid {
+  background: linear-gradient(135deg, #4caf50, #81c784);
+  color: white;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.flow-icon.pending {
+  background: linear-gradient(135deg, #ff9800, #ffb74d);
+  color: white;
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+.flow-icon.processing {
+  background: linear-gradient(135deg, #2196f3, #64b5f6);
+  color: white;
+  box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+}
+
+.status-paid {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.status-pending {
+  background: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.status-failed {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.summary-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--accent-color, #667eea), var(--accent-light, #764ba2));
+}
+
+.summary-card.total::before { --accent-color: #667eea; --accent-light: #764ba2; }
+.summary-card.paid::before { --accent-color: #4caf50; --accent-light: #81c784; }
+.summary-card.pending::before { --accent-color: #ff9800; --accent-light: #ffb74d; }
+.summary-card.failed::before { --accent-color: #f44336; --accent-light: #e57373; }
+
+.commission-breakdown-table {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.layer-row {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.layer-row:hover {
+  background-color: #f8f9fa;
+}
+
+.commission-cell {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.commission-amount {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.commission-percentage {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 2px;
+}
+
+.total-flow-amount {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2e7d32;
+}
+
+.policy-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.policy-number {
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.customer-info {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.company-info {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.premium-amount {
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+.transfer-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.badge-completed {
+  background: rgba(76, 175, 80, 0.1);
+  color: #2e7d32;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.badge-partial {
+  background: rgba(255, 152, 0, 0.1);
+  color: #f57c00;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+}
+</style>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1">
+      <i class="bi bi-wallet2 me-2 text-primary"></i>
+      <span>Payout Management 2</span>
+    </h4>
+    <p class="text-muted mb-0">Comprehensive Real-time Payout Tracking & Commission Distribution</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-primary" onclick="refreshPayouts()">
+      <i class="bi bi-arrow-clockwise me-1"></i>
+      Refresh
+    </button>
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-funnel me-1"></i>
+        Filter
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="#" onclick="filterByStatus('all')">All Payouts</a></li>
+        <li><a class="dropdown-item" href="#" onclick="filterByStatus('completed')">Completed</a></li>
+        <li><a class="dropdown-item" href="#" onclick="filterByStatus('pending')">Pending</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="#" onclick="filterByType('life')">Life Insurance</a></li>
+        <li><a class="dropdown-item" href="#" onclick="filterByType('health')">Health Insurance</a></li>
+        <li><a class="dropdown-item" href="#" onclick="filterByType('motor')">Motor Insurance</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- KPI Summary Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="summary-card total">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h6 class="text-muted mb-2">Total Payouts</h6>
+          <h3 class="mb-0 fw-bold"><%= @total_payouts %></h3>
+          <small class="text-muted">Active policies</small>
+        </div>
+        <div class="bg-primary bg-opacity-10 rounded p-3">
+          <i class="bi bi-list-check text-primary fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="summary-card total">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h6 class="text-muted mb-2">Total Commission</h6>
+          <h3 class="mb-0 fw-bold"><%= indian_currency(@total_amount.round(2)) %></h3>
+          <small class="text-muted">Generated amount</small>
+        </div>
+        <div class="bg-info bg-opacity-10 rounded p-3">
+          <i class="bi bi-currency-rupee text-info fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="summary-card paid">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h6 class="text-muted mb-2">Paid Amount</h6>
+          <h3 class="mb-0 fw-bold text-success"><%= indian_currency(@paid_amount.round(2)) %></h3>
+          <small class="text-muted">Completed transfers</small>
+        </div>
+        <div class="bg-success bg-opacity-10 rounded p-3">
+          <i class="bi bi-check-circle text-success fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="summary-card pending">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h6 class="text-muted mb-2">Pending Amount</h6>
+          <h3 class="mb-0 fw-bold text-warning"><%= indian_currency(@pending_amount.round(2)) %></h3>
+          <small class="text-muted">Awaiting transfer</small>
+        </div>
+        <div class="bg-warning bg-opacity-10 rounded p-3">
+          <i class="bi bi-clock text-warning fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Policy-wise Commission Breakdown Table -->
+<div class="commission-breakdown-table">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0" id="payoutsTable">
+      <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <tr>
+          <th class="border-0">Policy Details</th>
+          <th class="border-0">Customer</th>
+          <th class="border-0">Premium</th>
+          <th class="border-0">Main Agent</th>
+          <th class="border-0">Affiliate</th>
+          <th class="border-0">Ambassador</th>
+          <th class="border-0">Investor</th>
+          <th class="border-0">Company</th>
+          <th class="border-0">Transfer Status</th>
+          <th class="border-0">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if @payouts.any? %>
+          <% @payouts.each do |payout| %>
+            <tr class="layer-row payout-row" data-policy-type="<%= payout[:policy_type] %>" data-transfer-status="<%= payout[:transfer_status] %>">
+              <!-- Policy Details -->
+              <td>
+                <div class="policy-details">
+                  <div class="policy-number"><%= payout[:policy_number] %></div>
+                  <div class="customer-info text-capitalize"><%= payout[:policy_type] %> Insurance</div>
+                  <div class="company-info"><%= payout[:company_name] %></div>
+                </div>
+              </td>
+
+              <!-- Customer -->
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px;">
+                    <i class="bi bi-person text-primary"></i>
+                  </div>
+                  <div>
+                    <div class="fw-medium"><%= payout[:customer_name] %></div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Premium -->
+              <td class="commission-cell">
+                <div class="commission-amount premium-amount"><%= indian_currency(payout[:premium_amount].round(2)) %></div>
+              </td>
+
+              <!-- Main Agent Commission -->
+              <td class="commission-cell">
+                <div class="commission-amount"><%= indian_currency(payout[:main_agent_commission].round(2)) %></div>
+                <div class="commission-percentage">(<%= payout[:main_agent_percentage] %>%)</div>
+              </td>
+
+              <!-- Affiliate Commission -->
+              <td class="commission-cell">
+                <div class="commission-amount"><%= indian_currency(payout[:breakdown][:affiliate][:amount].round(2)) %></div>
+                <div class="commission-percentage">(<%= payout[:breakdown][:affiliate][:percentage] %>%)</div>
+              </td>
+
+              <!-- Ambassador Commission -->
+              <td class="commission-cell">
+                <div class="commission-amount"><%= indian_currency(payout[:breakdown][:ambassador][:amount].round(2)) %></div>
+                <div class="commission-percentage">(<%= payout[:breakdown][:ambassador][:percentage] %>%)</div>
+              </td>
+
+              <!-- Investor Commission -->
+              <td class="commission-cell">
+                <div class="commission-amount"><%= indian_currency(payout[:breakdown][:investor][:amount].round(2)) %></div>
+                <div class="commission-percentage">(<%= payout[:breakdown][:investor][:percentage] %>%)</div>
+              </td>
+
+              <!-- Company Expenses -->
+              <td class="commission-cell">
+                <div class="commission-amount"><%= indian_currency(payout[:breakdown][:company][:amount].round(2)) %></div>
+                <div class="commission-percentage">(<%= payout[:breakdown][:company][:percentage] %>%)</div>
+              </td>
+
+              <!-- Transfer Status -->
+              <td class="text-center">
+                <% if payout[:transfer_status] == 'Completed' %>
+                  <span class="transfer-status-badge badge-completed">
+                    <i class="bi bi-check-circle"></i>
+                    Completed
+                  </span>
+                  <div class="mt-1">
+                    <small class="text-muted"><%= indian_currency(payout[:total_commission].round(2)) %></small>
+                  </div>
+                <% else %>
+                  <span class="transfer-status-badge badge-partial">
+                    <i class="bi bi-clock"></i>
+                    <%= payout[:transfer_status] %>
+                  </span>
+                  <div class="mt-1">
+                    <small class="text-muted"><%= indian_currency((payout[:paid_count].to_f / payout[:total_count] * payout[:total_commission]).round(2)) %></small>
+                  </div>
+                <% end %>
+              </td>
+
+              <!-- Actions -->
+              <td>
+                <div class="action-buttons">
+                  <% unless payout[:transfer_status] == 'Completed' %>
+                    <%= button_to "Mark Paid",
+                        mark_as_paid_admin_payout2_index_path,
+                        method: :patch,
+                        params: { policy_type: payout[:policy_type], policy_id: payout[:policy_id] },
+                        class: "btn btn-sm btn-success",
+                        confirm: "Mark all commissions for this policy as paid?",
+                        form: { style: "display: inline;" } %>
+                  <% end %>
+                  <button class="btn btn-sm btn-outline-primary"
+                          onclick="showCommissionBreakdown('<%= payout[:policy_type] %>', '<%= payout[:policy_id] %>')">
+                    <i class="bi bi-eye me-1"></i>Details
+                  </button>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="10" class="text-center py-5">
+              <div class="text-muted">
+                <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                <h5>No Payouts Found</h5>
+                <p>There are no commission payouts to display at the moment.</p>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Commission Breakdown Modal -->
+<div class="modal fade" id="commissionModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Commission Breakdown Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="commissionModalBody">
+        <!-- Dynamic content loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function refreshPayouts() {
+  location.reload();
+}
+
+function filterByStatus(status) {
+  const rows = document.querySelectorAll('.payout-row');
+  rows.forEach(row => {
+    const transferStatus = row.dataset.transferStatus;
+    if (status === 'all') {
+      row.style.display = '';
+    } else if (status === 'completed') {
+      row.style.display = transferStatus === 'Completed' ? '' : 'none';
+    } else if (status === 'pending') {
+      row.style.display = transferStatus !== 'Completed' ? '' : 'none';
+    }
+  });
+}
+
+function filterByType(type) {
+  const rows = document.querySelectorAll('.payout-row');
+  rows.forEach(row => {
+    const policyType = row.dataset.policyType;
+    row.style.display = policyType === type ? '' : 'none';
+  });
+}
+
+function showCommissionBreakdown(policyType, policyId) {
+  fetch(`/admin/payout2/commission_breakdown?policy_type=${policyType}&policy_id=${policyId}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      const modalBody = document.getElementById('commissionModalBody');
+
+      if (data.error) {
+        modalBody.innerHTML = `
+          <div class="alert alert-danger">
+            <h6>Error Loading Commission Breakdown</h6>
+            <p>${data.error}</p>
+            <p><strong>Policy Type:</strong> ${policyType}</p>
+            <p><strong>Policy ID:</strong> ${policyId}</p>
+          </div>
+        `;
+        new bootstrap.Modal(document.getElementById('commissionModal')).show();
+        return;
+      }
+
+      let html = `
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <h6>Policy Information</h6>
+            <p class="mb-1"><strong>Policy Number:</strong> ${data.policy.number}</p>
+            <p class="mb-1"><strong>Type:</strong> ${data.policy.type}</p>
+            <p class="mb-1"><strong>Customer:</strong> ${data.policy.customer}</p>
+            <p class="mb-0"><strong>Company:</strong> ${data.policy.company}</p>
+          </div>
+        </div>
+
+        <h6>Commission Details</h6>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Commission Type</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Reference</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      if (data.commissions.length === 0) {
+        html += `
+          <tr>
+            <td colspan="5" class="text-center text-muted">No commission payouts found</td>
+          </tr>
+        `;
+      } else {
+        data.commissions.forEach(commission => {
+          const statusBadge = commission.status === 'paid' ?
+            '<span class="badge bg-success">Paid</span>' :
+            '<span class="badge bg-warning">Pending</span>';
+
+          html += `
+            <tr>
+              <td>${commission.type}</td>
+              <td>Rs. ${commission.amount.toLocaleString()}</td>
+              <td>${statusBadge}</td>
+              <td class="small">${commission.reference}</td>
+              <td class="small">${new Date(commission.date).toLocaleDateString()}</td>
+            </tr>
+          `;
+        });
+      }
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      modalBody.innerHTML = html;
+      new bootstrap.Modal(document.getElementById('commissionModal')).show();
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      const modalBody = document.getElementById('commissionModalBody');
+      modalBody.innerHTML = `
+        <div class="alert alert-danger">
+          <h6>Network Error</h6>
+          <p>Failed to load commission breakdown. Please try again.</p>
+          <p><strong>Error:</strong> ${error.message}</p>
+          <p><strong>Policy Type:</strong> ${policyType}</p>
+          <p><strong>Policy ID:</strong> ${policyId}</p>
+        </div>
+      `;
+      new bootstrap.Modal(document.getElementById('commissionModal')).show();
+    });
+}
+
+// Auto-refresh every 30 seconds for real-time updates
+setInterval(refreshPayouts, 30000);
+</script>

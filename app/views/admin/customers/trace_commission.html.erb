@@ -1,0 +1,2775 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Comprehensive Product Portfolio</h2>
+    <p class="text-muted mb-0"><strong><%= @customer.display_name %></strong> - Complete product coverage matrix and commission tracking</p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to admin_customers_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Customers
+    <% end %>
+    <%= link_to admin_customer_path(@customer), class: "btn btn-primary" do %>
+      <i class="bi bi-eye me-1"></i>
+      View Customer
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Policies</h6>
+            <h3 class="mb-0 text-primary"><%= @commission_summary[:total_policies] %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-file-earmark-text text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Coverage Score</h6>
+            <h3 class="mb-0 text-success"><%= @commission_summary[:opted_count] %> / <%= @commission_summary[:total_products] %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-check-circle text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Premium</h6>
+            <h3 class="mb-0 text-warning"><%= indian_currency(@commission_summary[:total_premium]) %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-currency-rupee text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Commission Paid</h6>
+            <h3 class="mb-0 text-info"><%= indian_currency(@commission_payouts.where(status: 'paid').sum(:payout_amount)) %></h3>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-cash-coin text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DrWise vs Non-DrWise Statistics -->
+<div class="row mb-4">
+  <div class="col-lg-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm border-success">
+      <div class="card-header bg-success bg-opacity-10 border-success">
+        <h6 class="mb-0 text-success">
+          <i class="bi bi-check-circle-fill me-2"></i>
+          DrWise Policies
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-4">
+            <div class="metric-item">
+              <h4 class="mb-1 text-success"><%= @drwise_summary[:total_policies] %></h4>
+              <small class="text-muted">Policies</small>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="metric-item">
+              <h4 class="mb-1 text-success"><%= indian_currency(@drwise_summary[:total_premium]) %></h4>
+              <small class="text-muted">Premium</small>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="metric-item">
+              <h4 class="mb-1 text-success"><%= @drwise_summary[:opted_count] %></h4>
+              <small class="text-muted">Products</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm border-warning">
+      <div class="card-header bg-warning bg-opacity-10 border-warning">
+        <h6 class="mb-0 text-warning">
+          <i class="bi bi-person-badge-fill me-2"></i>
+          Non-DrWise Policies
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-4">
+            <div class="metric-item">
+              <h4 class="mb-1 text-warning"><%= @non_drwise_summary[:total_policies] %></h4>
+              <small class="text-muted">Policies</small>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="metric-item">
+              <h4 class="mb-1 text-warning"><%= indian_currency(@non_drwise_summary[:total_premium]) %></h4>
+              <small class="text-muted">Premium</small>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="metric-item">
+              <h4 class="mb-1 text-warning"><%= @non_drwise_summary[:opted_count] %></h4>
+              <small class="text-muted">Products</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Comprehensive Product Matrix</h5>
+      <small class="text-muted">Complete portfolio overview Dr WISE all 17 product categories</small>
+    </div>
+  </div>
+  <div class="card-body">
+    <!-- Coverage Overview Chart -->
+    <div class="row mb-5">
+      <div class="col-md-6">
+        <div class="coverage-chart-container">
+          <canvas id="coverageChart" width="300" height="300"></canvas>
+          <div class="chart-center-text">
+            <div class="center-score">
+              <span class="score-number"><%= @commission_summary[:opted_count] %></span>
+              <span class="score-total">/<%= @commission_summary[:total_products] %></span>
+            </div>
+            <div class="score-label">Products</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="coverage-details">
+          <h6 class="mb-3">Coverage Analysis</h6>
+          <div class="coverage-metrics">
+            <div class="metric-item mb-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="metric-label">Coverage Percentage</span>
+                <span class="metric-value text-primary"><%= @commission_summary[:coverage_percentage] %>%</span>
+              </div>
+              <div class="progress mt-2" style="height: 8px;">
+                <div class="progress-bar bg-primary" style="width: <%= @commission_summary[:coverage_percentage] %>%"></div>
+              </div>
+            </div>
+
+            <div class="metric-item mb-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="metric-label">Total Investment</span>
+                <span class="metric-value text-success"><%= indian_currency(@commission_summary[:total_premium]) %></span>
+              </div>
+            </div>
+
+            <div class="metric-item">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="metric-label">Commission Status</span>
+                <span class="badge bg-<%= @commission_payouts.where(status: 'paid').any? ? 'success' : 'warning' %>">
+                  <%= @commission_payouts.where(status: 'paid').any? ? 'Payments Made' : 'Pending' %>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comprehensive Product Matrix Table - Side by Side Layout -->
+    <div class="table-responsive product-matrix-side-by-side-container">
+      <%
+        product_categories = [
+          {
+            name: 'Insurance Products',
+            icon: 'bi-shield-check',
+            products: [
+              { name: 'Life Insurance', icon: 'bi-heart-pulse', key: 'Life Insurance' },
+              { name: 'Health Insurance', icon: 'bi-activity', key: 'Health Insurance' },
+              { name: 'Motor Insurance', icon: 'bi-car-front', key: 'Motor Insurance' }
+            ]
+          },
+          {
+            name: 'Investment Products',
+            icon: 'bi-graph-up',
+            products: [
+              { name: 'Mutual Fund', icon: 'bi-pie-chart', key: 'Mutual Fund' },
+              { name: 'Gold', icon: 'bi-coin', key: 'Gold' },
+              { name: 'NPS', icon: 'bi-building', key: 'NPS' },
+              { name: 'Bonds', icon: 'bi-receipt', key: 'Bonds' }
+            ]
+          },
+          {
+            name: 'Loan Products',
+            icon: 'bi-bank',
+            products: [
+              { name: 'Personal Loan', icon: 'bi-person', key: 'Personal Loan' },
+              { name: 'Home Loan', icon: 'bi-house', key: 'Home Loan' },
+              { name: 'Business Loan', icon: 'bi-briefcase', key: 'Business Loan' }
+            ]
+          },
+          {
+            name: 'Taxation Services',
+            icon: 'bi-calculator',
+            products: [
+              { name: 'Income Tax Return (ITR)', icon: 'bi-file-earmark-text', key: 'ITR' }
+            ]
+          },
+          {
+            name: 'Travel Services',
+            icon: 'bi-airplane',
+            products: [
+              { name: 'Domestic Travel', icon: 'bi-geo', key: 'Domestic Travel' },
+              { name: 'International Travel', icon: 'bi-globe', key: 'International Travel' }
+            ]
+          }
+        ]
+      %>
+
+      <% product_categories.each do |category| %>
+        <div class="product-category-section mb-5">
+          <div class="category-header-section">
+            <h4 class="category-title">
+              <i class="<%= category[:icon] %> me-2"></i>
+              <%= category[:name] %>
+            </h4>
+          </div>
+
+          <table class="table table-bordered product-comparison-table">
+            <thead class="table-dark">
+              <tr>
+                <th style="width: 20%;">Product Type</th>
+                <th style="width: 8%;" class="text-center">DrWise Status</th>
+                <th style="width: 10%;" class="text-center">DrWise Policies</th>
+                <th style="width: 22%;">DrWise Coverage Details</th>
+                <th style="width: 8%;" class="text-center">NonDrWise Status</th>
+                <th style="width: 10%;" class="text-center">NonDrWise Policies</th>
+                <th style="width: 22%;">NonDrWise Coverage Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% category[:products].each do |product| %>
+                <%
+                  drwise_data = @drwise_policy_status[product[:key]] || @drwise_product_status[product[:key]]
+                  non_drwise_data = @non_drwise_policy_status[product[:key]] || @non_drwise_product_status[product[:key]]
+                  drwise_opted = drwise_data && drwise_data[:opted]
+                  non_drwise_opted = non_drwise_data && non_drwise_data[:opted]
+                %>
+                <tr class="product-comparison-row">
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <i class="<%= product[:icon] %> me-2 text-primary"></i>
+                      <span class="fw-medium"><%= product[:name] %></span>
+                    </div>
+                  </td>
+
+                  <!-- DrWise Status -->
+                  <td class="text-center">
+                    <% if drwise_opted %>
+                      <span class="badge bg-success">
+                        <i class="bi bi-check-circle me-1"></i>Yes
+                      </span>
+                    <% else %>
+                      <span class="badge bg-secondary">
+                        <i class="bi bi-x-circle me-1"></i>No
+                      </span>
+                    <% end %>
+                  </td>
+
+                  <!-- DrWise Policies Count -->
+                  <td class="text-center">
+                    <% if drwise_opted && drwise_data %>
+                      <% count_label = category[:name].include?('Insurance') ? 'policies' : (category[:name].include?('Investment') ? 'investments' : (category[:name].include?('Loan') ? 'loans' : (category[:name].include?('Taxation') ? 'services' : 'packages'))) %>
+                      <span class="badge bg-success"><%= drwise_data[:count] %> <%= count_label %></span>
+                    <% else %>
+                      <span class="text-muted">-</span>
+                    <% end %>
+                  </td>
+
+                  <!-- DrWise Coverage Details -->
+                  <td>
+                    <% if drwise_opted && drwise_data %>
+                      <% if category[:name].include?('Insurance') %>
+                        <div class="small">
+                          <div class="text-success mb-1">
+                            <i class="bi bi-currency-rupee me-1"></i>
+                            Total Premium: <%= indian_currency(drwise_data[:total_premium] || 0) %>
+                          </div>
+                          <% if drwise_data[:latest_policy] %>
+                            <div class="text-muted mb-2">
+                              <i class="bi bi-clock me-1"></i>
+                              Latest: <%= drwise_data[:latest_policy].created_at.strftime('%b %d, %Y') %>
+                            </div>
+                          <% end %>
+                          <% if ['Motor Insurance', 'Life Insurance', 'Health Insurance'].include?(product[:name]) %>
+                            <button class="btn btn-sm btn-success mt-1" onclick="showInsurancePolicies('<%= @customer.id %>', 'drwise', '<%= product[:name].downcase.gsub(' ', '') %>')">
+                              <i class="bi bi-eye me-1"></i>View Policies
+                            </button>
+                          <% end %>
+                        </div>
+                      <% else %>
+                        <span class="text-muted">Product not yet implemented</span>
+                      <% end %>
+                    <% else %>
+                      <span class="text-muted">No DrWise policies found</span>
+                    <% end %>
+                  </td>
+
+                  <!-- NonDrWise Status -->
+                  <td class="text-center">
+                    <% if non_drwise_opted %>
+                      <span class="badge bg-success">
+                        <i class="bi bi-check-circle me-1"></i>Yes
+                      </span>
+                    <% else %>
+                      <span class="badge bg-secondary">
+                        <i class="bi bi-x-circle me-1"></i>No
+                      </span>
+                    <% end %>
+                  </td>
+
+                  <!-- NonDrWise Policies Count -->
+                  <td class="text-center">
+                    <% if non_drwise_opted && non_drwise_data %>
+                      <% count_label = category[:name].include?('Insurance') ? 'policies' : (category[:name].include?('Investment') ? 'investments' : (category[:name].include?('Loan') ? 'loans' : (category[:name].include?('Taxation') ? 'services' : 'packages'))) %>
+                      <span class="badge bg-warning"><%= non_drwise_data[:count] %> <%= count_label %></span>
+                    <% else %>
+                      <span class="text-muted">-</span>
+                    <% end %>
+                  </td>
+
+                  <!-- NonDrWise Coverage Details -->
+                  <td>
+                    <% if non_drwise_opted && non_drwise_data %>
+                      <% if category[:name].include?('Insurance') %>
+                        <div class="small">
+                          <div class="text-success mb-1">
+                            <i class="bi bi-currency-rupee me-1"></i>
+                            Total Premium: <%= indian_currency(non_drwise_data[:total_premium] || 0) %>
+                          </div>
+                          <% if non_drwise_data[:latest_policy] %>
+                            <div class="text-muted mb-2">
+                              <i class="bi bi-clock me-1"></i>
+                              Latest: <%= non_drwise_data[:latest_policy].created_at.strftime('%b %d, %Y') %>
+                            </div>
+                          <% end %>
+                          <% if ['Motor Insurance', 'Life Insurance', 'Health Insurance'].include?(product[:name]) %>
+                            <button class="btn btn-sm btn-warning mt-1" onclick="showInsurancePolicies('<%= @customer.id %>', 'non-drwise', '<%= product[:name].downcase.gsub(' ', '') %>')">
+                              <i class="bi bi-eye me-1"></i>View Policies
+                            </button>
+                          <% end %>
+                        </div>
+                      <% else %>
+                        <span class="text-muted">Product not yet implemented</span>
+                      <% end %>
+                    <% else %>
+                      <span class="text-muted">No Non-DrWise policies found</span>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+
+<!-- Policy Details Cards -->
+<div class="row mb-4">
+  <% @policy_status.each_with_index do |(policy_type, data), index| %>
+    <div class="col-lg-4 mb-3">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-header bg-transparent border-0">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-bold">
+              <i class="<%= data[:icon] %> text-<%= data[:color] %> me-2"></i>
+              <%= policy_type %>
+            </h6>
+            <span class="badge bg-<%= data[:opted] ? 'success' : 'secondary' %>">
+              <%= data[:opted] ? 'OPTED' : 'NOT OPTED' %>
+            </span>
+          </div>
+        </div>
+        <div class="card-body">
+          <% if data[:opted] %>
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="stat-card">
+                  <h4 class="text-primary mb-1"><%= data[:count] %></h4>
+                  <small class="text-muted">Policies</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="stat-card">
+                  <h4 class="text-success mb-1"><%= indian_currency(data[:total_premium]) %></h4>
+                  <small class="text-muted">Premium</small>
+                </div>
+              </div>
+              <% if data[:latest_policy] %>
+                <div class="col-12">
+                  <div class="latest-policy bg-light rounded p-3">
+                    <h6 class="text-muted mb-2">Latest Policy:</h6>
+                    <div class="d-flex justify-content-between">
+                      <span class="fw-bold"><%= data[:latest_policy].policy_number || "Policy ##{data[:latest_policy].id}" %></span>
+                      <small class="text-muted"><%= data[:latest_policy].created_at.strftime('%b %d, %Y') %></small>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="text-center py-4">
+              <i class="bi bi-plus-circle text-muted" style="font-size: 3rem;"></i>
+              <h6 class="text-muted mt-3">No policies found</h6>
+              <small class="text-muted">Customer has not opted for this policy type</small>
+              <div class="mt-3">
+                <% case policy_type %>
+                <% when 'Health Insurance' %>
+                  <%= link_to new_admin_health_insurance_path(customer_id: @customer.id), class: "btn btn-sm btn-success" do %>
+                    <i class="bi bi-plus me-1"></i>Add Health Policy
+                  <% end %>
+                <% when 'Life Insurance' %>
+                  <%= link_to new_admin_life_insurance_path(customer_id: @customer.id), class: "btn btn-sm btn-primary" do %>
+                    <i class="bi bi-plus me-1"></i>Add Life Policy
+                  <% end %>
+                <% when 'Motor Insurance' %>
+                  <%= link_to new_admin_motor_insurance_path(customer_id: @customer.id), class: "btn btn-sm btn-warning" do %>
+                    <i class="bi bi-plus me-1"></i>Add Motor Policy
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<!-- Commission Payouts Table -->
+<% if @commission_payouts.any? %>
+  <%
+    # Group payouts by policy number
+    grouped_payouts = @commission_payouts.group_by { |p| p.policy_number || "Policy ##{p.policy_id}" }
+  %>
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-0">
+      <h5 class="mb-0">Commission Payouts</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Policy</th>
+              <th class="border-0">Type</th>
+              <th class="border-0">Commission Breakdown</th>
+              <th class="border-0">Total Amount</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% grouped_payouts.each do |policy_number, payouts| %>
+              <% first_payout = payouts.first %>
+              <%
+                # Fetch insurance policy — source of truth for commission amounts
+                _policy_rec = case first_payout.policy_type
+                              when 'motor'  then MotorInsurance.find_by(id: first_payout.policy_id)
+                              when 'life'   then LifeInsurance.find_by(id: first_payout.policy_id)
+                              when 'health' then HealthInsurance.find_by(id: first_payout.policy_id)
+                              when 'other'  then OtherInsurance.find_by(id: first_payout.policy_id)
+                              end
+
+                # Resolve actual recipient names once (outside the map)
+                _sub_agent   = _policy_rec&.sub_agent
+                _distributor = _policy_rec.respond_to?(:distributor) ? _policy_rec.distributor : nil
+
+                _corrected = payouts.map do |p|
+                  if _policy_rec
+                    case p.payout_to
+                    when 'main_agent'
+                      gross      = _policy_rec.try(:commission_amount).to_f
+                      tds_pct    = _policy_rec.try(:tds_percentage).to_f || _policy_rec.try(:main_agent_tds_percent).to_f
+                      tds_amt    = _policy_rec.try(:tds_amount).to_f || _policy_rec.try(:main_agent_tds_amount).to_f
+                      actual     = _policy_rec.try(:after_tds_value).to_f
+                      actual     = (gross - tds_amt).round(2) if actual.zero? && gross > 0
+                    when 'affiliate'
+                      gross      = _policy_rec.try(:sub_agent_commission_amount).to_f
+                      tds_pct    = _policy_rec.try(:sub_agent_tds_percentage).to_f
+                      tds_amt    = _policy_rec.try(:sub_agent_tds_amount).to_f
+                      actual     = _policy_rec.try(:sub_agent_after_tds_value).to_f
+                      actual     = (gross - tds_amt).round(2) if actual.zero? && gross > 0
+                    when 'ambassador'
+                      gross      = _policy_rec.try(:ambassador_commission_amount).to_f
+                      tds_pct    = _policy_rec.try(:ambassador_tds_percentage).to_f
+                      tds_amt    = _policy_rec.try(:ambassador_tds_amount).to_f
+                      actual     = _policy_rec.try(:ambassador_after_tds_value).to_f
+                      actual     = (gross - tds_amt).round(2) if actual.zero? && gross > 0
+                    when 'investor'
+                      gross      = _policy_rec.try(:investor_commission_amount).to_f
+                      tds_pct    = _policy_rec.try(:investor_tds_percentage).to_f
+                      tds_amt    = _policy_rec.try(:investor_tds_amount).to_f
+                      actual     = _policy_rec.try(:investor_after_tds_value).to_f
+                      actual     = (gross - tds_amt).round(2) if actual.zero? && gross > 0
+                    when 'company_expense'
+                      ca         = _policy_rec.try(:company_expenses_amount).to_f
+                      gross      = ca > 0 ? ca : (_policy_rec.try(:company_expenses_percentage).to_f * _policy_rec.try(:net_premium).to_f / 100.0).round(2)
+                      tds_pct    = 0.0; tds_amt = 0.0; actual = gross
+                    else
+                      gross      = p.payout_amount.to_f
+                      tds_pct    = 0.0; tds_amt = 0.0; actual = gross
+                    end
+                  else
+                    gross = p.payout_amount.to_f; tds_pct = 0.0; tds_amt = 0.0; actual = gross
+                  end
+
+                  recipient_name = case p.payout_to
+                                   when 'main_agent'      then 'Dr Wise (Main Agent)'
+                                   when 'affiliate'       then _sub_agent&.display_name.presence || 'Affiliate'
+                                   when 'ambassador'      then _distributor&.display_name.presence || 'Ambassador'
+                                   when 'investor'        then 'Investor'
+                                   when 'company_expense' then 'Company Expense'
+                                   else p.payout_to.humanize
+                                   end
+
+                  { payout_to: p.payout_to,
+                    payout_amount: actual.round(2),
+                    gross_amount:  gross.round(2),
+                    tds_pct:       tds_pct.round(2),
+                    tds_amt:       tds_amt.round(2),
+                    status:        p.status,
+                    payout_date:   p.payout_date,
+                    customer_name: p.try(:customer_name),
+                    recipient_name: recipient_name }
+                end
+
+                total_amount = _corrected.sum { |p| p[:payout_amount] }
+                main_agent_rec = _corrected.find { |p| p[:payout_to] == 'main_agent' }
+                main_agent_amount = main_agent_rec ? main_agent_rec[:payout_amount] : 0
+              %>
+              <tr>
+                <td>
+                  <div class="fw-bold"><%= policy_number %></div>
+                  <small class="text-muted"><%= first_payout.customer_name %></small>
+                </td>
+                <td>
+                  <span class="badge bg-<%=
+                    case first_payout.policy_type
+                    when 'health' then 'success'
+                    when 'life' then 'primary'
+                    when 'motor' then 'warning'
+                    else 'secondary'
+                    end
+                  %>">
+                    <%= first_payout.policy_type.humanize %>
+                  </span>
+                </td>
+                <td>
+                  <button type="button"
+                          class="btn btn-info btn-sm text-white commission-breakdown-btn"
+                          onclick="showCommissionBreakdown('<%= policy_number %>', '<%= first_payout.policy_type %>', '<%= _corrected.to_json.gsub("'", "\\'") %>')"
+                          style="border-radius: 20px;">
+                    <i class="bi bi-pie-chart me-1"></i><%= payouts.count %> breakdown
+                  </button>
+                  <br>
+                  <small class="text-muted mt-1">
+                    Main Agent: <%= indian_currency(main_agent_amount) %>
+                  </small>
+                </td>
+                <td>
+                  <div class="fw-bold text-success fs-6">
+                    <%= indian_currency(main_agent_amount) %>
+                  </div>
+                  <small class="text-muted">
+                    <%= payouts.count %> payments
+                  </small>
+                </td>
+                <td>
+                  <% all_paid = payouts.all? { |p| p.status == 'paid' } %>
+                  <% all_pending = payouts.all? { |p| p.status == 'pending' } %>
+                  <% if all_paid %>
+                    <span class="badge bg-success">
+                      <i class="bi bi-check-circle me-1"></i>All Paid
+                    </span>
+                  <% elsif all_pending %>
+                    <span class="badge bg-warning">
+                      <i class="bi bi-clock me-1"></i>All Pending
+                    </span>
+                  <% else %>
+                    <span class="badge bg-info">
+                      <i class="bi bi-hourglass-split me-1"></i>Mixed Status
+                    </span>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="text-dark fw-medium">
+                    <%= first_payout.payout_date&.strftime('%b %d, %Y') || 'Pending' %>
+                  </div>
+                  <% if payouts.map(&:payout_date).uniq.length > 1 %>
+                    <small class="text-muted">Multiple dates</small>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<style>
+/* Commission Breakdown Styling */
+.commission-breakdown {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  max-width: 300px;
+}
+
+.commission-item {
+  background: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-left: 3px solid #28a745;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: all 0.2s ease;
+}
+
+.commission-item:hover {
+  border-left-color: #198754;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transform: translateX(2px);
+}
+
+.commission-item:nth-child(1) { border-left-color: #007bff; } /* Main agent */
+.commission-item:nth-child(2) { border-left-color: #28a745; } /* Affiliate */
+.commission-item:nth-child(3) { border-left-color: #ffc107; } /* Ambassador */
+.commission-item:nth-child(4) { border-left-color: #6f42c1; } /* Investor */
+.commission-item:nth-child(5) { border-left-color: #dc3545; } /* Company expense */
+
+/* Table styling enhancements */
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.02);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.table th {
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #495057;
+  padding: 16px 12px;
+}
+
+.table td {
+  padding: 20px 12px;
+  vertical-align: middle;
+  border-color: #f1f5f9;
+}
+
+/* Badge styling */
+.badge {
+  font-size: 11px;
+  padding: 6px 10px;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+/* Total amount styling */
+.fs-6 {
+  font-size: 1.1rem !important;
+}
+
+/* Chart Container Styling */
+.coverage-chart-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.chart-center-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.center-score {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #495057;
+}
+
+.score-total {
+  font-size: 1.8rem;
+  color: #6c757d;
+}
+
+.score-label {
+  font-size: 1rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Coverage Details */
+.coverage-details {
+  padding: 20px;
+}
+
+/* Side by Side Product Matrix Table Styles */
+.product-matrix-side-by-side-container {
+  background: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  padding: 2rem;
+}
+
+.product-category-section {
+  margin-bottom: 2rem;
+}
+
+.category-title {
+  color: #495057;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.product-comparison-table {
+  margin: 0;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.product-comparison-table thead th {
+  background: #343a40;
+  color: white;
+  border: none;
+  padding: 12px 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.product-comparison-row {
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.product-comparison-row:hover {
+  background: rgba(0, 123, 255, 0.03);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.product-comparison-row td {
+  padding: 15px 10px;
+  vertical-align: middle;
+  border-top: 1px solid #e9ecef;
+  border-bottom: none;
+  border-left: none;
+  border-right: 1px solid #e9ecef;
+}
+
+.category-divider {
+  background: none;
+}
+
+.category-header {
+  background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+  padding: 12px 15px;
+  border: none;
+  font-size: 0.95rem;
+  color: #495057;
+  font-weight: 600;
+}
+
+.insurance-header {
+  background: linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, rgba(0, 123, 255, 0.05) 100%);
+  color: #007bff;
+  border-left: 4px solid #007bff;
+}
+
+.investments-header {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+  color: #28a745;
+  border-left: 4px solid #28a745;
+}
+
+.loans-header {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+  color: #ffc107;
+  border-left: 4px solid #ffc107;
+}
+
+.taxation-header {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
+  color: #dc3545;
+  border-left: 4px solid #dc3545;
+}
+
+.travel-header {
+  background: linear-gradient(135deg, rgba(108, 117, 125, 0.1) 0%, rgba(108, 117, 125, 0.05) 100%);
+  color: #6c757d;
+  border-left: 4px solid #6c757d;
+}
+
+.product-row {
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.product-row:hover {
+  background: rgba(0, 123, 255, 0.02);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.product-row td {
+  padding: 12px 15px;
+  vertical-align: middle;
+  border-top: 1px solid #e9ecef;
+  border-bottom: none;
+  border-left: none;
+  border-right: none;
+}
+
+.product-row:first-child td {
+  border-top: none;
+}
+
+/* Product row hover effects by category */
+.life-insurance:hover {
+  background: rgba(220, 53, 69, 0.02);
+}
+
+.health-insurance:hover {
+  background: rgba(220, 53, 69, 0.02);
+}
+
+.motor-insurance:hover {
+  background: rgba(255, 193, 7, 0.02);
+}
+
+.general-insurance:hover {
+  background: rgba(0, 123, 255, 0.02);
+}
+
+.travel-insurance:hover {
+  background: rgba(111, 66, 193, 0.02);
+}
+
+.mutual-fund:hover {
+  background: rgba(40, 167, 69, 0.02);
+}
+
+.gold-investment:hover {
+  background: rgba(255, 193, 7, 0.02);
+}
+
+.nps-investment:hover {
+  background: rgba(13, 202, 240, 0.02);
+}
+
+.bonds-investment:hover {
+  background: rgba(108, 117, 125, 0.02);
+}
+
+.personal-loan:hover,
+.home-loan:hover,
+.business-loan:hover {
+  background: rgba(255, 193, 7, 0.02);
+}
+
+.taxation-service:hover {
+  background: rgba(220, 53, 69, 0.02);
+}
+
+.domestic-travel:hover,
+.international-travel:hover,
+.additional-1:hover,
+.additional-2:hover {
+  background: rgba(108, 117, 125, 0.02);
+}
+
+/* Badge Styling */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.5em 0.75em;
+  border-radius: 0.375rem;
+}
+
+/* Simple Category Text Styling */
+.category-simple-text {
+  font-size: 0.9rem;
+  padding: 0.25rem 0;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Icon Colors */
+.text-primary { color: #007bff !important; }
+.text-success { color: #28a745 !important; }
+.text-warning { color: #ffc107 !important; }
+.text-danger { color: #dc3545 !important; }
+.text-secondary { color: #6c757d !important; }
+
+/* Responsive Design for Side by Side Table */
+@media (max-width: 768px) {
+  .product-matrix-side-by-side-container {
+    padding: 1rem;
+    overflow-x: auto;
+  }
+
+  .product-comparison-table {
+    min-width: 900px;
+    font-size: 0.8rem;
+  }
+
+  .product-comparison-table thead th {
+    padding: 8px 6px;
+    font-size: 0.75rem;
+  }
+
+  .product-comparison-row td {
+    padding: 10px 8px;
+  }
+
+  .category-title {
+    font-size: 1.1rem;
+  }
+
+  .badge {
+    font-size: 0.7rem;
+    padding: 0.4em 0.6em;
+  }
+
+  .btn-sm {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+  }
+}
+
+.metric-item {
+  margin-bottom: 1rem;
+}
+
+.metric-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.metric-value {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+/* Comprehensive Product Matrix Table */
+.product-matrix-container {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.product-matrix-table {
+  font-size: 0.9rem;
+  border: none;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+.product-matrix-table th,
+.product-matrix-table td {
+  border: 1px solid #e9ecef;
+  vertical-align: middle;
+  text-align: center;
+}
+
+
+/* Product Category Headers */
+.product-category {
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 15px 10px;
+  text-align: center;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  border: none;
+}
+
+.insurance-category {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.investments-category {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.loans-category {
+  background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.taxation-category {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.travel-category {
+  background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+}
+
+/* Product Subheaders */
+.product-subheader {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  padding: 12px 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #495057;
+  min-width: 80px;
+}
+
+.product-subheader.health {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
+  border-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+.product-subheader.motor {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+  border-color: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.product-subheader.general {
+  background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0.05) 100%);
+  border-color: rgba(13, 110, 253, 0.2);
+  color: #0d6efd;
+}
+
+.product-subheader.travel-ins {
+  background: linear-gradient(135deg, rgba(111, 66, 193, 0.1) 0%, rgba(111, 66, 193, 0.05) 100%);
+  border-color: rgba(111, 66, 193, 0.2);
+  color: #6f42c1;
+}
+
+.product-subheader.mutual-fund {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+  border-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+.product-subheader.gold {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+  border-color: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.product-subheader.nps {
+  background: linear-gradient(135deg, rgba(13, 202, 240, 0.1) 0%, rgba(13, 202, 240, 0.05) 100%);
+  border-color: rgba(13, 202, 240, 0.2);
+  color: #0dcaf0;
+}
+
+.product-subheader.bonds {
+  background: linear-gradient(135deg, rgba(108, 117, 125, 0.1) 0%, rgba(108, 117, 125, 0.05) 100%);
+  border-color: rgba(108, 117, 125, 0.2);
+  color: #6c757d;
+}
+
+.product-subheader.personal {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+  border-color: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.product-subheader.home {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+  border-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+.product-subheader.business {
+  background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0.05) 100%);
+  border-color: rgba(13, 110, 253, 0.2);
+  color: #0d6efd;
+}
+
+.product-subheader.taxation {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
+  border-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+.product-subheader.domestic {
+  background: linear-gradient(135deg, rgba(111, 66, 193, 0.1) 0%, rgba(111, 66, 193, 0.05) 100%);
+  border-color: rgba(111, 66, 193, 0.2);
+  color: #6f42c1;
+}
+
+.product-subheader.international {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
+  border-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+/* Product Status Cells */
+.product-status-cell {
+  padding: 15px 10px;
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.product-status-cell:hover {
+  background: #f8f9fa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.status-indicator-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+}
+
+.status-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-icon {
+  font-size: 1.8rem;
+  transition: all 0.3s ease;
+}
+
+.opted-icon {
+  color: #28a745;
+  animation: checkPulse 2s infinite;
+}
+
+.not-opted-icon {
+  color: #6c757d;
+}
+
+.status-text {
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-indicator.opted .status-text {
+  color: #28a745;
+}
+
+.status-indicator.not-opted .status-text {
+  color: #6c757d;
+}
+
+.product-details {
+  margin-top: 5px;
+}
+
+.detail-count {
+  font-size: 0.7rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+/* Animations */
+@keyframes checkPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Old Policy Matrix Table (Keep for backward compatibility) */
+.policy-matrix-table {
+  font-size: 1rem;
+}
+
+.policy-status-cell {
+  padding: 2rem 1rem !important;
+  vertical-align: middle;
+}
+
+.policy-status-indicator {
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 15px;
+  transition: all 0.3s ease;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.policy-status-indicator.opted {
+  background: linear-gradient(135deg, rgba(25, 135, 84, 0.1) 0%, rgba(25, 135, 84, 0.05) 100%);
+  border: 2px solid rgba(25, 135, 84, 0.2);
+}
+
+.policy-status-indicator.not-opted {
+  background: linear-gradient(135deg, rgba(108, 117, 125, 0.1) 0%, rgba(108, 117, 125, 0.05) 100%);
+  border: 2px solid rgba(108, 117, 125, 0.2);
+}
+
+.policy-status-indicator:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.status-icon-large {
+  margin-bottom: 1rem;
+}
+
+.policy-details {
+  margin-top: 1rem;
+}
+
+.detail-item {
+  margin-bottom: 0.5rem;
+}
+
+/* Policy Details Cards */
+.stat-card {
+  text-align: center;
+  padding: 1rem;
+}
+
+.latest-policy {
+  margin-top: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .policy-status-cell {
+    padding: 1rem 0.5rem !important;
+  }
+
+  .policy-status-indicator {
+    padding: 1rem;
+    min-height: 150px;
+  }
+
+  .center-score {
+    font-size: 2rem;
+  }
+
+  .coverage-chart-container {
+    margin: 10px 0;
+  }
+
+  /* Product Matrix Mobile Responsiveness */
+  .product-matrix-container {
+    padding: 10px;
+    overflow-x: auto;
+  }
+
+  .product-matrix-table {
+    min-width: 1200px;
+    font-size: 0.8rem;
+  }
+
+
+  .product-category {
+    font-size: 0.9rem;
+    padding: 10px 8px;
+  }
+
+  .product-subheader {
+    font-size: 0.75rem;
+    padding: 10px 6px;
+    min-width: 70px;
+  }
+
+  .product-status-cell {
+    padding: 10px 8px;
+  }
+
+  .status-icon {
+    font-size: 1.5rem;
+  }
+
+  .status-text {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .product-matrix-table {
+    font-size: 0.7rem;
+  }
+
+}
+</style>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Create comprehensive coverage donut chart for all 17 products
+  const ctx = document.getElementById('coverageChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Active Products', 'Available Products'],
+        datasets: [{
+          data: [
+            <%= @commission_summary[:opted_count] %>,
+            <%= @commission_summary[:total_products] - @commission_summary[:opted_count] %>
+          ],
+          backgroundColor: [
+            'rgba(25, 135, 84, 0.8)',   // Green for Active Products
+            'rgba(108, 117, 125, 0.3)'  // Gray for Available Products
+          ],
+          borderColor: [
+            'rgba(25, 135, 84, 1)',
+            'rgba(108, 117, 125, 0.5)'
+          ],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              usePointStyle: true,
+              font: {
+                size: 12
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: 'white',
+            bodyColor: 'white',
+            borderColor: 'rgba(255, 255, 255, 0.2)',
+            borderWidth: 1,
+            callbacks: {
+              label: function(context) {
+                const label = context.label;
+                const value = context.parsed;
+                const percentage = ((value / <%= @commission_summary[:total_products] %>) * 100).toFixed(1);
+                return `${label}: ${value} (${percentage}%)`;
+              }
+            }
+          }
+        },
+        cutout: '60%',
+        animation: {
+          animateRotate: true,
+          duration: 1500
+        }
+      }
+    });
+  }
+});
+</script>
+
+<style>
+  /* DrWise and Non-DrWise section styling */
+  .drwise-main-header {
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.15), rgba(25, 135, 84, 0.05));
+    border-left: 5px solid #198754;
+    font-size: 1.1rem;
+  }
+
+  .non-drwise-main-header {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05));
+    border-left: 5px solid #ffc107;
+    font-size: 1.1rem;
+  }
+
+  .drwise-header {
+    background: linear-gradient(90deg, rgba(25, 135, 84, 0.1), transparent);
+    border-left: 4px solid #198754;
+  }
+
+  .non-drwise-header {
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.1), transparent);
+    border-left: 4px solid #ffc107;
+  }
+
+  /* DrWise product rows */
+  .drwise-life-insurance,
+  .drwise-health-insurance,
+  .drwise-motor-insurance,
+  .drwise-mutual-fund,
+  .drwise-gold,
+  .drwise-nps,
+  .drwise-bonds,
+  .drwise-personal-loan,
+  .drwise-home-loan,
+  .drwise-business-loan,
+  .drwise-taxation,
+  .drwise-domestic-travel,
+  .drwise-international-travel {
+    background-color: rgba(25, 135, 84, 0.02);
+    border-left: 2px solid rgba(25, 135, 84, 0.2);
+  }
+
+  /* Non-DrWise product rows */
+  .non-drwise-life-insurance,
+  .non-drwise-health-insurance,
+  .non-drwise-motor-insurance,
+  .non-drwise-mutual-fund,
+  .non-drwise-gold,
+  .non-drwise-nps,
+  .non-drwise-bonds,
+  .non-drwise-personal-loan,
+  .non-drwise-home-loan,
+  .non-drwise-business-loan,
+  .non-drwise-taxation,
+  .non-drwise-domestic-travel,
+  .non-drwise-international-travel {
+    background-color: rgba(255, 193, 7, 0.02);
+    border-left: 2px solid rgba(255, 193, 7, 0.2);
+  }
+
+  /* DrWise hover effects */
+  .drwise-life-insurance:hover,
+  .drwise-health-insurance:hover,
+  .drwise-motor-insurance:hover,
+  .drwise-mutual-fund:hover,
+  .drwise-gold:hover,
+  .drwise-nps:hover,
+  .drwise-bonds:hover,
+  .drwise-personal-loan:hover,
+  .drwise-home-loan:hover,
+  .drwise-business-loan:hover,
+  .drwise-taxation:hover,
+  .drwise-domestic-travel:hover,
+  .drwise-international-travel:hover {
+    background-color: rgba(25, 135, 84, 0.05);
+    border-left: 2px solid rgba(25, 135, 84, 0.4);
+  }
+
+  /* Non-DrWise hover effects */
+  .non-drwise-life-insurance:hover,
+  .non-drwise-health-insurance:hover,
+  .non-drwise-motor-insurance:hover,
+  .non-drwise-mutual-fund:hover,
+  .non-drwise-gold:hover,
+  .non-drwise-nps:hover,
+  .non-drwise-bonds:hover,
+  .non-drwise-personal-loan:hover,
+  .non-drwise-home-loan:hover,
+  .non-drwise-business-loan:hover,
+  .non-drwise-taxation:hover,
+  .non-drwise-domestic-travel:hover,
+  .non-drwise-international-travel:hover {
+    background-color: rgba(255, 193, 7, 0.05);
+    border-left: 2px solid rgba(255, 193, 7, 0.4);
+  }
+
+  /* Enhanced table styling for better visibility */
+  .category-divider td {
+    font-weight: 600;
+    font-size: 1.05em;
+    padding: 1rem !important;
+  }
+
+  .product-row td {
+    vertical-align: middle;
+    padding: 0.75rem !important;
+  }
+
+  /* Badge enhancements */
+  .badge {
+    font-size: 0.8em;
+    padding: 0.4em 0.6em;
+  }
+
+  /* Icon spacing */
+  .bi {
+    margin-right: 0.3rem;
+  }
+
+  /* Table responsiveness improvements */
+  @media (max-width: 768px) {
+    .product-matrix-vertical-table {
+      font-size: 0.875rem;
+    }
+
+    .category-divider td {
+      font-size: 1rem;
+      padding: 0.75rem !important;
+    }
+
+    .product-row td {
+      padding: 0.5rem !important;
+    }
+  }
+
+  /* Enhanced Comprehensive Product Matrix Table Styling */
+  .enhanced-matrix-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .enhanced-matrix-table {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    border: none;
+    margin: 0;
+  }
+
+  /* Table Header Styling */
+  .enhanced-matrix-table .table-header {
+    background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+    color: white;
+  }
+
+  .enhanced-matrix-table .table-header th {
+    border: none;
+    padding: 18px 15px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    vertical-align: middle;
+    position: relative;
+  }
+
+  /* Header specific styles */
+  .product-type-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    border-right: 2px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .drwise-status-header,
+  .drwise-policies-header,
+  .drwise-details-header {
+    background: linear-gradient(135deg, #198754 0%, #146c43 100%) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .non-drwise-status-header,
+  .non-drwise-policies-header,
+  .non-drwise-details-header {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+    color: #212529 !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Row Styling */
+  .enhanced-product-row {
+    transition: all 0.3s ease;
+    border: none;
+    background: white;
+  }
+
+  .enhanced-product-row:hover {
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.02) 0%, rgba(0, 123, 255, 0.01) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .enhanced-product-row td {
+    padding: 20px 15px;
+    vertical-align: middle;
+    border-top: 1px solid #e9ecef;
+    border-bottom: none;
+    border-left: none;
+    border-right: 2px solid #f1f3f4;
+  }
+
+  /* Product Name Cell */
+  .product-name-cell {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-left: 4px solid #007bff !important;
+  }
+
+  .product-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .product-icon {
+    font-size: 1.5rem;
+    color: #007bff;
+    background: rgba(0, 123, 255, 0.1);
+    padding: 8px;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .product-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #495057;
+  }
+
+  /* DrWise Cells */
+  .drwise-cell {
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.03) 0%, rgba(25, 135, 84, 0.01) 100%);
+    border-left: 3px solid rgba(25, 135, 84, 0.2) !important;
+  }
+
+  /* Non-DrWise Cells */
+  .non-drwise-cell {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.03) 0%, rgba(255, 193, 7, 0.01) 100%);
+    border-left: 3px solid rgba(255, 193, 7, 0.2) !important;
+  }
+
+  /* Status Badge Styling */
+  .status-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 15px;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    min-width: 80px;
+  }
+
+  .status-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  }
+
+  .success-badge {
+    background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+    color: white;
+  }
+
+  .success-badge i {
+    font-size: 1rem;
+    color: #d4edda;
+  }
+
+  .inactive-badge {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    color: white;
+  }
+
+  .inactive-badge i {
+    font-size: 1rem;
+    color: #f8f9fa;
+  }
+
+  /* Policies Count Styling */
+  .policies-count {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+
+  .policies-count:hover {
+    transform: scale(1.05);
+  }
+
+  .success-count {
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.1) 0%, rgba(25, 135, 84, 0.05) 100%);
+    border: 2px solid rgba(25, 135, 84, 0.2);
+  }
+
+  .warning-count {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+    border: 2px solid rgba(255, 193, 7, 0.3);
+  }
+
+  .inactive-count {
+    background: linear-gradient(135deg, rgba(108, 117, 125, 0.1) 0%, rgba(108, 117, 125, 0.05) 100%);
+    border: 2px solid rgba(108, 117, 125, 0.2);
+  }
+
+  .count-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #495057;
+  }
+
+  .success-count .count-number {
+    color: #198754;
+  }
+
+  .warning-count .count-number {
+    color: #fd7e14;
+  }
+
+  .count-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .count-dash {
+    font-size: 2rem;
+    font-weight: 300;
+    color: #adb5bd;
+  }
+
+  /* Coverage Details Styling */
+  .coverage-details {
+    padding: 12px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+  }
+
+  .premium-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .premium-info i {
+    font-size: 1.1rem;
+  }
+
+  .premium-amount {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+  }
+
+  .latest-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .latest-info i {
+    font-size: 0.9rem;
+  }
+
+  .latest-date {
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-weight: 500;
+  }
+
+  .no-coverage {
+    padding: 12px;
+    text-align: center;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    border: 1px dashed #adb5bd;
+  }
+
+  .no-coverage-text {
+    color: #6c757d;
+    font-style: italic;
+    font-size: 0.85rem;
+  }
+
+  /* Responsive Design for Enhanced Matrix */
+  @media (max-width: 1200px) {
+    .enhanced-matrix-container {
+      padding: 1rem;
+      overflow-x: auto;
+    }
+
+    .enhanced-matrix-table {
+      min-width: 1000px;
+      font-size: 0.85rem;
+    }
+
+    .enhanced-matrix-table .table-header th {
+      padding: 15px 10px;
+      font-size: 0.8rem;
+    }
+
+    .enhanced-product-row td {
+      padding: 15px 10px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .enhanced-matrix-container {
+      padding: 0.75rem;
+    }
+
+    .enhanced-matrix-table {
+      min-width: 800px;
+      font-size: 0.8rem;
+    }
+
+    .enhanced-matrix-table .table-header th {
+      padding: 12px 8px;
+      font-size: 0.75rem;
+    }
+
+    .enhanced-product-row td {
+      padding: 12px 8px;
+    }
+
+    .product-icon {
+      width: 32px;
+      height: 32px;
+      font-size: 1.2rem;
+    }
+
+    .product-name {
+      font-size: 1rem;
+    }
+
+    .status-badge {
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      min-width: 70px;
+    }
+
+    .count-number {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+
+<!-- Commission Breakdown Modal -->
+<div class="modal fade" id="commissionBreakdownModal" tabindex="-1" aria-labelledby="commissionBreakdownModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-gradient-primary">
+        <h5 class="modal-title text-white" id="commissionBreakdownModalLabel">
+          <i class="bi bi-pie-chart me-2"></i>Commission Breakdown for <span id="modalPolicyNumber"></span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-3">
+          <div class="col-12">
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>Policy Type:</strong> <span id="modalPolicyType"></span>
+            </div>
+          </div>
+        </div>
+
+        <div id="commissionBreakdownContent">
+          <!-- Commission breakdown content will be loaded here -->
+        </div>
+
+        <div class="mt-4">
+          <div class="card bg-light">
+            <div class="card-body">
+              <div class="row text-center">
+                <div class="col-md-4">
+                  <h6 class="text-muted">Total Breakdown Items</h6>
+                  <h4 class="text-primary mb-0" id="totalBreakdownCount">0</h4>
+                </div>
+                <div class="col-md-4">
+                  <h6 class="text-muted">Main Agent Commission</h6>
+                  <h4 class="text-success mb-0" id="totalCommissionSum">Rs. 0</h4>
+                </div>
+                <div class="col-md-4">
+                  <h6 class="text-muted">Breakdown Status</h6>
+                  <h4 class="mb-0" id="breakdownStatus">
+                    <span class="badge bg-secondary">Loading...</span>
+                  </h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x me-1"></i>Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Insurance Policies Modal -->
+<div class="modal fade" id="insurancePoliciesModal" tabindex="-1" aria-labelledby="insurancePoliciesModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="insurancePoliciesModalLabel">
+          <i class="bi bi-shield-check text-primary me-2"></i>
+          Insurance Policies - <span id="modalCustomerName"><%= @customer.display_name %></span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="insurancePoliciesContent">
+          <!-- Policies will be loaded here -->
+          <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading insurance policies...</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* MODAL Z-INDEX AND BACKDROP FIXES - SAME AS AI REPORTS */
+.modal-backdrop {
+  z-index: 9998 !important;
+  opacity: 0.6 !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.modal {
+  z-index: 9999 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  outline: 0 !important;
+}
+
+.modal-dialog {
+  z-index: 10000 !important;
+  position: relative !important;
+  width: auto !important;
+  margin: 1.75rem auto !important;
+  pointer-events: none !important;
+}
+
+.modal-content {
+  z-index: 10001 !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  pointer-events: auto !important;
+  background-color: #fff !important;
+  background-clip: padding-box !important;
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+  border-radius: 0.3rem !important;
+  outline: 0 !important;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.5) !important;
+}
+
+#insurancePoliciesModal {
+  z-index: 9999 !important;
+  position: fixed !important;
+}
+
+#insurancePoliciesModal .modal-dialog {
+  z-index: 10000 !important;
+}
+
+#insurancePoliciesModal .modal-content {
+  z-index: 10001 !important;
+  background: white !important;
+  opacity: 1 !important;
+}
+
+.modal.show {
+  display: block !important;
+  z-index: 9999 !important;
+}
+
+.modal.show .modal-dialog {
+  z-index: 10000 !important;
+  transform: none !important;
+}
+
+.modal.show .modal-content {
+  z-index: 10001 !important;
+  opacity: 1 !important;
+  background-color: white !important;
+}
+
+.modal-dialog {
+  transform: none !important;
+  transition: none !important;
+}
+
+.modal-content,
+.modal-content * {
+  pointer-events: auto !important;
+  z-index: inherit !important;
+}
+
+.modal-header,
+.modal-body,
+.modal-footer {
+  background-color: transparent !important;
+  z-index: inherit !important;
+}
+
+/* Motor Insurance Policy Card Styling */
+.motor-policy-card {
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.motor-policy-card:hover {
+  border-color: #007bff;
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.policy-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px 8px 0 0;
+  padding: 1rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.policy-status-badge {
+  font-size: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.policy-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.detail-item {
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #007bff;
+}
+
+.detail-label {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.detail-value {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.95rem;
+}
+
+.policy-actions {
+  padding: 1rem;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+  border-radius: 0 0 8px 8px;
+}
+
+.policy-actions .btn {
+  transition: all 0.2s ease;
+  font-weight: 500;
+  border-width: 1.5px;
+}
+
+.policy-actions .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.policy-actions .btn-outline-danger:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+.policy-actions .btn-outline-success:hover {
+  background-color: #198754;
+  border-color: #198754;
+  color: white;
+}
+
+.policy-actions .btn-outline-info:hover {
+  background-color: #0dcaf0;
+  border-color: #0dcaf0;
+  color: white;
+}
+
+.policy-actions .btn-outline-primary:hover {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+}
+
+/* Commission Breakdown Modal Styles */
+.commission-breakdown-card {
+  transition: all 0.3s ease;
+  border-width: 2px !important;
+}
+
+.commission-breakdown-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.commission-icon {
+  transition: all 0.3s ease;
+}
+
+.commission-breakdown-card:hover .commission-icon {
+  transform: scale(1.1);
+}
+
+.commission-details {
+  font-size: 0.9rem;
+}
+
+/* Purple color for investor */
+.text-purple {
+  color: #6f42c1 !important;
+}
+
+.bg-purple {
+  background-color: #6f42c1 !important;
+}
+
+.border-purple {
+  border-color: #6f42c1 !important;
+}
+
+/* Commission breakdown button styling */
+.commission-breakdown-btn {
+  background: linear-gradient(135deg, #17a2b8, #138496);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.commission-breakdown-btn:hover {
+  background: linear-gradient(135deg, #138496, #0f6674);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+}
+</style>
+
+<script>
+function showCommissionBreakdown(policyNumber, policyType, payoutsJson) {
+  console.log('🔍 Opening commission breakdown modal for policy:', policyNumber);
+
+  try {
+    // Parse the payouts JSON data
+    const payouts = JSON.parse(payoutsJson);
+    console.log('📊 Payouts data:', payouts);
+
+    // Set modal title and policy information
+    document.getElementById('modalPolicyNumber').textContent = policyNumber;
+    document.getElementById('modalPolicyType').textContent = policyType.charAt(0).toUpperCase() + policyType.slice(1) + ' Insurance';
+
+    // Calculate totals
+    const totalBreakdownCount = payouts.length;
+    const mainAgentPayout = payouts.find(p => p.payout_to === 'main_agent');
+    const mainAgentAmount = mainAgentPayout ? parseFloat(mainAgentPayout.payout_amount || 0) : 0;
+
+    // Update summary statistics
+    document.getElementById('totalBreakdownCount').textContent = totalBreakdownCount;
+    document.getElementById('totalCommissionSum').textContent = 'Rs. ' + mainAgentAmount.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+    // Check if all payouts are paid
+    const allPaid = payouts.every(payout => payout.status === 'paid');
+    const allPending = payouts.every(payout => payout.status === 'pending');
+
+    let statusBadge;
+    if (allPaid) {
+      statusBadge = '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>All Paid</span>';
+    } else if (allPending) {
+      statusBadge = '<span class="badge bg-warning"><i class="bi bi-clock me-1"></i>All Pending</span>';
+    } else {
+      statusBadge = '<span class="badge bg-info"><i class="bi bi-hourglass-split me-1"></i>Mixed</span>';
+    }
+    document.getElementById('breakdownStatus').innerHTML = statusBadge;
+
+    // Generate breakdown content
+    let breakdownHtml = '';
+
+    if (payouts.length === 0) {
+      breakdownHtml = `
+        <div class="text-center py-5">
+          <i class="bi bi-info-circle text-muted" style="font-size: 4rem;"></i>
+          <h5 class="mt-3 text-muted">No Commission Breakdown Found</h5>
+          <p class="text-muted">No commission payouts found for this policy.</p>
+        </div>
+      `;
+    } else {
+      breakdownHtml = '<div class="row">';
+
+      payouts.forEach((payout, index) => {
+        const statusClass = payout.status === 'paid' ? 'success' : (payout.status === 'pending' ? 'warning' : 'secondary');
+        const statusIcon = payout.status === 'paid' ? 'bi-check-circle' : (payout.status === 'pending' ? 'bi-clock' : 'bi-question-circle');
+
+        // Determine the color scheme based on payout_to
+        let colorScheme = 'primary';
+        let iconClass = 'bi-person';
+
+        switch (payout.payout_to) {
+          case 'main_agent':
+            colorScheme = 'primary';
+            iconClass = 'bi-person-badge';
+            break;
+          case 'sub_agent':
+          case 'affiliate':
+            colorScheme = 'success';
+            iconClass = 'bi-people';
+            break;
+          case 'ambassador':
+            colorScheme = 'warning';
+            iconClass = 'bi-award';
+            break;
+          case 'investor':
+            colorScheme = 'purple';
+            iconClass = 'bi-bank';
+            break;
+          case 'company_expenses':
+            colorScheme = 'danger';
+            iconClass = 'bi-building';
+            break;
+          default:
+            colorScheme = 'secondary';
+            iconClass = 'bi-question';
+        }
+
+        breakdownHtml += `
+          <div class="col-md-6 mb-3">
+            <div class="card h-100 border-${colorScheme} commission-breakdown-card">
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                  <div class="commission-icon bg-${colorScheme} bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                    <i class="${iconClass} text-${colorScheme} fs-4"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <h6 class="mb-0 text-${colorScheme} fw-bold">${payout.payout_to.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h6>
+                    <small class="text-muted fw-semibold">${payout.recipient_name || 'Commission Recipient'}</small>
+                  </div>
+                </div>
+
+                <div class="commission-details">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-muted small">Gross Commission:</span>
+                    <span class="fw-semibold">Rs. ${parseFloat(payout.gross_amount || 0).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                  </div>
+
+                  ${payout.tds_pct > 0 ? `
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-muted small">TDS (${payout.tds_pct}%):</span>
+                    <span class="text-danger small">- Rs. ${parseFloat(payout.tds_amt || 0).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                  </div>
+                  ` : ''}
+
+                  <div class="d-flex justify-content-between align-items-center mb-2 pt-1 border-top">
+                    <span class="text-muted small fw-semibold">Net Payable:</span>
+                    <span class="fw-bold text-${colorScheme} fs-6">Rs. ${parseFloat(payout.payout_amount || 0).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                  </div>
+
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small">Status:</span>
+                    <span class="badge bg-${statusClass}">
+                      <i class="${statusIcon} me-1"></i>${payout.status ? payout.status.charAt(0).toUpperCase() + payout.status.slice(1) : 'Unknown'}
+                    </span>
+                  </div>
+
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">Paid Date:</span>
+                    <span class="text-dark small">${payout.payout_date ? new Date(payout.payout_date).toLocaleDateString('en-IN') : 'Pending'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      breakdownHtml += '</div>';
+    }
+
+    // Set the content
+    document.getElementById('commissionBreakdownContent').innerHTML = breakdownHtml;
+
+    // Show the modal
+    const modalElement = document.getElementById('commissionBreakdownModal');
+    const modal = new bootstrap.Modal(modalElement, {
+      backdrop: true,
+      keyboard: true,
+      focus: true
+    });
+
+    modal.show();
+    console.log('✅ Commission breakdown modal shown successfully');
+
+  } catch (error) {
+    console.error('❌ Error in showCommissionBreakdown:', error);
+    alert('Error opening commission breakdown: ' + error.message);
+  }
+}
+
+function showInsurancePolicies(customerId, type, insuranceType) {
+  // Open the modal
+  const modal = document.getElementById('insurancePoliciesModal');
+
+  // Move modal to document body for proper z-index handling
+  if (modal.parentNode !== document.body) {
+    document.body.appendChild(modal);
+  }
+
+  // Apply aggressive modal styling
+  modal.style.cssText = `
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 9999 !important;
+    width: 100% !important;
+    height: 100% !important;
+    outline: 0 !important;
+    display: block !important;
+  `;
+
+  const modalDialog = modal.querySelector('.modal-dialog');
+  if (modalDialog) {
+    modalDialog.style.cssText = `
+      z-index: 10000 !important;
+      position: relative !important;
+      margin: 1.75rem auto !important;
+      pointer-events: none !important;
+      transform: none !important;
+    `;
+  }
+
+  const modalContent = modal.querySelector('.modal-content');
+  if (modalContent) {
+    modalContent.style.cssText = `
+      z-index: 10001 !important;
+      position: relative !important;
+      background-color: white !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.8) !important;
+    `;
+  }
+
+  // Create and show modal instance
+  const modalInstance = new bootstrap.Modal(modal, {
+    backdrop: true,
+    keyboard: true,
+    focus: true
+  });
+
+  modalInstance.show();
+
+  // Force backdrop positioning after show
+  setTimeout(() => {
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (backdrop) {
+      backdrop.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        z-index: 9998 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background-color: rgba(0, 0, 0, 0.6) !important;
+        opacity: 1 !important;
+      `;
+    }
+
+    document.body.classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
+  }, 100);
+
+  // Update modal title
+  const titleType = type === 'drwise' ? 'DrWise' : 'Non-DrWise';
+  const insuranceTypeTitle = insuranceType.charAt(0).toUpperCase() + insuranceType.slice(1) + ' Insurance';
+  const modalTitle = document.getElementById('insurancePoliciesModalLabel');
+  const icon = getInsuranceIcon(insuranceType);
+
+  modalTitle.innerHTML = `
+    <i class="${icon} text-primary me-2"></i>
+    ${titleType} ${insuranceTypeTitle} Policies - <span id="modalCustomerName"><%= @customer.display_name %></span>
+  `;
+
+  // Fetch and display insurance policies
+  fetchInsurancePolicies(customerId, type, insuranceType);
+}
+
+function fetchInsurancePolicies(customerId, type, insuranceType) {
+  const contentDiv = document.getElementById('insurancePoliciesContent');
+
+  // Show loading state
+  contentDiv.innerHTML = `
+    <div class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-3 text-muted">Loading ${insuranceType} insurance policies...</p>
+    </div>
+  `;
+
+  // Fetch policies with updated endpoint
+  fetch(`/admin/customers/${customerId}/trace_commission?type=${type}&insurance_type=${insuranceType}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      displayInsurancePolicies(data.policies, type, insuranceType);
+    } else {
+      showErrorMessage(`Failed to load ${insuranceType} insurance policies: ${data.error}`);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showErrorMessage(`Error loading ${insuranceType} insurance policies: ${error.message}`);
+  });
+}
+
+function displayInsurancePolicies(policies, type, insuranceType) {
+  const contentDiv = document.getElementById('insurancePoliciesContent');
+
+  if (policies.length === 0) {
+    const icon = getInsuranceIcon(insuranceType);
+    const insuranceTitle = insuranceType.charAt(0).toUpperCase() + insuranceType.slice(1) + ' Insurance';
+
+    contentDiv.innerHTML = `
+      <div class="text-center py-5">
+        <i class="${icon} text-muted" style="font-size: 4rem;"></i>
+        <h5 class="mt-3 text-muted">No ${insuranceTitle} Policies Found</h5>
+        <p class="text-muted">This customer doesn't have any ${type === 'drwise' ? 'DrWise' : 'Non-DrWise'} ${insuranceType} insurance policies yet.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const insuranceTitle = insuranceType.charAt(0).toUpperCase() + insuranceType.slice(1) + ' Insurance';
+  let policiesHtml = `
+    <div class="row mb-3">
+      <div class="col-12">
+        <h6 class="text-muted mb-3">
+          <i class="bi bi-info-circle me-1"></i>
+          Found ${policies.length} ${type === 'drwise' ? 'DrWise' : 'Non-DrWise'} ${insuranceType} insurance ${policies.length === 1 ? 'policy' : 'policies'}
+        </h6>
+      </div>
+    </div>
+  `;
+
+  policies.forEach(policy => {
+    const statusClass = getStatusClass(policy.status);
+    const icon = getInsuranceIcon(insuranceType);
+
+    policiesHtml += `
+      <div class="motor-policy-card mb-4">
+        <div class="policy-header">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="mb-1 fw-bold">
+                <i class="${icon} me-2 text-primary"></i>
+                ${policy.policy_number || `Policy #${policy.id}`}
+              </h6>
+              <p class="text-muted mb-0">${getPolicyDescription(policy, insuranceType)}</p>
+            </div>
+            <div class="text-end">
+              <span class="policy-status-badge bg-${statusClass}">${policy.status || 'Active'}</span>
+              ${type === 'drwise' ? '<span class="badge bg-success ms-2">DrWise</span>' : '<span class="badge bg-warning ms-2">Non-DrWise</span>'}
+            </div>
+          </div>
+        </div>
+
+        <div class="policy-details-grid">
+          <div class="detail-item">
+            <div class="detail-label">Insurance Company</div>
+            <div class="detail-value">${policy.insurance_company || 'N/A'}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Policy Type</div>
+            <div class="detail-value">${policy.policy_type || 'N/A'}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Premium Amount</div>
+            <div class="detail-value text-success">Rs. ${formatCurrency(policy.premium_amount || 0)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Policy Period</div>
+            <div class="detail-value">${formatDate(policy.policy_start_date)} - ${formatDate(policy.policy_end_date)}</div>
+          </div>
+          ${getAdditionalPolicyDetails(policy, insuranceType)}
+        </div>
+
+        <div class="policy-actions mt-3">
+          <div class="d-flex justify-content-center">
+            <button class="btn btn-sm btn-primary" onclick="viewPolicyDetails('${insuranceType}', ${policy.id})">
+              <i class="bi bi-eye me-1"></i>View Details
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  contentDiv.innerHTML = policiesHtml;
+}
+
+function getStatusClass(status) {
+  switch(status) {
+    case 'Active': return 'success';
+    case 'Expired': return 'danger';
+    case 'Expiring Soon': return 'warning';
+    default: return 'secondary';
+  }
+}
+
+function getInsuranceIcon(insuranceType) {
+  switch(insuranceType) {
+    case 'motor': return 'bi-car-front-fill';
+    case 'motorinsurance': return 'bi-car-front-fill';
+    case 'life': return 'bi-heart-pulse-fill';
+    case 'lifeinsurance': return 'bi-heart-pulse-fill';
+    case 'health': return 'bi-activity';
+    case 'healthinsurance': return 'bi-activity';
+    default: return 'bi-shield-check';
+  }
+}
+
+function getPolicyDescription(policy, insuranceType) {
+  switch(insuranceType) {
+    case 'motor':
+    case 'motorinsurance':
+      return policy.vehicle_details || 'Vehicle details not available';
+    case 'life':
+    case 'lifeinsurance':
+      return policy.policy_details || 'Life insurance policy';
+    case 'health':
+    case 'healthinsurance':
+      return policy.policy_details || 'Health insurance policy';
+    default:
+      return 'Insurance policy details';
+  }
+}
+
+function getAdditionalPolicyDetails(policy, insuranceType) {
+  switch(insuranceType) {
+    case 'motor':
+    case 'motorinsurance':
+      return `
+        <div class="detail-item">
+          <div class="detail-label">Vehicle Info</div>
+          <div class="detail-value">${policy.additional_info?.vehicle_type || 'N/A'}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">IDV Amount</div>
+          <div class="detail-value text-info">Rs. ${formatCurrency(policy.additional_info?.idv_value || 0)}</div>
+        </div>
+      `;
+    case 'life':
+    case 'lifeinsurance':
+      return `
+        <div class="detail-item">
+          <div class="detail-label">Sum Assured</div>
+          <div class="detail-value text-info">Rs. ${formatCurrency(policy.additional_info?.sum_insured || 0)}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Payment Mode</div>
+          <div class="detail-value">${policy.additional_info?.payment_mode || 'N/A'}</div>
+        </div>
+      `;
+    case 'health':
+    case 'healthinsurance':
+      return `
+        <div class="detail-item">
+          <div class="detail-label">Sum Insured</div>
+          <div class="detail-value text-info">Rs. ${formatCurrency(policy.additional_info?.sum_insured || 0)}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Payment Mode</div>
+          <div class="detail-value">${policy.additional_info?.payment_mode || 'N/A'}</div>
+        </div>
+      `;
+    default:
+      return '';
+  }
+}
+
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-IN').format(amount);
+}
+
+function formatDate(dateString) {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleDateString('en-IN', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+function showErrorMessage(message) {
+  document.getElementById('insurancePoliciesContent').innerHTML = `
+    <div class="alert alert-danger" role="alert">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      ${message}
+    </div>
+  `;
+}
+
+function viewPolicyDetails(insuranceType, policyId) {
+  const basePath = getInsuranceBasePath(insuranceType);
+  window.location.href = `/admin/${basePath}/${policyId}`;
+}
+
+function editPolicy(insuranceType, policyId) {
+  const basePath = getInsuranceBasePath(insuranceType);
+  window.location.href = `/admin/${basePath}/${policyId}/edit`;
+}
+
+function renewPolicy(insuranceType, policyId) {
+  const basePath = getInsuranceBasePath(insuranceType);
+  window.location.href = `/admin/${basePath}/${policyId}/renew`;
+}
+
+function removePolicy(insuranceType, policyId) {
+  const basePath = getInsuranceBasePath(insuranceType);
+
+  // Show confirmation dialog
+  if (confirm('Are you sure you want to remove this policy? This action cannot be undone.')) {
+    // Send DELETE request
+    fetch(`/admin/${basePath}/${policyId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        // Show success message
+        alert('Policy removed successfully!');
+        // Reload the modal or redirect to refresh the data
+        location.reload();
+      } else {
+        throw new Error('Failed to remove policy');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Failed to remove policy. Please try again.');
+    });
+  }
+}
+
+function getInsuranceBasePath(insuranceType) {
+  switch(insuranceType) {
+    case 'motor':
+    case 'motorinsurance':
+      return 'insurance/motor';
+    case 'life':
+    case 'lifeinsurance':
+      return 'insurance/life';
+    case 'health':
+    case 'healthinsurance':
+      return 'insurance/health';
+    default:
+      return 'insurances';
+  }
+}
+</script>

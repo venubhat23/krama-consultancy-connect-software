@@ -1,0 +1,1019 @@
+<% return unless policy.respond_to?(:drwise_policy?) && policy.drwise_policy? %>
+<%
+  _main_pct   = (policy.try(:main_agent_commission_percentage) || 0).to_f
+  _sub_pct    = (policy.try(:sub_agent_commission_percentage)   || 0).to_f
+  _amb_pct    = (policy.try(:ambassador_commission_percentage)  || 0).to_f
+  _inv_pct    = (policy.try(:investor_commission_percentage)    || 0).to_f
+  _exp_pct    = (policy.try(:company_expenses_percentage)       || 0).to_f
+  _net        = (policy.try(:net_premium)                       || 0).to_f
+  _total_dist = _sub_pct + _amb_pct + _inv_pct
+  _profit_pct = _main_pct - _total_dist - _exp_pct
+  _profit_amt = _net * _profit_pct / 100.0
+
+  _policy_type = policy.class.name.underscore.gsub('_insurance', '')
+  _ct_url      = admin_commission_tracking_path(policy.id, policy_type: _policy_type)
+
+  _payouts = CommissionPayout.where(policy_type: _policy_type, policy_id: policy.id)
+                             .index_by(&:payout_to)
+  _main_payout = _payouts['main_agent']
+  _aff_payout  = _payouts['affiliate']
+  _amb_payout  = _payouts['ambassador']
+  _inv_payout  = _payouts['investor']
+  _comp_payout = _payouts['company_expense']
+
+  _main_agent_paid = _main_payout&.status == 'paid'
+
+  _aff_amount  = (policy.try(:sub_agent_after_tds_value) || 0).to_f
+  _amb_amount  = (policy.try(:ambassador_after_tds_value) || policy.try(:ambassador_commission_amount) || 0).to_f
+  _inv_amount  = (policy.try(:investor_after_tds_value) || policy.try(:investor_commission_amount) || 0).to_f
+  _comp_amount = (policy.try(:company_expenses_amount) || 0).to_f
+  _distribution_total = _aff_amount + _amb_amount + _inv_amount + _comp_amount
+%>
+<!-- Commission Calculation Table for View Pages -->
+<div class="card mb-4 shadow-sm commission-table">
+  <div class="card-header" style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-0 text-dark fw-bold">
+          <i class="bi bi-calculator me-2 text-primary"></i>
+          Commission Calculation
+        </h5>
+      </div>
+      <div class="text-end">
+        <small class="text-muted fw-bold">Profit Formula:</small>
+        <div class="badge bg-light text-dark border" style="font-size: 0.8rem;">
+          Main Agent Commission - Total Distribution - Company Expenses
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <!-- Commission Table -->
+    <div class="table-responsive">
+      <table class="table mb-0" style="font-size: 0.95rem;">
+        <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+          <tr>
+            <th class="py-3 px-4 fw-bold text-dark border-0" style="width: 16%;">COMMISSION DETAILS</th>
+            <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 10%;">(%)</th>
+            <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 14%;">COMMISSION</th>
+            <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 10%;">TDS (%)</th>
+            <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 13%;">TDS AMOUNT</th>
+            <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 19%; background: #f8f9fa;">ACTUAL AMOUNT</th>
+            <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 18%; background: #eef2ff;">PAYOUT STATUS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Main Agent -->
+          <tr style="border-bottom: 1px solid #e9ecef;">
+            <td class="py-3 px-4 fw-bold text-dark bg-light">Main Agent</td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center fw-bold" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= policy.try(:main_agent_commission_percentage) || 0 %>%
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= indian_currency(policy.try(:commission_amount)) || 'Rs. 0.00' %>
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= policy.try(:tds_percentage) || 0 %>%
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= indian_currency(policy.try(:tds_amount)) || 'Rs. 0.00' %>
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+              <div class="form-control border-1 text-center fw-bold fs-6" style="background: #e8f5e8; border-color: #28a745; color: #155724;">
+                <%= indian_currency(policy.try(:after_tds_value)) || 'Rs. 0.00' %>
+              </div>
+            </td>
+            <td class="py-2 px-2 text-center" style="background: #eef2ff;">
+              <% if _main_payout&.status == 'paid' %>
+                <%= link_to admin_payout_path(_main_payout), class: "payout-badge payout-paid" do %>
+                  <i class="bi bi-check-circle-fill me-1"></i>Paid
+                <% end %>
+                <div class="payout-date mt-1"><%= _main_payout.payout_date&.strftime('%d %b %Y') %></div>
+              <% elsif _main_payout %>
+                <span class="payout-badge payout-pending">
+                  <i class="bi bi-clock me-1"></i>Pending
+                </span>
+                <button type="button" class="btn btn-xs-pay btn-pay mt-1" data-bs-toggle="modal" data-bs-target="#commissionPayoutModal"
+                        data-payout-type="main_agent" data-payout-label="Main Agent"
+                        data-payout-url="<%= mark_main_agent_commission_received_admin_commission_tracking_path(policy.id) %>"
+                        data-policy-type="<%= _policy_type %>"
+                        data-amount="<%= (policy.try(:after_tds_value) || 0).to_f %>">
+                  <i class="bi bi-credit-card me-1"></i>Pay
+                </button>
+              <% else %>
+                <span class="payout-badge payout-none">
+                  <i class="bi bi-dash-circle me-1"></i>No Payout
+                </span>
+                <button type="button" class="btn btn-xs-pay btn-create mt-1" data-bs-toggle="modal" data-bs-target="#commissionPayoutModal"
+                        data-payout-type="main_agent" data-payout-label="Main Agent"
+                        data-payout-url="<%= mark_main_agent_commission_received_admin_commission_tracking_path(policy.id) %>"
+                        data-policy-type="<%= _policy_type %>"
+                        data-amount="<%= (policy.try(:after_tds_value) || 0).to_f %>">
+                  <i class="bi bi-plus-circle me-1"></i>Pay
+                </button>
+              <% end %>
+            </td>
+          </tr>
+
+          <!-- Affiliate -->
+          <tr style="border-bottom: 1px solid #e9ecef;">
+            <td class="py-3 px-4 fw-bold text-dark">Affiliate</td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center fw-bold" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= policy.try(:sub_agent_commission_percentage) || 0 %>%
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= indian_currency(policy.try(:sub_agent_commission_amount)) || 'Rs. 0.00' %>
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= policy.try(:sub_agent_tds_percentage) || 0 %>%
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= indian_currency(policy.try(:sub_agent_tds_amount)) || 'Rs. 0.00' %>
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+              <div class="form-control border-1 text-center fw-bold fs-6" style="background: #e3f2fd; border-color: #2196f3; color: #0d47a1;">
+                <%= indian_currency(policy.try(:sub_agent_after_tds_value)) || 'Rs. 0.00' %>
+              </div>
+            </td>
+            <td class="py-2 px-2 text-center" style="background: #eef2ff;">
+              <% if _aff_payout&.status == 'paid' %>
+                <%= link_to admin_payout_path(_aff_payout), class: "payout-badge payout-paid" do %>
+                  <i class="bi bi-check-circle-fill me-1"></i>Paid
+                <% end %>
+                <div class="payout-date mt-1"><%= _aff_payout.payout_date&.strftime('%d %b %Y') %></div>
+              <% elsif _aff_payout %>
+                <span class="payout-badge payout-pending">
+                  <i class="bi bi-clock me-1"></i>Pending
+                </span>
+                <button type="button" class="btn btn-xs-pay btn-pay mt-1" data-bs-toggle="modal" data-bs-target="#distributionSettleModal"
+                        data-settle-url="<%= settle_distribution_payouts_admin_commission_tracking_path(policy.id) %>"
+                        data-policy-type="<%= _policy_type %>"
+                        data-aff-amount="<%= _aff_amount %>" data-amb-amount="<%= _amb_amount %>"
+                        data-inv-amount="<%= _inv_amount %>" data-comp-amount="<%= _comp_amount %>"
+                        data-total-amount="<%= _distribution_total %>"
+                        <%= 'disabled title="Main Agent commission must be paid first"' unless _main_agent_paid %>>
+                  <i class="bi bi-credit-card me-1"></i>Pay
+                </button>
+              <% else %>
+                <span class="payout-badge payout-none">
+                  <i class="bi bi-dash-circle me-1"></i>No Payout
+                </span>
+                <button type="button" class="btn btn-xs-pay btn-create mt-1" data-bs-toggle="modal" data-bs-target="#distributionSettleModal"
+                        data-settle-url="<%= settle_distribution_payouts_admin_commission_tracking_path(policy.id) %>"
+                        data-policy-type="<%= _policy_type %>"
+                        data-aff-amount="<%= _aff_amount %>" data-amb-amount="<%= _amb_amount %>"
+                        data-inv-amount="<%= _inv_amount %>" data-comp-amount="<%= _comp_amount %>"
+                        data-total-amount="<%= _distribution_total %>"
+                        <%= 'disabled title="Main Agent commission must be paid first"' unless _main_agent_paid %>>
+                  <i class="bi bi-plus-circle me-1"></i>Pay
+                </button>
+              <% end %>
+            </td>
+          </tr>
+
+          <!-- Ambassador -->
+          <tr style="border-bottom: 1px solid #e9ecef;">
+            <td class="py-3 px-4 fw-bold text-dark">Ambassador</td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center fw-bold" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= policy.try(:ambassador_commission_percentage) || 0 %>%
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= indian_currency(policy.try(:ambassador_commission_amount)) || 'Rs. 0.00' %>
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= policy.try(:ambassador_tds_percentage) || '-' %>
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= indian_currency(policy.try(:ambassador_tds_amount)) || '-' %>
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+              <div class="form-control border-1 text-center fw-bold fs-6" style="background: #fff3e0; border-color: #ff9800; color: #e65100;">
+                <%= indian_currency(policy.try(:ambassador_after_tds_value) || policy.try(:ambassador_commission_amount)) || 'Rs. 0.00' %>
+              </div>
+            </td>
+            <td class="py-2 px-2 text-center" style="background: #eef2ff;">
+              <% if _amb_payout&.status == 'paid' %>
+                <%= link_to admin_payout_path(_amb_payout), class: "payout-badge payout-paid" do %>
+                  <i class="bi bi-check-circle-fill me-1"></i>Paid
+                <% end %>
+                <div class="payout-date mt-1"><%= _amb_payout.payout_date&.strftime('%d %b %Y') %></div>
+              <% elsif _amb_payout %>
+                <span class="payout-badge payout-pending">
+                  <i class="bi bi-clock me-1"></i>Pending
+                </span>
+                <button type="button" class="btn btn-xs-pay btn-pay mt-1" data-bs-toggle="modal" data-bs-target="#commissionPayoutModal"
+                        data-payout-type="ambassador" data-payout-label="Ambassador"
+                        data-payout-url="<%= transfer_to_ambassador_admin_commission_tracking_path(policy.id) %>"
+                        data-policy-type="<%= _policy_type %>"
+                        data-amount="<%= (policy.try(:ambassador_after_tds_value) || policy.try(:ambassador_commission_amount) || 0).to_f %>"
+                        <%= 'disabled title="Main Agent commission must be paid first"' unless _main_agent_paid %>>
+                  <i class="bi bi-credit-card me-1"></i>Pay
+                </button>
+              <% else %>
+                <span class="payout-badge payout-none">
+                  <i class="bi bi-dash-circle me-1"></i>No Payout
+                </span>
+                <button type="button" class="btn btn-xs-pay btn-create mt-1" data-bs-toggle="modal" data-bs-target="#commissionPayoutModal"
+                        data-payout-type="ambassador" data-payout-label="Ambassador"
+                        data-payout-url="<%= transfer_to_ambassador_admin_commission_tracking_path(policy.id) %>"
+                        data-policy-type="<%= _policy_type %>"
+                        data-amount="<%= (policy.try(:ambassador_after_tds_value) || policy.try(:ambassador_commission_amount) || 0).to_f %>"
+                        <%= 'disabled title="Main Agent commission must be paid first"' unless _main_agent_paid %>>
+                  <i class="bi bi-plus-circle me-1"></i>Pay
+                </button>
+              <% end %>
+            </td>
+          </tr>
+
+          <!-- Investor -->
+          <tr style="border-bottom: 1px solid #e9ecef;">
+            <td class="py-3 px-4 fw-bold text-dark">Investor</td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center fw-bold" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= policy.try(:investor_commission_percentage) || 0 %>%
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= indian_currency(policy.try(:investor_commission_amount)) || 'Rs. 0.00' %>
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= policy.try(:investor_tds_percentage) || '-' %>
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= indian_currency(policy.try(:investor_tds_amount)) || '-' %>
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+              <div class="form-control border-1 text-center fw-bold fs-6" style="background: #e8f5e8; border-color: #4caf50; color: #2e7d32;">
+                <%= indian_currency(policy.try(:investor_after_tds_value) || policy.try(:investor_commission_amount)) || 'Rs. 0.00' %>
+              </div>
+            </td>
+            <td class="py-2 px-2 text-center" style="background: #eef2ff;">
+              <span class="text-muted" style="font-size: 0.78rem;">—</span>
+            </td>
+          </tr>
+
+          <!-- Company -->
+          <tr style="border-bottom: 1px solid #e9ecef;">
+            <td class="py-3 px-4 fw-bold text-dark">Company</td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center fw-bold" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= policy.try(:company_expenses_percentage) || 0 %>%
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                <%= indian_currency(policy.try(:company_expenses_amount)) || 'Rs. 0.00' %>
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                -
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+                -
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+              <div class="form-control border-1 text-center fw-bold fs-6" style="background: #fce4ec; border-color: #e91e63; color: #880e4f;">
+                <%= indian_currency(policy.try(:company_expenses_amount)) || 'Rs. 0.00' %>
+              </div>
+            </td>
+            <td class="py-2 px-2 text-center" style="background: #eef2ff;">
+              <span class="text-muted" style="font-size: 0.78rem;">—</span>
+            </td>
+          </tr>
+
+          <!-- Profit -->
+          <tr style="border-bottom: 2px solid #dee2e6; background: #fffbf0;">
+            <td class="py-3 px-4 fw-bold text-dark">Profit</td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center fw-bold" style="background: #fffbf0; border-color: #ffc107; color: #856404;">
+                <%= number_with_precision(_profit_pct, precision: 2) %>%
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center fw-bold" style="background: #fffbf0; border-color: #ffc107; color: #856404;">
+                <%= indian_currency(_profit_amt) %>
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #fffbf0; border-color: #ffc107; color: #856404;">
+                -
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center">
+              <div class="form-control border-1 text-center" style="background: #fffbf0; border-color: #ffc107; color: #856404;">
+                -
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center" style="background: #fffbf0;">
+              <div class="form-control border-1 text-center fw-bold fs-6" style="background: #fff9c4; border-color: #ffc107; color: #856404;">
+                <%= indian_currency(_profit_amt) %>
+              </div>
+            </td>
+            <td class="py-2 px-2 text-center" style="background: #fffbf0;">
+              <span class="text-muted" style="font-size: 0.78rem;">—</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Summary Row -->
+    <div class="p-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-top: 1px solid #dee2e6;">
+      <div class="row">
+        <div class="col-md-3">
+          <small class="text-muted fw-bold">Net Premium:</small>
+          <div class="h6 mb-0 text-primary">
+            <%= indian_currency(policy.try(:net_premium)) || 'Rs. 0.00' %>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <small class="text-muted fw-bold">Total Distribution:</small>
+          <div class="h6 mb-0 text-info">
+            <%= number_with_precision(_total_dist, precision: 2) %>%
+          </div>
+        </div>
+        <div class="col-md-3">
+          <small class="text-muted fw-bold">Company Expenses:</small>
+          <div class="h6 mb-0 text-danger">
+            <%= number_with_precision(_exp_pct, precision: 2) %>%
+          </div>
+        </div>
+        <div class="col-md-3">
+          <small class="text-muted fw-bold">Final Profit:</small>
+          <div class="h6 mb-0 text-warning">
+            <%= indian_currency(_profit_amt) %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .commission-table {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .commission-table .table td,
+  .commission-table .table th {
+    vertical-align: middle;
+    border-color: #e9ecef;
+  }
+  .commission-table .form-control {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0;
+    font-weight: 500;
+    text-align: center;
+  }
+  .commission-table .form-control:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  .commission-table tr:hover {
+    background-color: rgba(102, 126, 234, 0.03);
+  }
+  .commission-table tr:last-child .form-control {
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+  }
+
+  /* Payout status badges */
+  .payout-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .payout-paid {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .payout-paid:hover {
+    background: #c3e6cb;
+    color: #0d3d1e;
+    text-decoration: none;
+  }
+  .payout-pending {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+  }
+  .payout-none {
+    background: #e9ecef;
+    color: #6c757d;
+    border: 1px solid #ced4da;
+  }
+  .payout-date {
+    font-size: 0.7rem;
+    color: #6c757d;
+  }
+
+  /* Pay / Create buttons */
+  .btn-xs-pay {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.72rem;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .btn-pay {
+    background: #17a2b8;
+    color: #fff;
+    border: 1px solid #138496;
+    transition: background 0.15s ease;
+  }
+  .btn-pay:hover {
+    background: #138496;
+    color: #fff;
+    text-decoration: none;
+  }
+  .btn-create {
+    background: #fff;
+    color: #6c757d;
+    border: 1px solid #adb5bd;
+    transition: background 0.15s ease;
+  }
+  .btn-create:hover {
+    background: #6c757d;
+    color: #fff;
+    text-decoration: none;
+  }
+  .btn-xs-pay:disabled {
+    background: #e9ecef !important;
+    color: #adb5bd !important;
+    border-color: #ced4da !important;
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
+
+  /* Payout modal */
+  .payout-modal-content {
+    border: none;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  }
+  .payout-modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #5a4fcf 100%);
+    color: #fff;
+    border-bottom: none;
+    padding: 1.25rem 1.5rem;
+  }
+  .payout-modal-header .modal-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  #commissionPayoutForm .modal-body {
+    padding: 1.5rem;
+  }
+  #commissionPayoutForm .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+  }
+  .payout-submit-btn {
+    background: linear-gradient(135deg, #667eea 0%, #5a4fcf 100%);
+    border: none;
+    font-weight: 600;
+    padding: 0.5rem 1.25rem;
+  }
+  .payout-submit-btn:hover {
+    opacity: 0.92;
+  }
+  .payout-submit-btn:disabled {
+    opacity: 0.7;
+  }
+
+  /* Distribution Settle Modal */
+  .settle-modal-header {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: #fff;
+    border-bottom: none;
+    padding: 1.25rem 1.5rem;
+  }
+  .settle-modal-header .modal-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .settle-intro {
+    font-size: 0.92rem;
+    color: #495057;
+  }
+  .settle-item-list {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+  }
+  .settle-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.65rem 1rem;
+    background: #fff;
+    border-bottom: 1px solid #f1f3f5;
+  }
+  .settle-item-row:last-child {
+    border-bottom: none;
+  }
+  .settle-item-row .label {
+    font-weight: 600;
+    color: #343a40;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .settle-item-row .amount {
+    font-weight: 700;
+    color: #11998e;
+  }
+  .settle-item-row.total-row {
+    background: #eafaf6;
+  }
+  .settle-item-row.total-row .label,
+  .settle-item-row.total-row .amount {
+    color: #0b7a6d;
+    font-size: 1.02rem;
+  }
+  .settle-icon-badge {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e8f9f4;
+    color: #11998e;
+    font-size: 0.85rem;
+  }
+  .settle-confirm-btn {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    border: none;
+    font-weight: 600;
+    padding: 0.5rem 1.25rem;
+    color: #fff;
+  }
+  .settle-confirm-btn:hover { opacity: 0.92; color: #fff; }
+
+  .settle-progress-wrap {
+    text-align: center;
+    padding: 1rem 0 0.5rem;
+  }
+  .settle-progress-circle {
+    width: 110px;
+    height: 110px;
+    margin: 0 auto 1rem;
+    position: relative;
+  }
+  .settle-progress-circle svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+  .settle-progress-circle circle {
+    fill: none;
+    stroke-width: 8;
+  }
+  .settle-progress-circle .bg-ring { stroke: #e9ecef; }
+  .settle-progress-circle .fg-ring {
+    stroke: url(#settleGradient);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.35s ease;
+  }
+  .settle-progress-pct {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #11998e;
+  }
+  .settle-progress-status {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+    min-height: 1.4em;
+  }
+  .settle-success-check {
+    font-size: 3rem;
+    color: #11998e;
+    animation: settlePop 0.4s ease;
+  }
+  @keyframes settlePop {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+</style>
+
+<!-- Commission Payout Modal (shared across Main Agent / Affiliate / Ambassador pay actions) -->
+<div class="modal fade" id="commissionPayoutModal" tabindex="-1" aria-labelledby="commissionPayoutModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content payout-modal-content">
+      <div class="modal-header payout-modal-header">
+        <h5 class="modal-title" id="commissionPayoutModalLabel">
+          <i class="bi bi-credit-card-2-front-fill me-2"></i>
+          Pay <span id="payoutModalLabel">Commission</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="commissionPayoutForm">
+        <div class="modal-body">
+          <div id="payoutModalAlert" class="alert alert-danger py-2 d-none" role="alert"></div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Amount</label>
+            <div class="input-group">
+              <span class="input-group-text">Rs.</span>
+              <input type="number" step="0.01" min="0" class="form-control" id="payoutAmount" name="amount" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Transaction ID <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="payoutTransactionId" name="transaction_id" placeholder="e.g. TXN123456" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Payout Date</label>
+            <input type="date" class="form-control" id="payoutDate" name="paid_date">
+          </div>
+
+          <div class="mb-0">
+            <label class="form-label fw-bold">Notes</label>
+            <textarea class="form-control" id="payoutNotes" name="notes" rows="2" placeholder="Optional remarks"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn payout-submit-btn text-white">
+            <i class="bi bi-check-circle me-1"></i>Confirm Payout
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var modalEl = document.getElementById('commissionPayoutModal');
+  if (!modalEl || modalEl.dataset.payoutModalInitialized) return;
+  modalEl.dataset.payoutModalInitialized = 'true';
+
+  var form = document.getElementById('commissionPayoutForm');
+  var labelEl = document.getElementById('payoutModalLabel');
+  var amountInput = document.getElementById('payoutAmount');
+  var txnInput = document.getElementById('payoutTransactionId');
+  var dateInput = document.getElementById('payoutDate');
+  var notesInput = document.getElementById('payoutNotes');
+  var alertBox = document.getElementById('payoutModalAlert');
+  var submitBtn = form.querySelector('.payout-submit-btn');
+  var defaultBtnHtml = submitBtn.innerHTML;
+
+  var currentUrl = null;
+  var currentPolicyType = null;
+
+  modalEl.addEventListener('show.bs.modal', function(event) {
+    var trigger = event.relatedTarget;
+    if (!trigger) return;
+
+    currentUrl = trigger.getAttribute('data-payout-url');
+    currentPolicyType = trigger.getAttribute('data-policy-type');
+    var payoutType = trigger.getAttribute('data-payout-type');
+
+    labelEl.textContent = trigger.getAttribute('data-payout-label') || 'Commission';
+    amountInput.value = parseFloat(trigger.getAttribute('data-amount') || 0).toFixed(2);
+    amountInput.readOnly = (payoutType === 'main_agent');
+    txnInput.value = '';
+    dateInput.value = new Date().toISOString().split('T')[0];
+    notesInput.value = '';
+    alertBox.classList.add('d-none');
+    alertBox.textContent = '';
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = defaultBtnHtml;
+  });
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!currentUrl) return;
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
+    alertBox.classList.add('d-none');
+
+    var payload = {
+      amount: amountInput.value,
+      transaction_id: txnInput.value,
+      paid_date: dateInput.value,
+      notes: notesInput.value,
+      policy_type: currentPolicyType
+    };
+
+    var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    var csrfToken = csrfMeta ? csrfMeta.content : '';
+
+    fetch(currentUrl, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-Token': csrfToken
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify(payload)
+    })
+      .then(function(res) {
+        return res.json().then(function(data) { return { ok: res.ok, data: data }; });
+      })
+      .then(function(result) {
+        if (result.ok && result.data.success) {
+          submitBtn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Paid!';
+          setTimeout(function() { window.location.reload(); }, 500);
+        } else {
+          alertBox.textContent = (result.data && result.data.message) || 'Payment failed. Please try again.';
+          alertBox.classList.remove('d-none');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = defaultBtnHtml;
+        }
+      })
+      .catch(function() {
+        alertBox.textContent = 'Something went wrong. Please try again.';
+        alertBox.classList.remove('d-none');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = defaultBtnHtml;
+      });
+  });
+})();
+</script>
+
+<!-- Distribution Settlement Modal (Affiliate Pay cascades to Ambassador / Investor / Company) -->
+<div class="modal fade" id="distributionSettleModal" tabindex="-1" aria-labelledby="distributionSettleModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content payout-modal-content">
+      <div class="modal-header settle-modal-header">
+        <h5 class="modal-title" id="distributionSettleModalLabel">
+          <i class="bi bi-lightning-charge-fill me-2"></i>Settle Distribution Payouts
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" id="settleModalCloseBtn"></button>
+      </div>
+
+      <!-- Step 1: Confirmation -->
+      <div id="settleConfirmStep">
+        <div class="modal-body">
+          <p class="settle-intro mb-3">
+            Paying the <strong>Affiliate</strong> commission will also clear the remaining payouts below for this
+            policy. Please review the amounts before confirming:
+          </p>
+          <div class="settle-item-list mb-2">
+            <div class="settle-item-row">
+              <span class="label"><span class="settle-icon-badge"><i class="bi bi-people-fill"></i></span>Affiliate</span>
+              <span class="amount" id="settleAffAmount">Rs. 0.00</span>
+            </div>
+            <div class="settle-item-row">
+              <span class="label"><span class="settle-icon-badge"><i class="bi bi-award-fill"></i></span>Ambassador</span>
+              <span class="amount" id="settleAmbAmount">Rs. 0.00</span>
+            </div>
+            <div class="settle-item-row">
+              <span class="label"><span class="settle-icon-badge"><i class="bi bi-graph-up-arrow"></i></span>Investor</span>
+              <span class="amount" id="settleInvAmount">Rs. 0.00</span>
+            </div>
+            <div class="settle-item-row">
+              <span class="label"><span class="settle-icon-badge"><i class="bi bi-building"></i></span>Company</span>
+              <span class="amount" id="settleCompAmount">Rs. 0.00</span>
+            </div>
+            <div class="settle-item-row total-row">
+              <span class="label">Total to Settle</span>
+              <span class="amount" id="settleTotalAmount">Rs. 0.00</span>
+            </div>
+          </div>
+          <div id="settleConfirmAlert" class="alert alert-danger py-2 mt-2 d-none" role="alert"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn settle-confirm-btn" id="settleConfirmBtn">
+            <i class="bi bi-check2-circle me-1"></i>Confirm &amp; Pay All
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Progress -->
+      <div id="settleProgressStep" class="d-none">
+        <div class="modal-body settle-progress-wrap">
+          <div class="settle-progress-circle">
+            <svg viewBox="0 0 120 120">
+              <defs>
+                <linearGradient id="settleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#11998e" />
+                  <stop offset="100%" stop-color="#38ef7d" />
+                </linearGradient>
+              </defs>
+              <circle class="bg-ring" cx="60" cy="60" r="52"></circle>
+              <circle class="fg-ring" id="settleProgressRing" cx="60" cy="60" r="52"></circle>
+            </svg>
+            <div class="settle-progress-pct" id="settleProgressPct">0%</div>
+          </div>
+          <div class="settle-progress-status" id="settleProgressStatus">Starting settlement...</div>
+        </div>
+      </div>
+
+      <!-- Step 3: Success -->
+      <div id="settleSuccessStep" class="d-none">
+        <div class="modal-body settle-progress-wrap">
+          <div class="settle-success-check"><i class="bi bi-check-circle-fill"></i></div>
+          <div class="settle-progress-status mt-2">All payouts settled successfully!</div>
+          <div class="text-muted small mt-1">Refreshing the page...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var modalEl = document.getElementById('distributionSettleModal');
+  if (!modalEl || modalEl.dataset.settleModalInitialized) return;
+  modalEl.dataset.settleModalInitialized = 'true';
+
+  var confirmStep  = document.getElementById('settleConfirmStep');
+  var progressStep = document.getElementById('settleProgressStep');
+  var successStep  = document.getElementById('settleSuccessStep');
+  var confirmBtn   = document.getElementById('settleConfirmBtn');
+  var closeBtn     = document.getElementById('settleModalCloseBtn');
+  var alertBox     = document.getElementById('settleConfirmAlert');
+
+  var ring = document.getElementById('settleProgressRing');
+  var pctLabel = document.getElementById('settleProgressPct');
+  var statusLabel = document.getElementById('settleProgressStatus');
+  var radius = 52;
+  var circumference = 2 * Math.PI * radius;
+  ring.style.strokeDasharray = circumference;
+  ring.style.strokeDashoffset = circumference;
+
+  var currentUrl = null;
+  var currentPolicyType = null;
+  var progressTimer = null;
+
+  function formatRs(value) {
+    var n = parseFloat(value || 0);
+    return 'Rs. ' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function setProgress(pct, label) {
+    var offset = circumference - (pct / 100) * circumference;
+    ring.style.strokeDashoffset = offset;
+    pctLabel.textContent = pct + '%';
+    if (label) statusLabel.textContent = label;
+  }
+
+  function resetModal() {
+    confirmStep.classList.remove('d-none');
+    progressStep.classList.add('d-none');
+    successStep.classList.add('d-none');
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i>Confirm &amp; Pay All';
+    alertBox.classList.add('d-none');
+    alertBox.textContent = '';
+    setProgress(0, 'Starting settlement...');
+    if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+  }
+
+  modalEl.addEventListener('show.bs.modal', function(event) {
+    var trigger = event.relatedTarget;
+    if (!trigger) return;
+
+    currentUrl = trigger.getAttribute('data-settle-url');
+    currentPolicyType = trigger.getAttribute('data-policy-type');
+
+    document.getElementById('settleAffAmount').textContent  = formatRs(trigger.getAttribute('data-aff-amount'));
+    document.getElementById('settleAmbAmount').textContent  = formatRs(trigger.getAttribute('data-amb-amount'));
+    document.getElementById('settleInvAmount').textContent  = formatRs(trigger.getAttribute('data-inv-amount'));
+    document.getElementById('settleCompAmount').textContent = formatRs(trigger.getAttribute('data-comp-amount'));
+    document.getElementById('settleTotalAmount').textContent = formatRs(trigger.getAttribute('data-total-amount'));
+
+    resetModal();
+  });
+
+  var settleStages = [
+    { pct: 15, label: 'Clearing Affiliate payout...' },
+    { pct: 40, label: 'Clearing Ambassador payout...' },
+    { pct: 65, label: 'Clearing Investor payout...' },
+    { pct: 90, label: 'Clearing Company payout...' }
+  ];
+
+  confirmBtn.addEventListener('click', function() {
+    if (!currentUrl) return;
+
+    confirmBtn.disabled = true;
+    closeBtn.style.display = 'none';
+    alertBox.classList.add('d-none');
+
+    confirmStep.classList.add('d-none');
+    progressStep.classList.remove('d-none');
+
+    var stageIndex = 0;
+    setProgress(0, 'Starting settlement...');
+
+    progressTimer = setInterval(function() {
+      if (stageIndex < settleStages.length) {
+        setProgress(settleStages[stageIndex].pct, settleStages[stageIndex].label);
+        stageIndex++;
+      } else {
+        clearInterval(progressTimer);
+        progressTimer = null;
+      }
+    }, 450);
+
+    var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    var csrfToken = csrfMeta ? csrfMeta.content : '';
+
+    fetch(currentUrl, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-Token': csrfToken
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({ policy_type: currentPolicyType })
+    })
+      .then(function(res) {
+        return res.json().then(function(data) { return { ok: res.ok, data: data }; });
+      })
+      .then(function(result) {
+        if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+
+        if (result.ok && result.data.success) {
+          setProgress(100, 'Done!');
+          setTimeout(function() {
+            progressStep.classList.add('d-none');
+            successStep.classList.remove('d-none');
+            setTimeout(function() { window.location.reload(); }, 900);
+          }, 350);
+        } else {
+          progressStep.classList.add('d-none');
+          confirmStep.classList.remove('d-none');
+          closeBtn.style.display = '';
+          confirmBtn.disabled = false;
+          alertBox.textContent = (result.data && result.data.message) || 'Settlement failed. Please try again.';
+          alertBox.classList.remove('d-none');
+        }
+      })
+      .catch(function() {
+        if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+        progressStep.classList.add('d-none');
+        confirmStep.classList.remove('d-none');
+        closeBtn.style.display = '';
+        confirmBtn.disabled = false;
+        alertBox.textContent = 'Something went wrong. Please try again.';
+        alertBox.classList.remove('d-none');
+      });
+  });
+})();
+</script>

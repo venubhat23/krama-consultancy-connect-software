@@ -1,0 +1,271 @@
+<!-- Error Display -->
+<% if @payout.errors.any? %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <div class="d-flex align-items-center">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <div>
+        <h6 class="mb-1"><%= pluralize(@payout.errors.count, "error") %> prohibited this payout from being saved:</h6>
+        <ul class="mb-0">
+          <% @payout.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% end %>
+
+<%= form_with model: @payout, url: (@payout.new_record? ? admin_payouts_path : admin_payout_path(@payout)), local: true, class: "needs-validation", novalidate: true, data: { turbo: false } do |form| %>
+
+  <!-- Basic Payout Information -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-cash-coin me-2 text-primary"></i>
+      <h5 class="mb-0">Payout Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <%= form.label :policy_type, class: "form-label" do %>
+            Policy Type <span class="text-danger">*</span>
+          <% end %>
+          <%= form.select :policy_type,
+              options_for_select([
+                ['Health Insurance', 'health_insurance'],
+                ['Life Insurance', 'life_insurance'],
+                ['Motor Insurance', 'motor_insurance'],
+                ['General Insurance', 'general_insurance']
+              ], @payout.policy_type),
+              { prompt: 'Select Policy Type' },
+              { class: "form-select #{'is-invalid' if @payout.errors[:policy_type].any?}", required: true, id: 'policy_type_select' } %>
+          <% if @payout.errors[:policy_type].any? %>
+            <div class="invalid-feedback">
+              <%= @payout.errors[:policy_type].first %>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="col-md-6">
+          <%= form.label :policy_id, class: "form-label" do %>
+            Policy <span class="text-danger">*</span>
+          <% end %>
+          <%= form.select :policy_id,
+              options_for_select(policy_options_for_select(@payout.policy_type), @payout.policy_id),
+              { prompt: 'Select Policy' },
+              { class: "form-select #{'is-invalid' if @payout.errors[:policy_id].any?}", required: true, id: 'policy_id_select' } %>
+          <% if @payout.errors[:policy_id].any? %>
+            <div class="invalid-feedback">
+              <%= @payout.errors[:policy_id].first %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :payout_to, class: "form-label" do %>
+            Payout To <span class="text-danger">*</span>
+          <% end %>
+          <%= form.select :payout_to,
+              options_for_select([
+                ['Agent', 'agent'],
+                ['Customer', 'customer'],
+                ['Ambassador', 'distributor'],
+                ['Investor', 'investor']
+              ], @payout.payout_to),
+              { prompt: 'Select Payout Recipient' },
+              { class: "form-select #{'is-invalid' if @payout.errors[:payout_to].any?}", required: true } %>
+          <% if @payout.errors[:payout_to].any? %>
+            <div class="invalid-feedback">
+              <%= @payout.errors[:payout_to].first %>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="col-md-6">
+          <%= form.label :payout_amount, class: "form-label" do %>
+            Payout Amount <span class="text-danger">*</span>
+          <% end %>
+          <div class="input-group">
+            <span class="input-group-text">Rs. </span>
+            <%= form.number_field :payout_amount,
+                class: "form-control #{'is-invalid' if @payout.errors[:payout_amount].any?}",
+                placeholder: "Enter payout amount",
+                step: 0.01,
+                min: 0,
+                required: true %>
+            <% if @payout.errors[:payout_amount].any? %>
+              <div class="invalid-feedback">
+                <%= @payout.errors[:payout_amount].first %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :payout_date, "Payout Date", class: "form-label" %>
+          <%= form.date_field :payout_date,
+              class: "form-control #{'is-invalid' if @payout.errors[:payout_date].any?}",
+              value: @payout.payout_date || Date.current,
+              min: "1900-01-01",
+              max: "2099-12-31" %>
+          <% if @payout.errors[:payout_date].any? %>
+            <div class="invalid-feedback">
+              <%= @payout.errors[:payout_date].first %>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="col-md-6">
+          <%= form.label :status, "Status", class: "form-label" %>
+          <%= form.select :status,
+              options_for_select([
+                ['Pending', 'pending'],
+                ['Processing', 'processing'],
+                ['Paid', 'paid'],
+                ['Cancelled', 'cancelled']
+              ], @payout.status),
+              { prompt: 'Select Status' },
+              { class: "form-select #{'is-invalid' if @payout.errors[:status].any?}" } %>
+          <% if @payout.errors[:status].any? %>
+            <div class="invalid-feedback">
+              <%= @payout.errors[:status].first %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Information (Show when status is paid or processing) -->
+  <div class="card border-0 shadow-sm mb-4" id="payment_info_card" style="display: <%= @payout.processing? || @payout.paid? ? 'block' : 'none' %>;">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-credit-card me-2 text-primary"></i>
+      <h5 class="mb-0">Payment Information</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <%= form.label :payment_mode, "Payment Mode", class: "form-label" %>
+          <%= form.select :payment_mode,
+              options_for_select([
+                ['Bank Transfer', 'bank_transfer'],
+                ['Cash', 'cash'],
+                ['Cheque', 'cheque'],
+                ['UPI', 'upi'],
+                ['Online Transfer', 'online_transfer']
+              ], @payout.payment_mode),
+              { prompt: 'Select Payment Mode' },
+              { class: "form-select" } %>
+        </div>
+
+        <div class="col-md-6">
+          <%= form.label :transaction_id, "Transaction ID", class: "form-label" %>
+          <%= form.text_field :transaction_id,
+              class: "form-control",
+              placeholder: "Enter transaction ID" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :reference_number, "Reference Number", class: "form-label" %>
+          <%= form.text_field :reference_number,
+              class: "form-control",
+              placeholder: "Enter reference number" %>
+        </div>
+
+        <div class="col-md-6">
+          <%= form.label :processed_by, "Processed By", class: "form-label" %>
+          <%= form.text_field :processed_by,
+              class: "form-control",
+              placeholder: "Enter processor name" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Additional Information -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-file-text me-2 text-primary"></i>
+      <h5 class="mb-0">Additional Information</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-12">
+          <%= form.label :notes, "Notes", class: "form-label" %>
+          <%= form.text_area :notes,
+              class: "form-control",
+              rows: 4,
+              placeholder: "Enter any additional notes or comments..." %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-end gap-2">
+        <%= link_to "Cancel", admin_payouts_path, class: "btn btn-outline-secondary" %>
+        <%= form.submit (@payout.new_record? ? "Create Payout" : "Update Payout"), class: "btn btn-primary" %>
+      </div>
+    </div>
+  </div>
+
+<% end %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const policyTypeSelect = document.getElementById('policy_type_select');
+  const policyIdSelect = document.getElementById('policy_id_select');
+  const statusSelect = document.querySelector('select[name="payout[status]"]');
+  const paymentInfoCard = document.getElementById('payment_info_card');
+
+  // Handle policy type change
+  policyTypeSelect?.addEventListener('change', function() {
+    const policyType = this.value;
+
+    if (policyType) {
+      // Make AJAX call to get policies for the selected type
+      fetch(`/admin/payouts/policies_by_type?policy_type=${policyType}`)
+        .then(response => response.json())
+        .then(data => {
+          policyIdSelect.innerHTML = '<option value="">Select Policy</option>';
+          data.forEach(policy => {
+            const option = document.createElement('option');
+            option.value = policy.id;
+            option.textContent = `${policy.policy_number || 'Policy #' + policy.id} - ${policy.customer_name} - Rs. ${policy.premium}`;
+            policyIdSelect.appendChild(option);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching policies:', error);
+          policyIdSelect.innerHTML = '<option value="">Error loading policies</option>';
+        });
+    } else {
+      policyIdSelect.innerHTML = '<option value="">Select Policy Type First</option>';
+    }
+  });
+
+  // Handle status change
+  statusSelect?.addEventListener('change', function() {
+    const status = this.value;
+
+    if (status === 'processing' || status === 'paid') {
+      paymentInfoCard.style.display = 'block';
+    } else {
+      paymentInfoCard.style.display = 'none';
+    }
+  });
+
+  // Pre-populate policy select if policy_type is already selected
+  if (policyTypeSelect?.value) {
+    policyTypeSelect.dispatchEvent(new Event('change'));
+  }
+});
+</script>

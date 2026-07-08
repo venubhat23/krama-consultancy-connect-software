@@ -1,0 +1,494 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Upcoming Renewals</h2>
+    <p class="text-muted mb-0">Policies due for renewal in the next 60 days</p>
+  </div>
+  <div class="d-flex gap-2">
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-download me-1"></i>
+        Export
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-text me-2"></i>Export as CSV</a></li>
+        <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-excel me-2"></i>Export as Excel</a></li>
+      </ul>
+    </div>
+    <button class="btn btn-warning" onclick="sendRenewalReminders()">
+      <i class="bi bi-bell me-1"></i>
+      Send Reminders
+    </button>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-2 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Renewals</h6>
+            <h3 class="mb-0 text-primary"><%= number_with_delimiter(@stats[:total_renewals]) %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-arrow-repeat text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-2 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Health Insurance</h6>
+            <h3 class="mb-0 text-success"><%= number_with_delimiter(@stats[:health_renewals]) %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-heart-pulse text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-2 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Life Insurance</h6>
+            <h3 class="mb-0 text-info"><%= number_with_delimiter(@stats[:life_renewals]) %></h3>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-shield-check text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-2 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Motor Insurance</h6>
+            <h3 class="mb-0 text-warning"><%= number_with_delimiter(@stats[:motor_renewals]) %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-car-front text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-2 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">General Insurance</h6>
+            <h3 class="mb-0 text-secondary"><%= number_with_delimiter(@stats[:other_renewals]) %></h3>
+          </div>
+          <div class="bg-secondary bg-opacity-10 rounded p-3">
+            <i class="bi bi-clipboard-check text-secondary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Health Insurance Renewals -->
+<% if @renewal_health_insurances.any? %>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">
+      <i class="bi bi-heart-pulse text-success me-2"></i>
+      Health Insurance Renewals (<%= @renewal_health_insurances.count %>)
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th class="border-0">Customer</th>
+            <th class="border-0">Policy Details</th>
+            <th class="border-0">Company & Plan</th>
+            <th class="border-0">Coverage</th>
+            <th class="border-0">Renewal Date</th>
+            <th class="border-0">Days Left</th>
+            <th class="border-0">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @renewal_health_insurances.each do |insurance| %>
+            <tr>
+              <td>
+                <div>
+                  <h6 class="mb-1"><%= insurance.customer&.display_name || 'Unknown Customer' %></h6>
+                  <small class="text-muted"><%= insurance.customer&.email || 'No email' %></small>
+                  <div><small class="text-muted"><%= insurance.customer&.mobile || 'No mobile' %></small></div>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.policy_number %></div>
+                  <span class="badge bg-<%= insurance.policy_type == 'New' ? 'primary' : 'success' %>">
+                    <%= insurance.policy_type %>
+                  </span>
+                  <div><small class="text-muted">Type: <%= insurance.class.name.split('Insurance').first %> Insurance</small></div>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.insurance_company_name %></div>
+                  <% if insurance.plan_name.present? %>
+                    <small class="text-muted"><%= insurance.plan_name %></small>
+                  <% end %>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= indian_currency(insurance.sum_insured) %></div>
+                  <small class="text-muted">Premium: <%= indian_currency(insurance.total_premium) %></small>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.policy_end_date.strftime("%d %b %Y") %></div>
+                  <small class="text-muted">Started: <%= insurance.policy_start_date.strftime("%d %b %Y") %></small>
+                </div>
+              </td>
+              <td>
+                <% days_left = insurance.days_until_expiry %>
+                <span class="badge bg-<%= days_left <= 7 ? 'danger' : days_left <= 30 ? 'warning' : 'info' %>">
+                  <%= days_left %> days
+                </span>
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <%= link_to admin_health_insurance_path(insurance), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                    <i class="bi bi-eye"></i>
+                  <% end %>
+                  <button class="btn btn-sm btn-outline-warning" title="Send Reminder" onclick="sendIndividualReminder('<%= insurance.id %>', 'health')">
+                    <i class="bi bi-bell"></i>
+                  </button>
+                  <%= link_to new_admin_health_insurance_path(renewal_from: insurance.id), class: "btn btn-sm btn-outline-success", title: "Create Renewal" do %>
+                    <i class="bi bi-arrow-repeat"></i>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% end %>
+
+<!-- Life Insurance Renewals -->
+<% if @renewal_life_insurances&.any? %>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">
+      <i class="bi bi-shield-check text-info me-2"></i>
+      Life Insurance Renewals (<%= @renewal_life_insurances.count %>)
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th class="border-0">Customer</th>
+            <th class="border-0">Policy Details</th>
+            <th class="border-0">Company & Plan</th>
+            <th class="border-0">Coverage</th>
+            <th class="border-0">Renewal Date</th>
+            <th class="border-0">Days Left</th>
+            <th class="border-0">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @renewal_life_insurances.each do |insurance| %>
+            <tr>
+              <td>
+                <div>
+                  <h6 class="mb-1"><%= insurance.customer&.display_name || 'Unknown Customer' %></h6>
+                  <small class="text-muted"><%= insurance.customer&.email || 'No email' %></small>
+                  <div><small class="text-muted"><%= insurance.customer&.mobile || 'No mobile' %></small></div>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.policy_number %></div>
+                  <span class="badge bg-<%= insurance.policy_type == 'New' ? 'primary' : 'success' %>">
+                    <%= insurance.policy_type %>
+                  </span>
+                  <div><small class="text-muted">Type: <%= insurance.class.name.split('Insurance').first %> Insurance</small></div>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.insurance_company_name %></div>
+                  <% if insurance.plan_name.present? %>
+                    <small class="text-muted"><%= insurance.plan_name %></small>
+                  <% end %>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= indian_currency(insurance.sum_insured) %></div>
+                  <small class="text-muted">Premium: <%= indian_currency(insurance.total_premium) %></small>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.policy_end_date.strftime("%d %b %Y") %></div>
+                  <small class="text-muted">Started: <%= insurance.policy_start_date.strftime("%d %b %Y") %></small>
+                </div>
+              </td>
+              <td>
+                <% days_left = insurance.days_until_expiry %>
+                <span class="badge bg-<%= days_left <= 7 ? 'danger' : days_left <= 30 ? 'warning' : 'info' %>">
+                  <%= days_left %> days
+                </span>
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <%= link_to admin_life_insurance_path(insurance), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                    <i class="bi bi-eye"></i>
+                  <% end %>
+                  <button class="btn btn-sm btn-outline-warning" title="Send Reminder" onclick="sendIndividualReminder('<%= insurance.id %>', 'life')">
+                    <i class="bi bi-bell"></i>
+                  </button>
+                  <%= link_to new_admin_life_insurance_path(renewal_from: insurance.id), class: "btn btn-sm btn-outline-success", title: "Create Renewal" do %>
+                    <i class="bi bi-arrow-repeat"></i>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% end %>
+
+<!-- Motor Insurance Renewals -->
+<% if @renewal_motor_insurances&.any? %>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">
+      <i class="bi bi-car-front text-warning me-2"></i>
+      Motor Insurance Renewals (<%= @renewal_motor_insurances.count %>)
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th class="border-0">Customer</th>
+            <th class="border-0">Policy Details</th>
+            <th class="border-0">Vehicle & Company</th>
+            <th class="border-0">Coverage</th>
+            <th class="border-0">Renewal Date</th>
+            <th class="border-0">Days Left</th>
+            <th class="border-0">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @renewal_motor_insurances.each do |insurance| %>
+            <tr>
+              <td>
+                <div>
+                  <h6 class="mb-1"><%= insurance.policy&.customer&.display_name || 'Unknown Customer' %></h6>
+                  <small class="text-muted"><%= insurance.policy&.customer&.email || 'No email' %></small>
+                  <div><small class="text-muted"><%= insurance.policy&.customer&.mobile || 'No mobile' %></small></div>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.policy_number %></div>
+                  <span class="badge bg-<%= insurance.policy_type == 'New' ? 'primary' : 'success' %>">
+                    <%= insurance.policy_type %>
+                  </span>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.broker_name || 'N/A' %></div>
+                  <% if insurance.registration_number.present? %>
+                    <small class="text-muted">Vehicle: <%= insurance.registration_number %></small>
+                  <% end %>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= indian_currency(insurance.sum_insured) %></div>
+                  <small class="text-muted">Premium: <%= indian_currency(insurance.total_premium) %></small>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.policy_end_date.strftime("%d %b %Y") %></div>
+                  <small class="text-muted">Started: <%= insurance.policy_start_date.strftime("%d %b %Y") %></small>
+                </div>
+              </td>
+              <td>
+                <% days_left = insurance.days_until_expiry %>
+                <span class="badge bg-<%= days_left <= 7 ? 'danger' : days_left <= 30 ? 'warning' : 'info' %>">
+                  <%= days_left %> days
+                </span>
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <%= link_to admin_motor_insurance_path(insurance), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                    <i class="bi bi-eye"></i>
+                  <% end %>
+                  <button class="btn btn-sm btn-outline-warning" title="Send Reminder" onclick="sendIndividualReminder('<%= insurance.id %>', 'motor')">
+                    <i class="bi bi-bell"></i>
+                  </button>
+                  <%= link_to new_admin_motor_insurance_path(renewal_from: insurance.id), class: "btn btn-sm btn-outline-success", title: "Create Renewal" do %>
+                    <i class="bi bi-arrow-repeat"></i>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% end %>
+
+<!-- General Insurance Renewals -->
+<% if @renewal_other_insurances&.any? %>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">
+      <i class="bi bi-clipboard-check text-secondary me-2"></i>
+      General Insurance Renewals (<%= @renewal_other_insurances.count %>)
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th class="border-0">Customer</th>
+            <th class="border-0">Policy Details</th>
+            <th class="border-0">Company & Plan</th>
+            <th class="border-0">Coverage</th>
+            <th class="border-0">Renewal Date</th>
+            <th class="border-0">Days Left</th>
+            <th class="border-0">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @renewal_other_insurances.each do |insurance| %>
+            <tr>
+              <td>
+                <div>
+                  <h6 class="mb-1"><%= insurance.policy&.customer&.display_name || 'Unknown Customer' %></h6>
+                  <small class="text-muted"><%= insurance.policy&.customer&.email || 'No email' %></small>
+                  <div><small class="text-muted"><%= insurance.policy&.customer&.mobile || 'No mobile' %></small></div>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.policy_number %></div>
+                  <span class="badge bg-<%= insurance.policy_type == 'New' ? 'primary' : 'success' %>">
+                    <%= insurance.policy_type %>
+                  </span>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.insurance_company_name %></div>
+                  <% if insurance.plan_name.present? %>
+                    <small class="text-muted"><%= insurance.plan_name %></small>
+                  <% end %>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= indian_currency(insurance.sum_insured) %></div>
+                  <small class="text-muted">Premium: <%= indian_currency(insurance.total_premium) %></small>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.policy_end_date.strftime("%d %b %Y") %></div>
+                  <small class="text-muted">Started: <%= insurance.policy_start_date.strftime("%d %b %Y") %></small>
+                </div>
+              </td>
+              <td>
+                <% days_left = insurance.days_until_expiry %>
+                <span class="badge bg-<%= days_left <= 7 ? 'danger' : days_left <= 30 ? 'warning' : 'info' %>">
+                  <%= days_left %> days
+                </span>
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <%= link_to admin_other_insurance_path(insurance), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                    <i class="bi bi-eye"></i>
+                  <% end %>
+                  <button class="btn btn-sm btn-outline-warning" title="Send Reminder" onclick="sendIndividualReminder('<%= insurance.id %>', 'other')">
+                    <i class="bi bi-bell"></i>
+                  </button>
+                  <%= link_to new_admin_other_insurance_path(renewal_from: insurance.id), class: "btn btn-sm btn-outline-success", title: "Create Renewal" do %>
+                    <i class="bi bi-arrow-repeat"></i>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% end %>
+
+<!-- Empty State -->
+<% if @stats[:total_renewals] == 0 %>
+<div class="card border-0 shadow-sm">
+  <div class="card-body text-center py-5">
+    <i class="bi bi-arrow-repeat fs-1 text-muted d-block mb-3"></i>
+    <h5 class="text-muted">No upcoming renewals</h5>
+    <p class="text-muted mb-3">
+      There are no policies due for renewal in the next 60 days.
+    </p>
+    <%= link_to "View All Policies", admin_health_insurances_path, class: "btn btn-primary" %>
+  </div>
+</div>
+<% end %>
+
+<script>
+function sendRenewalReminders() {
+  if (confirm('Are you sure you want to send renewal reminders to all customers with upcoming renewals?')) {
+    // Implementation for bulk reminder sending
+    alert('Feature coming soon! This will send reminders to all customers with policies due for renewal.');
+  }
+}
+
+function sendIndividualReminder(insuranceId, insuranceType) {
+  if (confirm('Are you sure you want to send a renewal reminder to this customer?')) {
+    // Implementation for individual reminder sending
+    alert(`Feature coming soon! This will send a renewal reminder for ${insuranceType} insurance policy ID: ${insuranceId}`);
+  }
+}
+</script>

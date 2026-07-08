@@ -1,0 +1,202 @@
+<div class="container-fluid py-4">
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <%= link_to dashboard_path, class: "btn btn-outline-secondary btn-sm" do %>
+      <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+    <% end %>
+    <div>
+      <h4 class="mb-0 fw-bold text-success"><i class="bi bi-graph-up-arrow me-2"></i>Net Profit — Policy Commission Breakdown</h4>
+      <p class="text-muted mb-0" style="font-size:.85rem">Profit = Main Agent Commission − (Affiliate + Ambassador + Investor + Company Expenses)</p>
+    </div>
+  </div>
+
+  <!-- Date Filter -->
+  <div class="card mb-4 border-0 shadow-sm">
+    <div class="card-body py-3">
+      <form method="get" action="<%= dashboard_net_profit_path %>" class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label fw-semibold" style="font-size:.85rem">From Date</label>
+          <input type="date" name="start_date" value="<%= @start_date %>" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold" style="font-size:.85rem">To Date</label>
+          <input type="date" name="end_date" value="<%= @end_date %>" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary btn-sm w-100">
+            <i class="bi bi-funnel me-1"></i>Filter
+          </button>
+        </div>
+        <div class="col-md-2">
+          <button type="button" class="btn btn-success btn-sm w-100" id="downloadCsvBtn" style="display:none" onclick="downloadCSV()">
+            <i class="bi bi-download me-1"></i>Download CSV
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Content area -->
+  <div id="profitLoading" class="text-center py-5">
+    <div class="spinner-border text-success" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Loading profit data...</p>
+  </div>
+
+  <div id="profitContent" style="display:none"></div>
+</div>
+
+<script>
+var _profitData = null;
+
+function fmtINR(v) {
+  if (v == null || isNaN(v)) return '₹0';
+  return '₹' + Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function loadProfitData() {
+  const startDate = '<%= @start_date %>';
+  const endDate   = '<%= @end_date %>';
+  const params    = new URLSearchParams({ start_date: startDate, end_date: endDate });
+
+  fetch(`/admin/api/system_status/profit_summary?${params}`, { credentials: 'same-origin' })
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(data => {
+      document.getElementById('profitLoading').style.display = 'none';
+      const content = document.getElementById('profitContent');
+      content.style.display = 'block';
+
+      if (!data.success) {
+        content.innerHTML = `<div class="alert alert-danger">${data.error || 'Failed to load profit data'}</div>`;
+        return;
+      }
+
+      _profitData = data;
+      document.getElementById('downloadCsvBtn').style.display = '';
+
+      const s = data.summary;
+      const typeColor = { Health: '#27ae60', Life: '#2980b9', Motor: '#e67e22' };
+
+      const kpiHtml = `
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-2">
+            <div class="card border-0 shadow-sm h-100" style="border-top:3px solid #0d6efd!important">
+              <div class="card-body text-center p-3">
+                <div style="font-size:1.8rem;font-weight:700;color:#0d6efd">${s.total_policies}</div>
+                <div style="font-size:.78rem;color:#6c757d;font-weight:600">Policies Analysed</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-2">
+            <div class="card border-0 shadow-sm h-100" style="border-top:3px solid #e67e22!important">
+              <div class="card-body text-center p-3">
+                <div style="font-size:1rem;font-weight:700;color:#e67e22">${fmtINR(s.total_net_premium)}</div>
+                <div style="font-size:.78rem;color:#6c757d;font-weight:600">Total Net Premium</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-2">
+            <div class="card border-0 shadow-sm h-100" style="border-top:3px solid #27ae60!important">
+              <div class="card-body text-center p-3">
+                <div style="font-size:1rem;font-weight:700;color:#27ae60">${fmtINR(s.total_profit)}</div>
+                <div style="font-size:.78rem;color:#6c757d;font-weight:600">Total Profit</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-2">
+            <div class="card border-0 shadow-sm h-100" style="border-top:3px solid #2c3e7a!important">
+              <div class="card-body text-center p-3">
+                <div style="font-size:1rem;font-weight:700;color:#2c3e7a">${fmtINR(s.total_main_agent)}</div>
+                <div style="font-size:.78rem;color:#6c757d;font-weight:600">Main Agent (Net)</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-2">
+            <div class="card border-0 shadow-sm h-100" style="border-top:3px solid #8e44ad!important">
+              <div class="card-body text-center p-3">
+                <div style="font-size:1.8rem;font-weight:700;color:#8e44ad">${s.avg_profit_pct}%</div>
+                <div style="font-size:.78rem;color:#6c757d;font-weight:600">Avg Profit %</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="text-muted mb-4" style="font-size:.82rem">
+          <i class="bi bi-info-circle me-1"></i>
+          <strong>Period:</strong> ${data.start_date} – ${data.end_date}
+        </p>`;
+
+      const rowsHtml = data.policies.map(pol => {
+        const tc = typeColor[pol.policy_type] || '#6c757d';
+        const detailRows = pol.rows.map(r => `
+          <tr style="${r.label==='Profit'?'background:#eafaf1;font-weight:700':''}">
+            <td class="px-3 py-2">${r.label}</td>
+            <td class="px-3 py-2 text-center">${r.pct > 0 ? r.pct+'%' : '—'}</td>
+            <td class="px-3 py-2 text-end">${fmtINR(r.amount)}</td>
+            <td class="px-3 py-2 text-center">${r.tds_pct != null ? (r.tds_pct > 0 ? r.tds_pct+'%' : '0%') : '—'}</td>
+            <td class="px-3 py-2 text-end">${r.tds_amt != null ? fmtINR(r.tds_amt) : '—'}</td>
+            <td class="px-3 py-2 text-end fw-semibold" style="color:${r.label==='Profit'?'#27ae60':''}">${fmtINR(r.actual)}</td>
+          </tr>`).join('');
+
+        return `
+          <div class="card border-0 shadow-sm mb-3" style="overflow:hidden">
+            <div style="background:linear-gradient(90deg,#f8f9ff,#eef1ff);padding:.75rem 1rem;border-bottom:2px solid ${tc};display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+              <span class="fw-bold" style="color:#2c3e7a;font-size:.9rem">${pol.policy_number}</span>
+              <span style="background:${tc};color:#fff;padding:.2em .7em;border-radius:12px;font-size:.75rem;font-weight:600">${pol.policy_type}</span>
+              <span style="color:#555;font-size:.82rem">${pol.customer}</span>
+              <span style="color:#888;font-size:.78rem">${pol.company}</span>
+              <span style="color:#888;font-size:.78rem;margin-left:auto">${pol.booking_date}</span>
+              <span style="background:#eafaf1;color:#27ae60;border:1px solid #a9dfbf;padding:.2em .7em;border-radius:12px;font-size:.78rem;font-weight:700">Profit: ${fmtINR(pol.profit_amount)}</span>
+            </div>
+            <div class="p-3">
+              <div class="d-flex gap-3 mb-2" style="font-size:.78rem;color:#6c757d;flex-wrap:wrap">
+                <span><strong>Net Premium:</strong> ${fmtINR(pol.net_premium)}</span>
+                <span><strong>Total Distribution:</strong> ${pol.total_distribution_pct}%</span>
+                <span><strong>Company Expenses:</strong> ${pol.company_expenses_pct}%</span>
+                <span><strong>Final Profit:</strong> <span style="color:#27ae60;font-weight:700">${fmtINR(pol.profit_amount)}</span></span>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm mb-0" style="font-size:.8rem">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Commission Details</th>
+                      <th class="text-center">%</th>
+                      <th class="text-end">Commission</th>
+                      <th class="text-center">TDS %</th>
+                      <th class="text-end">TDS Amount</th>
+                      <th class="text-end">Actual Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>${detailRows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+      content.innerHTML = kpiHtml + (data.policies.length
+        ? rowsHtml
+        : '<div class="text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>No policies found for this date range.</div>');
+    })
+    .catch(err => {
+      document.getElementById('profitLoading').style.display = 'none';
+      document.getElementById('profitContent').style.display = 'block';
+      document.getElementById('profitContent').innerHTML = '<div class="alert alert-danger">Error loading profit data. Please try again.</div>';
+    });
+}
+
+function downloadCSV() {
+  if (!_profitData || !_profitData.policies) return;
+  const rows = [['Policy Number', 'Type', 'Customer', 'Company', 'Booking Date', 'Net Premium', 'Profit Amount']];
+  _profitData.policies.forEach(p => {
+    rows.push([p.policy_number, p.policy_type, p.customer, p.company, p.booking_date,
+               p.net_premium, p.profit_amount]);
+  });
+  const csv = rows.map(r => r.map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'net_profit_<%= @start_date %>_<%= @end_date %>.csv';
+  a.click();
+}
+
+document.addEventListener('DOMContentLoaded', loadProfitData);
+</script>

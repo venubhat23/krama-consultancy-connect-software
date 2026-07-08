@@ -1,0 +1,938 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex align-items-center">
+    <!-- Profile Image or Avatar - Show only one -->
+    <% if @sub_agent.profile_image.attached? %>
+      <div class="me-3">
+        <%= image_tag @sub_agent.profile_image,
+            class: "rounded-circle border",
+            style: "width: 60px; height: 60px; object-fit: cover; border: 3px solid #e9ecef;" %>
+      </div>
+    <% else %>
+      <div class="me-3">
+        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+             style="width: 60px; height: 60px; font-size: 1.5rem; font-weight: bold;">
+          <%= @sub_agent.display_name.split.map(&:first).join('').upcase[0..1] %>
+        </div>
+      </div>
+    <% end %>
+    <div>
+      <h2 class="mb-1"><%= @sub_agent.display_name %></h2>
+      <p class="text-muted mb-0">
+        <span class="badge bg-<%= @sub_agent.active? ? 'success' : 'secondary' %> me-2">
+          <%= @sub_agent.status.capitalize %>
+        </span>
+        Affiliate Details
+      </p>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to edit_admin_sub_agent_path(@sub_agent), class: "btn btn-primary" do %>
+      <i class="bi bi-pencil me-1"></i>
+      Edit Affiliate
+    <% end %>
+    <%= link_to admin_sub_agents_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to List
+    <% end %>
+  </div>
+</div>
+
+<!-- Personal Details -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0 d-flex align-items-center">
+    <i class="bi bi-person-circle me-2 text-primary"></i>
+    <h5 class="mb-0">Personal Details</h5>
+  </div>
+  <div class="card-body">
+    <!-- Profile Image Management Section -->
+    <% if @sub_agent.profile_image.attached? %>
+      <div class="col-12 mb-4">
+        <div class="alert alert-info">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-info-circle me-2"></i>
+            <div class="flex-grow-1">
+              <strong>Profile Image:</strong> <%= @sub_agent.profile_image.filename %>
+              (<%= number_to_human_size(@sub_agent.profile_image.byte_size) %>)
+            </div>
+            <div>
+              <%= link_to rails_blob_path(@sub_agent.profile_image, disposition: "inline"),
+                  class: "btn btn-sm btn-outline-primary me-2",
+                  target: "_blank",
+                  title: "View full size" do %>
+                <i class="bi bi-eye me-1"></i>View
+              <% end %>
+              <%= link_to rails_blob_path(@sub_agent.profile_image, disposition: "attachment"),
+                  class: "btn btn-sm btn-outline-secondary",
+                  download: @sub_agent.profile_image.filename,
+                  title: "Download image" do %>
+                <i class="bi bi-download me-1"></i>Download
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+    <div class="row">
+      <div class="col-md-6">
+        <table class="table table-borderless">
+          <tr>
+            <th class="text-muted" width="40%">Full Name:</th>
+            <td><%= @sub_agent.full_name %></td>
+          </tr>
+          <tr>
+            <th class="text-muted">Mobile:</th>
+            <td>
+              <a href="tel:<%= @sub_agent.mobile %>" class="text-decoration-none">
+                <i class="bi bi-telephone me-1"></i>
+                <%= @sub_agent.mobile %>
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <th class="text-muted">Email:</th>
+            <td>
+              <% if @sub_agent.email.present? %>
+                <a href="mailto:<%= @sub_agent.email %>" class="text-decoration-none">
+                  <i class="bi bi-envelope me-1"></i>
+                  <%= @sub_agent.email %>
+                </a>
+              <% else %>
+                <span class="text-muted">Not provided</span>
+              <% end %>
+            </td>
+          </tr>
+          <tr>
+            <th class="text-muted">Role:</th>
+            <td>
+              <span class="badge bg-info">
+                <%= case @sub_agent.role_id
+                    when 1 then 'Agent'
+                    when 2 then 'Senior Agent'
+                    when 3 then 'Manager'
+                    when 4 then 'Senior Manager'
+                    else "Role #{@sub_agent.role_id}"
+                    end %>
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <th class="text-muted">Birth Date:</th>
+            <td>
+              <% if @sub_agent.birth_date.present? %>
+                <%= @sub_agent.birth_date.strftime("%d %B, %Y") %>
+              <% else %>
+                <span class="text-muted">Not provided</span>
+              <% end %>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div class="col-md-6">
+        <table class="table table-borderless">
+          <tr>
+            <th class="text-muted" width="40%">Gender:</th>
+            <td><%= @sub_agent.gender.presence || 'Not specified' %></td>
+          </tr>
+          <tr>
+            <th class="text-muted">PAN No:</th>
+            <td><%= @sub_agent.pan_no.presence || 'Not provided' %></td>
+          </tr>
+          <tr>
+            <th class="text-muted">GST No:</th>
+            <td><%= @sub_agent.gst_no.presence || 'Not provided' %></td>
+          </tr>
+          <tr>
+            <th class="text-muted">Company:</th>
+            <td><%= @sub_agent.company_name.presence || 'Not provided' %></td>
+          </tr>
+          <tr>
+            <th class="text-muted">Status:</th>
+            <td>
+              <span class="badge bg-<%= @sub_agent.active? ? 'success' : 'secondary' %>">
+                <%= @sub_agent.status.capitalize %>
+              </span>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <% if @sub_agent.address.present? %>
+      <div class="row mt-3">
+        <div class="col-12">
+          <h6 class="text-muted mb-2">Address:</h6>
+          <p class="mb-0"><%= simple_format(@sub_agent.address) %></p>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Login Credentials -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0 d-flex align-items-center">
+    <i class="bi bi-key me-2 text-primary"></i>
+    <h5 class="mb-0">Login Credentials</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <label class="form-label text-muted">Username</label>
+        <div class="d-flex align-items-center mb-3">
+          <code class="bg-light border rounded px-3 py-2 me-2 flex-grow-1" id="username_<%= @sub_agent.id %>"><%= @sub_agent.mobile&.gsub(/\D/, '')&.last(10) || 'Not available' %></code>
+          <button class="btn btn-sm btn-outline-secondary copy-btn" type="button" data-copy="<%= @sub_agent.mobile&.gsub(/\D/, '')&.last(10) || 'Not available' %>" title="Copy Username">
+            <i class="bi bi-copy"></i>
+          </button>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label text-muted">Password</label>
+        <div class="d-flex align-items-center mb-3">
+          <code class="bg-light border rounded px-3 py-2 me-2 flex-grow-1" id="password_<%= @sub_agent.id %>"><%= @sub_agent.original_password || 'Not set' %></code>
+          <button class="btn btn-sm btn-outline-secondary copy-btn" type="button" data-copy="<%= @sub_agent.original_password || 'Not set' %>" title="Copy Password">
+            <i class="bi bi-copy"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <button type="button" class="btn btn-success" onclick="shareOnWhatsApp()">
+          <i class="bi bi-whatsapp me-2"></i>Share on WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bank Details -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0 d-flex align-items-center">
+    <i class="bi bi-bank me-2 text-success"></i>
+    <h5 class="mb-0">Bank Details</h5>
+  </div>
+  <div class="card-body">
+    <% if [@sub_agent.bank_name, @sub_agent.account_no, @sub_agent.ifsc_code, @sub_agent.account_holder_name, @sub_agent.account_type, @sub_agent.upi_id].any?(&:present?) %>
+      <div class="row">
+        <div class="col-md-6">
+          <table class="table table-borderless">
+            <tr>
+              <th class="text-muted" width="40%">Bank Name:</th>
+              <td><%= @sub_agent.bank_name.presence || 'Not provided' %></td>
+            </tr>
+            <tr>
+              <th class="text-muted">Account Number:</th>
+              <td><%= @sub_agent.account_no.presence || 'Not provided' %></td>
+            </tr>
+            <tr>
+              <th class="text-muted">IFSC Code:</th>
+              <td><%= @sub_agent.ifsc_code.presence || 'Not provided' %></td>
+            </tr>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <table class="table table-borderless">
+            <tr>
+              <th class="text-muted" width="40%">Account Holder:</th>
+              <td><%= @sub_agent.account_holder_name.presence || 'Not provided' %></td>
+            </tr>
+            <tr>
+              <th class="text-muted">Account Type:</th>
+              <td><%= @sub_agent.account_type.presence || 'Not provided' %></td>
+            </tr>
+            <tr>
+              <th class="text-muted">UPI ID:</th>
+              <td><%= @sub_agent.upi_id.presence || 'Not provided' %></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    <% else %>
+      <div class="text-center py-4">
+        <i class="bi bi-bank display-6 text-muted mb-3 d-block"></i>
+        <h6 class="text-muted">No bank details provided</h6>
+        <p class="text-muted mb-0">Bank information can be added when editing the affiliate.</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Ambassador Assignment -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0 d-flex align-items-center">
+    <i class="bi bi-person-badge me-2 text-info"></i>
+    <h5 class="mb-0">Ambassador Assignment</h5>
+  </div>
+  <div class="card-body">
+    <% if @assigned_distributor.present? %>
+      <div class="row">
+        <div class="col-md-6">
+          <table class="table table-borderless">
+            <tr>
+              <th class="text-muted" width="40%">Assigned To:</th>
+              <td>
+                <%= link_to admin_distributor_path(@assigned_distributor), class: "text-decoration-none" do %>
+                  <strong><%= @assigned_distributor.display_name %></strong>
+                <% end %>
+              </td>
+            </tr>
+            <tr>
+              <th class="text-muted">Ambassador Email:</th>
+              <td>
+                <a href="mailto:<%= @assigned_distributor.email %>" class="text-decoration-none">
+                  <i class="bi bi-envelope me-1"></i>
+                  <%= @assigned_distributor.email %>
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <th class="text-muted">Ambassador Mobile:</th>
+              <td>
+                <a href="tel:<%= @assigned_distributor.mobile %>" class="text-decoration-none">
+                  <i class="bi bi-telephone me-1"></i>
+                  <%= @assigned_distributor.mobile %>
+                </a>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <table class="table table-borderless">
+            <tr>
+              <th class="text-muted" width="40%">Assignment Date:</th>
+              <td>
+                <% if @distributor_assignment&.assigned_at.present? %>
+                  <%= @distributor_assignment.assigned_at.strftime("%d %B, %Y") %>
+                  <small class="text-muted d-block">(<%= time_ago_in_words(@distributor_assignment.assigned_at) %> ago)</small>
+                <% else %>
+                  <span class="text-muted">Date not available</span>
+                <% end %>
+              </td>
+            </tr>
+            <tr>
+              <th class="text-muted">Ambassador Status:</th>
+              <td>
+                <span class="badge bg-<%= @assigned_distributor.active? ? 'success' : 'secondary' %>">
+                  <%= @assigned_distributor.status.capitalize %>
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <th class="text-muted">Company:</th>
+              <td><%= @assigned_distributor.company_name.presence || 'Not provided' %></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    <% else %>
+      <div class="text-center py-4">
+        <i class="bi bi-person-badge display-6 text-muted mb-3 d-block"></i>
+        <h6 class="text-muted">No Ambassador Assigned</h6>
+        <p class="text-muted mb-3">This affiliate is not currently assigned to any ambassador.</p>
+        <%= link_to edit_admin_sub_agent_path(@sub_agent), class: "btn btn-outline-primary" do %>
+          <i class="bi bi-plus-lg me-1"></i>Assign Ambassador
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Documents -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center">
+      <i class="bi bi-file-earmark-text me-2 text-warning"></i>
+      <h5 class="mb-0">Documents</h5>
+    </div>
+    <div>
+      <%= link_to documents_admin_sub_agent_path(@sub_agent), class: "btn btn-sm btn-outline-primary" do %>
+        <i class="bi bi-eye me-1"></i>View All Documents
+      <% end %>
+    </div>
+  </div>
+  <div class="card-body">
+    <!-- Main Document -->
+    <% if @sub_agent.upload_main_document.attached? %>
+      <div class="mb-4">
+        <h6 class="mb-3">Main Document</h6>
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <i class="bi bi-file-earmark-pdf fs-2 text-danger"></i>
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-1"><%= @sub_agent.upload_main_document.filename %></h6>
+                <small class="text-muted">
+                  Uploaded: <%= time_ago_in_words(@sub_agent.upload_main_document.created_at) %> ago
+                </small>
+              </div>
+              <div>
+                <%= link_to rails_blob_path(@sub_agent.upload_main_document, disposition: "attachment"),
+                           class: "btn btn-sm btn-outline-primary" do %>
+                  <i class="bi bi-download me-1"></i>Download
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Additional Documents -->
+    <% if @documents.any? %>
+      <div class="mb-3">
+        <h6 class="mb-3">Additional Documents</h6>
+        <div class="row">
+          <% @documents.each do |document| %>
+            <div class="col-md-6 mb-3">
+              <div class="card h-100">
+                <div class="card-body">
+                  <div class="d-flex align-items-start">
+                    <div class="me-3">
+                      <i class="bi bi-file-earmark fs-4 text-primary"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h6 class="card-title mb-1"><%= document.document_type %></h6>
+                      <p class="card-text mb-2">
+                        <small class="text-muted"><%= document.document_name %></small>
+                      </p>
+                      <small class="text-muted">
+                        Uploaded: <%= document.created_at ? time_ago_in_words(document.created_at) + ' ago' : 'Date not available' %>
+                      </small>
+                    </div>
+                  </div>
+                  <div class="mt-3">
+                    <% if document.document_file.attached? %>
+                      <%= link_to document.document_url, target: '_blank',
+                                 class: "btn btn-sm btn-outline-primary me-2" do %>
+                        <i class="bi bi-eye me-1"></i>View
+                      <% end %>
+                      <%= link_to rails_blob_path(document.document_file, disposition: "attachment"),
+                                 class: "btn btn-sm btn-outline-secondary" do %>
+                        <i class="bi bi-download me-1"></i>Download
+                      <% end %>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Empty State -->
+    <% if !@sub_agent.upload_main_document.attached? && @documents.empty? %>
+      <div class="text-center py-4">
+        <i class="bi bi-file-earmark display-6 text-muted mb-3 d-block"></i>
+        <h6 class="text-muted">No documents uploaded</h6>
+        <p class="text-muted mb-3">Documents can be added when editing the affiliate.</p>
+        <%= link_to edit_admin_sub_agent_path(@sub_agent), class: "btn btn-outline-primary" do %>
+          <i class="bi bi-plus-lg me-1"></i>Add Documents
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Policy Summary -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0 d-flex align-items-center">
+    <i class="bi bi-shield-check me-2 text-success"></i>
+    <h5 class="mb-0">Policy Summary</h5>
+  </div>
+  <div class="card-body">
+    <div class="row text-center mb-4 g-2">
+      <div class="col-md-2">
+        <div class="border rounded p-3">
+          <h4 class="text-primary mb-1"><%= @total_policies %></h4>
+          <small class="text-muted">Total Policies</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="border rounded p-3">
+          <h4 class="text-success mb-1"><%= @active_policies %></h4>
+          <small class="text-muted">Active Policies</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="border rounded p-3">
+          <h4 class="text-warning mb-1"><%= @expired_policies %></h4>
+          <small class="text-muted">Expired Policies</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="border rounded p-3">
+          <h4 class="text-info mb-1"><%= indian_currency(@total_premium_handled) %></h4>
+          <small class="text-muted">Total Premium</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="border rounded p-3 clients-card-trigger"
+             data-bs-toggle="modal" data-bs-target="#clientsModal"
+             style="cursor:pointer; transition:box-shadow .15s;"
+             onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.13)'"
+             onmouseleave="this.style.boxShadow=''">
+          <h4 class="text-danger mb-1"><%= @unique_clients %></h4>
+          <small class="text-muted">No. of Clients</small>
+          <div style="font-size:.68rem; color:#dc3545; margin-top:.2rem; opacity:.7;"><i class="bi bi-eye me-1"></i>View clients</div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="border rounded p-3">
+          <h4 class="text-success mb-1"><%= indian_currency(@total_gross_commission) %></h4>
+          <small class="text-muted">Commission Earned</small>
+        </div>
+      </div>
+    </div>
+
+    <% if @all_policies.any? %>
+      <h6 class="mb-3">Recent Policies (<%= @all_policies.count %>)</h6>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-light">
+            <tr>
+              <th>Policy Number</th>
+              <th>Type</th>
+              <th>Customer</th>
+              <th>Company</th>
+              <th>Premium</th>
+              <th>Status</th>
+              <th>End Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @all_policies.first(10).each do |policy_data| %>
+              <tr>
+                <td>
+                  <strong><%= policy_data[:policy_number] %></strong>
+                </td>
+                <td>
+                  <span class="badge bg-<%=
+                    case policy_data[:type]
+                    when 'Health Insurance' then 'info'
+                    when 'Life Insurance' then 'primary'
+                    when 'Motor Insurance' then 'warning'
+                    else 'secondary'
+                    end
+                  %>">
+                    <%= policy_data[:type] %>
+                  </span>
+                </td>
+                <td><%= policy_data[:customer_name] %></td>
+                <td><%= policy_data[:company_name] %></td>
+                <td><%= indian_currency(policy_data[:premium]) %></td>
+                <td>
+                  <% if policy_data[:status] == 'Active' %>
+                    <span style="color:#198754; font-weight:600;">Active</span>
+                  <% else %>
+                    <span style="color:#dc3545; font-weight:600;">Expired</span>
+                  <% end %>
+                </td>
+                <td>
+                  <% if policy_data[:end_date] %>
+                    <%= policy_data[:end_date].strftime("%d %b, %Y") %>
+                  <% else %>
+                    <span class="text-muted">-</span>
+                  <% end %>
+                </td>
+                <td>
+                  <% case policy_data[:type] %>
+                  <% when 'Health Insurance' %>
+                    <%= link_to admin_health_insurance_path(policy_data[:policy]), class: "btn btn-sm btn-outline-primary" do %>
+                      <i class="bi bi-eye"></i>
+                    <% end %>
+                  <% when 'Life Insurance' %>
+                    <%= link_to admin_life_insurance_path(policy_data[:policy]), class: "btn btn-sm btn-outline-primary" do %>
+                      <i class="bi bi-eye"></i>
+                    <% end %>
+                  <% when 'Motor Insurance' %>
+                    <%= link_to admin_motor_insurance_path(policy_data[:policy]), class: "btn btn-sm btn-outline-primary" do %>
+                      <i class="bi bi-eye"></i>
+                    <% end %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <% if @all_policies.count > 10 %>
+        <div class="text-center mt-3">
+          <p class="text-muted">Showing 10 of <%= @all_policies.count %> policies</p>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-center py-4">
+        <i class="bi bi-shield display-6 text-muted mb-3 d-block"></i>
+        <h6 class="text-muted">No policies found</h6>
+        <p class="text-muted mb-0">This affiliate has not handled any policies yet.</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Commission Summary -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center">
+      <i class="bi bi-cash-coin me-2 text-warning"></i>
+      <h5 class="mb-0">Commission Earned</h5>
+    </div>
+    <%= button_to create_missing_payouts_admin_sub_agent_path(@sub_agent),
+        method: :post,
+        form: { data: { "turbo-confirm": "This will create commission payouts for any policies that are missing one. Continue?" } },
+        class: "btn btn-sm btn-outline-warning",
+        title: "Create payouts for policies that are missing commission records" do %>
+      <i class="bi bi-plus-circle me-1"></i> Create Missing Payouts
+    <% end %>
+  </div>
+  <div class="card-body">
+    <!-- Row 1: TDS breakdown -->
+    <div class="row text-center mb-3">
+      <div class="col-md-4">
+        <div class="border rounded p-3 bg-light">
+          <h4 class="text-secondary mb-1"><%= indian_currency(@total_gross_commission) %></h4>
+          <small class="text-muted">Commission Amount</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="border rounded p-3 bg-light">
+          <h4 class="text-danger mb-1"><%= indian_currency(@total_tds_amount) %></h4>
+          <small class="text-muted">TDS Deducted</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="border rounded p-3" style="background: rgba(25,135,84,0.08);">
+          <h4 class="text-success mb-1"><%= indian_currency(@total_net_commission) %></h4>
+          <small class="text-muted">Commission After TDS</small>
+        </div>
+      </div>
+    </div>
+    <!-- Row 2: Payment status breakdown -->
+    <div class="row text-center mb-4">
+      <div class="col-md-4">
+        <div class="border rounded p-3">
+          <h4 class="text-primary mb-1"><%= indian_currency(@paid_commission) %></h4>
+          <small class="text-muted">Paid</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="border rounded p-3">
+          <h4 class="text-info mb-1"><%= indian_currency(@processing_commission) %></h4>
+          <small class="text-muted">Processing</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="border rounded p-3">
+          <h4 class="text-warning mb-1"><%= indian_currency(@pending_commission) %></h4>
+          <small class="text-muted">Pending</small>
+        </div>
+      </div>
+    </div>
+
+    <% if @commission_details.any? %>
+      <h6 class="mb-3">Recent Commission Payouts (<%= @commission_details.count %>)</h6>
+      <div class="table-responsive">
+        <% visible = @commission_details.first(10) %>
+        <table class="table table-hover">
+          <thead class="table-light">
+            <tr>
+              <th>Policy Number</th>
+              <th>Policy Type</th>
+              <th>Customer</th>
+              <th class="text-end">Commission Amount</th>
+              <th class="text-end">TDS</th>
+              <th class="text-end">After TDS</th>
+              <th>Status</th>
+              <th>Payout Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% visible.each do |detail| %>
+              <% payout = detail[:payout] %>
+              <tr>
+                <td><strong><%= detail[:policy_number] %></strong></td>
+                <td>
+                  <span class="badge bg-<%=
+                    case payout.policy_type
+                    when 'health' then 'info'
+                    when 'life' then 'primary'
+                    when 'motor' then 'warning'
+                    else 'secondary'
+                    end
+                  %>">
+                    <%= payout.policy_type.humanize %> Insurance
+                  </span>
+                </td>
+                <td><%= detail[:customer_name] %></td>
+                <td class="text-end"><%= indian_currency(detail[:gross]) %></td>
+                <td class="text-end text-danger"><%= indian_currency(detail[:tds]) %></td>
+                <td class="text-end"><strong class="text-success"><%= indian_currency(detail[:net]) %></strong></td>
+                <td>
+                  <span class="badge bg-<%=
+                    case payout.status
+                    when 'paid' then 'success'
+                    when 'processing' then 'info'
+                    when 'pending' then 'warning'
+                    when 'cancelled' then 'danger'
+                    else 'secondary'
+                    end
+                  %>">
+                    <%= payout.status.humanize %>
+                  </span>
+                </td>
+                <td>
+                  <% if payout.payout_date %>
+                    <%= payout.payout_date.strftime("%d %b, %Y") %>
+                  <% else %>
+                    <span class="text-muted">-</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot class="table-secondary fw-bold">
+            <tr>
+              <td colspan="3">Total</td>
+              <td class="text-end"><%= indian_currency(visible.sum { |d| d[:gross] }) %></td>
+              <td class="text-end text-danger"><%= indian_currency(visible.sum { |d| d[:tds] }) %></td>
+              <td class="text-end text-success"><%= indian_currency(visible.sum { |d| d[:net] }) %></td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <% if @commission_details.count > 10 %>
+        <div class="text-center mt-3">
+          <p class="text-muted">Showing 10 of <%= @commission_details.count %> commission payouts</p>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-center py-4">
+        <i class="bi bi-cash display-6 text-muted mb-3 d-block"></i>
+        <h6 class="text-muted">No commission records found</h6>
+        <p class="text-muted mb-0">No commission payouts have been recorded for this affiliate yet.</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Commission Ledger -->
+<%= render 'shared/ledger_table',
+    ledger_entries: @ledger_entries,
+    closing_balance: @ledger_closing_balance,
+    entity_name: @sub_agent.display_name %>
+
+<!-- Timestamps -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0 d-flex align-items-center">
+    <i class="bi bi-clock me-2 text-info"></i>
+    <h5 class="mb-0">Timeline</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <table class="table table-borderless">
+          <tr>
+            <th class="text-muted" width="40%">Created:</th>
+            <td>
+              <%= @sub_agent.created_at.strftime("%d %B, %Y at %I:%M %p") %>
+              <small class="text-muted">(<%= time_ago_in_words(@sub_agent.created_at) %> ago)</small>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div class="col-md-6">
+        <table class="table table-borderless">
+          <tr>
+            <th class="text-muted" width="40%">Last Updated:</th>
+            <td>
+              <%= @sub_agent.updated_at.strftime("%d %B, %Y at %I:%M %p") %>
+              <small class="text-muted">(<%= time_ago_in_words(@sub_agent.updated_at) %> ago)</small>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Clients Modal -->
+<div class="modal fade" id="clientsModal" tabindex="-1" aria-labelledby="clientsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="clientsModalLabel">
+          <i class="bi bi-people me-2 text-danger"></i>Clients (<%= @unique_clients %>)
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <% if @client_details.any? %>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Mobile</th>
+                  <th>Email</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @client_details.each_with_index do |client, index| %>
+                  <tr>
+                    <td class="text-muted"><%= index + 1 %></td>
+                    <td>
+                      <%= link_to admin_customer_path(client.id),
+                            target: "_blank",
+                            class: "text-decoration-none fw-bold text-primary" do %>
+                        <%= [client.first_name, client.middle_name, client.last_name].compact.join(' ') %>
+                      <% end %>
+                      <% if client.company_name.present? %>
+                        <small class="text-muted d-block"><%= client.company_name %></small>
+                      <% end %>
+                    </td>
+                    <td>
+                      <% if client.mobile.present? %>
+                        <a href="tel:<%= client.mobile %>" class="text-decoration-none">
+                          <i class="bi bi-telephone me-1"></i><%= client.mobile %>
+                        </a>
+                      <% else %>
+                        <span class="text-muted">-</span>
+                      <% end %>
+                    </td>
+                    <td>
+                      <% if client.email.present? %>
+                        <a href="mailto:<%= client.email %>" class="text-decoration-none small">
+                          <%= client.email %>
+                        </a>
+                      <% else %>
+                        <span class="text-muted">-</span>
+                      <% end %>
+                    </td>
+                    <td>
+                      <span class="badge bg-secondary">
+                        <%= client.customer_type.presence || 'Individual' %>
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge bg-<%= client.status ? 'success' : 'secondary' %>">
+                        <%= client.status ? 'Active' : 'Inactive' %>
+                      </span>
+                    </td>
+                    <td>
+                      <%= link_to admin_customer_path(client.id),
+                            class: "btn btn-sm btn-outline-primary",
+                            target: "_blank",
+                            title: "View client" do %>
+                        <i class="bi bi-eye"></i>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <div class="text-center py-5">
+            <i class="bi bi-people display-6 text-muted mb-3 d-block"></i>
+            <h6 class="text-muted">No clients found</h6>
+            <p class="text-muted mb-0">This affiliate has no clients assigned yet.</p>
+          </div>
+        <% end %>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Copy to clipboard functionality
+  const copyButtons = document.querySelectorAll('.copy-btn');
+  copyButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const textToCopy = this.getAttribute('data-copy');
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          showCopyNotification(this, 'Copied!');
+        }).catch(err => {
+          fallbackCopyTextToClipboard(textToCopy, this);
+        });
+      } else {
+        fallbackCopyTextToClipboard(textToCopy, this);
+      }
+    });
+  });
+
+  function fallbackCopyTextToClipboard(text, button) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.top = "-1000px";
+    textArea.style.left = "-1000px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        showCopyNotification(button, 'Copied!');
+      } else {
+        showCopyNotification(button, 'Failed to copy', true);
+      }
+    } catch (err) {
+      showCopyNotification(button, 'Failed to copy', true);
+    }
+
+    document.body.removeChild(textArea);
+  }
+
+  function showCopyNotification(button, message, isError = false) {
+    const originalIcon = button.innerHTML;
+    const originalClass = button.className;
+
+    button.innerHTML = `<i class="bi bi-check"></i>`;
+    button.className = isError ? 'btn btn-sm btn-outline-danger' : 'btn btn-sm btn-outline-success';
+
+    setTimeout(() => {
+      button.innerHTML = originalIcon;
+      button.className = originalClass;
+    }, 1000);
+  }
+});
+
+// WhatsApp sharing function
+function shareOnWhatsApp() {
+  const username = document.getElementById('username_<%= @sub_agent.id %>').textContent;
+  const password = document.getElementById('password_<%= @sub_agent.id %>').textContent;
+  const agentName = '<%= @sub_agent.display_name %>';
+  const mobile = '<%= @sub_agent.mobile %>';
+
+  const message = `*Drwise Login Credentials*\n\n` +
+                  `Name: ${agentName}\n` +
+                  `Mobile: ${mobile}\n\n` +
+                  `*Login Details:*\n` +
+                  `Username: ${username}\n` +
+                  `Password: ${password}\n\n` +
+                  `Login URL: <%= request.base_url %>/login\n\n` +
+                  `Please save these credentials securely.`;
+
+  const whatsappUrl = 'https://wa.me/?text=' + encodeURIComponent(message);
+  window.open(whatsappUrl, '_blank');
+}
+</script>

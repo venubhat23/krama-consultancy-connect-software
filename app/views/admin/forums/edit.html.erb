@@ -1,0 +1,24 @@
+<div class="mb-4">
+  <h2 class="mb-1">Edit <%= @forum.name %></h2>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <%= form_with model: [:admin, @forum], local: true do |form| %>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Forum Name</label>
+          <%= form.text_field :name, class: "form-control" %>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Business Plan</label>
+          <%= form.select :business_plan_id, @business_plans.map { |p| [p.name, p.id] }, {}, class: "form-select" %>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <%= form.submit "Save Changes", class: "btn btn-primary" %>
+        <%= link_to "Cancel", admin_forum_path(@forum), class: "btn btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,228 @@
+<% content_for :page_title, "Commission Flow Timeline" %>
+<% content_for :page_subtitle, "Timeline for Payout ##{@payout.id}" %>
+
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="page-header mb-4">
+    <div class="row align-items-center">
+      <div class="col">
+        <h3 class="page-title mb-0">
+          <i class="bi bi-clock-history me-2"></i>
+          Commission Flow Timeline
+        </h3>
+        <p class="page-subtitle text-muted mb-0">
+          Complete timeline for Payout #<%= @payout.id %> - <%= @payout.policy_number %>
+        </p>
+      </div>
+      <div class="col-auto">
+        <%= link_to admin_payouts_path, class: "btn btn-outline-secondary" do %>
+          <i class="bi bi-arrow-left me-1"></i> Back to Payouts
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payout Summary Card -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-0">
+          <h6 class="mb-0">Payout Summary</h6>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <strong class="text-muted d-block">Customer</strong>
+              <%= @payout.customer_name %>
+            </div>
+            <div class="col-md-3">
+              <strong class="text-muted d-block">Policy Number</strong>
+              <%= @payout.policy_number %>
+            </div>
+            <div class="col-md-3">
+              <strong class="text-muted d-block">Payout Amount</strong>
+              <%= indian_currency(@payout.payout_amount.to_i) %>
+            </div>
+            <div class="col-md-3">
+              <strong class="text-muted d-block">Status</strong>
+              <span class="badge bg-<%= case @payout.status
+                                      when 'paid' then 'success'
+                                      when 'processing' then 'warning'
+                                      when 'pending' then 'secondary'
+                                      when 'cancelled' then 'danger'
+                                      else 'secondary'
+                                      end %>">
+                <%= @payout.status.humanize %>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-0">
+          <h6 class="mb-0">
+            <i class="bi bi-list-task me-2"></i>
+            Timeline Events
+          </h6>
+        </div>
+        <div class="card-body">
+          <% if @timeline_events.present? %>
+            <div class="timeline">
+              <% @timeline_events.each_with_index do |event, index| %>
+                <div class="timeline-item <%= 'active' if index == 0 %>">
+                  <div class="timeline-marker bg-<%= timeline_color_for_action(event[:type] || event[:action]) %>">
+                    <i class="<%= timeline_icon_for_action(event[:type] || event[:action]) %> text-white"></i>
+                  </div>
+                  <div class="timeline-content">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                      <h6 class="mb-0"><%= event[:title] %></h6>
+                      <small class="text-muted">
+                        <%= event[:date]&.strftime("%b %d, %Y at %I:%M %p") || 'N/A' %>
+                      </small>
+                    </div>
+                    <p class="text-muted mb-2 small"><%= event[:description] %></p>
+                    <% if event[:details].present? %>
+                      <div class="small text-secondary">
+                        <% event[:details].each do |key, value| %>
+                          <div><strong><%= key.humanize %>:</strong> <%= value %></div>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="text-center text-muted py-5">
+              <i class="bi bi-clock-history fs-1 d-block mb-3"></i>
+              <h5>No Timeline Events Found</h5>
+              <p>This payout doesn't have any recorded timeline events yet.</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Policy Details (if available) -->
+  <% if @policy.present? %>
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-transparent border-0">
+            <h6 class="mb-0">
+              <i class="bi bi-file-earmark-text me-2"></i>
+              Related Policy Information
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <strong class="text-muted d-block">Policy Type</strong>
+                <%= @payout.policy_type.humanize %>
+              </div>
+              <div class="col-md-4">
+                <strong class="text-muted d-block">Insurance Company</strong>
+                <%= @policy.try(:insurance_company_name) || 'N/A' %>
+              </div>
+              <div class="col-md-4">
+                <strong class="text-muted d-block">Premium Amount</strong>
+                <%= indian_currency(@policy.try(:total_premium).to_i) %>
+              </div>
+              <% if @policy.try(:policy_start_date).present? %>
+                <div class="col-md-4">
+                  <strong class="text-muted d-block">Policy Start</strong>
+                  <%= @policy.policy_start_date.strftime("%b %d, %Y") %>
+                </div>
+              <% end %>
+              <% if @policy.try(:policy_end_date).present? %>
+                <div class="col-md-4">
+                  <strong class="text-muted d-block">Policy End</strong>
+                  <%= @policy.policy_end_date.strftime("%b %d, %Y") %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<style>
+.timeline {
+  position: relative;
+  padding-left: 30px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #dee2e6;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 2rem;
+  padding-left: 30px;
+}
+
+.timeline-item.active .timeline-content {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #0d6efd;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -22px;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.timeline-content {
+  min-height: 30px;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .timeline {
+    padding-left: 20px;
+  }
+
+  .timeline::before {
+    left: 10px;
+  }
+
+  .timeline-item {
+    padding-left: 25px;
+  }
+
+  .timeline-marker {
+    left: -15px;
+    width: 25px;
+    height: 25px;
+  }
+}
+</style>

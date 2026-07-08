@@ -1,0 +1,69 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Business Plans</h2>
+    <p class="text-muted mb-0">Bronze / Silver / Gold tiers forums subscribe to</p>
+  </div>
+  <%= link_to new_admin_business_plan_path, class: "btn btn-primary" do %>
+    <i class="bi bi-plus-lg me-1"></i> New Plan
+  <% end %>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <% if @business_plans.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Plan</th>
+              <th class="border-0">Price</th>
+              <th class="border-0">Chapter Limit</th>
+              <th class="border-0">Member Limit</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @business_plans.each do |plan| %>
+              <tr>
+                <td>
+                  <h6 class="mb-0 fw-medium"><%= plan.name %></h6>
+                  <small class="text-muted"><%= plan.key %></small>
+                </td>
+                <td><span class="fw-medium">₹<%= number_with_delimiter(plan.price.to_i) %></span></td>
+                <td><%= plan.unlimited_chapters? ? content_tag(:span, "Unlimited", class: "badge bg-info-subtle text-info") : plan.chapter_limit %></td>
+                <td><%= plan.unlimited_members? ? content_tag(:span, "Unlimited", class: "badge bg-info-subtle text-info") : plan.member_limit %></td>
+                <td>
+                  <% if plan.active? %>
+                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Active</span>
+                  <% else %>
+                    <span class="badge bg-secondary"><i class="bi bi-x-circle me-1"></i>Inactive</span>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <%= link_to admin_business_plan_path(plan), class: "btn btn-sm btn-outline-secondary", title: "View" do %>
+                      <i class="bi bi-eye"></i>
+                    <% end %>
+                    <%= link_to edit_admin_business_plan_path(plan), class: "btn btn-sm btn-outline-primary", title: "Edit" do %>
+                      <i class="bi bi-pencil"></i>
+                    <% end %>
+                    <%= button_to admin_business_plan_path(plan), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete #{plan.name} plan?" } }, title: "Delete" do %>
+                      <i class="bi bi-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-diagram-3 fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No business plans yet</h5>
+        <%= link_to "Create the first plan", new_admin_business_plan_path, class: "btn btn-primary mt-2" %>
+      </div>
+    <% end %>
+  </div>
+</div>

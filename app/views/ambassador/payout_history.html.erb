@@ -1,0 +1,81 @@
+<% content_for :title, "Payout History" %>
+
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h1 class="h3 mb-0 text-gray-800">Payout History</h1>
+        <p class="text-muted mt-1">Track your commission payouts and earnings</p>
+      </div>
+      <div>
+        <%= link_to ambassador_dashboard_path, class: "btn btn-outline-primary" do %>
+          Back to Dashboard
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h6 class="m-0 font-weight-bold text-primary">Payout History</h6>
+  </div>
+  <div class="card-body">
+    <% if @payouts.any? %>
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Policy Number</th>
+              <th>Customer</th>
+              <th>Type</th>
+              <th>Premium</th>
+              <th>Commission</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @payouts.each do |payout| %>
+              <%
+                policy = nil
+                case payout.policy_type
+                when 'health'
+                  policy = HealthInsurance.find_by(id: payout.policy_id) if defined?(HealthInsurance)
+                when 'life'
+                  policy = LifeInsurance.find_by(id: payout.policy_id) if defined?(LifeInsurance)
+                when 'motor'
+                  policy = MotorInsurance.find_by(id: payout.policy_id) if defined?(MotorInsurance)
+                end
+              %>
+              <tr>
+                <td><%= policy&.policy_number || "Policy ##{payout.policy_id}" %></td>
+                <td><%= policy&.customer&.display_name || 'Customer' %></td>
+                <td><%= payout.policy_type.capitalize %></td>
+                <td><%= indian_currency((policy&.total_premium || 0).round) %></td>
+                <td><%= indian_currency((payout.payout_amount || 0).round) %></td>
+                <td>
+                  <% case payout.status.downcase %>
+                  <% when 'paid' %>
+                    <span class="badge bg-success">Paid</span>
+                  <% when 'pending' %>
+                    <span class="badge bg-warning">Pending</span>
+                  <% else %>
+                    <span class="badge bg-secondary"><%= payout.status.humanize %></span>
+                  <% end %>
+                </td>
+                <td><%= payout.created_at.strftime("%b %d, %Y") %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-4">
+        <h5>No Payout History</h5>
+        <p>You don't have any payout records yet.</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+

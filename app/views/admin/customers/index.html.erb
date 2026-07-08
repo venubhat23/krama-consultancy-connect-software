@@ -1,0 +1,654 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Client Management</h2>
+  </div>
+  <div class="d-flex gap-2 align-items-center">
+    <div class="dropdown download-dropdown">
+      <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-download me-1"></i> Download
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <a class="dropdown-item" data-turbo="false" href="<%= download_admin_customers_path(request.query_parameters.merge(format_type: 'csv_individual')) %>">
+            <i class="bi bi-filetype-csv text-success me-2"></i>CSV Individual
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" data-turbo="false" href="<%= download_admin_customers_path(request.query_parameters.merge(format_type: 'excel_individual')) %>">
+            <i class="bi bi-file-earmark-excel text-success me-2"></i>Excel Individual
+          </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <a class="dropdown-item" data-turbo="false" href="<%= download_admin_customers_path(request.query_parameters.merge(format_type: 'csv_corporate')) %>">
+            <i class="bi bi-filetype-csv text-success me-2"></i>CSV Corporate
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" data-turbo="false" href="<%= download_admin_customers_path(request.query_parameters.merge(format_type: 'excel_corporate')) %>">
+            <i class="bi bi-file-earmark-excel text-success me-2"></i>Excel Corporate
+          </a>
+        </li>
+      </ul>
+    </div>
+    <% if can_create?('customers') %>
+      <%= link_to new_admin_customer_path, class: "btn btn-primary" do %>
+        <i class="bi bi-plus-lg me-1"></i>
+        Add New Client
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Clients</h6>
+            <h3 class="mb-0 text-primary"><%= number_with_delimiter(@total_customers) %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-people text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Active Clients</h6>
+            <h3 class="mb-0 text-success"><%= number_with_delimiter(@active_customers) %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-person-check text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Individual Clients</h6>
+            <h3 class="mb-0 text-info"><%= number_with_delimiter(@individual_customers) %></h3>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-person text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Corporate Clients</h6>
+            <h3 class="mb-0 text-warning"><%= number_with_delimiter(@corporate_customers) %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-building text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <%= form_with url: admin_customers_path, method: :get, local: true, class: "d-flex flex-wrap align-items-center gap-2", id: "search_form" do |form| %>
+      <!-- General Search -->
+      <div class="flex-grow-1" style="min-width: 250px;">
+        <%= form.text_field :search, placeholder: "Search by name, email, mobile, PAN, or Lead ID... (min 4 characters)",
+                           value: params[:search],
+                           class: "form-control",
+                           id: "search_input",
+                           data: { min_length: 4 } %>
+      </div>
+
+      <!-- Lead ID Search (for exact/partial matching) -->
+      <div style="min-width: 180px;">
+        <%= form.text_field :lead_id_search, placeholder: "Lead ID (e.g., 2026)",
+                           value: params[:lead_id_search],
+                           class: "form-control",
+                           id: "lead_id_search_input",
+                           data: { min_length: 4 } %>
+      </div>
+
+      <!-- Customer Type Filter -->
+      <div style="min-width: 140px;">
+        <%= form.select :customer_type,
+                       options_for_select([
+                         ['All Types', ''],
+                         ['Individual', 'individual'],
+                         ['Corporate', 'corporate']
+                       ], params[:customer_type]),
+                       {},
+                       { class: "form-select", id: "customer_type_filter" } %>
+      </div>
+
+      <!-- Status Filter -->
+      <div style="min-width: 120px;">
+        <%= form.select :status,
+                       options_for_select([
+                         ['All Status', ''],
+                         ['Active', 'active'],
+                         ['Inactive', 'inactive']
+                       ], params[:status]),
+                       {},
+                       { class: "form-select", id: "status_filter" } %>
+      </div>
+
+      <!-- Clear Button -->
+      <div>
+        <%= link_to "Clear", admin_customers_path, class: "btn btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('search_input');
+  const leadIdSearchInput = document.getElementById('lead_id_search_input');
+  const customerTypeFilter = document.getElementById('customer_type_filter');
+  const statusFilter = document.getElementById('status_filter');
+  const searchForm = document.getElementById('search_form');
+  let searchTimeout;
+  let leadIdSearchTimeout;
+
+  // Auto-search on typing after 4 characters
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const searchValue = this.value;
+
+    // Clear lead ID search when using general search
+    if (searchValue.length > 0) {
+      leadIdSearchInput.value = '';
+    }
+
+    searchTimeout = setTimeout(() => {
+      if (searchValue.length >= 4 || searchValue.length === 0) {
+        searchForm.submit();
+      }
+    }, 500); // 500ms delay after typing stops
+  });
+
+  // Auto-search on lead ID typing after 4 characters
+  leadIdSearchInput.addEventListener('input', function() {
+    clearTimeout(leadIdSearchTimeout);
+    const leadIdValue = this.value;
+
+    // Clear general search when using lead ID search
+    if (leadIdValue.length > 0) {
+      searchInput.value = '';
+    }
+
+    leadIdSearchTimeout = setTimeout(() => {
+      if (leadIdValue.length >= 4 || leadIdValue.length === 0) {
+        searchForm.submit();
+      }
+    }, 500); // 500ms delay after typing stops
+  });
+
+  // Auto-submit on customer type filter change
+  customerTypeFilter.addEventListener('change', function() {
+    searchForm.submit();
+  });
+
+  // Auto-submit on status filter change
+  statusFilter.addEventListener('change', function() {
+    searchForm.submit();
+  });
+});
+</script>
+
+<!-- Customers List -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">Client List</h5>
+  </div>
+  <div class="card-body p-0">
+    <% if @customers.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Client</th>
+              <th class="border-0">Contact</th>
+              <th class="border-0">Affiliate</th>
+              <th class="border-0">Policies</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @customers.each do |customer| %>
+              <tr class="<%= customer.deactivated? ? 'table-warning opacity-75' : '' %>">
+                <td>
+                  <div class="d-flex align-items-center">
+                    <!-- Profile Image Circle -->
+                    <div class="me-3 <%= 'r2-profile-image' if customer.has_r2_profile_image? %>">
+                      <% if customer.has_r2_profile_image? %>
+                        <%= image_tag customer.r2_profile_image_url,
+                            class: "rounded-circle",
+                            style: "width: 40px; height: 40px; object-fit: cover;",
+                            alt: "Profile (R2)",
+                            title: "Profile image from Cloudflare R2",
+                            onerror: "this.onerror=null; this.parentNode.innerHTML='<div class=\"rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center\" style=\"width: 40px; height: 40px;\"><span class=\"text-primary fw-bold\">#{customer.display_name.present? ? customer.display_name[0].upcase : "?"}</span></div>';" %>
+                      <% elsif customer.profile_image.attached? %>
+                        <%= image_tag url_for(customer.profile_image),
+                            class: "rounded-circle",
+                            style: "width: 40px; height: 40px; object-fit: cover;",
+                            alt: "Profile (ActiveStorage)",
+                            title: "Profile image from ActiveStorage",
+                            onerror: "this.onerror=null; this.parentNode.innerHTML='<div class=\"rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center\" style=\"width: 40px; height: 40px;\"><span class=\"text-primary fw-bold\">#{customer.display_name.present? ? customer.display_name[0].upcase : "?"}</span></div>';" %>
+                      <% else %>
+                        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center"
+                             style="width: 40px; height: 40px;"
+                             title="No profile image">
+                          <span class="text-primary fw-bold">
+                            <%= customer.display_name.present? ? customer.display_name[0].upcase : "?" %>
+                          </span>
+                        </div>
+                      <% end %>
+                    </div>
+                    <!-- Customer Details -->
+                    <div>
+                      <h6 class="mb-0">
+                        <%= customer.display_name.present? ? customer.display_name : "Unnamed Customer" %>
+                      </h6>
+                      <small class="text-muted d-block">
+                        <i class="bi bi-calendar me-1"></i>Created: <%= customer.created_at.strftime('%d %b %Y') %>
+                      </small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <%= customer.mobile.present? ? customer.mobile : "No mobile number" %>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <% if customer.affiliate.present? %>
+                      <small class="text-primary">
+                        <i class="bi bi-person me-1"></i><%= customer.affiliate.display_name %>
+                      </small>
+                    <% elsif customer.sub_agent == 'Self' %>
+                      <small class="text-muted">
+                        <i class="bi bi-person-check me-1"></i>Self
+                      </small>
+                    <% else %>
+                      <small class="text-muted">
+                        <i class="bi bi-dash me-1"></i>Not assigned
+                      </small>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <%= customer.respond_to?(:policies_count) ? (customer.policies_count || 0) : customer.policies.count %>
+                </td>
+                <td>
+                  <% if customer.deactivated? %>
+                    Deactivated
+                  <% else %>
+                    <%= customer.status? ? 'Active' : 'Inactive' %>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <% if can_view?('customers') %>
+                      <%= link_to admin_customer_path(customer), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                        <i class="bi bi-eye"></i>
+                      <% end %>
+                    <% end %>
+
+                    <% if can_edit?('customers') %>
+                      <%= link_to edit_admin_customer_path(customer), class: "btn btn-sm btn-outline-warning", title: "Edit" do %>
+                        <i class="bi bi-pencil"></i>
+                      <% end %>
+                    <% end %>
+
+                    <%= link_to trace_commission_admin_customer_path(customer), class: "btn btn-sm btn-outline-info", title: "Insurance Summary" do %>
+                      <i class="bi bi-graph-up-arrow"></i>
+                    <% end %>
+
+                    <% if can_edit?('customers') %>
+                      <% if customer.deactivated? %>
+                        <button type="button"
+                            class="btn btn-sm btn-outline-success"
+                            title="Activate"
+                            onclick="handleDeactivationAction('<%= activate_admin_customer_path(customer) %>', 'PATCH', 'Are you sure you want to activate this customer?')">
+                          <i class="bi bi-check-circle"></i>
+                        </button>
+                      <% else %>
+                        <button type="button"
+                            class="btn btn-sm btn-outline-danger"
+                            title="Deactivate"
+                            onclick="handleDeactivationAction('<%= deactivate_admin_customer_path(customer) %>', 'PATCH', 'Are you sure you want to deactivate this customer?')">
+                          <i class="bi bi-x-circle"></i>
+                        </button>
+                      <% end %>
+                    <% end %>
+
+                    <% if can_delete?('customers') %>
+                      <button type="button"
+                          class="btn btn-sm btn-outline-danger delete-customer-enhanced"
+                          data-customer-id="<%= customer.id %>"
+                          data-customer-name="<%= customer.display_name %>"
+                          data-url="<%= admin_customer_path(customer) %>"
+                          title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="card-footer bg-transparent border-0">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-3 flex-wrap">
+            <small class="text-muted">
+              <% total = defined?(@total_filtered_count) && @total_filtered_count.present? ? @total_filtered_count : (@customers.respond_to?(:total_count) ? @customers.total_count : @customers.count) %>
+              <% if @customers.respond_to?(:offset_value) %>
+                Showing <strong><%= @customers.offset_value + 1 %></strong>–<strong><%= [@customers.offset_value + @customers.limit_value, total].min %></strong> of <strong><%= number_with_delimiter(total) %></strong> clients
+              <% else %>
+                Showing <strong><%= number_with_delimiter(total) %></strong> clients
+              <% end %>
+            </small>
+            <%= render 'shared/per_page_selector' %>
+          </div>
+          <% if @customers.respond_to?(:total_pages) && @customers.total_pages > 1 %>
+            <div class="pagination-wrapper">
+              <%= paginate @customers %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-people fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No clients found</h5>
+        <p class="text-muted mb-3">
+          <% if params[:search].present? || params[:customer_type].present? || params[:status].present? %>
+            Try adjusting your search criteria or
+            <%= link_to "view all clients", admin_customers_path, class: "text-decoration-none" %>.
+          <% else %>
+            Start by adding your first client to the system.
+          <% end %>
+        </p>
+        <%= link_to new_admin_customer_path, class: "btn btn-primary" do %>
+          <i class="bi bi-plus-lg me-1"></i>
+          Add First Client
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header border-bottom-0">
+        <h5 class="modal-title" id="deleteConfirmationModalLabel">
+          <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+          Confirm Deletion
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body py-4">
+        <div class="text-center">
+          <div class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+            <i class="bi bi-trash text-danger fs-4"></i>
+          </div>
+          <h6 class="mb-2">Are you sure you want to delete this client?</h6>
+          <p class="text-muted mb-1">Client: <strong id="modal-customer-name">Customer Name</strong></p>
+          <p class="text-muted small">This action cannot be undone. All related data will be permanently removed.</p>
+        </div>
+      </div>
+      <div class="modal-footer border-top-0 d-flex justify-content-center gap-3 pb-4">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i>
+          Cancel
+        </button>
+        <button type="button" class="btn btn-danger px-4" id="confirmDeleteBtn">
+          <i class="bi bi-trash me-1"></i>
+          Delete Client
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Global function to handle deactivation/activation
+function handleDeactivationAction(url, method, confirmMessage) {
+  if (confirm(confirmMessage)) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    form.style.display = 'none';
+
+    // Add CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfToken) {
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'authenticity_token';
+      csrfInput.value = csrfToken.getAttribute('content');
+      form.appendChild(csrfInput);
+    }
+
+    // Add method override
+    const methodInput = document.createElement('input');
+    methodInput.type = 'hidden';
+    methodInput.name = '_method';
+    methodInput.value = method;
+    form.appendChild(methodInput);
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize the delete confirmation modal
+  const modal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+  let currentDeleteUrl = '';
+
+  // Enhanced delete functionality with Bootstrap modal
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-customer-enhanced')) {
+      e.preventDefault();
+
+      const button = e.target.closest('.delete-customer-enhanced');
+      const customerId = button.dataset.customerId;
+      const customerName = button.dataset.customerName || 'this customer';
+      const url = button.dataset.url;
+
+      // Update modal with customer information
+      document.getElementById('modal-customer-name').textContent = customerName;
+      currentDeleteUrl = url;
+
+      // Show modal
+      modal.show();
+    }
+  });
+
+  // Handle confirmation
+  document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    if (currentDeleteUrl) {
+      // Create and submit a form for DELETE request
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = currentDeleteUrl;
+      form.style.display = 'none';
+
+      // Add CSRF token
+      const csrfToken = document.querySelector('meta[name="csrf-token"]');
+      if (csrfToken) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'authenticity_token';
+        csrfInput.value = csrfToken.getAttribute('content');
+        form.appendChild(csrfInput);
+      }
+
+      // Add method override for DELETE
+      const methodInput = document.createElement('input');
+      methodInput.type = 'hidden';
+      methodInput.name = '_method';
+      methodInput.value = 'DELETE';
+      form.appendChild(methodInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+
+    modal.hide();
+  });
+
+  // Handle modal cancellation
+  document.getElementById('deleteConfirmationModal').addEventListener('hidden.bs.modal', function() {
+    currentDeleteUrl = '';
+  });
+
+  // Keep old delete functionality for backward compatibility
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-customer')) {
+      e.preventDefault();
+
+      const button = e.target.closest('.delete-customer');
+      const url = button.dataset.url;
+      const confirmMessage = button.dataset.confirm;
+
+      if (confirm(confirmMessage)) {
+        // Create and submit a form for DELETE request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        form.style.display = 'none';
+
+        // Add CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+          const csrfInput = document.createElement('input');
+          csrfInput.type = 'hidden';
+          csrfInput.name = 'authenticity_token';
+          csrfInput.value = csrfToken.content;
+          form.appendChild(csrfInput);
+        }
+
+        // Add method override for DELETE
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'DELETE';
+        form.appendChild(methodInput);
+
+        document.body.appendChild(form);
+        form.submit();
+      }
+    }
+  });
+});
+</script>
+
+<style>
+/* Customer Profile Image Styles */
+.rounded-circle {
+  border: 2px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.rounded-circle img {
+  border-radius: 50%;
+}
+
+/* R2 Profile Image Indicator */
+.r2-profile-image {
+  position: relative;
+}
+
+.r2-profile-image::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(45deg, #28a745, #20c997);
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Hover effect for profile images */
+tr:hover .rounded-circle {
+  border-color: #007bff;
+  transition: border-color 0.3s ease;
+  transform: scale(1.05);
+}
+
+/* Initial letter avatar */
+.bg-primary.bg-opacity-10 {
+  background-color: rgba(13, 110, 253, 0.1) !important;
+  border: 2px solid #e9ecef;
+}
+
+tr:hover .bg-primary.bg-opacity-10 {
+  border-color: #007bff;
+  transition: border-color 0.3s ease;
+  transform: scale(1.05);
+}
+
+/* Profile image loading state */
+.profile-image-loading {
+  background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%, transparent 50%, #f8f9fa 50%, #f8f9fa 75%, transparent 75%, transparent);
+  background-size: 8px 8px;
+  animation: loading 1s linear infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 0 0; }
+  100% { background-position: 8px 8px; }
+}
+
+/* Delete confirmation modal styling */
+#deleteConfirmationModal .modal-content {
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+#deleteConfirmationModal .modal-header {
+  background-color: #f8f9fa;
+}
+
+#deleteConfirmationModal .btn-outline-danger:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s;
+}
+</style>

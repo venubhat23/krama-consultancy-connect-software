@@ -1,0 +1,19 @@
+<%= form_with model: chapter, url: (chapter.persisted? ? forum_portal_chapter_path(chapter) : forum_portal_chapters_path), local: true do |form| %>
+  <% if chapter.errors.any? %>
+    <div class="alert alert-danger">
+      <ul class="mb-0"><% chapter.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %></ul>
+    </div>
+  <% end %>
+  <div class="mb-3">
+    <label class="form-label">Chapter Name</label>
+    <%= form.text_field :name, class: "form-control", required: true %>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Status</label>
+    <%= form.select :status, options_for_select([["Active", "active"], ["Inactive", "inactive"]], chapter.status), {}, class: "form-select" %>
+  </div>
+  <div class="mt-4 d-flex gap-2">
+    <%= form.submit chapter.persisted? ? "Save" : "Create Chapter", class: "btn btn-primary" %>
+    <%= link_to "Cancel", forum_portal_chapters_path, class: "btn btn-outline-secondary" %>
+  </div>
+<% end %>

@@ -1,0 +1,63 @@
+<div class="mb-4">
+  <h2 class="mb-1"><%= @forum_request.company_name %></h2>
+  <p class="text-muted mb-0">Requested by <%= @forum_request.name %> (<%= @forum_request.email %><%= ", #{@forum_request.phone}" if @forum_request.phone.present? %>)</p>
+</div>
+
+<div class="row">
+  <div class="col-md-7">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0"><h5 class="mb-0">Message</h5></div>
+      <div class="card-body">
+        <p class="mb-0"><%= @forum_request.message.presence || "—" %></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-5">
+    <% if @forum_request.pending? %>
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-transparent border-0"><h5 class="mb-0">Approve & Create Forum</h5></div>
+        <div class="card-body">
+          <%= form_with url: approve_admin_forum_request_path(@forum_request), method: :post, local: true do %>
+            <div class="mb-3">
+              <label class="form-label">Business Plan</label>
+              <%= select_tag :business_plan_id, options_from_collection_for_select(@business_plans, :id, :name), class: "form-select" %>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Admin Email</label>
+              <%= text_field_tag :admin_email, @forum_request.email, class: "form-control" %>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Admin Password</label>
+              <%= password_field_tag :admin_password, nil, class: "form-control", required: true %>
+            </div>
+            <%= submit_tag "Approve & Create Forum", class: "btn btn-success w-100" %>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-0"><h5 class="mb-0">Reject</h5></div>
+        <div class="card-body">
+          <%= form_with url: reject_admin_forum_request_path(@forum_request), method: :post, local: true do %>
+            <%= text_area_tag :review_note, nil, class: "form-control mb-3", placeholder: "Reason (optional)", rows: 2 %>
+            <%= submit_tag "Reject Request", class: "btn btn-outline-danger w-100" %>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <span class="badge bg-<%= @forum_request.approved? ? 'success' : 'secondary' %> mb-2"><%= @forum_request.status.humanize %></span>
+          <% if @forum_request.forum %>
+            <p class="mb-1">Forum: <%= link_to @forum_request.forum.name, admin_forum_path(@forum_request.forum) %></p>
+          <% end %>
+          <% if @forum_request.review_note.present? %>
+            <p class="text-muted mb-0">"<%= @forum_request.review_note %>"</p>
+          <% end %>
+          <p class="text-muted mb-0 mt-2">Reviewed by <%= @forum_request.reviewed_by&.email %></p>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

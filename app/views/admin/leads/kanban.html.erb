@@ -1,0 +1,818 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">
+      <i class="bi bi-diagram-3 me-2 text-success"></i>
+      Kanban Flow
+    </h2>
+    <p class="text-muted mb-0">Visual workflow management for leads</p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to admin_leads_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Leads
+    <% end %>
+    <%= link_to new_admin_lead_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg me-1"></i>
+      Add New Lead
+    <% end %>
+  </div>
+</div>
+
+<!-- Kanban Board -->
+<div class="kanban-board" id="kanban-board">
+  <div class="kanban-columns">
+    <% @stages.each do |stage_key, stage_info| %>
+      <div class="kanban-column" data-stage="<%= stage_key %>">
+        <div class="kanban-column-header bg-<%= stage_info[:color] %>">
+          <div class="column-title">
+            <h6 class="mb-0 text-white fw-bold">
+              <%= stage_info[:name] %>
+            </h6>
+            <span class="badge bg-white text-<%= stage_info[:color] %> ms-2">
+              <%= (@leads_by_stage[stage_key] || []).count %>
+            </span>
+          </div>
+        </div>
+
+        <div class="kanban-column-body" data-drop-target="<%= stage_key %>">
+          <% leads_in_stage = @leads_by_stage[stage_key] || [] %>
+          <% if leads_in_stage.any? %>
+            <% leads_in_stage.each do |lead| %>
+              <div class="kanban-card"
+                   draggable="true"
+                   data-lead-id="<%= lead.id %>"
+                   data-current-stage="<%= lead.current_stage %>">
+
+                <!-- Lead ID Badge -->
+                <div class="card-header">
+                  <span class="badge bg-primary fs-7">
+                    <%= lead.lead_id.presence || "LEAD-#{lead.id}" %>
+                  </span>
+                  <% if lead.is_branch_out? %>
+                    <span class="badge bg-success fs-7">
+                      <i class="bi bi-diagram-3"></i> Branch
+                    </span>
+                  <% end %>
+                </div>
+
+                <!-- Lead Details -->
+                <div class="card-body">
+                  <h6 class="card-title mb-2"><%= lead.name %></h6>
+
+                  <div class="lead-meta">
+                    <div class="meta-item">
+                      <i class="bi bi-telephone text-muted"></i>
+                      <small><%= lead.contact_number %></small>
+                    </div>
+
+                    <% if lead.email.present? %>
+                      <div class="meta-item">
+                        <i class="bi bi-envelope text-muted"></i>
+                        <small><%= truncate(lead.email, length: 20) %></small>
+                      </div>
+                    <% end %>
+
+                    <div class="meta-item">
+                      <i class="bi bi-tag text-muted"></i>
+                      <small><%= lead.product_category&.humanize || 'N/A' %></small>
+                    </div>
+
+                    <% if lead.product_subcategory.present? %>
+                      <div class="meta-item">
+                        <i class="bi bi-tags text-muted"></i>
+                        <small><%= truncate(lead.product_subcategory, length: 15) %></small>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <!-- Affiliate Info -->
+                  <div class="affiliate-info mt-2">
+                    <% if lead.is_direct %>
+                      <span class="badge bg-warning text-dark fs-8">Direct</span>
+                    <% elsif lead.affiliate %>
+                      <span class="badge bg-info fs-8">
+                        <i class="bi bi-person"></i>
+                        <%= truncate(lead.affiliate.full_name, length: 15) %>
+                      </span>
+                    <% end %>
+                  </div>
+
+                  <!-- Date Info -->
+                  <div class="date-info mt-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <small class="text-muted">
+                        <i class="bi bi-calendar"></i>
+                        Created: <%= lead.created_date&.strftime('%d/%m/%Y') || lead.created_at&.strftime('%d/%m/%Y') %>
+                      </small>
+                      <% if lead.stage_updated_at.present? %>
+                        <small class="text-muted">
+                          <i class="bi bi-clock"></i>
+                          Updated: <%= lead.stage_updated_at.strftime('%d/%m') %>
+                        </small>
+                      <% end %>
+                    </div>
+                    <% if lead.created_at > 24.hours.ago %>
+                      <div class="mt-1">
+                        <span class="badge bg-success fs-8 pulse">
+                          <i class="bi bi-star-fill"></i> New
+                        </span>
+                      </div>
+                    <% elsif lead.stage_updated_at.present? && lead.stage_updated_at > 24.hours.ago %>
+                      <div class="mt-1">
+                        <span class="badge bg-info fs-8 pulse">
+                          <i class="bi bi-arrow-clockwise"></i> Recently Updated
+                        </span>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card-footer">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <%= link_to admin_lead_path(lead),
+                        class: "btn btn-sm btn-outline-primary",
+                        title: "View Details" do %>
+                      <i class="bi bi-eye"></i>
+                    <% end %>
+
+                    <%= link_to edit_admin_lead_path(lead),
+                        class: "btn btn-sm btn-outline-warning",
+                        title: "Edit" do %>
+                      <i class="bi bi-pencil"></i>
+                    <% end %>
+
+                    <% if lead.can_convert_to_customer? %>
+                      <%= link_to convert_to_customer_admin_lead_path(lead),
+                          method: :patch,
+                          class: "btn btn-sm btn-success",
+                          title: "Convert" do %>
+                        <i class="bi bi-person-plus"></i>
+                      <% end %>
+                    <% elsif lead.converted_customer.present? %>
+                      <%= link_to admin_customer_path(lead.converted_customer),
+                          class: "btn btn-sm btn-info",
+                          title: "View Customer" do %>
+                        <i class="bi bi-person-check"></i>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="empty-column">
+              <i class="bi bi-inbox text-muted"></i>
+              <p class="text-muted mb-0">No leads</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="kanban-loading" class="d-none position-fixed top-0 start-0 w-100 h-100" style="background: rgba(0,0,0,0.5); z-index: 9999;">
+  <div class="d-flex justify-content-center align-items-center h-100">
+    <div class="spinner-border text-light" role="status">
+      <span class="visually-hidden">Updating...</span>
+    </div>
+  </div>
+</div>
+
+<!-- Kanban Board Styles -->
+<style>
+/* Kanban Board Container */
+.kanban-board {
+  height: calc(100vh - 200px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.kanban-columns {
+  display: flex;
+  gap: 20px;
+  min-height: 100%;
+  align-items: flex-start;
+}
+
+/* Kanban Columns */
+.kanban-column {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-width: 280px;
+  max-width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+  max-height: calc(100vh - 260px);
+}
+
+.kanban-column-header {
+  padding: 16px 20px;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.column-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kanban-column-body {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  max-height: calc(100vh - 340px);
+  min-height: 200px;
+}
+
+/* Kanban Cards */
+.kanban-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: grab;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.kanban-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #007bff;
+}
+
+.kanban-card.dragging {
+  opacity: 0.8;
+  transform: rotate(2deg);
+  cursor: grabbing;
+  z-index: 1000;
+}
+
+.kanban-card .card-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 12px 16px 8px;
+  border-radius: 8px 8px 0 0;
+}
+
+.kanban-card .card-body {
+  padding: 12px 16px;
+}
+
+.kanban-card .card-footer {
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  padding: 8px 16px;
+  border-radius: 0 0 8px 8px;
+}
+
+.kanban-card .card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #212529;
+}
+
+/* Lead Meta Information */
+.lead-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+}
+
+.meta-item i {
+  width: 12px;
+  flex-shrink: 0;
+}
+
+/* Badges */
+.fs-7 {
+  font-size: 0.75rem !important;
+}
+
+.fs-8 {
+  font-size: 0.7rem !important;
+}
+
+/* Empty Column State */
+.empty-column {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+}
+
+.empty-column i {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+
+/* Drop Zone Styling */
+.kanban-column-body.drag-over {
+  background: rgba(13, 110, 253, 0.1);
+  border: 2px dashed #007bff;
+  border-radius: 8px;
+}
+
+.kanban-column-body.drop-valid {
+  background: rgba(25, 135, 84, 0.1);
+  border: 2px dashed #28a745;
+}
+
+.kanban-column-body.drop-invalid {
+  background: rgba(220, 53, 69, 0.1);
+  border: 2px dashed #dc3545;
+}
+
+/* Action Buttons */
+.kanban-card .btn-sm {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .kanban-columns {
+    gap: 16px;
+  }
+
+  .kanban-column {
+    min-width: 260px;
+    max-width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .kanban-board {
+    padding: 12px;
+    height: calc(100vh - 180px);
+  }
+
+  .kanban-columns {
+    gap: 12px;
+  }
+
+  .kanban-column {
+    min-width: 240px;
+    max-width: 260px;
+  }
+}
+
+/* Scrollbar Styling */
+.kanban-column-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.kanban-column-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.kanban-column-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.kanban-column-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Animation for card movement */
+@keyframes cardMove {
+  0% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.kanban-card.just-moved {
+  animation: cardMove 0.3s ease-out;
+}
+
+/* Pulse animation for new/updated badges */
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Enhanced date info styling */
+.date-info {
+  border-top: 1px solid rgba(0,0,0,0.1);
+  padding-top: 0.5rem;
+}
+
+.date-info small {
+  font-size: 0.7rem;
+}
+</style>
+
+<!-- Enhanced Debug Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🎯 Kanban Drag & Drop: Initializing...');
+  console.log('🎴 Cards found:', document.querySelectorAll('.kanban-card[data-lead-id]').length);
+  console.log('🎯 Drop zones found:', document.querySelectorAll('[data-drop-target]').length);
+
+  // Test if cards are draggable
+  const firstCard = document.querySelector('.kanban-card[data-lead-id]');
+  if (firstCard) {
+    console.log('🐛 First card draggable:', firstCard.draggable);
+    console.log('🐛 First card lead ID:', firstCard.dataset.leadId);
+  }
+
+  // Test drop zones
+  const dropZones = document.querySelectorAll('[data-drop-target]');
+  dropZones.forEach((zone, index) => {
+    console.log(`🐛 Drop zone ${index}:`, zone.dataset.dropTarget);
+
+    // Add manual event listeners to test
+    zone.addEventListener('dragover', (e) => {
+      console.log('🎯 DRAGOVER detected on zone:', zone.dataset.dropTarget);
+      e.preventDefault();
+    });
+
+    zone.addEventListener('drop', (e) => {
+      console.log('📥 DROP detected on zone:', zone.dataset.dropTarget);
+      e.preventDefault();
+    });
+
+    zone.addEventListener('dragenter', (e) => {
+      console.log('🚪 DRAGENTER detected on zone:', zone.dataset.dropTarget);
+    });
+  });
+
+  // Test cards
+  const cards = document.querySelectorAll('.kanban-card[data-lead-id]');
+  cards.forEach((card, index) => {
+    console.log(`🐛 Setting up card ${index + 1}: Lead ${card.dataset.leadId}`);
+  });
+
+  // Add Direct Drag & Drop Implementation (Fallback)
+  let draggedCard = null;
+  let draggedLeadId = null;
+  let draggedCurrentStage = null;
+
+  // Enhanced card drag events
+  cards.forEach((card) => {
+    card.addEventListener('dragstart', (e) => {
+      console.log('🖱️ Direct DRAGSTART:', card.dataset.leadId);
+      draggedCard = card;
+      draggedLeadId = card.dataset.leadId;
+      draggedCurrentStage = card.dataset.currentStage;
+
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', draggedLeadId);
+    });
+
+    card.addEventListener('dragend', (e) => {
+      console.log('🛑 Direct DRAGEND:', card.dataset.leadId);
+      card.classList.remove('dragging');
+
+      // Clean up all drop zone styling
+      dropZones.forEach(zone => {
+        zone.classList.remove('drag-over', 'drop-valid', 'drop-invalid');
+      });
+    });
+  });
+
+  // Enhanced drop zone events
+  dropZones.forEach((zone) => {
+    zone.addEventListener('dragover', (e) => {
+      console.log('🎯 Direct DRAGOVER:', zone.dataset.dropTarget);
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+
+    zone.addEventListener('dragenter', (e) => {
+      console.log('🚪 Direct DRAGENTER:', zone.dataset.dropTarget);
+      e.preventDefault();
+      zone.classList.add('drag-over');
+    });
+
+    zone.addEventListener('dragleave', (e) => {
+      console.log('🚪 Direct DRAGLEAVE:', zone.dataset.dropTarget);
+      if (!zone.contains(e.relatedTarget)) {
+        zone.classList.remove('drag-over');
+      }
+    });
+
+    zone.addEventListener('drop', async (e) => {
+      console.log('📥 Direct DROP on zone:', zone.dataset.dropTarget);
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+
+      const targetStage = zone.dataset.dropTarget;
+
+      console.log(`🔄 Processing drop: ${draggedLeadId} from ${draggedCurrentStage} to ${targetStage}`);
+
+      if (targetStage === draggedCurrentStage) {
+        console.log('⚠️ Same stage, skipping');
+        return;
+      }
+
+      try {
+        console.log('🌐 Making direct AJAX call...');
+        const result = await updateLeadStageDirectly(draggedLeadId, targetStage);
+
+        if (result.success) {
+          console.log('✅ Direct update successful');
+
+          if (!result.redirecting) {
+            // Only move the card if we're not redirecting to customer conversion
+            moveCardDirectly(draggedLeadId, targetStage);
+            showNotification('✅ Lead stage updated successfully!', 'success');
+          }
+          // If redirecting, the notification is already shown by updateLeadStageDirectly
+        } else {
+          console.log('❌ Direct update failed');
+          showNotification('❌ Failed to update lead stage', 'error');
+        }
+      } catch (error) {
+        console.error('💥 Direct update error:', error);
+        showNotification('❌ Error: ' + error.message, 'error');
+      }
+    });
+  });
+
+  async function updateLeadStageDirectly(leadId, newStage) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (!csrfToken) {
+      console.error("❌ No CSRF token found");
+      return false;
+    }
+
+    const url = `/admin/leads/${leadId}/convert_stage`;
+    const payload = { stage: newStage };
+
+    console.log("📤 Direct payload:", payload);
+
+    try {
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      console.log(`📨 Direct response status: ${response.status}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Direct error response:", errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log("📬 Direct response data:", result);
+
+      // Check if we need to redirect to customer conversion
+      if (result.redirect_to_conversion && result.redirect_url) {
+        console.log("🔄 Redirecting to customer conversion:", result.redirect_url);
+        showNotification('🔄 Redirecting to customer creation...', 'success');
+        setTimeout(() => {
+          window.location.href = result.redirect_url;
+        }, 1000);
+        return { success: true, redirecting: true };
+      }
+
+      return { success: result.success !== false, redirecting: false };
+    } catch (error) {
+      console.error("💥 Direct fetch error:", error);
+      throw error;
+    }
+  }
+
+  function moveCardDirectly(leadId, targetStage) {
+    const card = document.querySelector(`[data-lead-id="${leadId}"]`);
+    const targetColumn = document.querySelector(`[data-drop-target="${targetStage}"]`);
+
+    if (!card || !targetColumn) {
+      console.error("❌ Could not find card or target column for direct DOM move");
+      return;
+    }
+
+    console.log("🔄 Moving card directly in DOM");
+
+    // Update card's stage data and stage update time
+    card.dataset.currentStage = targetStage;
+
+    // Update the stage_updated_at time in the card HTML for proper sorting
+    const now = new Date();
+    const stageUpdatedElements = Array.from(card.querySelectorAll('small')).filter(el => el.textContent.includes('Updated:'));
+    if (stageUpdatedElements.length > 0) {
+      const formattedDate = now.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit'
+      });
+      stageUpdatedElements[0].innerHTML = `<i class="bi bi-clock"></i> Updated: ${formattedDate}`;
+    } else {
+      // If no updated element exists, add one to the date info section
+      const dateInfoDiv = card.querySelector('.date-info .d-flex');
+      if (dateInfoDiv) {
+        const formattedDate = now.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: '2-digit'
+        });
+        const updatedElement = document.createElement('small');
+        updatedElement.className = 'text-muted';
+        updatedElement.innerHTML = `<i class="bi bi-clock"></i> Updated: ${formattedDate}`;
+        dateInfoDiv.appendChild(updatedElement);
+      }
+    }
+
+    // Remove any empty state
+    const emptyState = targetColumn.querySelector('.empty-column');
+    if (emptyState) {
+      emptyState.remove();
+    }
+
+    // Find the correct position to insert the card (sorted by latest updated first)
+    const existingCards = Array.from(targetColumn.querySelectorAll('.kanban-card'));
+    let insertPosition = null;
+
+    // Set the current time as the update timestamp for sorting
+    const currentTime = now.getTime();
+
+    for (let i = 0; i < existingCards.length; i++) {
+      const existingCard = existingCards[i];
+
+      // Try to get the stage_updated_at from the card's updated date display
+      const updatedElements = Array.from(existingCard.querySelectorAll('small')).filter(el => el.textContent.includes('Updated:'));
+      let existingTime = 0;
+
+      if (updatedElements.length > 0) {
+        // Extract date from the text and convert to timestamp
+        const dateText = updatedElements[0].textContent;
+        const dateMatch = dateText.match(/Updated: (\d{2}\/\d{2}\/?\d{0,4})/);
+        if (dateMatch) {
+          let dateStr = dateMatch[1];
+          // If year is missing or only 2-digit, add/correct current year
+          const parts = dateStr.split('/');
+          if (parts.length === 2) {
+            dateStr += '/' + now.getFullYear();
+          } else if (parts.length === 3 && parts[2].length === 2) {
+            // Convert 2-digit year to 4-digit
+            const twoDigitYear = parseInt(parts[2]);
+            const currentYear = now.getFullYear();
+            const currentCentury = Math.floor(currentYear / 100) * 100;
+            dateStr = `${parts[0]}/${parts[1]}/${currentCentury + twoDigitYear}`;
+          }
+          const [day, month, year] = dateStr.split('/');
+          existingTime = new Date(year, month - 1, day).getTime();
+        }
+      }
+
+      // If no updated time found, try to get created time
+      if (!existingTime) {
+        const createdElements = Array.from(existingCard.querySelectorAll('small')).filter(el => el.textContent.includes('Created:'));
+        if (createdElements.length > 0) {
+          const dateText = createdElements[0].textContent;
+          const dateMatch = dateText.match(/Created: (\d{2}\/\d{2}\/\d{4})/);
+          if (dateMatch) {
+            const [day, month, year] = dateMatch[1].split('/');
+            existingTime = new Date(year, month - 1, day).getTime();
+          }
+        }
+      }
+
+      // If this card is newer than the existing card, insert before it
+      if (currentTime > existingTime) {
+        insertPosition = existingCard;
+        break;
+      }
+    }
+
+    // Insert the card at the correct position
+    if (insertPosition) {
+      targetColumn.insertBefore(card, insertPosition);
+      console.log("✅ Card inserted at sorted position (before existing card)");
+    } else {
+      // No cards are older, so append at the end
+      targetColumn.appendChild(card);
+      console.log("✅ Card appended at end (oldest)");
+    }
+
+    // Add visual indicator that this card was recently updated
+    card.classList.add('just-moved');
+    setTimeout(() => {
+      card.classList.remove('just-moved');
+    }, 300);
+
+    // Add "Recently Updated" badge if not already present
+    addRecentlyUpdatedBadge(card);
+
+    // Update counts
+    updateColumnCountsDirectly();
+
+    console.log("✅ Card moved and sorted correctly");
+  }
+
+  function addRecentlyUpdatedBadge(card) {
+    // Remove any existing "Recently Updated" or "New" badges using text content check
+    const allBadges = card.querySelectorAll('.badge');
+    allBadges.forEach(badge => {
+      const text = badge.textContent.trim();
+      if (text.includes('Recently Updated') || text.includes('New')) {
+        // Remove the parent container if it's a badge container
+        const parent = badge.parentElement;
+        if (parent && parent.classList.contains('mt-1')) {
+          parent.remove();
+        } else {
+          badge.remove();
+        }
+      }
+    });
+
+    // Find the date-info container
+    const dateInfoContainer = card.querySelector('.date-info');
+    if (dateInfoContainer) {
+      // Create new "Recently Updated" badge
+      const badgeContainer = document.createElement('div');
+      badgeContainer.className = 'mt-1';
+      badgeContainer.innerHTML = `
+        <span class="badge bg-info fs-8 pulse">
+          <i class="bi bi-arrow-clockwise"></i> Recently Updated
+        </span>
+      `;
+
+      dateInfoContainer.appendChild(badgeContainer);
+    }
+  }
+
+  function updateColumnCountsDirectly() {
+    document.querySelectorAll('.kanban-column').forEach(column => {
+      const stage = column.querySelector('[data-drop-target]')?.dataset.dropTarget;
+      const cardCount = column.querySelectorAll('.kanban-card').length;
+      const badge = column.querySelector('.badge');
+
+      if (badge && stage) {
+        badge.textContent = cardCount;
+        console.log(`📊 Updated ${stage} count to: ${cardCount}`);
+      }
+    });
+  }
+
+  function showNotification(message, type) {
+    console.log(`💬 ${type.toUpperCase()}: ${message}`);
+
+    // Create a simple toast notification
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 10000; min-width: 300px; border-radius: 8px;';
+    notification.innerHTML = `
+      <div class="d-flex align-items-center">
+        <i class="bi bi-${type === 'success' ? 'check-circle' : 'x-circle'} me-2"></i>
+        ${message}
+      </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+  }
+
+  console.log('🚀 Kanban Drag & Drop: Ready!');
+});
+</script>

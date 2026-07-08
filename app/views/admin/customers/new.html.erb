@@ -1,0 +1,3604 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Add New Client</h2>
+    <p class="text-muted mb-0">Fill in the details to create a new client account</p>
+  </div>
+  <div>
+    <%= link_to admin_customers_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Clients
+    <% end %>
+  </div>
+</div>
+
+<!-- Error Display -->
+<% if @customer.errors.any? %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <div class="d-flex align-items-center">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <div>
+        <h6 class="mb-1"><%= pluralize(@customer.errors.count, "error") %> prohibited this customer from being saved:</h6>
+        <ul class="mb-0">
+          <% @customer.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% end %>
+
+<%= form_with model: [:admin, @customer], local: true, multipart: true, class: "needs-validation", novalidate: true, data: { turbo: false } do |form| %>
+
+  <!-- Hidden field for lead_id if creating from lead -->
+  <%= form.hidden_field :lead_id if @customer.lead_id.present? %>
+
+  <!-- 1. Customer Type Selection -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-person-gear me-2 text-primary"></i>
+      <h5 class="mb-0">Customer Type</h5>
+    </div>
+    <div class="card-body">
+      <div class="customer-type-selection">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="customer-type-card" data-type="individual">
+              <%= form.radio_button :customer_type, 'individual',
+                  class: "form-check-input d-none",
+                  id: "customer_type_individual",
+                  required: true %>
+              <label for="customer_type_individual" class="customer-type-label">
+                <div class="text-center p-4">
+                  <i class="bi bi-person-circle fs-1 d-block mb-3 text-primary"></i>
+                  <h6 class="fw-bold">Individual</h6>
+                  <p class="text-muted small mb-0">Personal Customer</p>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="customer-type-card" data-type="corporate">
+              <%= form.radio_button :customer_type, 'corporate',
+                  class: "form-check-input d-none",
+                  id: "customer_type_corporate",
+                  required: true %>
+              <label for="customer_type_corporate" class="customer-type-label">
+                <div class="text-center p-4">
+                  <i class="bi bi-building fs-1 d-block mb-3 text-success"></i>
+                  <h6 class="fw-bold">Corporate</h6>
+                  <p class="text-muted small mb-0">Business Customer</p>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+        <% if @customer.errors[:customer_type].any? %>
+          <div class="text-danger mt-2">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            <%= @customer.errors[:customer_type].first %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Corporate Customer Form -->
+  <div id="corporate_sections" style="display: none;">
+    <!-- Basic Information (Corporate) -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0 d-flex align-items-center">
+        <i class="bi bi-info-circle me-2 text-primary"></i>
+        <h5 class="mb-0">Basic Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <%= form.label :profile_image, "Profile Image", class: "form-label" %>
+            <%= form.file_field :profile_image, class: "form-control", accept: "image/*", id: "corporate_profile_image" %>
+            <small class="form-text text-muted">Profile image will be saved to cloud storage (R2)</small>
+
+            <!-- Profile Image Preview -->
+            <%= render 'shared/file_upload_preview',
+                       field_id: 'corporate_profile_image',
+                       preview_id: 'corporate_profile_image_preview',
+                       accept: 'image/*',
+                       show_file_info: false,
+                       max_file_size: '5MB',
+                       preview_container_class: 'mt-2' %>
+          </div>
+          <div class="col-md-6">
+            <%= form.label :sub_agent_id, "Affiliate *", class: "form-label" %>
+            <%= form.select :sub_agent_id,
+                options_for_select(@sub_agents.map { |sa| ["#{sa.first_name} #{sa.last_name}", sa.id] }, @customer.sub_agent_id),
+                { prompt: 'Search and select affiliate...' },
+                { class: "form-control #{'is-invalid' if @customer.errors[:sub_agent_id].any?} searchable-select", required: true, id: "corporate_affiliate_select", data: { placeholder: "Type to search affiliates...", search_url: "/admin/customers/search_sub_agents" } } %>
+            <% if @customer.errors[:sub_agent_id].any? %>
+              <div class="invalid-feedback"><%= @customer.errors[:sub_agent_id].first %></div>
+            <% end %>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-6">
+            <%= form.label :company_name, class: "form-label" do %>
+              Company Name <span class="text-danger">*</span>
+            <% end %>
+            <%= form.text_field :company_name, class: "form-control #{'is-invalid' if @customer.errors[:company_name].any?}", placeholder: "Enter Company Name", id: "corporate_company_name", required: true %>
+            <% if @customer.errors[:company_name].any? %>
+              <div class="invalid-feedback">
+                <%= @customer.errors[:company_name].first %>
+              </div>
+            <% end %>
+          </div>
+          <div class="col-md-6">
+            <%= form.label :mobile, class: "form-label" do %>
+              Mobile No. <span class="text-danger">*</span>
+            <% end %>
+            <%= form.telephone_field :mobile, class: "form-control #{'is-invalid' if @customer.errors[:mobile].any?}", placeholder: "Enter Mobile (e.g., +91 98765 43210)", id: "corporate_mobile", title: "Enter a mobile number with or without +91 country code", required: true %>
+            <% if @customer.errors[:mobile].any? %>
+              <div class="invalid-feedback">
+                <%= @customer.errors[:mobile].first %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-12">
+            <%= form.label :email, class: "form-label" do %>
+              Email <span class="text-danger">*</span>
+            <% end %>
+            <%= form.email_field :email, class: "form-control #{'is-invalid' if @customer.errors[:email].any?}", placeholder: "Enter Email", required: true %>
+            <% if @customer.errors[:email].any? %>
+              <div class="invalid-feedback">
+                <%= @customer.errors[:email].first %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Login Credentials Section (Corporate) -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <h6 class="text-primary mb-3">
+              <i class="bi bi-key me-2"></i>Login Credentials
+            </h6>
+            <p class="text-muted small mb-3">Create login account for this corporate customer</p>
+          </div>
+
+          <!-- Password Type Selection -->
+          <div class="col-12 mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="corporate_user_enter_password" name="customer[user_enter_password]">
+              <label class="form-check-label" for="corporate_user_enter_password">
+                User Enter Password
+              </label>
+              <small class="form-text text-muted d-block">Check if user wants to enter password manually, otherwise system will generate it</small>
+            </div>
+          </div>
+
+          <!-- Manual Password Fields (hidden by default) -->
+          <div id="corporate_manual_password_fields" style="display: none;">
+            <div class="col-md-6">
+              <label class="form-label" for="corporate_password">Password *</label>
+              <input type="password" class="form-control" id="corporate_password" name="customer[password]" placeholder="Enter password">
+              <small class="form-text text-muted">Minimum 8 characters with letters and numbers</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="corporate_password_confirmation">Confirm Password *</label>
+              <input type="password" class="form-control" id="corporate_password_confirmation" name="customer[password_confirmation]" placeholder="Confirm password">
+              <small class="form-text text-muted">Must match the password above</small>
+            </div>
+          </div>
+
+          <!-- System Generated Password Info -->
+          <div id="corporate_system_password_info" class="col-12">
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>System Generated Password:</strong> A secure password will be automatically generated and sent to the customer via email.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advance Details (Corporate) -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0 d-flex align-items-center">
+        <i class="bi bi-gear me-2 text-primary"></i>
+        <h5 class="mb-0">Advance Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <%= form.label :state, "State", class: "form-label" %>
+            <%= form.select :state,
+                options_for_select(LocationData.states_for_select, @customer.state),
+                { prompt: 'Search and select state...' },
+                { class: "form-select searchable-select", id: "customer_state_individual", data: { placeholder: "Type to search states..." } } %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :city, "City", class: "form-label" %>
+            <%= form.select :city,
+                options_for_select([], @customer.city),
+                { prompt: 'Search and select city...' },
+                { class: "form-select searchable-select", id: "customer_city_individual", disabled: true, data: { placeholder: "Type to search cities..." } } %>
+          </div>
+          <div class="col-md-3">
+            <%= form.label :address, "Address", class: "form-label" %>
+            <%= form.text_area :address, class: "form-control", rows: 1, placeholder: "Enter Address" %>
+          </div>
+          <div class="col-md-1">
+            <%= form.label :pincode, "Pincode", class: "form-label" %>
+            <%= form.text_field :pincode, class: "form-control", placeholder: "000000", id: "customer_pincode_individual" %>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <%= form.label :annual_income, "Annual Income", class: "form-label" %>
+            <%= form.number_field :annual_income, class: "form-control", placeholder: "Enter Annual Income" %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :pan_no, "PAN No.", class: "form-label" %>
+            <%= form.text_field :pan_no, class: "form-control", placeholder: "Enter PAN number" %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :gst_no, class: "form-label" do %>
+              GST No. <span class="text-danger">*</span>
+            <% end %>
+            <%= form.text_field :gst_no, class: "form-control #{'is-invalid' if @customer.errors[:gst_no].any?}", placeholder: "Enter GST", id: "corporate_gst_no", required: true %>
+            <% if @customer.errors[:gst_no].any? %>
+              <div class="invalid-feedback">
+                <%= @customer.errors[:gst_no].first %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-12">
+            <%= form.label :additional_information, "Additional Information", class: "form-label" %>
+            <%= form.text_area :additional_information, class: "form-control", rows: 2, placeholder: "Enter additional information" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Family Details (Corporate) -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-people me-2 text-primary"></i>
+          <h5 class="mb-0">Family Details</h5>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-primary" id="add_corporate_family_member">
+          <i class="bi bi-plus-lg me-1"></i>
+          Add Family Member
+        </button>
+      </div>
+      <div class="card-body">
+        <div id="corporate_family_members_container">
+          <!-- Corporate family members will be added here dynamically -->
+        </div>
+        <p class="text-muted mb-0">Each family member is a repeatable group with nested documents.</p>
+      </div>
+    </div>
+
+    <!-- Corporate Members -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-building me-2 text-primary"></i>
+          <h5 class="mb-0">Corporate Members</h5>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-primary" id="add_corporate_member_corp">
+          <i class="bi bi-plus-lg me-1"></i>
+          Add Corporate Member
+        </button>
+      </div>
+      <div class="card-body">
+        <div id="corporate_members_corp_container">
+          <!-- Corporate members will be added here dynamically -->
+        </div>
+        <p class="text-muted mb-0">Add corporate members with their respective documents.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Basic Information (Individual Customer) -->
+  <div id="individual_sections" style="display: none;">
+
+    <!-- Document Quick Import Card -->
+    <div class="card border-0 shadow-sm mb-4" id="doc_import_card">
+      <div class="card-header bg-transparent border-0 d-flex align-items-center">
+        <i class="bi bi-file-earmark-text me-2 text-success"></i>
+        <h5 class="mb-0">Quick Import from Document</h5>
+        <span class="badge bg-success ms-2">Optional</span>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">Upload Aadhaar, PAN card, or Cheque to auto-fill customer details</p>
+
+        <!-- Document Type Selection -->
+        <div class="d-flex gap-3 mb-4 flex-wrap">
+          <div class="doc-type-btn text-center" data-type="pan">
+            <i class="bi bi-credit-card fs-4 d-block mb-1 text-primary"></i>
+            <span class="fw-semibold small">PAN Card</span>
+            <div class="text-muted" style="font-size:11px">Single card</div>
+          </div>
+          <div class="doc-type-btn text-center" data-type="aadhaar">
+            <i class="bi bi-card-heading fs-4 d-block mb-1 text-primary"></i>
+            <span class="fw-semibold small">Aadhaar Card</span>
+            <div class="text-muted" style="font-size:11px">Front + Back</div>
+          </div>
+          <div class="doc-type-btn text-center" data-type="cheque">
+            <i class="bi bi-bank fs-4 d-block mb-1 text-primary"></i>
+            <span class="fw-semibold small">Cheque</span>
+            <div class="text-muted" style="font-size:11px">Bank details</div>
+          </div>
+        </div>
+
+        <!-- Aadhaar Upload Zone -->
+        <div id="aadhaar_upload_zone" style="display:none;">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small text-muted text-uppercase">Aadhaar Front</label>
+              <div class="doc-upload-zone" id="aadhaar_front_zone">
+                <input type="file" id="aadhaar_front_input" accept="image/*" style="display:none;">
+                <div class="doc-zone-content text-center p-3">
+                  <i class="bi bi-cloud-upload fs-3 text-primary mb-2 d-block"></i>
+                  <div class="small text-muted">Click to upload or drag &amp; drop</div>
+                  <div class="text-muted" style="font-size:11px">JPG, PNG (max 10MB)</div>
+                </div>
+                <div id="aadhaar_front_preview" style="display:none;" class="text-center p-3 w-100">
+                  <img id="aadhaar_front_img" style="max-width:100%;max-height:160px;border-radius:8px;object-fit:contain;" src="" alt="Aadhaar Front">
+                  <div id="aadhaar_front_name" class="mt-2 small text-muted text-truncate"></div>
+                  <button type="button" class="btn btn-link btn-sm text-danger p-0 mt-1" onclick="resetDocZone('aadhaar_front_input','aadhaar_front_zone','aadhaar_front_preview','aadhaar_front_img')">
+                    <i class="bi bi-x-circle me-1"></i>Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small text-muted text-uppercase">Aadhaar Back <span class="fw-normal text-lowercase">(optional)</span></label>
+              <div class="doc-upload-zone" id="aadhaar_back_zone">
+                <input type="file" id="aadhaar_back_input" accept="image/*" style="display:none;">
+                <div class="doc-zone-content text-center p-3">
+                  <i class="bi bi-cloud-upload fs-3 text-primary mb-2 d-block"></i>
+                  <div class="small text-muted">Click to upload or drag &amp; drop</div>
+                  <div class="text-muted" style="font-size:11px">JPG, PNG (max 10MB)</div>
+                </div>
+                <div id="aadhaar_back_preview" style="display:none;" class="text-center p-3 w-100">
+                  <img id="aadhaar_back_img" style="max-width:100%;max-height:160px;border-radius:8px;object-fit:contain;" src="" alt="Aadhaar Back">
+                  <div id="aadhaar_back_name" class="mt-2 small text-muted text-truncate"></div>
+                  <button type="button" class="btn btn-link btn-sm text-danger p-0 mt-1" onclick="resetDocZone('aadhaar_back_input','aadhaar_back_zone','aadhaar_back_preview','aadhaar_back_img')">
+                    <i class="bi bi-x-circle me-1"></i>Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAN Upload Zone -->
+        <div id="pan_upload_zone" style="display:none;">
+          <div class="row">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small text-muted text-uppercase">PAN Card</label>
+              <div class="doc-upload-zone" id="pan_zone">
+                <input type="file" id="pan_input" accept="image/*" style="display:none;">
+                <div class="doc-zone-content text-center p-3">
+                  <i class="bi bi-cloud-upload fs-3 text-primary mb-2 d-block"></i>
+                  <div class="small text-muted">Click to upload or drag &amp; drop</div>
+                  <div class="text-muted" style="font-size:11px">JPG, PNG (max 10MB)</div>
+                </div>
+                <div id="pan_preview" style="display:none;" class="text-center p-3 w-100">
+                  <img id="pan_img" style="max-width:100%;max-height:160px;border-radius:8px;object-fit:contain;" src="" alt="PAN Card">
+                  <div id="pan_name" class="mt-2 small text-muted text-truncate"></div>
+                  <button type="button" class="btn btn-link btn-sm text-danger p-0 mt-1" onclick="resetDocZone('pan_input','pan_zone','pan_preview','pan_img')">
+                    <i class="bi bi-x-circle me-1"></i>Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cheque Upload Zone -->
+        <div id="cheque_upload_zone" style="display:none;">
+          <div class="row">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small text-muted text-uppercase">Cheque (Front)</label>
+              <div class="doc-upload-zone" id="cheque_zone">
+                <input type="file" id="cheque_input" accept="image/*" style="display:none;">
+                <div class="doc-zone-content text-center p-3">
+                  <i class="bi bi-cloud-upload fs-3 text-primary mb-2 d-block"></i>
+                  <div class="small text-muted">Click to upload or drag &amp; drop</div>
+                  <div class="text-muted" style="font-size:11px">JPG, PNG (max 10MB)</div>
+                </div>
+                <div id="cheque_preview" style="display:none;" class="text-center p-3 w-100">
+                  <img id="cheque_img" style="max-width:100%;max-height:160px;border-radius:8px;object-fit:contain;" src="" alt="Cheque">
+                  <div id="cheque_name" class="mt-2 small text-muted text-truncate"></div>
+                  <button type="button" class="btn btn-link btn-sm text-danger p-0 mt-1" onclick="resetDocZone('cheque_input','cheque_zone','cheque_preview','cheque_img')">
+                    <i class="bi bi-x-circle me-1"></i>Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 d-flex align-items-center">
+              <div class="text-muted small p-3 bg-light rounded">
+                <i class="bi bi-info-circle me-1 text-info"></i>
+                <strong>Cheque extraction reads:</strong><br>
+                Account holder name, Bank name, Account number, IFSC code, Branch name.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div id="ocr_progress_container" style="display:none;" class="mt-4">
+          <div class="d-flex justify-content-between mb-1">
+            <span id="ocr_status_text" class="small fw-semibold text-primary">Processing...</span>
+            <span id="ocr_progress_pct" class="small fw-semibold">0%</span>
+          </div>
+          <div class="progress" style="height:10px;border-radius:8px;">
+            <div id="ocr_progress_bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width:0%;border-radius:8px;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        </div>
+
+        <!-- Extract Button -->
+        <div id="extract_btn_container" style="display:none;" class="mt-4">
+          <button type="button" class="btn btn-primary" id="extract_info_btn">
+            <i class="bi bi-magic me-2"></i>Extract Info
+          </button>
+          <span class="text-muted small ms-3">OCR reads the document and extracts customer details</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extracted Info Modal -->
+    <div class="modal fade" id="docInfoModal" tabindex="-1" aria-labelledby="docInfoModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header border-0 pb-0">
+            <div>
+              <h5 class="modal-title mb-0" id="docInfoModalLabel">
+                <i class="bi bi-file-earmark-check me-2 text-success"></i>Extracted Information
+              </h5>
+              <p class="text-muted small mb-0 mt-1">Review and select which fields to import into the form</p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div id="extracted_info_table"></div>
+          </div>
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-success" id="import_to_form_btn">
+              <i class="bi bi-download me-2"></i>Import to Form
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0 d-flex align-items-center">
+        <i class="bi bi-info-circle me-2 text-primary"></i>
+        <h5 class="mb-0">Basic Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <%= form.label :profile_image, "Profile Image", class: "form-label" %>
+            <%= form.file_field :profile_image, class: "form-control", accept: "image/*", id: "individual_profile_image" %>
+            <small class="form-text text-muted">Profile image will be saved to cloud storage (R2)</small>
+
+            <!-- Profile Image Preview -->
+            <%= render 'shared/file_upload_preview',
+                       field_id: 'individual_profile_image',
+                       preview_id: 'individual_profile_image_preview',
+                       accept: 'image/*',
+                       show_file_info: false,
+                       max_file_size: '5MB',
+                       preview_container_class: 'mt-2' %>
+          </div>
+          <div class="col-md-6">
+            <%= form.label :sub_agent_id, "Affiliate *", class: "form-label" %>
+            <%= form.select :sub_agent_id,
+                options_for_select(@sub_agents.map { |sa| ["#{sa.first_name} #{sa.last_name}", sa.id] }, @customer.sub_agent_id),
+                { prompt: 'Search and select affiliate...' },
+                { class: "form-control #{'is-invalid' if @customer.errors[:sub_agent_id].any?} searchable-select", required: true, id: "individual_affiliate_select", data: { placeholder: "Type to search affiliates...", search_url: "/admin/customers/search_sub_agents" } } %>
+            <% if @customer.errors[:sub_agent_id].any? %>
+              <div class="invalid-feedback"><%= @customer.errors[:sub_agent_id].first %></div>
+            <% end %>
+            <small class="form-text text-muted">Select the affiliate for this customer</small>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <%= form.label :first_name, class: "form-label" do %>
+              First Name <span class="text-danger">*</span>
+            <% end %>
+            <%= form.text_field :first_name, class: "form-control #{'is-invalid' if @customer.errors[:first_name].any?}", placeholder: "Enter first name", id: "individual_first_name" %>
+            <% if @customer.errors[:first_name].any? %>
+              <div class="invalid-feedback">
+                <%= @customer.errors[:first_name].first %>
+              </div>
+            <% end %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :middle_name, "Middle Name", class: "form-label" %>
+            <%= form.text_field :middle_name, class: "form-control #{'is-invalid' if @customer.errors[:middle_name].any?}", placeholder: "Enter middle name" %>
+            <% if @customer.errors[:middle_name].any? %>
+              <div class="invalid-feedback">
+                <%= @customer.errors[:middle_name].first %>
+              </div>
+            <% end %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :last_name, class: "form-label" do %>
+              Last Name <span class="text-danger">*</span>
+            <% end %>
+            <%= form.text_field :last_name, class: "form-control #{'is-invalid' if @customer.errors[:last_name].any?}", placeholder: "Enter last name", id: "individual_last_name" %>
+            <% if @customer.errors[:last_name].any? %>
+              <div class="invalid-feedback">
+                <%= @customer.errors[:last_name].first %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-6">
+            <%= form.label :mobile, class: "form-label" do %>
+              Mobile <span class="text-danger">*</span>
+            <% end %>
+            <%= form.telephone_field :mobile, class: "form-control #{'is-invalid' if @customer.errors[:mobile].any?}", placeholder: "Enter mobile number (e.g., +91 98765 43210)", id: "individual_mobile", title: "Enter a mobile number with or without +91 country code" %>
+            <% if @customer.errors[:mobile].any? %>
+              <div class="invalid-feedback">
+                <%= @customer.errors[:mobile].first %>
+              </div>
+            <% end %>
+          </div>
+          <div class="col-md-6">
+            <%= form.label :email, class: "form-label" do %>
+              Email <span class="text-danger">*</span>
+            <% end %>
+            <%= form.email_field :email, class: "form-control #{'is-invalid' if @customer.errors[:email].any?}", placeholder: "Enter email ID", required: true %>
+            <% if @customer.errors[:email].any? %>
+              <div class="invalid-feedback">
+                <%= @customer.errors[:email].first %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Login Credentials Section -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <h6 class="text-primary mb-3">
+              <i class="bi bi-key me-2"></i>Login Credentials
+            </h6>
+            <p class="text-muted small mb-3">Create login account for this customer to access mobile app</p>
+          </div>
+
+          <!-- Password Type Selection -->
+          <div class="col-12 mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="user_enter_password" name="customer[user_enter_password]">
+              <label class="form-check-label" for="user_enter_password">
+                User Enter Password
+              </label>
+              <small class="form-text text-muted d-block">Check if user wants to enter password manually, otherwise system will generate it</small>
+            </div>
+          </div>
+
+          <!-- Manual Password Fields (hidden by default) -->
+          <div id="manual_password_fields" style="display: none;">
+            <div class="col-md-6">
+              <label class="form-label" for="customer_password">Password *</label>
+              <input type="password" class="form-control" id="customer_password" name="customer[password]" placeholder="Enter password">
+              <small class="form-text text-muted">Minimum 8 characters with letters and numbers</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="customer_password_confirmation">Confirm Password *</label>
+              <input type="password" class="form-control" id="customer_password_confirmation" name="customer[password_confirmation]" placeholder="Confirm password">
+              <small class="form-text text-muted">Must match the password above</small>
+            </div>
+          </div>
+
+          <!-- System Generated Password Info -->
+          <div id="system_password_info" class="col-12">
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>System Generated Password:</strong> A secure password will be automatically generated and sent to the customer via email.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Advance Details (Individual Customer) -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0 d-flex align-items-center">
+        <i class="bi bi-gear me-2 text-primary"></i>
+        <h5 class="mb-0">Advance Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <%= form.label :state, "State", class: "form-label" %>
+            <%= form.select :state,
+                options_for_select(LocationData.states_for_select, @customer.state),
+                { prompt: 'Search and select state...' },
+                { class: "form-select searchable-select", id: "customer_state_corporate", data: { placeholder: "Type to search states..." } } %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :city, "City", class: "form-label" %>
+            <%= form.select :city,
+                options_for_select([], @customer.city),
+                { prompt: 'Search and select city...' },
+                { class: "form-select searchable-select", id: "customer_city_corporate", disabled: true, data: { placeholder: "Type to search cities..." } } %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :address, "Address", class: "form-label" %>
+            <%= form.text_area :address, class: "form-control", rows: 1, placeholder: "Enter full address" %>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <%= form.label :birth_place, "Birth Place", class: "form-label" %>
+            <%= form.text_field :birth_place, class: "form-control", placeholder: "Enter birth place" %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :birth_date, class: "form-label" do %>
+              Birth Date <span class="text-danger">*</span>
+            <% end %>
+            <%= form.date_field :birth_date, class: "form-control", min: "1900-01-01", max: "2099-12-31" %>
+            <small class="form-text text-muted">Format: DD-MM-YYYY</small>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :age, "Age", class: "form-label" %>
+            <%= form.text_field :age, class: "form-control", readonly: true, placeholder: "Auto calculated from DOB" %>
+            <small class="form-text text-muted">Format: X years, Y days</small>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <%= form.label :anniversary_date, "Anniversary Date", class: "form-label" %>
+            <%= form.date_field :anniversary_date, class: "form-control", min: "1900-01-01", max: "2099-12-31" %>
+            <small class="form-text text-muted">Optional</small>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <%= form.label :gender, "Gender", class: "form-label" %>
+            <%= form.select :gender,
+                options_for_select([
+                  ['Male', 'male'], ['Female', 'female'], ['Other', 'other']
+                ], @customer.gender),
+                { prompt: 'Select Gender' },
+                { class: "form-select" } %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :height_feet, "Height", class: "form-label" %>
+            <%= form.select :height_feet, options_for_select([
+              ['Select Height', ''],
+              ['3.0 feet', 3.0], ['3.1 feet', 3.08], ['3.2 feet', 3.17], ['3.3 feet', 3.25], ['3.4 feet', 3.33], ['3.5 feet', 3.42], ['3.6 feet', 3.5], ['3.7 feet', 3.58], ['3.8 feet', 3.67], ['3.9 feet', 3.75], ['3.10 feet', 3.83], ['3.11 feet', 3.92],
+              ['4.0 feet', 4.0], ['4.1 feet', 4.08], ['4.2 feet', 4.17], ['4.3 feet', 4.25], ['4.4 feet', 4.33], ['4.5 feet', 4.42], ['4.6 feet', 4.5], ['4.7 feet', 4.58], ['4.8 feet', 4.67], ['4.9 feet', 4.75], ['4.10 feet', 4.83], ['4.11 feet', 4.92],
+              ['5.0 feet', 5.0], ['5.1 feet', 5.08], ['5.2 feet', 5.17], ['5.3 feet', 5.25], ['5.4 feet', 5.33], ['5.5 feet', 5.42], ['5.6 feet', 5.5], ['5.7 feet', 5.58], ['5.8 feet', 5.67], ['5.9 feet', 5.75], ['5.10 feet', 5.83], ['5.11 feet', 5.92],
+              ['6.0 feet', 6.0], ['6.1 feet', 6.08], ['6.2 feet', 6.17], ['6.3 feet', 6.25], ['6.4 feet', 6.33], ['6.5 feet', 6.42], ['6.6 feet', 6.5], ['6.7 feet', 6.58], ['6.8 feet', 6.67], ['6.9 feet', 6.75], ['6.10 feet', 6.83], ['6.11 feet', 6.92],
+              ['7.0 feet', 7.0], ['7.1 feet', 7.08], ['7.2 feet', 7.17], ['7.3 feet', 7.25], ['7.4 feet', 7.33], ['7.5 feet', 7.42], ['7.6 feet', 7.5], ['7.7 feet', 7.58], ['7.8 feet', 7.67], ['7.9 feet', 7.75], ['7.10 feet', 7.83], ['7.11 feet', 7.92],
+              ['8.0 feet', 8.0], ['8.1 feet', 8.08], ['8.2 feet', 8.17], ['8.3 feet', 8.25], ['8.4 feet', 8.33], ['8.5 feet', 8.42], ['8.6 feet', 8.5], ['8.7 feet', 8.58], ['8.8 feet', 8.67], ['8.9 feet', 8.75], ['8.10 feet', 8.83], ['8.11 feet', 8.92]
+            ], @customer.height_feet), {}, { class: "form-select" } %>
+            <div class="form-text">Select height from the dropdown</div>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :weight_kg, "Weight (Kg)", class: "form-label" %>
+            <%= form.number_field :weight_kg, class: "form-control", placeholder: "Enter weight in kg", step: 0.1 %>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <%= form.label :education, "Education", class: "form-label" %>
+            <%= form.text_field :education, class: "form-control", placeholder: "Enter education" %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :marital_status, "Marital Status", class: "form-label" %>
+            <%= form.select :marital_status,
+                options_for_select([
+                  ['Single', 'single'], ['Married', 'married'],
+                  ['Divorced', 'divorced'], ['Widowed', 'widowed']
+                ], @customer.marital_status),
+                { prompt: 'Select Marital Status' },
+                { class: "form-select" } %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :business_job, "Business/Job", class: "form-label" %>
+            <%= form.select :business_job,
+                options_for_select([
+                  ['Salaried', 'salaried'],
+                  ['Self Employed', 'self_employed'],
+                  ['Business', 'business'],
+                  ['Professional', 'professional'],
+                  ['Student', 'student'],
+                  ['Retired', 'retired'],
+                  ['Unemployed', 'unemployed'],
+                  ['Other', 'other']
+                ], @customer.business_job),
+                { prompt: 'Select Business/Job' },
+                { class: "form-select" } %>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <%= form.label :business_name, "Name of Business/Job", class: "form-label" %>
+            <%= form.text_field :business_name, class: "form-control", placeholder: "Enter business/job name" %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :type_of_duty, "Type of Duty", class: "form-label" %>
+            <%= form.text_field :type_of_duty, class: "form-control", placeholder: "Enter type of duty" %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :annual_income, "Annual Income", class: "form-label" %>
+            <%= form.number_field :annual_income, class: "form-control", placeholder: "Enter annual income" %>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-6">
+            <%= form.label :pan_no, "PAN No", class: "form-label" %>
+            <%= form.text_field :pan_no, class: "form-control", placeholder: "Enter PAN number" %>
+          </div>
+          <div class="col-md-6">
+            <%= form.label :additional_information, "Additional Information", class: "form-label" %>
+            <%= form.text_area :additional_information, class: "form-control", rows: 1, placeholder: "Enter additional notes" %>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <%= form.label :bank_name, "Bank Name", class: "form-label" %>
+            <%= form.text_field :bank_name, class: "form-control", placeholder: "Enter bank name", id: "customer_bank_name_individual" %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :account_no, "Account Number", class: "form-label" %>
+            <%= form.text_field :account_no, class: "form-control", placeholder: "Enter account number", id: "customer_account_no_individual" %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :ifsc_code, "IFSC Code", class: "form-label" %>
+            <%= form.text_field :ifsc_code, class: "form-control", placeholder: "e.g. HDFC0001234", id: "customer_ifsc_code_individual" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- 5. Family Details (Repeatable Group) -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-people me-2 text-primary"></i>
+          <h5 class="mb-0">Family Details</h5>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-primary" id="add_family_member">
+          <i class="bi bi-plus-lg me-1"></i>
+          Add Family Member
+        </button>
+      </div>
+      <div class="card-body">
+        <div id="family_members_container">
+          <!-- Family members will be added here dynamically -->
+        </div>
+        <p class="text-muted mb-0">Each family member is a repeatable group with nested documents.</p>
+      </div>
+    </div>
+
+    <!-- 6. Corporate Members (Repeatable Group) -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-building me-2 text-primary"></i>
+          <h5 class="mb-0">Corporate Members</h5>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-primary" id="add_corporate_member">
+          <i class="bi bi-plus-lg me-1"></i>
+          Add Corporate Member
+        </button>
+      </div>
+      <div class="card-body">
+        <div id="corporate_members_container">
+          <!-- Corporate members will be added here dynamically -->
+        </div>
+        <p class="text-muted mb-0">Add corporate members with their respective documents.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Document Upload Section -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-0">
+          <i class="bi bi-file-earmark-text me-2 text-primary"></i>
+          Upload Documents
+        </h5>
+        <p class="text-muted mb-0 mt-1">Upload customer documents like ID proof, address proof, etc.</p>
+      </div>
+      <button type="button" class="btn btn-sm btn-primary" id="add_customer_document">
+        <i class="bi bi-plus-lg me-1"></i>
+        Add Document
+      </button>
+    </div>
+    <div class="card-body">
+      <div id="customer_documents_container">
+        <!-- Customer document entries will be added here -->
+      </div>
+
+      <div id="no_documents_message" class="text-center text-muted py-4">
+        <i class="bi bi-file-earmark-plus fs-1 mb-3 d-block"></i>
+        <p class="mb-0">No documents added yet. Click "Add Document" to upload customer documents.</p>
+      </div>
+
+      <p class="text-muted mb-0 mt-3">
+        <small><strong>Note:</strong> This is a repeatable list. Add multiple documents as needed for proper customer verification.</small>
+      </p>
+    </div>
+  </div>
+
+  <!-- Nominee Details Section (individual only) -->
+  <div id="nominee_section" class="card border-0 shadow-sm mb-4" style="display: none;">
+    <div class="card-header bg-transparent border-0">
+      <h5 class="mb-0">
+        <i class="bi bi-people me-2 text-primary"></i>
+        Nominee Details *
+      </h5>
+      <p class="text-muted mb-0 mt-1">Nominee information is mandatory for individual customer registration</p>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <%= form.label :nominee_name, "Nominee Name *", class: "form-label" %>
+          <%= form.text_field :nominee_name,
+              class: "form-control",
+              placeholder: "Enter nominee full name",
+              id: "nominee_name_field" %>
+          <div class="invalid-feedback">
+            Please provide a nominee name.
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <%= form.label :nominee_relation, "Relationship *", class: "form-label" %>
+          <%= form.select :nominee_relation,
+              options_for_select([
+                ['Father', 'father'],
+                ['Mother', 'mother'],
+                ['Spouse', 'spouse'],
+                ['Son', 'son'],
+                ['Daughter', 'daughter'],
+                ['Brother', 'brother'],
+                ['Sister', 'sister'],
+                ['Other', 'other']
+              ], @customer.nominee_relation),
+              { prompt: 'Select Relationship' },
+              { class: "form-control", id: "nominee_relationship_select" } %>
+          <div class="invalid-feedback">
+            Please select nominee relationship.
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <%= form.label :nominee_date_of_birth, "Date of Birth *", class: "form-label" %>
+          <%= form.date_field :nominee_date_of_birth,
+              class: "form-control",
+              id: "nominee_dob_field",
+              min: "1900-01-01",
+              max: "2099-12-31" %>
+          <div class="invalid-feedback">
+            Please provide nominee date of birth.
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-info d-flex align-items-center">
+        <i class="bi bi-info-circle me-2"></i>
+        <div>
+          <small><strong>Important:</strong> Nominee details are mandatory for individual customers. Please ensure the information is accurate as it will be used for legal purposes.</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status and Form Actions -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <div class="form-check form-switch">
+            <%= form.check_box :status, { class: "form-check-input", checked: true }, "true", "false" %>
+            <%= form.label :status, "Active Status", class: "form-check-label" %>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-end gap-2">
+        <%= link_to "Cancel", admin_customers_path, class: "btn btn-outline-secondary" %>
+        <%= form.submit "Create Customer", class: "btn btn-primary" %>
+      </div>
+    </div>
+  </div>
+
+<% end %>
+
+<style>
+.customer-type-selection {
+  margin-bottom: 1rem;
+}
+
+.customer-type-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.customer-type-label {
+  width: 100%;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  display: block;
+  margin: 0;
+}
+
+.customer-type-label:hover {
+  border-color: #007bff;
+  background-color: #f8f9fa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,123,255,0.1);
+}
+
+input[type="radio"]:checked + .customer-type-label {
+  border-color: #007bff;
+  background-color: #e3f2fd;
+  color: #007bff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,123,255,0.2);
+}
+
+.document-entry, .family-member-entry, .corporate-member-entry {
+  background: #f8f9fa;
+  border-radius: 8px;
+  position: relative;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.nested-documents {
+  background: white;
+  border-radius: 6px;
+  margin-top: 1rem;
+}
+
+/* Document OCR Quick Import */
+.doc-upload-zone {
+  border: 2px dashed #dee2e6;
+  border-radius: 10px;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  min-height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  overflow: hidden;
+}
+.doc-upload-zone:hover, .doc-upload-zone.drag-over {
+  border-color: #0d6efd;
+  background: #e8f0fe;
+}
+.doc-upload-zone.has-file {
+  border-color: #198754;
+  background: #f0fff4;
+}
+.doc-type-btn {
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  padding: 16px 32px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  user-select: none;
+  min-width: 150px;
+}
+.doc-type-btn:hover { border-color: #0d6efd; background: #f0f4ff; }
+.doc-type-btn.active { border-color: #0d6efd; background: #e8f0fe; color: #0d6efd; }
+.doc-type-btn.active i { color: #0d6efd !important; }
+.doc-upload-zone.res-low { border-color: #ffc107; background: #fffbf0; }
+.res-warning { border-radius: 8px; }
+</style>
+
+<!-- jQuery (required for Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Select2 CSS & JS for searchable dropdown -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Custom styling for enhanced Select2 dropdown -->
+<style>
+  .select2-container--bootstrap-5 .select2-selection--single {
+    height: 38px;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+
+  .select2-container--bootstrap-5 .select2-selection--single:focus-within {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+
+  .select2-container--bootstrap-5 .select2-selection__rendered {
+    color: #495057;
+    padding-left: 12px;
+    padding-right: 20px;
+    line-height: 36px;
+  }
+
+  .select2-container--bootstrap-5 .select2-results__option {
+    padding: 8px 12px;
+  }
+
+  .select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: #0d6efd;
+    color: white;
+  }
+
+  .select2-dropdown {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+
+  .select2-results__options {
+    max-height: 400px !important;
+    min-height: 200px;
+  }
+
+  .select2-dropdown-large .select2-results__options {
+    max-height: 600px !important;
+    min-height: 400px !important;
+    overflow-y: auto;
+  }
+
+  .select2-dropdown-large {
+    min-width: 100% !important;
+  }
+
+  .select2-dropdown-large .select2-results__option {
+    padding: 8px 12px !important;
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+  }
+
+  .select2-search__field {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 6px 12px;
+  }
+
+  /* Affiliate option styling */
+  .affiliate-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    min-height: 45px;
+  }
+
+  .affiliate-option-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 10px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .affiliate-option-details {
+    flex: 1;
+  }
+
+  .affiliate-option-name {
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 2px;
+  }
+
+  .affiliate-option-id {
+    font-size: 11px;
+    color: #6c757d;
+  }
+
+  /* City option styling */
+  .city-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    min-height: 45px;
+  }
+
+  .city-option-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(45deg, #6f42c1, #e83e8c);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 10px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .city-option-details {
+    flex: 1;
+  }
+
+  .city-option-name {
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 2px;
+  }
+
+  .city-option-state {
+    font-size: 11px;
+    color: #6c757d;
+  }
+</style>
+
+<!-- Include Form Enhancements -->
+<script>
+<%= File.read(Rails.root.join('app/assets/javascripts/form_enhancements.js')).html_safe %>
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Customer type selection
+  const customerTypeRadios = document.querySelectorAll('input[name="customer[customer_type]"]');
+  const individualSections = document.getElementById('individual_sections');
+  const corporateSections = document.getElementById('corporate_sections');
+
+  // Initially disable all form validations until customer type is selected
+  const individualRequiredFields = ['individual_first_name', 'individual_last_name', 'individual_mobile'];
+  const corporateRequiredFields = ['corporate_company_name', 'corporate_mobile', 'corporate_gst_no'];
+
+  // Remove required attributes initially
+  individualRequiredFields.concat(corporateRequiredFields).forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) field.removeAttribute('required');
+  });
+
+  const nomineeSection = document.getElementById('nominee_section');
+  const nomineeFields = ['nominee_name_field', 'nominee_relationship_select', 'nominee_dob_field'];
+
+  function toggleNomineeSection(isIndividual) {
+    if (!nomineeSection) return;
+    nomineeSection.style.display = isIndividual ? 'block' : 'none';
+    nomineeFields.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (isIndividual) {
+        el.setAttribute('required', 'required');
+      } else {
+        el.removeAttribute('required');
+      }
+    });
+  }
+
+  function handleCustomerTypeChange(selectedType) {
+    if (selectedType === 'individual') {
+      individualSections.style.display = 'block';
+      corporateSections.style.display = 'none';
+
+      // Enable individual form fields
+      const individualInputs = document.querySelectorAll('#individual_sections input, #individual_sections select, #individual_sections textarea');
+      individualInputs.forEach(input => input.disabled = false);
+
+      // Disable corporate form fields to prevent submission conflicts
+      const corporateInputs = document.querySelectorAll('#corporate_sections input, #corporate_sections select, #corporate_sections textarea');
+      corporateInputs.forEach(input => input.disabled = true);
+
+      // Add required to individual fields
+      individualRequiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) field.setAttribute('required', 'required');
+      });
+
+      // Remove required from corporate fields
+      corporateRequiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) field.removeAttribute('required');
+      });
+
+      // Email is required for individual customers
+      const individualEmailField = document.querySelector('#individual_sections input[name="customer[email]"]');
+      if (individualEmailField) {
+        individualEmailField.setAttribute('required', 'required');
+      }
+
+      toggleNomineeSection(true);
+    } else if (selectedType === 'corporate') {
+      individualSections.style.display = 'none';
+      corporateSections.style.display = 'block';
+
+      // Enable corporate form fields
+      const corporateInputs = document.querySelectorAll('#corporate_sections input, #corporate_sections select, #corporate_sections textarea');
+      corporateInputs.forEach(input => input.disabled = false);
+
+      // Disable individual form fields to prevent submission conflicts
+      const individualInputs = document.querySelectorAll('#individual_sections input, #individual_sections select, #individual_sections textarea');
+      individualInputs.forEach(input => input.disabled = true);
+
+      // Add required to corporate fields
+      corporateRequiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) field.setAttribute('required', 'required');
+      });
+
+      // Remove required from individual fields
+      individualRequiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) field.removeAttribute('required');
+      });
+
+      // Email is required for corporate customers
+      const corporateEmailField = document.querySelector('#corporate_sections input[name="customer[email]"]');
+      if (corporateEmailField) {
+        corporateEmailField.setAttribute('required', 'required');
+      }
+
+      toggleNomineeSection(false);
+    } else {
+      individualSections.style.display = 'none';
+      corporateSections.style.display = 'none';
+
+      // Disable all form fields when no type is selected
+      const allInputs = document.querySelectorAll('#individual_sections input, #individual_sections select, #individual_sections textarea, #corporate_sections input, #corporate_sections select, #corporate_sections textarea');
+      allInputs.forEach(input => input.disabled = true);
+
+      // Remove required from all fields
+      individualRequiredFields.concat(corporateRequiredFields).forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) field.removeAttribute('required');
+      });
+
+      // Remove required from email fields
+      const allEmailFields = document.querySelectorAll('input[name="customer[email]"]');
+      allEmailFields.forEach(field => field.removeAttribute('required'));
+
+      toggleNomineeSection(false);
+    }
+  }
+
+  // Handle initial state based on server-side data (important for validation errors)
+  const checkedRadio = document.querySelector('input[name="customer[customer_type]"]:checked');
+  if (checkedRadio) {
+    handleCustomerTypeChange(checkedRadio.value);
+  }
+
+  customerTypeRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+      handleCustomerTypeChange(this.value);
+    });
+  });
+
+  // Auto-calculate age from birth date with years and days
+  const birthDateField = document.querySelector('input[name="customer[birth_date]"]');
+  const ageField = document.querySelector('input[name="customer[age]"]');
+
+  function calculateDetailedAge(birthDateString) {
+    if (!birthDateString) return '';
+
+    const birthDate = new Date(birthDateString);
+    const today = new Date();
+
+    // Calculate years
+    let years = today.getFullYear() - birthDate.getFullYear();
+
+    // Calculate if birthday hasn't occurred this year yet
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    const dayDiff = today.getDate() - birthDate.getDate();
+
+    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+      years--;
+    }
+
+    if (years === 0) {
+      // If less than a year old, calculate days from birth
+      const timeDiff = today.getTime() - birthDate.getTime();
+      const days = Math.floor(timeDiff / (1000 * 3600 * 24));
+      return `${days} days`;
+    } else {
+      // Calculate days since last birthday
+      let lastBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+      if (lastBirthday > today) {
+        lastBirthday = new Date(today.getFullYear() - 1, birthDate.getMonth(), birthDate.getDate());
+      }
+
+      const timeDiff = today.getTime() - lastBirthday.getTime();
+      const days = Math.floor(timeDiff / (1000 * 3600 * 24));
+
+      if (days === 0) {
+        return `${years} years`;
+      } else {
+        return `${years} years, ${days} days`;
+      }
+    }
+  }
+
+  if (birthDateField && ageField) {
+    birthDateField.addEventListener('change', function() {
+      ageField.value = calculateDetailedAge(this.value);
+    });
+
+    // Calculate age on page load if birth date is already set
+    if (birthDateField.value) {
+      ageField.value = calculateDetailedAge(birthDateField.value);
+    }
+  }
+
+  // Password type toggle functionality
+  const userEnterPasswordCheckbox = document.getElementById('user_enter_password');
+  const corporateUserEnterPasswordCheckbox = document.getElementById('corporate_user_enter_password');
+  const manualPasswordFields = document.getElementById('manual_password_fields');
+  const systemPasswordInfo = document.getElementById('system_password_info');
+  const corporateManualPasswordFields = document.getElementById('corporate_manual_password_fields');
+  const corporateSystemPasswordInfo = document.getElementById('corporate_system_password_info');
+  const customerPasswordField = document.getElementById('customer_password');
+  const customerPasswordConfirmationField = document.getElementById('customer_password_confirmation');
+  const corporatePasswordField = document.getElementById('corporate_password');
+  const corporatePasswordConfirmationField = document.getElementById('corporate_password_confirmation');
+
+  // Individual customer password toggle
+  if (userEnterPasswordCheckbox) {
+    userEnterPasswordCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        // User wants to enter password manually
+        manualPasswordFields.style.display = 'block';
+        systemPasswordInfo.style.display = 'none';
+        customerPasswordField.setAttribute('required', 'required');
+        customerPasswordConfirmationField.setAttribute('required', 'required');
+      } else {
+        // System will generate password
+        manualPasswordFields.style.display = 'none';
+        systemPasswordInfo.style.display = 'block';
+        customerPasswordField.removeAttribute('required');
+        customerPasswordConfirmationField.removeAttribute('required');
+        customerPasswordField.value = '';
+        customerPasswordConfirmationField.value = '';
+      }
+    });
+  }
+
+  // Corporate customer password toggle
+  if (corporateUserEnterPasswordCheckbox) {
+    corporateUserEnterPasswordCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        // User wants to enter password manually
+        corporateManualPasswordFields.style.display = 'block';
+        corporateSystemPasswordInfo.style.display = 'none';
+        corporatePasswordField.setAttribute('required', 'required');
+        corporatePasswordConfirmationField.setAttribute('required', 'required');
+      } else {
+        // System will generate password
+        corporateManualPasswordFields.style.display = 'none';
+        corporateSystemPasswordInfo.style.display = 'block';
+        corporatePasswordField.removeAttribute('required');
+        corporatePasswordConfirmationField.removeAttribute('required');
+        corporatePasswordField.value = '';
+        corporatePasswordConfirmationField.value = '';
+      }
+    });
+  }
+
+  // Password validation for manual entry
+  function validatePasswords(passwordField, confirmationField) {
+    const password = passwordField.value;
+    const confirmation = confirmationField.value;
+
+    if (password && confirmation) {
+      if (password !== confirmation) {
+        confirmationField.setCustomValidity('Passwords do not match');
+      } else if (password.length < 8) {
+        passwordField.setCustomValidity('Password must be at least 8 characters long');
+      } else if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
+        passwordField.setCustomValidity('Password must contain both letters and numbers');
+      } else {
+        passwordField.setCustomValidity('');
+        confirmationField.setCustomValidity('');
+      }
+    }
+  }
+
+  // Add password validation listeners
+  if (customerPasswordField && customerPasswordConfirmationField) {
+    customerPasswordField.addEventListener('input', function() {
+      validatePasswords(customerPasswordField, customerPasswordConfirmationField);
+    });
+    customerPasswordConfirmationField.addEventListener('input', function() {
+      validatePasswords(customerPasswordField, customerPasswordConfirmationField);
+    });
+  }
+
+  if (corporatePasswordField && corporatePasswordConfirmationField) {
+    corporatePasswordField.addEventListener('input', function() {
+      validatePasswords(corporatePasswordField, corporatePasswordConfirmationField);
+    });
+    corporatePasswordConfirmationField.addEventListener('input', function() {
+      validatePasswords(corporatePasswordField, corporatePasswordConfirmationField);
+    });
+  }
+
+  // Document management
+  let documentIndex = 0;
+  const addDocumentBtn = document.getElementById('add_document');
+  const documentsContainer = document.getElementById('documents_container');
+
+  addDocumentBtn?.addEventListener('click', function() {
+    const documentHtml = `
+      <div class="document-entry p-3 mb-3 border rounded position-relative" data-index="${documentIndex}">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-btn remove-document">
+          <i class="bi bi-trash"></i>
+        </button>
+        <div class="row">
+          <div class="col-md-6">
+            <label class="form-label">Document Type <span class="text-danger">*</span></label>
+            <select name="customer[documents_attributes][${documentIndex}][document_type]" class="form-select" required>
+              <option value="">Select Document Type</option>
+              <option value="Aadhaar Card">Aadhaar Card</option>
+              <option value="Pancard">PAN Card</option>
+              <option value="Driving License">Driving License</option>
+              <option value="Mediclaim">Mediclaim</option>
+              <option value="RC Book">RC Book</option>
+              <option value="Other File">Other File</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Document File <span class="text-danger">*</span></label>
+            <input type="file" name="customer[documents_attributes][${documentIndex}][file]" class="form-control" required>
+          </div>
+        </div>
+      </div>
+    `;
+    documentsContainer.insertAdjacentHTML('beforeend', documentHtml);
+    documentIndex++;
+  });
+
+  // Family member management
+  let familyMemberIndex = 0;
+  const addFamilyMemberBtn = document.getElementById('add_family_member');
+  const familyMembersContainer = document.getElementById('family_members_container');
+
+  addFamilyMemberBtn?.addEventListener('click', function() {
+    const familyMemberHtml = `
+      <div class="family-member-entry p-3 mb-3 border rounded position-relative" data-index="${familyMemberIndex}">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-btn remove-family-member">
+          <i class="bi bi-trash"></i>
+        </button>
+        <h6 class="mb-3">Family Member ${familyMemberIndex + 1}</h6>
+
+        <div class="row">
+          <div class="col-md-4">
+            <label class="form-label">First Name <span class="text-danger">*</span></label>
+            <input type="text" name="customer[family_members_attributes][${familyMemberIndex}][first_name]" class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Middle Name</label>
+            <input type="text" name="customer[family_members_attributes][${familyMemberIndex}][middle_name]" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+            <input type="text" name="customer[family_members_attributes][${familyMemberIndex}][last_name]" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <label class="form-label">Mobile</label>
+            <input type="tel" name="customer[family_members_attributes][${familyMemberIndex}][mobile]" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Birth Date</label>
+            <input type="date" name="customer[family_members_attributes][${familyMemberIndex}][birth_date]" class="form-control" min="1900-01-01" max="2099-12-31">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Age</label>
+            <input type="text" name="customer[family_members_attributes][${familyMemberIndex}][age]" class="form-control" readonly placeholder="Auto calculated from DOB">
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <label class="form-label">Gender</label>
+            <select name="customer[family_members_attributes][${familyMemberIndex}][gender]" class="form-select">
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Relationship <span class="text-danger">*</span></label>
+            <select name="customer[family_members_attributes][${familyMemberIndex}][relationship]" class="form-select" required>
+              <option value="">Select Relationship</option>
+              <% FamilyMember::RELATIONSHIPS.each do |rel| %>
+              <option value="<%= rel %>"><%= rel.humanize.titleize %></option>
+              <% end %>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Height</label>
+            <select name="customer[family_members_attributes][${familyMemberIndex}][height_feet]" class="form-select">
+              <option value="">Select Height</option>
+              <option value="3.0">3.0 feet</option><option value="3.08">3.1 feet</option><option value="3.17">3.2 feet</option><option value="3.25">3.3 feet</option><option value="3.33">3.4 feet</option><option value="3.42">3.5 feet</option><option value="3.5">3.6 feet</option><option value="3.58">3.7 feet</option><option value="3.67">3.8 feet</option><option value="3.75">3.9 feet</option><option value="3.83">3.10 feet</option><option value="3.92">3.11 feet</option>
+              <option value="4.0">4.0 feet</option><option value="4.08">4.1 feet</option><option value="4.17">4.2 feet</option><option value="4.25">4.3 feet</option><option value="4.33">4.4 feet</option><option value="4.42">4.5 feet</option><option value="4.5">4.6 feet</option><option value="4.58">4.7 feet</option><option value="4.67">4.8 feet</option><option value="4.75">4.9 feet</option><option value="4.83">4.10 feet</option><option value="4.92">4.11 feet</option>
+              <option value="5.0">5.0 feet</option><option value="5.08">5.1 feet</option><option value="5.17">5.2 feet</option><option value="5.25">5.3 feet</option><option value="5.33">5.4 feet</option><option value="5.42">5.5 feet</option><option value="5.5">5.6 feet</option><option value="5.58">5.7 feet</option><option value="5.67">5.8 feet</option><option value="5.75">5.9 feet</option><option value="5.83">5.10 feet</option><option value="5.92">5.11 feet</option>
+              <option value="6.0">6.0 feet</option><option value="6.08">6.1 feet</option><option value="6.17">6.2 feet</option><option value="6.25">6.3 feet</option><option value="6.33">6.4 feet</option><option value="6.42">6.5 feet</option><option value="6.5">6.6 feet</option><option value="6.58">6.7 feet</option><option value="6.67">6.8 feet</option><option value="6.75">6.9 feet</option><option value="6.83">6.10 feet</option><option value="6.92">6.11 feet</option>
+              <option value="7.0">7.0 feet</option><option value="7.08">7.1 feet</option><option value="7.17">7.2 feet</option><option value="7.25">7.3 feet</option><option value="7.33">7.4 feet</option><option value="7.42">7.5 feet</option><option value="7.5">7.6 feet</option><option value="7.58">7.7 feet</option><option value="7.67">7.8 feet</option><option value="7.75">7.9 feet</option><option value="7.83">7.10 feet</option><option value="7.92">7.11 feet</option>
+              <option value="8.0">8.0 feet</option><option value="8.08">8.1 feet</option><option value="8.17">8.2 feet</option><option value="8.25">8.3 feet</option><option value="8.33">8.4 feet</option><option value="8.42">8.5 feet</option><option value="8.5">8.6 feet</option><option value="8.58">8.7 feet</option><option value="8.67">8.8 feet</option><option value="8.75">8.9 feet</option><option value="8.83">8.10 feet</option><option value="8.92">8.11 feet</option>
+            </select>
+            <div class="form-text">Select height from the dropdown</div>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <label class="form-label">Weight (Kg)</label>
+            <input type="number" name="customer[family_members_attributes][${familyMemberIndex}][weight_kg]" class="form-control" step="0.1">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">PAN No</label>
+            <input type="text" name="customer[family_members_attributes][${familyMemberIndex}][pan_no]" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Additional Information</label>
+            <textarea name="customer[family_members_attributes][${familyMemberIndex}][additional_information]" class="form-control" rows="1"></textarea>
+          </div>
+        </div>
+
+        <div class="nested-documents p-3 mt-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">Family Member Documents</h6>
+            <button type="button" class="btn btn-sm btn-outline-primary add-family-document" data-family-index="${familyMemberIndex}">
+              <i class="bi bi-plus-lg me-1"></i>
+              Add Document
+            </button>
+          </div>
+          <div id="family_member_${familyMemberIndex}_documents">
+            <!-- Family member documents will be added here -->
+          </div>
+        </div>
+      </div>
+    `;
+    familyMembersContainer.insertAdjacentHTML('beforeend', familyMemberHtml);
+    familyMemberIndex++;
+  });
+
+  // Corporate document management
+  let corporateDocumentIndex = 0;
+  const addCorporateDocumentBtn = document.getElementById('add_corporate_document');
+  const corporateDocumentsContainer = document.getElementById('corporate_documents_container');
+
+  addCorporateDocumentBtn?.addEventListener('click', function() {
+    const documentHtml = `
+      <div class="document-entry p-3 mb-3 border rounded position-relative" data-index="${corporateDocumentIndex}">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-btn remove-corporate-doc">
+          <i class="bi bi-trash"></i>
+        </button>
+        <div class="row">
+          <div class="col-md-6">
+            <label class="form-label">Document Type <span class="text-danger">*</span></label>
+            <select name="customer[corporate_documents_attributes][${corporateDocumentIndex}][document_type]" class="form-select" required>
+              <option value="">Select Document Type</option>
+              <option value="Aadhaar Card">Aadhaar Card</option>
+              <option value="Pancard">PAN Card</option>
+              <option value="Driving License">Driving License</option>
+              <option value="Mediclaim">Mediclaim</option>
+              <option value="RC Book">RC Book</option>
+              <option value="Other File">Other File</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Document File <span class="text-danger">*</span></label>
+            <input type="file" name="customer[corporate_documents_attributes][${corporateDocumentIndex}][file]" class="form-control" required>
+          </div>
+        </div>
+      </div>
+    `;
+    corporateDocumentsContainer.insertAdjacentHTML('beforeend', documentHtml);
+    corporateDocumentIndex++;
+  });
+
+  // Corporate family member management
+  let corporateFamilyMemberIndex = 0;
+  const addCorporateFamilyMemberBtn = document.getElementById('add_corporate_family_member');
+  const corporateFamilyMembersContainer = document.getElementById('corporate_family_members_container');
+
+  addCorporateFamilyMemberBtn?.addEventListener('click', function() {
+    const familyMemberHtml = `
+      <div class="family-member-entry p-3 mb-3 border rounded position-relative" data-index="${corporateFamilyMemberIndex}">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-btn remove-corporate-family-member">
+          <i class="bi bi-trash"></i>
+        </button>
+        <h6 class="mb-3">Family Member ${corporateFamilyMemberIndex + 1}</h6>
+
+        <div class="row">
+          <div class="col-md-4">
+            <label class="form-label">First Name <span class="text-danger">*</span></label>
+            <input type="text" name="customer[family_members_attributes][${corporateFamilyMemberIndex}][first_name]" class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Middle Name</label>
+            <input type="text" name="customer[family_members_attributes][${corporateFamilyMemberIndex}][middle_name]" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+            <input type="text" name="customer[family_members_attributes][${corporateFamilyMemberIndex}][last_name]" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <label class="form-label">Mobile</label>
+            <input type="tel" name="customer[family_members_attributes][${corporateFamilyMemberIndex}][mobile]" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Birth Date</label>
+            <input type="date" name="customer[family_members_attributes][${corporateFamilyMemberIndex}][birth_date]" class="form-control" min="1900-01-01" max="2099-12-31">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Age</label>
+            <input type="text" name="customer[family_members_attributes][${corporateFamilyMemberIndex}][age]" class="form-control" readonly placeholder="Auto calculated from DOB">
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <label class="form-label">Gender</label>
+            <select name="customer[family_members_attributes][${corporateFamilyMemberIndex}][gender]" class="form-select">
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Relationship <span class="text-danger">*</span></label>
+            <select name="customer[family_members_attributes][${corporateFamilyMemberIndex}][relationship]" class="form-select" required>
+              <option value="">Select Relationship</option>
+              <% FamilyMember::RELATIONSHIPS.each do |rel| %>
+              <option value="<%= rel %>"><%= rel.humanize.titleize %></option>
+              <% end %>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Height</label>
+            <select name="customer[family_members_attributes][${corporateFamilyMemberIndex}][height_feet]" class="form-select">
+              <option value="">Select Height</option>
+              <option value="3.0">3.0 feet</option><option value="3.08">3.1 feet</option><option value="3.17">3.2 feet</option><option value="3.25">3.3 feet</option><option value="3.33">3.4 feet</option><option value="3.42">3.5 feet</option><option value="3.5">3.6 feet</option><option value="3.58">3.7 feet</option><option value="3.67">3.8 feet</option><option value="3.75">3.9 feet</option><option value="3.83">3.10 feet</option><option value="3.92">3.11 feet</option>
+              <option value="4.0">4.0 feet</option><option value="4.08">4.1 feet</option><option value="4.17">4.2 feet</option><option value="4.25">4.3 feet</option><option value="4.33">4.4 feet</option><option value="4.42">4.5 feet</option><option value="4.5">4.6 feet</option><option value="4.58">4.7 feet</option><option value="4.67">4.8 feet</option><option value="4.75">4.9 feet</option><option value="4.83">4.10 feet</option><option value="4.92">4.11 feet</option>
+              <option value="5.0">5.0 feet</option><option value="5.08">5.1 feet</option><option value="5.17">5.2 feet</option><option value="5.25">5.3 feet</option><option value="5.33">5.4 feet</option><option value="5.42">5.5 feet</option><option value="5.5">5.6 feet</option><option value="5.58">5.7 feet</option><option value="5.67">5.8 feet</option><option value="5.75">5.9 feet</option><option value="5.83">5.10 feet</option><option value="5.92">5.11 feet</option>
+              <option value="6.0">6.0 feet</option><option value="6.08">6.1 feet</option><option value="6.17">6.2 feet</option><option value="6.25">6.3 feet</option><option value="6.33">6.4 feet</option><option value="6.42">6.5 feet</option><option value="6.5">6.6 feet</option><option value="6.58">6.7 feet</option><option value="6.67">6.8 feet</option><option value="6.75">6.9 feet</option><option value="6.83">6.10 feet</option><option value="6.92">6.11 feet</option>
+              <option value="7.0">7.0 feet</option><option value="7.08">7.1 feet</option><option value="7.17">7.2 feet</option><option value="7.25">7.3 feet</option><option value="7.33">7.4 feet</option><option value="7.42">7.5 feet</option><option value="7.5">7.6 feet</option><option value="7.58">7.7 feet</option><option value="7.67">7.8 feet</option><option value="7.75">7.9 feet</option><option value="7.83">7.10 feet</option><option value="7.92">7.11 feet</option>
+              <option value="8.0">8.0 feet</option><option value="8.08">8.1 feet</option><option value="8.17">8.2 feet</option><option value="8.25">8.3 feet</option><option value="8.33">8.4 feet</option><option value="8.42">8.5 feet</option><option value="8.5">8.6 feet</option><option value="8.58">8.7 feet</option><option value="8.67">8.8 feet</option><option value="8.75">8.9 feet</option><option value="8.83">8.10 feet</option><option value="8.92">8.11 feet</option>
+            </select>
+            <div class="form-text">Select height from the dropdown</div>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-6">
+            <label class="form-label">Weight (Kg)</label>
+            <input type="number" name="customer[family_members_attributes][${corporateFamilyMemberIndex}][weight_kg]" class="form-control" step="0.1">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">PAN No</label>
+            <input type="text" name="customer[family_members_attributes][${corporateFamilyMemberIndex}][pan_no]" class="form-control">
+          </div>
+        </div>
+      </div>
+    `;
+    corporateFamilyMembersContainer.insertAdjacentHTML('beforeend', familyMemberHtml);
+    corporateFamilyMemberIndex++;
+  });
+
+  // Corporate member management
+  let corporateMemberIndex = 0;
+  const addCorporateMemberBtn = document.getElementById('add_corporate_member');
+  const corporateMembersContainer = document.getElementById('corporate_members_container');
+
+  // Corporate member management for corp section
+  let corporateMemberCorpIndex = 0;
+  const addCorporateMemberCorpBtn = document.getElementById('add_corporate_member_corp');
+  const corporateMembersCorpContainer = document.getElementById('corporate_members_corp_container');
+
+  addCorporateMemberCorpBtn?.addEventListener('click', function() {
+    const corporateMemberHtml = `
+      <div class="corporate-member-entry p-3 mb-3 border rounded position-relative" data-index="${corporateMemberCorpIndex}">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-btn remove-corporate-member-corp">
+          <i class="bi bi-trash"></i>
+        </button>
+        <h6 class="mb-3">Corporate Member ${corporateMemberCorpIndex + 1}</h6>
+
+        <div class="row">
+          <div class="col-md-6">
+            <label class="form-label">Company Name <span class="text-danger">*</span></label>
+            <input type="text" name="customer[corporate_members_attributes][${corporateMemberCorpIndex}][company_name]" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Mobile</label>
+            <input type="tel" name="customer[corporate_members_attributes][${corporateMemberCorpIndex}][mobile]" class="form-control">
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input type="email" name="customer[corporate_members_attributes][${corporateMemberCorpIndex}][email]" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">State</label>
+            <input type="text" name="customer[corporate_members_attributes][${corporateMemberCorpIndex}][state]" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">City</label>
+            <input type="text" name="customer[corporate_members_attributes][${corporateMemberCorpIndex}][city]" class="form-control">
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-12">
+            <label class="form-label">Address</label>
+            <textarea name="customer[corporate_members_attributes][${corporateMemberCorpIndex}][address]" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <label class="form-label">Annual Income</label>
+            <input type="number" name="customer[corporate_members_attributes][${corporateMemberCorpIndex}][annual_income]" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">PAN No</label>
+            <input type="text" name="customer[corporate_members_attributes][${corporateMemberCorpIndex}][pan_no]" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">GST No</label>
+            <input type="text" name="customer[corporate_members_attributes][${corporateMemberCorpIndex}][gst_no]" class="form-control">
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-12">
+            <label class="form-label">Additional Information</label>
+            <textarea name="customer[corporate_members_attributes][${corporateMemberCorpIndex}][additional_information]" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+    `;
+    corporateMembersCorpContainer.insertAdjacentHTML('beforeend', corporateMemberHtml);
+    corporateMemberCorpIndex++;
+  });
+
+  addCorporateMemberBtn?.addEventListener('click', function() {
+    const corporateMemberHtml = `
+      <div class="corporate-member-entry p-3 mb-3 border rounded position-relative" data-index="${corporateMemberIndex}">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-btn remove-corporate-member">
+          <i class="bi bi-trash"></i>
+        </button>
+        <h6 class="mb-3">Corporate Member ${corporateMemberIndex + 1}</h6>
+
+        <div class="row">
+          <div class="col-md-6">
+            <label class="form-label">Company Name <span class="text-danger">*</span></label>
+            <input type="text" name="customer[corporate_members_attributes][${corporateMemberIndex}][company_name]" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Mobile</label>
+            <input type="tel" name="customer[corporate_members_attributes][${corporateMemberIndex}][mobile]" class="form-control">
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input type="email" name="customer[corporate_members_attributes][${corporateMemberIndex}][email]" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">State</label>
+            <input type="text" name="customer[corporate_members_attributes][${corporateMemberIndex}][state]" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">City</label>
+            <input type="text" name="customer[corporate_members_attributes][${corporateMemberIndex}][city]" class="form-control">
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-12">
+            <label class="form-label">Address</label>
+            <textarea name="customer[corporate_members_attributes][${corporateMemberIndex}][address]" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <label class="form-label">Annual Income</label>
+            <input type="number" name="customer[corporate_members_attributes][${corporateMemberIndex}][annual_income]" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">PAN No</label>
+            <input type="text" name="customer[corporate_members_attributes][${corporateMemberIndex}][pan_no]" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">GST No</label>
+            <input type="text" name="customer[corporate_members_attributes][${corporateMemberIndex}][gst_no]" class="form-control">
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-12">
+            <label class="form-label">Additional Information</label>
+            <textarea name="customer[corporate_members_attributes][${corporateMemberIndex}][additional_information]" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div class="nested-documents p-3 mt-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">Corporate Member Documents</h6>
+            <button type="button" class="btn btn-sm btn-outline-primary add-corporate-document" data-corporate-index="${corporateMemberIndex}">
+              <i class="bi bi-plus-lg me-1"></i>
+              Add Document
+            </button>
+          </div>
+          <div id="corporate_member_${corporateMemberIndex}_documents">
+            <!-- Corporate member documents will be added here -->
+          </div>
+        </div>
+      </div>
+    `;
+    corporateMembersContainer.insertAdjacentHTML('beforeend', corporateMemberHtml);
+    corporateMemberIndex++;
+  });
+
+  // Event delegation for remove buttons
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-document')) {
+      e.target.closest('.document-entry').remove();
+    }
+    if (e.target.closest('.remove-family-member')) {
+      e.target.closest('.family-member-entry').remove();
+    }
+    if (e.target.closest('.remove-corporate-member')) {
+      e.target.closest('.corporate-member-entry').remove();
+    }
+    if (e.target.closest('.remove-corporate-doc')) {
+      e.target.closest('.document-entry').remove();
+    }
+    if (e.target.closest('.remove-corporate-family-member')) {
+      e.target.closest('.family-member-entry').remove();
+    }
+    if (e.target.closest('.remove-corporate-member-corp')) {
+      e.target.closest('.corporate-member-entry').remove();
+    }
+  });
+
+  // Handle nested document additions
+  let nestedDocumentIndex = 0;
+
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.add-family-document')) {
+      const button = e.target.closest('.add-family-document');
+      const familyIndex = button.getAttribute('data-family-index');
+      const container = document.getElementById(`family_member_${familyIndex}_documents`);
+
+      const documentHtml = `
+        <div class="nested-document-entry p-2 mb-2 border rounded">
+          <div class="row">
+            <div class="col-md-6">
+              <label class="form-label">Document Type</label>
+              <select name="customer[family_members_attributes][${familyIndex}][documents_attributes][${nestedDocumentIndex}][document_type]" class="form-select">
+                <option value="">Select Document Type</option>
+                <option value="Aadhaar Card">Aadhaar Card</option>
+                <option value="Pancard">PAN Card</option>
+                <option value="Driving License">Driving License</option>
+                <option value="Mediclaim">Mediclaim</option>
+                <option value="RC Book">RC Book</option>
+                <option value="Other File">Other File</option>
+              </select>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label">Document File</label>
+              <input type="file" name="customer[family_members_attributes][${familyIndex}][documents_attributes][${nestedDocumentIndex}][file]" class="form-control">
+            </div>
+            <div class="col-md-1">
+              <label class="form-label">&nbsp;</label>
+              <button type="button" class="btn btn-sm btn-outline-danger remove-nested-document w-100">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.insertAdjacentHTML('beforeend', documentHtml);
+      nestedDocumentIndex++;
+    }
+
+    if (e.target.closest('.add-corporate-document')) {
+      const button = e.target.closest('.add-corporate-document');
+      const corporateIndex = button.getAttribute('data-corporate-index');
+      const container = document.getElementById(`corporate_member_${corporateIndex}_documents`);
+
+      const documentHtml = `
+        <div class="nested-document-entry p-2 mb-2 border rounded">
+          <div class="row">
+            <div class="col-md-6">
+              <label class="form-label">Document Type</label>
+              <select name="customer[corporate_members_attributes][${corporateIndex}][documents_attributes][${nestedDocumentIndex}][document_type]" class="form-select">
+                <option value="">Select Document Type</option>
+                <option value="Aadhaar Card">Aadhaar Card</option>
+                <option value="Pancard">PAN Card</option>
+                <option value="Driving License">Driving License</option>
+                <option value="Mediclaim">Mediclaim</option>
+                <option value="RC Book">RC Book</option>
+                <option value="Other File">Other File</option>
+              </select>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label">Document File</label>
+              <input type="file" name="customer[corporate_members_attributes][${corporateIndex}][documents_attributes][${nestedDocumentIndex}][file]" class="form-control">
+            </div>
+            <div class="col-md-1">
+              <label class="form-label">&nbsp;</label>
+              <button type="button" class="btn btn-sm btn-outline-danger remove-nested-document w-100">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.insertAdjacentHTML('beforeend', documentHtml);
+      nestedDocumentIndex++;
+    }
+
+    if (e.target.closest('.remove-nested-document')) {
+      e.target.closest('.nested-document-entry').remove();
+    }
+  });
+
+  // Auto-calculate family member ages with years and days
+  document.addEventListener('change', function(e) {
+    if (e.target.matches('input[name*="birth_date"]')) {
+      let ageField = e.target.closest('.row').parentNode.querySelector('input[name*="[age]"]');
+      if (!ageField) {
+        ageField = e.target.closest('.family-member-entry')?.querySelector('input[name*="[age]"]');
+      }
+
+      if (ageField) {
+        ageField.value = calculateDetailedAge(e.target.value);
+      }
+    }
+  });
+
+  // Simple State-City Dropdown
+  console.log('Setting up state-city dropdowns...');
+
+  // Use API for city data
+  let citiesData = {};
+
+  function loadCitiesForState(stateValue, cityDropdown, selectedCity = null) {
+    console.log('Loading cities for:', stateValue, 'Selected city:', selectedCity);
+
+    // Clear and disable if no state
+    if (!stateValue) {
+      cityDropdown.innerHTML = '<option value="">Select State First</option>';
+      cityDropdown.disabled = true;
+      return;
+    }
+
+    // Store the currently selected city or use the passed selectedCity
+    const currentSelectedCity = selectedCity || cityDropdown.value;
+
+    // Use API call to get cities
+    fetch(`/api/cities?state=${stateValue}`)
+      .then(response => response.json())
+      .then(data => {
+        const cities = data.cities || [];
+        populateCityDropdown(cities, cityDropdown, currentSelectedCity);
+      })
+      .catch(error => {
+        console.error('Error loading cities:', error);
+        cityDropdown.innerHTML = '<option value="">Error loading cities</option>';
+        cityDropdown.disabled = true;
+      });
+  }
+
+  function populateCityDropdown(cities, cityDropdown, selectedCity = null) {
+    // Clear dropdown and add cities
+    cityDropdown.innerHTML = '<option value="">Select City</option>';
+
+    let cityMatched = false;
+
+    cities.forEach(city => {
+      const option = document.createElement('option');
+      option.value = city;
+      option.textContent = city;
+
+      // Select the city if it matches the selectedCity (case-insensitive comparison)
+      if (selectedCity && city.toLowerCase() === selectedCity.toLowerCase()) {
+        option.selected = true;
+        cityMatched = true;
+        console.log(`City matched: ${city}`);
+      }
+
+      cityDropdown.appendChild(option);
+    });
+
+    cityDropdown.disabled = false;
+    console.log(`Loaded ${cities.length} cities`, selectedCity ? `Looking for: ${selectedCity}, Found: ${cityMatched}` : '');
+  }
+
+  // Setup for Individual customer
+  const individualState = document.getElementById('customer_state_individual');
+  const individualCity = document.getElementById('customer_city_individual');
+
+  if (individualState && individualCity) {
+    // Get initial city value from server-side data (from lead conversion)
+    const initialCityValue = '<%= @customer.city.to_s.html_safe if @customer.city.present? %>'; // Get from server instead of empty dropdown
+    console.log('Individual customer - Initial city value:', initialCityValue);
+    console.log('Individual customer - Initial state value:', individualState.value);
+
+    // Handle both regular change and Select2 change events
+    individualState.addEventListener('change', function() {
+      loadCitiesForState(this.value, individualCity, null); // No initial city on manual state change
+    });
+
+    // Handle Select2 change event specifically
+    $('#customer_state_individual').on('select2:select', function (e) {
+      const selectedValue = e.params.data.id;
+      loadCitiesForState(selectedValue, individualCity, null); // No initial city on manual state change
+    });
+
+    // Load cities if state already selected and preserve the initial city selection
+    // Add a small delay to ensure DOM is ready
+    setTimeout(() => {
+      if (individualState.value && initialCityValue) {
+        console.log('Loading cities with initial city selection for individual customer:', initialCityValue);
+        loadCitiesForState(individualState.value, individualCity, initialCityValue);
+      } else if (individualState.value) {
+        console.log('Loading cities without initial city selection for individual customer');
+        loadCitiesForState(individualState.value, individualCity);
+      }
+    }, 200);
+  }
+
+  // Setup for Corporate customer
+  const corporateState = document.getElementById('customer_state_corporate');
+  const corporateCity = document.getElementById('customer_city_corporate');
+
+  if (corporateState && corporateCity) {
+    // Get initial city value from server-side data (from lead conversion)
+    const initialCorporateCityValue = '<%= @customer.city.to_s.html_safe if @customer.city.present? %>'; // Get from server instead of empty dropdown
+    console.log('Corporate customer - Initial city value:', initialCorporateCityValue);
+    console.log('Corporate customer - Initial state value:', corporateState.value);
+
+    // Handle both regular change and Select2 change events
+    corporateState.addEventListener('change', function() {
+      loadCitiesForState(this.value, corporateCity, null); // No initial city on manual state change
+    });
+
+    // Handle Select2 change event specifically
+    $('#customer_state_corporate').on('select2:select', function (e) {
+      const selectedValue = e.params.data.id;
+      loadCitiesForState(selectedValue, corporateCity, null); // No initial city on manual state change
+    });
+
+    // Load cities if state already selected and preserve the initial city selection
+    // Add a small delay to ensure DOM is ready
+    setTimeout(() => {
+      if (corporateState.value && initialCorporateCityValue) {
+        console.log('Loading cities with initial city selection for corporate customer:', initialCorporateCityValue);
+        loadCitiesForState(corporateState.value, corporateCity, initialCorporateCityValue);
+      } else if (corporateState.value) {
+        console.log('Loading cities without initial city selection for corporate customer');
+        loadCitiesForState(corporateState.value, corporateCity);
+      }
+    }, 200);
+  }
+
+  console.log('State-city dropdowns ready!');
+
+  // Initialize Select2 for searchable dropdowns
+  function initializeSelect2Dropdowns() {
+    // Initialize State dropdowns with search
+    $('#customer_state_individual, #customer_state_corporate').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select state...',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('body'),
+      minimumResultsForSearch: 0,
+      closeOnSelect: true
+    });
+
+    // Initialize Affiliate dropdowns with AJAX search
+    $('#corporate_affiliate_select, #individual_affiliate_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select affiliate...',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('body'),
+      dropdownCssClass: 'select2-dropdown-large',
+      minimumInputLength: 0, // Allow opening without typing
+      ajax: {
+        url: '/api/v1/public/search_sub_agents',
+        dataType: 'json',
+        delay: 250,
+        data: function (params) {
+          return {
+            q: params.term || '', // Send empty query to get default results
+            limit: params.term ? 20 : 10 // Show fewer results when no search term
+          };
+        },
+        processResults: function (data) {
+          console.log('Search affiliates response:', data);
+          return {
+            results: data.results || []
+          };
+        },
+        error: function(xhr, status, error) {
+          console.error('Search affiliates AJAX error:', status, error);
+          return {
+            results: [{id: '', text: 'Error loading affiliates - please try again'}]
+          };
+        },
+        cache: true
+      },
+      templateResult: function(option) {
+        if (option.loading) return option.text;
+        if (!option.id || option.id === '') {
+          return option.text;
+        }
+
+        // Generate avatar with initials
+        var initials = option.text.split(' ').map(function(name) {
+          return name.charAt(0).toUpperCase();
+        }).join('').substring(0, 2);
+
+        // Custom template for affiliate options with green avatar
+        var $option = $(
+          '<div class="affiliate-option">' +
+            '<div class="affiliate-option-avatar">' + initials + '</div>' +
+            '<div class="affiliate-option-details">' +
+              '<div class="affiliate-option-name">' + option.text + '</div>' +
+              '<div class="affiliate-option-id">Affiliate ID: #' + option.id + '</div>' +
+            '</div>' +
+          '</div>'
+        );
+        return $option;
+      },
+      templateSelection: function(option) {
+        return option.text || 'Search and select affiliate...';
+      },
+      escapeMarkup: function(markup) {
+        return markup;
+      }
+    });
+
+    // Initialize City dropdowns
+    $('#customer_city_individual, #customer_city_corporate').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select city...',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('body'),
+      dropdownCssClass: 'select2-dropdown-large',
+      minimumResultsForSearch: 0,
+      closeOnSelect: true,
+      templateResult: function(option) {
+        if (!option.id || option.element.value === '') {
+          return option.text;
+        }
+
+        // Generate city initials
+        var initials = option.text.split(' ').map(function(word) {
+          return word.charAt(0).toUpperCase();
+        }).join('').substring(0, 3);
+
+        // Get the state from the state dropdown in the same section
+        var stateDropdown = $(option.element).closest('.card-body').find('select[name*="[state]"]');
+        var stateName = stateDropdown.find('option:selected').text() || 'State';
+
+        // Custom template for city options with purple square avatar
+        var $option = $(
+          '<div class="city-option">' +
+            '<div class="city-option-avatar">' + initials + '</div>' +
+            '<div class="city-option-details">' +
+              '<div class="city-option-name">' + option.text + '</div>' +
+              '<div class="city-option-state">' + stateName + '</div>' +
+            '</div>' +
+          '</div>'
+        );
+        return $option;
+      },
+      templateSelection: function(option) {
+        return option.text || 'Search and select city...';
+      },
+      escapeMarkup: function(markup) {
+        return markup;
+      }
+    });
+  }
+
+  // Initialize Select2 after a short delay to ensure DOM is ready
+  setTimeout(initializeSelect2Dropdowns, 100);
+
+  // Re-initialize Select2 for city dropdowns when cities are loaded
+  function reinitializeCitySelect2(cityDropdown) {
+    // Destroy existing Select2 if it exists
+    if (cityDropdown.hasClass('select2-hidden-accessible')) {
+      cityDropdown.select2('destroy');
+    }
+
+    // Reinitialize with Select2
+    cityDropdown.select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select city...',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('body'),
+      dropdownCssClass: 'select2-dropdown-large',
+      minimumResultsForSearch: 0,
+      closeOnSelect: true,
+      templateResult: function(option) {
+        if (!option.id || option.element.value === '') {
+          return option.text;
+        }
+
+        // Generate city initials
+        var initials = option.text.split(' ').map(function(word) {
+          return word.charAt(0).toUpperCase();
+        }).join('').substring(0, 3);
+
+        // Get the state from the state dropdown in the same section
+        var stateDropdown = $(option.element).closest('.card-body').find('select[name*="[state]"]');
+        var stateName = stateDropdown.find('option:selected').text() || 'State';
+
+        // Custom template for city options with purple square avatar
+        var $option = $(
+          '<div class="city-option">' +
+            '<div class="city-option-avatar">' + initials + '</div>' +
+            '<div class="city-option-details">' +
+              '<div class="city-option-name">' + option.text + '</div>' +
+              '<div class="city-option-state">' + stateName + '</div>' +
+            '</div>' +
+          '</div>'
+        );
+        return $option;
+      },
+      templateSelection: function(option) {
+        return option.text || 'Search and select city...';
+      },
+      escapeMarkup: function(markup) {
+        return markup;
+      }
+    });
+  }
+
+  // Override the existing populateCityDropdown function to include Select2 reinitialization
+  const originalPopulateCityDropdown = window.populateCityDropdown || populateCityDropdown;
+
+  function populateCityDropdown(cities, cityDropdown, selectedCity = null) {
+    // First destroy Select2 if it exists
+    const $cityDropdown = $(cityDropdown);
+    if ($cityDropdown.hasClass('select2-hidden-accessible')) {
+      $cityDropdown.select2('destroy');
+    }
+
+    // Clear dropdown and add cities (original functionality)
+    cityDropdown.innerHTML = '<option value="">Select City</option>';
+
+    let cityMatched = false;
+
+    cities.forEach(city => {
+      const option = document.createElement('option');
+      option.value = city;
+      option.textContent = city;
+
+      // Select the city if it matches the selectedCity (case-insensitive comparison)
+      if (selectedCity && city.toLowerCase() === selectedCity.toLowerCase()) {
+        option.selected = true;
+        cityMatched = true;
+        console.log(`City matched in Select2: ${city}`);
+      }
+
+      cityDropdown.appendChild(option);
+    });
+
+    cityDropdown.disabled = false;
+    console.log(`Loaded ${cities.length} cities in Select2`, selectedCity ? `Looking for: ${selectedCity}, Found: ${cityMatched}` : '');
+
+    // Reinitialize Select2 and set the selected value
+    setTimeout(() => {
+      $cityDropdown.select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select city...',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('body'),
+        dropdownCssClass: 'select2-dropdown-large',
+        minimumResultsForSearch: 0,
+        closeOnSelect: true,
+        templateResult: function(option) {
+          if (!option.id || option.element.value === '') {
+            return option.text;
+          }
+
+          // Generate city initials
+          var initials = option.text.split(' ').map(function(word) {
+            return word.charAt(0).toUpperCase();
+          }).join('').substring(0, 3);
+
+          // Get the state from the state dropdown in the same section
+          var stateDropdown = $(option.element).closest('.card-body').find('select[name*="[state]"]');
+          var stateName = stateDropdown.find('option:selected').text() || 'State';
+
+          // Custom template for city options with purple square avatar
+          var $option = $(
+            '<div class="city-option">' +
+              '<div class="city-option-avatar">' + initials + '</div>' +
+              '<div class="city-option-details">' +
+                '<div class="city-option-name">' + option.text + '</div>' +
+                '<div class="city-option-state">' + stateName + '</div>' +
+              '</div>' +
+            '</div>'
+          );
+          return $option;
+        },
+        templateSelection: function(option) {
+          return option.text || 'Search and select city...';
+        },
+        escapeMarkup: function(markup) {
+          return markup;
+        }
+      });
+
+      if (selectedCity && cityMatched) {
+        // Ensure the selected city is properly set
+        $cityDropdown.val(selectedCity).trigger('change.select2');
+        console.log(`Set city value to: ${selectedCity}`);
+      }
+    }, 100);
+  }
+
+  console.log('Select2 dropdowns initialized!');
+
+  // Customer Document Management System
+  let customerDocumentIndex = 0;
+  const addCustomerDocumentBtn = document.getElementById('add_customer_document');
+  const customerDocumentsContainer = document.getElementById('customer_documents_container');
+  const noDocumentsMessage = document.getElementById('no_documents_message');
+
+  addCustomerDocumentBtn?.addEventListener('click', function() {
+    // Hide the no documents message
+    if (noDocumentsMessage) {
+      noDocumentsMessage.style.display = 'none';
+    }
+
+    const documentHtml = `
+      <div class="customer-document-entry p-3 mb-3 border rounded position-relative" data-index="${customerDocumentIndex}" style="background: #f8f9fa;">
+        <button type="button" class="btn btn-sm btn-outline-danger position-absolute remove-customer-document" style="top: 10px; right: 10px;" title="Remove Document">
+          <i class="bi bi-trash"></i>
+        </button>
+
+        <div class="row">
+          <div class="col-md-6">
+            <label class="form-label">Document Type <span class="text-danger">*</span></label>
+            <select name="customer[documents_attributes][${customerDocumentIndex}][document_type]" class="form-select" required>
+              <option value="">Select Document Type</option>
+              <option value="Aadhaar Card">Aadhaar Card</option>
+              <option value="Pancard">Pancard</option>
+              <option value="Driving License">Driving License</option>
+              <option value="Mediclaim">Mediclaim</option>
+              <option value="RC Book">RC Book</option>
+              <option value="Other File">Other File</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Document File <span class="text-danger">*</span></label>
+            <input type="file" name="customer[documents_attributes][${customerDocumentIndex}][document_file]" class="form-control customer-doc-file" accept="application/pdf,image/jpeg,image/jpg,image/png" required id="customer_doc_file_${customerDocumentIndex}">
+          </div>
+        </div>
+
+
+        <!-- Document Preview Container -->
+        <div id="customer_doc_preview_${customerDocumentIndex}" class="mt-3" style="display: none;">
+          <div class="card border-light bg-light">
+            <div class="card-body p-3">
+              <div class="d-flex align-items-start">
+                <!-- Preview Content -->
+                <div class="preview-content me-3">
+                  <!-- Image Preview -->
+                  <div class="image-preview" style="display: none;">
+                    <img class="preview-image rounded" style="max-width: 120px; max-height: 120px; object-fit: cover; border: 2px solid #e9ecef;" alt="Preview">
+                  </div>
+
+                  <!-- Document Preview -->
+                  <div class="document-preview" style="display: none;">
+                    <div class="d-flex align-items-center p-2 border rounded" style="background-color: #f8f9fa; min-width: 120px;">
+                      <i class="file-icon bi bi-file-earmark text-primary fs-3 me-2"></i>
+                      <div>
+                        <div class="fw-bold file-name text-truncate small" style="max-width: 100px;"></div>
+                        <small class="text-muted file-type"></small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- File Information -->
+                <div class="file-info flex-grow-1">
+                  <h6 class="mb-1 small">
+                    <i class="bi bi-file-earmark-check text-success me-1"></i>
+                    <span class="file-title">Document Ready</span>
+                  </h6>
+                  <div class="file-details small text-muted">
+                    <div><strong>Name:</strong> <span class="file-name-detail"></span></div>
+                    <div><strong>Size:</strong> <span class="file-size-detail"></span></div>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="file-actions">
+                  <button type="button" class="btn btn-sm btn-outline-danger remove-file" title="Remove File">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    `;
+    customerDocumentsContainer.insertAdjacentHTML('beforeend', documentHtml);
+
+    // Add event listener for the new file input
+    setupCustomerDocumentPreview(customerDocumentIndex);
+
+    customerDocumentIndex++;
+  });
+
+  // Remove customer document event listener
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-customer-document')) {
+      e.target.closest('.customer-document-entry').remove();
+
+      // Show no documents message if no documents left
+      if (customerDocumentsContainer.children.length === 0) {
+        noDocumentsMessage.style.display = 'block';
+      }
+    }
+  });
+
+  // Function to setup preview functionality for customer documents
+  function setupCustomerDocumentPreview(index) {
+    const fileInput = document.getElementById(`customer_doc_file_${index}`);
+    const previewContainer = document.getElementById(`customer_doc_preview_${index}`);
+
+    if (!fileInput || !previewContainer) return;
+
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+
+      if (!file) {
+        previewContainer.style.display = 'none';
+        return;
+      }
+
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        showCustomerDocError(fileInput, 'File size exceeds 10MB limit');
+        fileInput.value = '';
+        previewContainer.style.display = 'none';
+        return;
+      }
+
+      showCustomerDocumentPreview(file, previewContainer);
+    });
+
+    // Remove file button
+    previewContainer.querySelector('.remove-file')?.addEventListener('click', function() {
+      fileInput.value = '';
+      previewContainer.style.display = 'none';
+    });
+  }
+
+  function showCustomerDocumentPreview(file, previewContainer) {
+    const imagePreview = previewContainer.querySelector('.image-preview');
+    const documentPreview = previewContainer.querySelector('.document-preview');
+    const fileNameElement = previewContainer.querySelector('.file-name-detail');
+    const fileSizeElement = previewContainer.querySelector('.file-size-detail');
+
+    // Hide both previews initially
+    imagePreview.style.display = 'none';
+    documentPreview.style.display = 'none';
+
+    // Show preview container
+    previewContainer.style.display = 'block';
+
+    // Update file details
+    if (fileNameElement) fileNameElement.textContent = file.name;
+    if (fileSizeElement) fileSizeElement.textContent = formatCustomerFileSize(file.size);
+
+    // Check if file is an image
+    if (file.type && file.type.startsWith('image/')) {
+      showCustomerImagePreview(file, imagePreview);
+    } else {
+      showCustomerDocPreview(file, documentPreview);
+    }
+
+    // Add smooth animation
+    previewContainer.style.opacity = '0';
+    setTimeout(() => {
+      previewContainer.style.transition = 'opacity 0.3s ease';
+      previewContainer.style.opacity = '1';
+    }, 10);
+  }
+
+  function showCustomerImagePreview(file, container) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = container.querySelector('.preview-image');
+      img.src = e.target.result;
+      container.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function showCustomerDocPreview(file, container) {
+    const fileIcon = container.querySelector('.file-icon');
+    const fileName = container.querySelector('.file-name');
+    const fileType = container.querySelector('.file-type');
+
+    fileName.textContent = file.name;
+    fileType.textContent = file.type || 'Unknown type';
+
+    // Set appropriate icon
+    fileIcon.className = 'file-icon bi fs-3 me-2 ' + getCustomerFileIcon(file.type || file.name);
+
+    container.style.display = 'block';
+  }
+
+  function formatCustomerFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  function getCustomerFileIcon(fileType) {
+    if (fileType.includes('pdf')) return 'bi-file-earmark-pdf text-danger';
+    if (fileType.includes('word') || fileType.includes('document')) return 'bi-file-earmark-word text-primary';
+    if (fileType.includes('excel') || fileType.includes('spreadsheet')) return 'bi-file-earmark-excel text-success';
+    if (fileType.includes('image')) return 'bi-file-earmark-image text-info';
+    return 'bi-file-earmark text-muted';
+  }
+
+  function showCustomerDocError(inputElement, message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'alert alert-danger alert-dismissible fade show mt-2';
+    errorDiv.innerHTML = `
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    inputElement.parentNode.insertBefore(errorDiv, inputElement.nextSibling);
+    setTimeout(() => errorDiv.remove(), 5000);
+  }
+
+  // Mobile Number Validation for Indian Numbers (7, 8, 9 starting digits)
+  function validateMobileNumber(input) {
+    const mobilePattern = /^[6789]\d{9}$/;
+    let value = input.value.replace(/\D/g, ''); // Remove non-digits
+
+    // Handle +91 country code prefix
+    if (value.length === 12 && value.startsWith('91')) {
+      value = value.substring(2); // Remove '91' prefix
+    } else if (value.length === 13 && value.startsWith('91')) {
+      value = value.substring(2); // Remove '91' prefix
+    } else if (value.length === 11 && value.startsWith('0')) {
+      value = value.substring(1); // Remove leading '0'
+    } else if (value.length === 11 && !value.startsWith('0')) {
+      value = value.substring(1); // Remove first digit if 11 digits and doesn't start with 0
+    }
+
+    // Auto-format the input to only contain the final 10 digits
+    input.value = value;
+
+    // Clear previous validation state
+    input.classList.remove('is-valid', 'is-invalid');
+    const feedback = input.parentNode.querySelector('.mobile-feedback');
+    if (feedback) feedback.remove();
+
+    if (value.length === 0) {
+      return; // Don't validate empty input
+    }
+
+    if (value.length !== 10) {
+      showMobileError(input, 'Mobile number must be exactly 10 digits (you entered ' + value.length + ')');
+    } else if (!mobilePattern.test(value)) {
+      showMobileError(input, 'Mobile number must start with 6, 7, 8, or 9');
+    } else {
+      input.classList.add('is-valid');
+    }
+  }
+
+  function showMobileError(input, message) {
+    input.classList.add('is-invalid');
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'invalid-feedback mobile-feedback';
+    errorDiv.textContent = message;
+    input.parentNode.appendChild(errorDiv);
+  }
+
+  // ===== DOCUMENT OCR QUICK IMPORT =====
+  (function() {
+    var tesseractPromise = null;
+    var extractedData = {};
+    var selectedDocType = null;
+
+    function ensureTesseract() {
+      if (tesseractPromise) return tesseractPromise;
+      tesseractPromise = new Promise(function(resolve, reject) {
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+        s.onload = resolve;
+        s.onerror = function() { reject(new Error('Failed to load OCR engine')); };
+        document.head.appendChild(s);
+      });
+      return tesseractPromise;
+    }
+
+    // Doc type button selection
+    document.querySelectorAll('.doc-type-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.doc-type-btn').forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        selectedDocType = this.dataset.type;
+        document.getElementById('aadhaar_upload_zone').style.display = selectedDocType === 'aadhaar' ? 'block' : 'none';
+        document.getElementById('pan_upload_zone').style.display = selectedDocType === 'pan' ? 'block' : 'none';
+        document.getElementById('cheque_upload_zone').style.display = selectedDocType === 'cheque' ? 'block' : 'none';
+        updateExtractBtn();
+        ensureTesseract(); // preload silently
+      });
+    });
+
+    function updateExtractBtn() {
+      var container = document.getElementById('extract_btn_container');
+      if (!container) return;
+      var hasFile = false;
+      if (selectedDocType === 'aadhaar') {
+        var fi = document.getElementById('aadhaar_front_input');
+        hasFile = fi && fi.files.length > 0;
+      } else if (selectedDocType === 'pan') {
+        var pi = document.getElementById('pan_input');
+        hasFile = pi && pi.files.length > 0;
+      } else if (selectedDocType === 'cheque') {
+        var ci = document.getElementById('cheque_input');
+        hasFile = ci && ci.files.length > 0;
+      }
+      container.style.display = (selectedDocType && hasFile) ? 'block' : 'none';
+    }
+
+    // Expose resetDocZone globally for inline onclick
+    window.resetDocZone = function(inputId, zoneId, previewId, imgId) {
+      var input = document.getElementById(inputId);
+      var zone = document.getElementById(zoneId);
+      var preview = document.getElementById(previewId);
+      var img = document.getElementById(imgId);
+      if (input) input.value = '';
+      if (img) { img.src = ''; img.style.display = 'none'; }
+      if (preview) {
+        preview.querySelectorAll('.res-warning, .res-info').forEach(function(el) { el.remove(); });
+        preview.style.display = 'none';
+      }
+      if (zone) {
+        var content = zone.querySelector('.doc-zone-content');
+        if (content) content.style.display = 'block';
+        zone.classList.remove('has-file', 'res-low');
+      }
+      updateExtractBtn();
+    };
+
+    function setupDropZone(inputId, zoneId, previewId, imgId, nameId) {
+      var input = document.getElementById(inputId);
+      var zone = document.getElementById(zoneId);
+      var preview = document.getElementById(previewId);
+      var img = document.getElementById(imgId);
+      var nameEl = document.getElementById(nameId);
+      if (!input || !zone) return;
+
+      zone.addEventListener('click', function(e) {
+        if (e.target.closest('button')) return; // don't trigger on Remove button
+        input.click();
+      });
+
+      input.addEventListener('change', function() {
+        var file = this.files[0];
+        if (!file) return;
+        if (nameEl) nameEl.textContent = file.name;
+
+        // Remove any previous resolution badges
+        preview.querySelectorAll('.res-warning, .res-info').forEach(function(el) { el.remove(); });
+        zone.classList.remove('res-low');
+
+        var objectUrl = URL.createObjectURL(file);
+
+        if (file.type.startsWith('image/')) {
+          // Check resolution and show info badge — always allow extraction
+          var checkImg = new Image();
+          checkImg.onload = function() {
+            var w = checkImg.naturalWidth, h = checkImg.naturalHeight;
+            var MIN_W = 600, MIN_H = 300;
+            var content = zone.querySelector('.doc-zone-content');
+            if (content) content.style.display = 'none';
+            if (preview) preview.style.display = 'block';
+            zone.classList.add('has-file');
+
+            var sizeKB = Math.round(file.size / 1024);
+            var dimInfo = w + '×' + h + 'px · ' + sizeKB + ' KB';
+            if (img) { img.src = objectUrl; img.style.display = 'block'; }
+            if (nameEl) nameEl.textContent = file.name;
+
+            if (w < MIN_W || h < MIN_H) {
+              zone.classList.add('res-low');
+              var warn = document.createElement('div');
+              warn.className = 'res-warning alert alert-warning py-1 px-2 mt-2 mb-0 small text-center';
+              warn.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>' +
+                '<strong>' + dimInfo + '</strong> — Low resolution.<br>' +
+                '<span class="text-muted" style="font-size:11px">Results may be inaccurate but extraction is still allowed.</span>';
+              preview.appendChild(warn);
+            } else {
+              var info = document.createElement('div');
+              info.className = 'res-info text-muted mt-1 small text-center';
+              info.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i>' + dimInfo;
+              preview.appendChild(info);
+            }
+            updateExtractBtn();
+          };
+          checkImg.onerror = function() {
+            // Can't check — allow anyway
+            if (img) { img.src = objectUrl; img.style.display = 'block'; }
+            var content = zone.querySelector('.doc-zone-content');
+            if (content) content.style.display = 'none';
+            if (preview) preview.style.display = 'block';
+            zone.classList.add('has-file');
+            updateExtractBtn();
+          };
+          checkImg.src = objectUrl;
+        } else {
+          // Non-image file (PDF, etc.)
+          if (img) img.style.display = 'none';
+          var content = zone.querySelector('.doc-zone-content');
+          if (content) content.style.display = 'none';
+          if (preview) preview.style.display = 'block';
+          zone.classList.add('has-file');
+          updateExtractBtn();
+        }
+      });
+
+      zone.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('drag-over'); });
+      zone.addEventListener('dragleave', function() { this.classList.remove('drag-over'); });
+      zone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('drag-over');
+        if (e.dataTransfer.files.length) {
+          input.files = e.dataTransfer.files;
+          input.dispatchEvent(new Event('change'));
+        }
+      });
+    }
+
+    setupDropZone('aadhaar_front_input', 'aadhaar_front_zone', 'aadhaar_front_preview', 'aadhaar_front_img', 'aadhaar_front_name');
+    setupDropZone('aadhaar_back_input', 'aadhaar_back_zone', 'aadhaar_back_preview', 'aadhaar_back_img', 'aadhaar_back_name');
+    setupDropZone('pan_input', 'pan_zone', 'pan_preview', 'pan_img', 'pan_name');
+    setupDropZone('cheque_input', 'cheque_zone', 'cheque_preview', 'cheque_img', 'cheque_name');
+
+    function setProgress(pct, text) {
+      var bar = document.getElementById('ocr_progress_bar');
+      var pctEl = document.getElementById('ocr_progress_pct');
+      var textEl = document.getElementById('ocr_status_text');
+      var p = Math.round(Math.min(100, Math.max(0, pct)));
+      if (bar) { bar.style.width = p + '%'; bar.setAttribute('aria-valuenow', p); }
+      if (pctEl) pctEl.textContent = p + '%';
+      if (textEl && text) textEl.textContent = text;
+    }
+
+    // Upscale small images before OCR — Tesseract works poorly below ~1200px wide
+    function preprocessImage(file) {
+      return new Promise(function(resolve) {
+        var img = new Image();
+        var url = URL.createObjectURL(file);
+        img.onload = function() {
+          var minW = 1400;
+          var scale = img.width < minW ? minW / img.width : 1;
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          var ctx = canvas.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          // Boost contrast to help OCR on low-quality scans
+          var id = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          var d = id.data;
+          for (var i = 0; i < d.length; i += 4) {
+            d[i]   = Math.min(255, Math.max(0, (d[i]   - 128) * 1.4 + 128));
+            d[i+1] = Math.min(255, Math.max(0, (d[i+1] - 128) * 1.4 + 128));
+            d[i+2] = Math.min(255, Math.max(0, (d[i+2] - 128) * 1.4 + 128));
+          }
+          ctx.putImageData(id, 0, 0);
+          canvas.toBlob(function(blob) { URL.revokeObjectURL(url); resolve(blob); }, 'image/png');
+        };
+        img.onerror = function() { URL.revokeObjectURL(url); resolve(file); };
+        img.src = url;
+      });
+    }
+
+    async function runOCR(file, offset, scale, lang) {
+      offset = offset || 0; scale = scale || 1; lang = lang || 'eng';
+      setProgress(offset + 1 * scale, 'Enhancing image...');
+      var processedFile = await preprocessImage(file);
+      var worker = await Tesseract.createWorker(lang, 1, {
+        logger: function(m) {
+          if (m.status === 'loading tesseract core') setProgress(offset + 2 * scale, 'Loading OCR engine...');
+          else if (m.status === 'initializing tesseract') setProgress(offset + 10 * scale, 'Initializing...');
+          else if (m.status === 'loading language traineddata') setProgress(offset + 20 * scale, 'Loading ' + lang + ' language data...');
+          else if (m.status === 'initializing api') setProgress(offset + 30 * scale, 'Starting recognition...');
+          else if (m.status === 'recognizing text') setProgress(offset + (30 + m.progress * 70) * scale, 'Reading text...');
+        }
+      });
+      var result = await worker.recognize(processedFile);
+      await worker.terminate();
+      return result.data.text;
+    }
+
+    var extractBtn = document.getElementById('extract_info_btn');
+    if (extractBtn) {
+      extractBtn.addEventListener('click', function() {
+        var self = this;
+        var progressContainer = document.getElementById('ocr_progress_container');
+        self.disabled = true;
+        self.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+        progressContainer.style.display = 'block';
+        setProgress(0, 'Loading OCR engine...');
+
+        ensureTesseract().then(async function() {
+          try {
+            if (selectedDocType === 'aadhaar') {
+              var frontFile = document.getElementById('aadhaar_front_input').files[0];
+              var backFile = document.getElementById('aadhaar_back_input').files[0];
+              var frontText = '', backText = '';
+              var scale = backFile ? 0.5 : 1;
+              if (frontFile) { setProgress(0, 'Processing Aadhaar front...'); frontText = await runOCR(frontFile, 0, scale, 'eng+hin'); }
+              if (backFile) { setProgress(50, 'Processing Aadhaar back...'); backText = await runOCR(backFile, 50, 0.5, 'eng+hin'); }
+              extractedData = parseAadhaarText(frontText, backText);
+            } else if (selectedDocType === 'pan') {
+              var panFile = document.getElementById('pan_input').files[0];
+              if (panFile) { setProgress(0, 'Processing PAN card...'); var text = await runOCR(panFile, 0, 1, 'eng+hin'); extractedData = parsePanText(text); }
+            } else if (selectedDocType === 'cheque') {
+              var chequeFile = document.getElementById('cheque_input').files[0];
+              if (chequeFile) { setProgress(0, 'Processing cheque...'); var text = await runOCR(chequeFile, 0, 1); extractedData = parseChequeText(text); }
+            }
+            setProgress(100, 'Extraction complete!');
+            setTimeout(function() {
+              showInfoModal(extractedData);
+              self.disabled = false;
+              self.innerHTML = '<i class="bi bi-magic me-2"></i>Extract Info';
+              progressContainer.style.display = 'none';
+            }, 600);
+          } catch(err) {
+            console.error('OCR error:', err);
+            self.disabled = false;
+            self.innerHTML = '<i class="bi bi-magic me-2"></i>Extract Info';
+            progressContainer.style.display = 'none';
+            alert('Could not process document. Please ensure the image is clear and try again.');
+          }
+        }).catch(function(err) {
+          console.error('Tesseract load error:', err);
+          self.disabled = false;
+          self.innerHTML = '<i class="bi bi-magic me-2"></i>Extract Info';
+          progressContainer.style.display = 'none';
+          alert('Failed to load OCR engine. Please check your internet connection.');
+        });
+      });
+    }
+
+    // Clean up raw OCR address text: strip non-ASCII lines (Hindi garbage), remove pincode, normalise
+    function cleanAddress(raw) {
+      var lines = raw.split('\n').map(function(l) { return l.trim(); }).filter(function(l) {
+        if (!l) return false;
+        // Drop lines that are mostly non-ASCII (Devanagari/Kannada garble)
+        var ascii = l.replace(/[^\x20-\x7E]/g, '').length;
+        return ascii / l.length > 0.6; // keep line if >60% ASCII
+      }).map(function(l) {
+        return l
+          .replace(/[^\x20-\x7E]/g, '')  // strip residual non-ASCII chars (Hindi, etc.)
+          .replace(/[|!]+/g, ' ')         // remove pipe/exclamation OCR artifacts
+          .replace(/\s{2,}/g, ' ')
+          .trim();
+      }).filter(function(l) { return l.length > 2; });
+      return lines.join(', ')
+        .replace(/\s*[-–]\s*\d{6}[\s\S]*$/, '') // "State - 560066" → remove
+        .replace(/\d{6}[\s\S]*$/, '')            // bare pincode at end → remove
+        .replace(/,\s*,/g, ',')
+        .replace(/,\s*$/, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    }
+
+    // Among all "Address: ..." blocks in text, pick the one with highest ASCII ratio (cleanest)
+    function bestAddressMatch(text) {
+      var re = /Address[\s:]+(.+?)(?=(?:Address[\s:]|\d{4}\s\d{4}|^\s*$))/gsi;
+      var best = null, bestScore = 0;
+      var m;
+      while ((m = re.exec(text)) !== null) {
+        var raw = m[1];
+        var ascii = raw.replace(/[^\x20-\x7E\n]/g, '').length;
+        var score = raw.length > 10 ? ascii / raw.length : 0;
+        if (score > bestScore) { bestScore = score; best = raw; }
+      }
+      // Also try a simple last-match (regex might miss the last block)
+      var simple = text.match(/Address[\s:]+(.+)$/si);
+      if (simple) {
+        var raw2 = simple[1];
+        var ascii2 = raw2.replace(/[^\x20-\x7E\n]/g, '').length;
+        var score2 = raw2.length > 10 ? ascii2 / raw2.length : 0;
+        if (score2 > bestScore) { best = raw2; }
+      }
+      return best ? cleanAddress(best) : null;
+    }
+
+    function parseAadhaarText(frontText, backText) {
+      var result = {};
+      var allText = (frontText || '') + '\n' + (backText || '');
+
+      // Aadhaar number — 12 digits with spaces, or 12 consecutive digits
+      var am = allText.match(/\d{4}\s\d{4}\s\d{4}/);
+      if (!am) am = allText.match(/\b(\d{12})\b/);
+      if (am) result.aadhaar_number = am[0];
+
+      // DOB — always prefer labeled patterns; bare-date fallback skips Download/Issue/Enrolment dates
+      var dobPatterns = [
+        /(?:DOB|Date of Birth|जन्म.{0,10})[\s:\/]+(\d{2}[\/\-]\d{2}[\/\-]\d{4})/i,
+        /(?:Year of Birth|YOB)[\s:]+(\d{4})/i
+      ];
+      for (var i = 0; i < dobPatterns.length; i++) {
+        var dm = frontText.match(dobPatterns[i]);
+        if (dm) { result.dob = dm[1]; break; }
+      }
+      // Bare date fallback: skip lines that contain Download/Issue/Enrolment/Expiry labels
+      if (!result.dob) {
+        var allLines = frontText.split('\n');
+        for (var i = 0; i < allLines.length; i++) {
+          if (/download|issue|enrol|expiry|valid|from\s*:|to\s*:/i.test(allLines[i])) continue;
+          var bdm = allLines[i].match(/(\d{2}[\/\-]\d{2}[\/\-]\d{4})/);
+          if (bdm) { result.dob = bdm[1]; break; }
+        }
+      }
+
+      // Gender — scan full front text (handles "महिला / Female" mixed lines)
+      if (/female|महिला/i.test(frontText)) result.gender = 'female';
+      else if (/\bmale\b|पुरुष/i.test(frontText)) result.gender = 'male';
+      else if (/transgender/i.test(frontText)) result.gender = 'other';
+
+      // Name — shared validator used for both passes
+      var frontLines = frontText.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 2; });
+
+      function isValidNameLine(line) {
+        if (/\d/.test(line)) return false;
+        if (/[^A-Za-z\s]/.test(line)) return false;
+        if (/aadhaar|govt|india|unique|authority|uid|help|enrol|dob|birth|gender|address|government|election|commission|department|issue|identification|verification|download|information/i.test(line)) return false;
+        if (/s\/o|d\/o|w\/o|c\/o/i.test(line)) return false; // skip father/husband name lines
+        if (line.length < 8 || line.length > 60) return false;
+        var words = line.trim().split(/\s+/);
+        if (words.length < 2) return false;
+        // First word Title Case; rest Title Case or lowercase ≥3 chars
+        var firstOK = /^[A-Z][a-z]{2,}$/.test(words[0]);
+        var restOK = words.slice(1).every(function(w) {
+          return /^[A-Z][a-z]{2,}$/.test(w) || /^[a-z]{3,}$/.test(w);
+        });
+        return firstOK && restOK;
+      }
+
+      // DOB line index — only stop at explicitly labeled DOB, NOT "Download Date" / "Issue Date"
+      var dobLineIdx = frontLines.length;
+      for (var i = 0; i < frontLines.length; i++) {
+        if (/\bDOB\b|\bDate of Birth\b/i.test(frontLines[i]) &&
+            !/download|issue|enrol/i.test(frontLines[i])) { dobLineIdx = i; break; }
+      }
+
+      // Pass 1: search before DOB line (most reliable — name comes before DOB on card)
+      for (var i = 0; i < dobLineIdx; i++) {
+        if (isValidNameLine(frontLines[i])) { result.full_name = frontLines[i]; break; }
+      }
+      // Pass 2: if not found, search ALL lines (handles screenshots, letter-format, combined images)
+      if (!result.full_name) {
+        for (var i = 0; i < frontLines.length; i++) {
+          if (isValidNameLine(frontLines[i])) { result.full_name = frontLines[i]; break; }
+        }
+      }
+      // Pass 3: mixed Hindi+English lines — extract the English Title Case name portion
+      if (!result.full_name) {
+        var allFrontRaw = frontText.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 2; });
+        for (var i = 0; i < allFrontRaw.length; i++) {
+          var line = allFrontRaw[i];
+          if (/aadhaar|govt|india|unique|authority|uid|help|enrol|dob|birth|gender|address|government|download|identification|election|commission|department|verification/i.test(line)) continue;
+          if (/s\/o|d\/o|w\/o|c\/o/i.test(line)) continue;
+          var engMatch = line.match(/([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})+)/);
+          if (engMatch) { result.full_name = engMatch[1]; break; }
+        }
+      }
+
+      // From back — address (pick cleanest occurrence), pincode, state
+      if (backText) {
+        var addrClean = bestAddressMatch(backText);
+        if (addrClean && addrClean.length > 5) result.address = addrClean;
+
+        // Fallback: lines after S/O, C/O, H.No, Flat, etc.
+        if (!result.address) {
+          var backLines = backText.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+          var addrLines = []; var collecting = false;
+          for (var i = 0; i < backLines.length; i++) {
+            var bl = backLines[i];
+            if (/^[SCWD]\/[OA]|^H\.?\s*No|^Flat|^Door|^Plot|^Vill|^Near|^House|^Address/i.test(bl)) {
+              collecting = true;
+              bl = bl.replace(/^Address[\s:]+/i, '');
+            }
+            if (collecting) {
+              if (/^\d{6}$/.test(bl)) break;
+              if (bl.length > 0) addrLines.push(bl);
+              if (addrLines.length >= 6) break;
+            }
+          }
+          if (addrLines.length > 0) result.address = cleanAddress(addrLines.join('\n'));
+        }
+
+        // Pincode (6-digit number)
+        var pm = backText.match(/\b(\d{6})\b/);
+        if (pm) result.pincode = pm[1];
+
+        // State name
+        var STATES = ['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu and Kashmir','Ladakh','Chandigarh','Puducherry'];
+        for (var i = 0; i < STATES.length; i++) {
+          if (backText.toLowerCase().indexOf(STATES[i].toLowerCase()) !== -1) { result.state = STATES[i]; break; }
+        }
+      }
+
+      // If front was a combined image (both sides) — also search frontText for cleanest Address block
+      if (!result.address) {
+        var addrClean2 = bestAddressMatch(frontText);
+        if (addrClean2 && addrClean2.length > 5) result.address = addrClean2;
+      }
+      if (!result.address) {
+        var soMatch = frontText.match(/S\/O[\s:]+(.+?)(?:\n\d{4}|\n\d{6}|$)/si);
+        if (soMatch) result.address = cleanAddress(soMatch[1]);
+      }
+      // Pincode and state from frontText as fallback
+      if (!result.pincode) {
+        var pfm = frontText.match(/\b(\d{6})\b/);
+        if (pfm) result.pincode = pfm[1];
+      }
+      if (!result.state) {
+        var STATES2 = ['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu and Kashmir','Ladakh','Chandigarh','Puducherry'];
+        for (var i = 0; i < STATES2.length; i++) {
+          if (frontText.toLowerCase().indexOf(STATES2[i].toLowerCase()) !== -1) { result.state = STATES2[i]; break; }
+        }
+      }
+
+      // Phone — labeled pattern only (avoids confusing Aadhaar/pincode digits)
+      var phoneSearchText = allText;
+      var phonePats = [
+        /(?:Mob(?:ile)?|Phone|Contact|Tel(?:\.)?|Mo\.)[\s.:]+(?:\+?91[\s\-]?)?([6-9]\d{9})/i,
+        /\bVID[\s:]+\d+[\s\S]{0,200}?([6-9]\d{9})/i
+      ];
+      for (var i = 0; i < phonePats.length; i++) {
+        var phm = phoneSearchText.match(phonePats[i]);
+        if (phm) { result.phone = phm[1]; break; }
+      }
+
+      // City / District — look for labeled district/taluk/city, or infer from address
+      var citySearchText = (backText || '') + '\n' + (frontText || '');
+      var cityPats = [
+        /(?:Dist(?:rict)?|District|Taluk|Tehsil|Taluq|City|Town)[\s.:]+([A-Za-z][A-Za-z\s]{2,25}?)(?:\n|\r|,|$)/i
+      ];
+      for (var i = 0; i < cityPats.length; i++) {
+        var cm = citySearchText.match(cityPats[i]);
+        if (cm) { result.city = cm[1].trim().replace(/\s{2,}/g,' '); break; }
+      }
+      // Fallback: if address parsed, second-to-last comma-segment before state is usually city
+      if (!result.city && result.address && result.state) {
+        var addrParts = result.address.split(',').map(function(p) { return p.trim(); }).filter(function(p) { return p.length > 2; });
+        for (var i = addrParts.length - 1; i >= 0; i--) {
+          var part = addrParts[i];
+          if (part.toLowerCase() === result.state.toLowerCase()) continue;
+          if (/^\d{6}$/.test(part)) continue;
+          if (/^\d+$/.test(part)) continue;
+          result.city = part; break;
+        }
+      }
+
+      // Split full_name → first / middle / last
+      if (result.full_name) {
+        var parts = result.full_name.trim().split(/\s+/);
+        if (parts.length === 1) { result.first_name = parts[0]; }
+        else if (parts.length === 2) { result.first_name = parts[0]; result.last_name = parts[1]; }
+        else { result.first_name = parts[0]; result.last_name = parts[parts.length - 1]; result.middle_name = parts.slice(1, -1).join(' '); }
+      }
+
+      return result;
+    }
+
+    function parsePanText(text) {
+      var result = {};
+
+      console.log('[PAN OCR raw]', JSON.stringify(text));
+
+      // PAN number: ABCDE1234F (case-insensitive, normalise to upper)
+      var pm = text.match(/[A-Z]{5}[0-9]{4}[A-Z]/i);
+      if (pm) result.pan_no = pm[0].toUpperCase();
+
+      // DOB — first DD/MM/YYYY date in the text
+      var dm = text.match(/(\d{2}\/\d{2}\/\d{4})/);
+      if (dm) result.dob = dm[1];
+
+      var lines = text.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 1; });
+
+      function cleanForName(ln) {
+        return ln
+          .replace(/[^\x20-\x7E]/g, ' ')   // kill non-ASCII (Hindi chars)
+          .replace(/(\s+\d+)+\s*$/, '')     // strip trailing right-column numbers
+          .replace(/\s{2,}/g, ' ')
+          .trim();
+      }
+
+      function isNameLine(c) {
+        // Accept ALL-CAPS or Title Case — Tesseract produces either on faded blue PAN cards
+        if (!/^[A-Za-z][A-Za-z\s]+$/.test(c)) return false;
+        if (c.replace(/\s/g, '').length < 3) return false;
+        if (c.length >= 55) return false;
+        var cu = c.toUpperCase();
+        if (/^(PERMANENT|ACCOUNT|NUMBER|CARD|TAX|INCOME|GOVT|INDIA|DEPARTMENT|SIGNATURE|SIGN|DATE|DOB|VALID|FROM|TO)$/.test(cu.trim())) return false;
+        if (/PERMANENT ACCOUNT|INCOME TAX|GOVT OF INDIA/i.test(c)) return false;
+        return true;
+      }
+
+      var nameLine1 = null, nameLine2 = null, nameLineIdx = -1;
+
+      // Pass 1 — name after "INCOME TAX" or "GOVT OF INDIA" header
+      for (var i = 0; i < lines.length; i++) {
+        var cl = cleanForName(lines[i]);
+        if (/income tax|govt of india/i.test(cl)) {
+          for (var j = i + 1; j < Math.min(i + 10, lines.length); j++) {
+            var c = cleanForName(lines[j]);
+            if (isNameLine(c)) { nameLine1 = c.toUpperCase(); nameLineIdx = j; break; }
+          }
+          if (nameLine1) break;
+        }
+      }
+
+      // Pass 2 — fallback: first qualifying name line anywhere
+      if (!nameLine1) {
+        for (var i = 0; i < lines.length; i++) {
+          var c = cleanForName(lines[i]);
+          if (isNameLine(c)) { nameLine1 = c.toUpperCase(); nameLineIdx = i; break; }
+        }
+      }
+
+      // Father's name = next qualifying name line after nameLine1
+      if (nameLineIdx >= 0) {
+        for (var j = nameLineIdx + 1; j < Math.min(nameLineIdx + 6, lines.length); j++) {
+          var c = cleanForName(lines[j]);
+          if (isNameLine(c)) { nameLine2 = c.toUpperCase(); break; }
+        }
+      }
+
+      console.log('[PAN OCR] nameLine1:', nameLine1, '| nameLine2:', nameLine2);
+
+      if (nameLine1) {
+        var parts = nameLine1.trim().split(/\s+/);
+        var lastPart = parts[parts.length - 1];
+        if (lastPart.length === 1 && nameLine2) {
+          // Patronymic: "JAGADISH S" + "SHIVANNA" → first=JAGADISH, last=SHIVANNA
+          result.first_name = parts.slice(0, -1).join(' ') || parts[0];
+          result.last_name  = nameLine2;
+        } else if (parts.length === 1) {
+          result.first_name = parts[0];
+        } else if (parts.length === 2) {
+          result.first_name = parts[0];
+          result.last_name  = parts[1];
+        } else {
+          result.first_name  = parts[0];
+          result.middle_name = parts.slice(1, -1).join(' ');
+          result.last_name   = parts[parts.length - 1];
+        }
+      }
+
+      if (nameLine2) result.father_name = nameLine2;
+
+      return result;
+    }
+
+    function parseChequeText(text) {
+      var result = {};
+      var lines = text.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 1; });
+
+      // ── IFSC code ──────────────────────────────────────────────────────────
+      // OCR commonly confuses digit-0 with letter-O in IFSC (e.g. SBIN0003067 → SBINO003067).
+      // Pattern: 4 letters + [0 or O] + 6 alphanumeric chars (11 chars total).
+      // Try labeled keywords first, then bare scan.
+      function extractIfsc(t) {
+        // Label patterns: "IFS Code", "IFSC Code", "IFSC:", "IFS:", etc.
+        var lm = t.match(/(?:IFSC?\s*(?:Code)?)[\s.:]+([A-Z]{4}[0O][A-Z0-9]{6})/i);
+        if (lm) return lm[1];
+        // Bare scan — find any 11-char sequence matching IFSC format
+        var bm = t.match(/\b([A-Z]{4}[0O][A-Z0-9]{6})\b/);
+        if (bm) return bm[1];
+        return null;
+      }
+      var rawIfsc = extractIfsc(text);
+      if (rawIfsc) {
+        // Normalise: 5th char must be digit 0 (not letter O)
+        rawIfsc = rawIfsc.toUpperCase();
+        result.ifsc_code = rawIfsc.slice(0, 4) + '0' + rawIfsc.slice(5);
+      }
+
+      // ── Account number ─────────────────────────────────────────────────────
+      // "PREFIX" on SBI cheques holds the account number, possibly on the next line.
+      // "A/c No." label — the field may be blacked out in scanned cheques; try anyway.
+      // Use [\s\S]{0,10} to bridge a newline between label and value.
+      var acctPatterns = [
+        /(?:A[\/\s]?[Cc]\.?\s*[Nn]o\.?|Account\s*(?:No|Number|#))[\s\S]{0,10}?([0-9]{8,20})/i,
+        /PREFIX[\s\S]{0,10}?([0-9]{8,20})/i,
+        /(?:SB\s*ACCOUNT|CURRENT\s*ACCOUNT|SAVINGS\s*ACCOUNT)\b[\s\S]{0,80}?([0-9]{9,20})/i
+      ];
+      for (var i = 0; i < acctPatterns.length; i++) {
+        var am = text.match(acctPatterns[i]);
+        if (am) { result.account_no = am[1]; break; }
+      }
+      // Fallback: first 10–18 digit standalone number (skips 9-digit MICR & 6-digit cheque number)
+      if (!result.account_no) {
+        var longNums = text.match(/\b([0-9]{10,18})\b/g);
+        if (longNums && longNums.length > 0) result.account_no = longNums[0];
+      }
+
+      // ── Bank name ──────────────────────────────────────────────────────────
+      // Longer/more-specific names first so "State Bank of India" beats "Bank of India"
+      var BANKS = [
+        'State Bank of India','Punjab National Bank','Bank of Baroda','Canara Bank',
+        'Union Bank of India','Indian Bank','Central Bank of India','UCO Bank',
+        'Bank of Maharashtra','Bank of India','Indian Overseas Bank','Corporation Bank',
+        'Allahabad Bank','Oriental Bank','Andhra Bank','Vijaya Bank','Dena Bank',
+        'Syndicate Bank','HDFC Bank','ICICI Bank','Axis Bank','Kotak Mahindra Bank',
+        'Yes Bank','IndusInd Bank','Federal Bank','IDBI Bank','IDFC First Bank',
+        'Nainital Bank','Karnataka Bank','South Indian Bank','City Union Bank',
+        'Karur Vysya Bank','Lakshmi Vilas Bank','Bandhan Bank','RBL Bank',
+        'Saraswat Bank','AU Small Finance Bank','Jana Small Finance Bank',
+        'Equitas Small Finance Bank','ESAF Small Finance Bank','SBI'
+      ];
+      var fullText = text.toLowerCase();
+      for (var b = 0; b < BANKS.length; b++) {
+        if (fullText.indexOf(BANKS[b].toLowerCase()) !== -1) {
+          result.bank_name = BANKS[b]; break;
+        }
+      }
+      // Fallback: extract the first line that contains "bank" but isn't an address/IFSC line
+      if (!result.bank_name) {
+        for (var i = 0; i < lines.length; i++) {
+          if (/\bbank\b/i.test(lines[i]) && lines[i].length < 70 &&
+              !/branch|ifsc|swift|address|road|nagar|colony|district/i.test(lines[i])) {
+            result.bank_name = lines[i].replace(/[^A-Za-z0-9 &.(),-]/g, '').trim(); break;
+          }
+        }
+      }
+
+      // ── Branch ─────────────────────────────────────────────────────────────
+      var branchM = text.match(/Branch[\s:]+([A-Za-z][A-Za-z0-9 ,.()\-]{3,60}?)(?:\n|IFSC|$)/i);
+      if (branchM) result.branch = branchM[1].trim();
+
+      // ── Account holder name ────────────────────────────────────────────────
+      // Priority 1: salutation "Mr. / Mrs. / Ms." near signature area (all-caps names on cheques)
+      var salutM = text.match(/(?:Mr\.|Mrs\.|Ms\.|Dr\.)\s+([A-Z][A-Z\s]{3,40}?)(?:\n|$)/);
+      if (salutM) result.full_name = salutM[1].trim().replace(/\s{2,}/g, ' ');
+
+      // Priority 2: PAY <NAME> OR ORDER  (payee line)
+      if (!result.full_name) {
+        var payM = text.match(/^PAY\s+([A-Za-z][A-Za-z\s]{3,50}?)(?:\s+OR\s+ORDER|\n|$)/im);
+        if (payM) result.full_name = payM[1].trim();
+      }
+
+      // Priority 3: A/C Name or Account Name label
+      if (!result.full_name) {
+        var acNameM = text.match(/(?:A\/C\s*Name|Account\s*Name|A\/C\s*Holder)[\s:]+([A-Za-z][A-Za-z\s.]{3,50}?)(?:\n|$)/i);
+        if (acNameM) result.full_name = acNameM[1].trim();
+      }
+
+      // Priority 4: standalone all-caps name (2+ words, no digits, not bank keywords)
+      if (!result.full_name) {
+        for (var i = 0; i < lines.length; i++) {
+          var ln = lines[i];
+          if (/bank|branch|ifsc|micr|account|cheque|cheque|date|rupees|amount|pay|sign|nominee|address|swift|code|valid|multi|city|prefix|order|only|lacs|state/i.test(ln)) continue;
+          if (/\d/.test(ln)) continue;
+          // ALL-CAPS two-word+ name (common on Indian cheques)
+          if (/^[A-Z]{2,}(?:\s+[A-Z]{2,})+$/.test(ln) && ln.length >= 5 && ln.length <= 50) {
+            result.full_name = ln; break;
+          }
+          // Title-case two-word+ name
+          if (/^[A-Z][a-z]{1,}(?:\s+[A-Z][a-z]{1,})+$/.test(ln) && ln.length >= 5 && ln.length <= 50) {
+            result.full_name = ln; break;
+          }
+        }
+      }
+
+      if (result.full_name) {
+        // Normalise: convert ALL CAPS to Title Case
+        var nameStr = result.full_name.replace(/\b[A-Z]{2,}\b/g, function(w) {
+          return w.charAt(0) + w.slice(1).toLowerCase();
+        });
+        var parts = nameStr.trim().split(/\s+/);
+        if (parts.length === 1) { result.first_name = parts[0]; }
+        else if (parts.length === 2) { result.first_name = parts[0]; result.last_name = parts[1]; }
+        else { result.first_name = parts[0]; result.last_name = parts[parts.length - 1]; result.middle_name = parts.slice(1, -1).join(' '); }
+      }
+
+      return result;
+    }
+
+    function showInfoModal(data) {
+      var FIELDS = [
+        { key: 'first_name',    label: 'First Name' },
+        { key: 'middle_name',   label: 'Middle Name' },
+        { key: 'last_name',     label: 'Last Name' },
+        { key: 'aadhaar_number',label: 'Aadhaar Number' },
+        { key: 'phone',         label: 'Phone' },
+        { key: 'address',       label: 'Address' },
+        { key: 'state',         label: 'State' },
+        { key: 'city',          label: 'City' },
+        { key: 'dob',           label: 'Date of Birth' },
+        { key: 'gender',        label: 'Gender' },
+        { key: 'pan_no',        label: 'PAN Number' },
+        { key: 'pincode',       label: 'Pincode' },
+        { key: 'father_name',   label: "Father's Name" },
+        { key: 'bank_name',     label: 'Bank Name' },
+        { key: 'account_no',    label: 'Account Number' },
+        { key: 'ifsc_code',     label: 'IFSC Code' },
+        { key: 'branch',        label: 'Branch' }
+      ];
+
+      var rows = '';
+      FIELDS.forEach(function(f) {
+        var alwaysShow = (f.key === 'first_name' || f.key === 'last_name');
+        if (!data[f.key] && !alwaysShow) return;
+        var safeVal = data[f.key] ? String(data[f.key]).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;') : '';
+        rows += '<tr>' +
+          '<td class="fw-semibold text-muted small" style="width:32%">' + f.label + '</td>' +
+          '<td>' +
+            '<span class="extracted-val-display small">' + safeVal + '</span>' +
+            '<input type="text" class="form-control form-control-sm extracted-val-input" style="display:none" value="' + safeVal + '">' +
+          '</td>' +
+          '<td class="text-center" style="width:36px">' +
+            '<button type="button" class="btn btn-sm btn-link p-0 text-secondary edit-extracted-btn" title="Edit value">' +
+              '<i class="bi bi-pencil" style="font-size:13px"></i>' +
+            '</button>' +
+          '</td>' +
+          '<td class="text-center" style="width:52px">' +
+            '<input type="checkbox" class="form-check-input import-field-check" data-field="' + f.key + '" checked>' +
+          '</td>' +
+          '</tr>';
+      });
+
+      var tableEl = document.getElementById('extracted_info_table');
+      if (rows) {
+        tableEl.innerHTML =
+          '<table class="table table-bordered table-sm align-middle mb-2">' +
+            '<thead class="table-light"><tr>' +
+              '<th>Field</th>' +
+              '<th>Extracted Value</th>' +
+              '<th style="width:36px"></th>' +
+              '<th class="text-center" style="width:52px">Import</th>' +
+            '</tr></thead>' +
+            '<tbody>' + rows + '</tbody>' +
+          '</table>' +
+          '<p class="text-muted small mb-0">Click <i class="bi bi-pencil"></i> to edit a value before importing. Uncheck fields you do not want.</p>';
+
+        // Wire up edit-toggle buttons
+        tableEl.querySelectorAll('.edit-extracted-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var row = this.closest('tr');
+            var display = row.querySelector('.extracted-val-display');
+            var input   = row.querySelector('.extracted-val-input');
+            if (input.style.display === 'none') {
+              input.value = display.textContent.trim();
+              display.style.display = 'none';
+              input.style.display = '';
+              input.focus();
+              this.querySelector('i').className = 'bi bi-check-lg';
+              this.title = 'Confirm edit';
+            } else {
+              display.textContent = input.value.trim();
+              input.style.display = 'none';
+              display.style.display = '';
+              this.querySelector('i').className = 'bi bi-pencil';
+              this.title = 'Edit value';
+            }
+          });
+        });
+      } else {
+        tableEl.innerHTML = '<div class="alert alert-warning mb-0"><i class="bi bi-exclamation-triangle me-2"></i>' +
+          'Could not extract readable text. Please ensure the image is clear, well-lit, and not blurred, then try again.</div>';
+      }
+
+      new bootstrap.Modal(document.getElementById('docInfoModal')).show();
+    }
+
+    var importBtn = document.getElementById('import_to_form_btn');
+    if (importBtn) {
+      importBtn.addEventListener('click', function() {
+        document.querySelectorAll('.import-field-check:checked').forEach(function(cb) {
+          var field = cb.dataset.field;
+          var row = cb.closest('tr');
+          var valInput = row ? row.querySelector('.extracted-val-input') : null;
+          var valDisplay = row ? row.querySelector('.extracted-val-display') : null;
+          var value = valInput ? valInput.value.trim() : (valDisplay ? valDisplay.textContent.trim() : extractedData[field]);
+          if (!value) return;
+
+          switch(field) {
+            case 'first_name':     setDocVal('#individual_first_name', value); break;
+            case 'middle_name':    setDocVal('[name="customer[middle_name]"]', value); break;
+            case 'last_name':      setDocVal('#individual_last_name', value); break;
+            case 'pan_no':         setDocVal('[name="customer[pan_no]"]', value); break;
+            case 'aadhaar_number': setDocVal('[name="customer[aadhaar_no]"]', value); break;
+            case 'phone':          setDocVal('#individual_mobile', value); break;
+            case 'address':        setDocVal('[name="customer[address]"]', value); break;
+            case 'pincode':        setDocVal('[name="customer[pincode]"]', value); break;
+            case 'gender':         setDocVal('[name="customer[gender]"]', value); break;
+            case 'dob':
+              var parts = value.split(/[\/\-]/);
+              if (parts.length === 3) {
+                var yr, mo, dy;
+                if (parts[2].length === 4) { dy = parts[0]; mo = parts[1]; yr = parts[2]; }
+                else { yr = parts[0]; mo = parts[1]; dy = parts[2]; }
+                setDocVal('[name="customer[birth_date]"]', yr + '-' + mo.padStart(2,'0') + '-' + dy.padStart(2,'0'));
+              }
+              break;
+            case 'state':
+              // Find city value from modal (may have been edited)
+              var pendingCity = null;
+              var cityRow = document.querySelector('.import-field-check[data-field="city"]');
+              if (cityRow && cityRow.checked) {
+                var cityRowTr = cityRow.closest('tr');
+                var cityValIn = cityRowTr ? cityRowTr.querySelector('.extracted-val-input') : null;
+                var cityValDi = cityRowTr ? cityRowTr.querySelector('.extracted-val-display') : null;
+                pendingCity = cityValIn ? cityValIn.value.trim() : (cityValDi ? cityValDi.textContent.trim() : null);
+              }
+              ['#customer_state_individual', '#customer_state_corporate'].forEach(function(sel) {
+                var stateEl = document.querySelector(sel);
+                if (!stateEl) return;
+                for (var i = 0; i < stateEl.options.length; i++) {
+                  var opt = stateEl.options[i];
+                  if (opt.text.toLowerCase() === value.toLowerCase() || opt.value.toLowerCase() === value.toLowerCase()) {
+                    stateEl.value = opt.value;
+                    if (typeof $ !== 'undefined') $(stateEl).trigger('change');
+                    // Load cities and pre-select city if available
+                    var citySelId = sel.indexOf('individual') !== -1 ? '#customer_city_individual' : '#customer_city_corporate';
+                    var cityEl = document.querySelector(citySelId);
+                    if (typeof loadCitiesForState !== 'undefined' && cityEl) {
+                      loadCitiesForState(opt.value, cityEl, pendingCity);
+                    }
+                    break;
+                  }
+                }
+              });
+              break;
+            case 'city':
+              // Best-effort direct set; usually handled via loadCitiesForState in state case
+              ['#customer_city_individual', '#customer_city_corporate'].forEach(function(sel) {
+                var cityEl = document.querySelector(sel);
+                if (!cityEl) return;
+                for (var i = 0; i < cityEl.options.length; i++) {
+                  if (cityEl.options[i].text.toLowerCase() === value.toLowerCase()) {
+                    cityEl.value = cityEl.options[i].value;
+                    if (typeof $ !== 'undefined') $(cityEl).trigger('change');
+                    break;
+                  }
+                }
+              });
+              break;
+            case 'bank_name':   setDocVal('#customer_bank_name_individual', value); break;
+            case 'account_no':  setDocVal('#customer_account_no_individual', value); break;
+            case 'ifsc_code':   setDocVal('#customer_ifsc_code_individual', value); break;
+          }
+        });
+
+        var bsModal = bootstrap.Modal.getInstance(document.getElementById('docInfoModal'));
+        if (bsModal) bsModal.hide();
+
+        var toast = document.createElement('div');
+        toast.className = 'alert alert-success alert-dismissible fade show position-fixed bottom-0 end-0 m-3 shadow';
+        toast.style.zIndex = '99999';
+        toast.innerHTML = '<i class="bi bi-check2-circle me-2"></i><strong>Imported!</strong> Customer details auto-filled from document.' +
+          '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        document.body.appendChild(toast);
+        setTimeout(function() { if (toast.parentNode) toast.remove(); }, 4000);
+
+        document.getElementById('individual_sections').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+    function setDocVal(selector, value) {
+      var el = document.querySelector(selector);
+      if (el) {
+        el.value = value;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+  })();
+  // ===== END DOCUMENT OCR QUICK IMPORT =====
+
+  // Add mobile validation to both individual and corporate mobile fields
+  document.addEventListener('DOMContentLoaded', function() {
+    const individualMobile = document.getElementById('individual_mobile');
+    const corporateMobile = document.getElementById('corporate_mobile');
+
+    if (individualMobile) {
+      individualMobile.addEventListener('input', function() {
+        validateMobileNumber(this);
+      });
+
+      individualMobile.addEventListener('blur', function() {
+        validateMobileNumber(this);
+      });
+    }
+
+    if (corporateMobile) {
+      corporateMobile.addEventListener('input', function() {
+        validateMobileNumber(this);
+      });
+
+      corporateMobile.addEventListener('blur', function() {
+        validateMobileNumber(this);
+      });
+    }
+  });
+});
+</script>

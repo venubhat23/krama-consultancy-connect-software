@@ -1,0 +1,501 @@
+<% content_for :page_title, "Imports" %>
+<% content_for :page_subtitle, "Bulk Import Data" %>
+
+<div class="container-fluid">
+  <div class="page-header mb-4">
+    <div class="row align-items-center">
+      <div class="col">
+        <h3 class="page-title mb-0">
+          <i class="fas fa-cloud-upload-alt me-2"></i>
+          Data Import Section
+        </h3>
+        <p class="page-subtitle text-muted mb-0">
+          Accelerate onboarding of large datasets with standardized bulk imports
+        </p>
+      </div>
+    </div>
+  </div>
+
+<!-- Import Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-primary shadow h-100">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+              Total Imports
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= number_with_delimiter(@import_stats[:total_imports]) %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-database fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-success shadow h-100">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+              Successful Imports
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= number_with_delimiter(@import_stats[:successful_imports]) %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-warning shadow h-100">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+              Failed/Skipped
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= number_with_delimiter(@import_stats[:failed_imports]) %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-info shadow h-100">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+              Last Import
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= @import_stats[:last_import] ? time_ago_in_words(@import_stats[:last_import]) + " ago" : "Never" %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-clock fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import Options Grid -->
+<div class="row">
+  <!-- Customer Import Card -->
+  <div class="col-xl-6 col-lg-6 mb-4">
+    <div class="card shadow-lg border-0 h-100 import-card">
+      <div class="card-header bg-gradient-primary text-white">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-users fa-2x me-3"></i>
+          <div>
+            <h5 class="mb-0">Import Customers</h5>
+            <small class="text-light">Bulk upload individual or corporate customer records</small>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-text text-muted mb-4">
+          Import customer data including contact details, PAN/GST information, and profile details.
+          Supports both individual and corporate customer types.
+        </p>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <%= link_to download_template_admin_imports_path(template_type: 'customers'),
+                      class: "btn btn-outline-primary btn-sm",
+                      target: "_blank" do %>
+            <i class="fas fa-download me-1"></i> Download Template
+          <% end %>
+
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#customerImportModal">
+            <i class="fas fa-upload me-1"></i> Import Customers
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Affiliate Import Card -->
+  <div class="col-xl-6 col-lg-6 mb-4">
+    <div class="card shadow-lg border-0 h-100 import-card">
+      <div class="card-header bg-gradient-success text-white">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-user-tie fa-2x me-3"></i>
+          <div>
+            <h5 class="mb-0">Import Affiliates</h5>
+            <small class="text-light">Bulk upload affiliate and distributor records</small>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-text text-muted mb-4">
+          Import affiliate data including personal details, bank information, and commission setup.
+          Includes role assignment and authentication credentials.
+        </p>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <%= link_to download_template_admin_imports_path(template_type: 'sub_agents'),
+                      class: "btn btn-outline-success btn-sm",
+                      target: "_blank" do %>
+            <i class="fas fa-download me-1"></i> Download Template
+          <% end %>
+
+          <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#subAgentImportModal">
+            <i class="fas fa-upload me-1"></i> Import Affiliates
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Health Insurance Import Card -->
+  <div class="col-xl-6 col-lg-6 mb-4">
+    <div class="card shadow-lg border-0 h-100 import-card">
+      <div class="card-header bg-gradient-info text-white">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-heartbeat fa-2x me-3"></i>
+          <div>
+            <h5 class="mb-0">Import Health Insurance</h5>
+            <small class="text-light">Bulk upload health insurance policies</small>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-text text-muted mb-4">
+          Import health insurance policies with customer mapping, premium details, and policy terms.
+          Automatically calculates commissions and TDS.
+        </p>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <%= link_to download_template_admin_imports_path(template_type: 'health_insurances'),
+                      class: "btn btn-outline-info btn-sm",
+                      target: "_blank" do %>
+            <i class="fas fa-download me-1"></i> Download Template
+          <% end %>
+
+          <div class="btn-group">
+            <%= link_to health_insurances_form_admin_imports_path,
+                        class: "btn btn-info" do %>
+              <i class="fas fa-upload me-1"></i> Import Health Insurance
+            <% end %>
+            <button type="button" class="btn btn-info dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+              <span class="visually-hidden">Toggle Dropdown</span>
+            </button>
+            <ul class="dropdown-menu">
+              <li>
+                <%= link_to health_insurances_form_admin_imports_path, class: "dropdown-item" do %>
+                  <i class="fas fa-magic me-2"></i> Guided Import Wizard
+                <% end %>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#healthInsuranceImportModal">
+                  <i class="fas fa-bolt me-2"></i> Quick Import Modal
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Life Insurance Import Card -->
+  <div class="col-xl-6 col-lg-6 mb-4">
+    <div class="card shadow-lg border-0 h-100 import-card">
+      <div class="card-header bg-gradient-warning text-white">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-shield-alt fa-2x me-3"></i>
+          <div>
+            <h5 class="mb-0">Import Life Insurance</h5>
+            <small class="text-light">Bulk upload life insurance policies</small>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-text text-muted mb-4">
+          Import life insurance policies with beneficiary details, premium calculations, and multi-year GST setup.
+          Supports complex commission structures.
+        </p>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <%= link_to download_template_admin_imports_path(template_type: 'life_insurances'),
+                      class: "btn btn-outline-warning btn-sm",
+                      target: "_blank" do %>
+            <i class="fas fa-download me-1"></i> Download Template
+          <% end %>
+
+          <button type="button" class="btn btn-warning text-white" data-bs-toggle="modal" data-bs-target="#lifeInsuranceImportModal">
+            <i class="fas fa-upload me-1"></i> Import Life Insurance
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Motor Insurance Import Card -->
+  <div class="col-xl-6 col-lg-6 mb-4">
+    <div class="card shadow-lg border-0 h-100 import-card">
+      <div class="card-header bg-gradient-danger text-white">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-car fa-2x me-3"></i>
+          <div>
+            <h5 class="mb-0">Import Motor Insurance</h5>
+            <small class="text-light">Bulk upload motor insurance policies</small>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-text text-muted mb-4">
+          Import motor insurance policies with vehicle details, IDV calculations, and comprehensive coverage options.
+          Includes NCB, add-ons, and premium breakdowns.
+        </p>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <%= link_to download_template_admin_imports_path(template_type: 'motor_insurances'),
+                      class: "btn btn-outline-danger btn-sm",
+                      target: "_blank" do %>
+            <i class="fas fa-download me-1"></i> Download Template
+          <% end %>
+
+          <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#motorInsuranceImportModal">
+            <i class="fas fa-upload me-1"></i> Import Motor Insurance
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Import Guidelines -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow border-0">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="fas fa-info-circle text-info me-2"></i>
+            Import Guidelines & Best Practices
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6 class="text-primary">File Requirements:</h6>
+              <ul class="list-unstyled">
+                <li><i class="fas fa-check text-success me-2"></i> CSV or Excel (.xlsx) format</li>
+                <li><i class="fas fa-check text-success me-2"></i> UTF-8 encoding recommended</li>
+                <li><i class="fas fa-check text-success me-2"></i> Maximum file size: 10MB</li>
+                <li><i class="fas fa-check text-success me-2"></i> First row must contain headers</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-primary">Validation Features:</h6>
+              <ul class="list-unstyled">
+                <li><i class="fas fa-shield-alt text-info me-2"></i> Duplicate detection on key fields</li>
+                <li><i class="fas fa-shield-alt text-info me-2"></i> Data format validation</li>
+                <li><i class="fas fa-shield-alt text-info me-2"></i> Required field checking</li>
+                <li><i class="fas fa-shield-alt text-info me-2"></i> Invalid rows are flagged and skipped</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="alert alert-warning mt-3" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Important:</strong> Always download and use the provided templates to ensure data consistency.
+            Test with a small sample before importing large datasets.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modals -->
+<%= render 'customer_import_modal' %>
+<%= render 'sub_agent_import_modal' %>
+<%= render 'health_insurance_import_modal' %>
+<%= render 'life_insurance_import_modal' %>
+<%= render 'motor_insurance_import_modal' %>
+
+<style>
+.import-card {
+  transition: transform 0.2s ease;
+  height: 100%;
+}
+
+.import-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.border-left-primary {
+  border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+  border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-info {
+  border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-warning {
+  border-left: 0.25rem solid #f6c23e !important;
+}
+
+.bg-gradient-primary {
+  background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%);
+}
+
+.bg-gradient-success {
+  background: linear-gradient(87deg, #2dce89 0, #2dcecc 100%);
+}
+
+.bg-gradient-info {
+  background: linear-gradient(87deg, #11cdef 0, #1171ef 100%);
+}
+
+.bg-gradient-warning {
+  background: linear-gradient(87deg, #fb6340 0, #fbb140 100%);
+}
+
+.bg-gradient-danger {
+  background: linear-gradient(87deg, #f5365c 0, #f56036 100%);
+}
+
+/* Fix modal z-index and overlay issues */
+.modal {
+  z-index: 1055 !important;
+}
+
+.modal-backdrop {
+  z-index: 1050 !important;
+}
+
+/* Ensure proper spacing and layout */
+.main-content {
+  z-index: 1 !important;
+  position: relative;
+}
+
+/* Fix card spacing in grid */
+.row.mb-4 {
+  margin-bottom: 2rem !important;
+}
+
+.col-xl-6.col-lg-6.mb-4 {
+  margin-bottom: 1.5rem !important;
+}
+
+/* Better responsive layout */
+@media (max-width: 768px) {
+  .col-xl-6 {
+    margin-bottom: 1rem;
+  }
+
+  .import-card:hover {
+    transform: none;
+  }
+}
+
+/* Fix button alignment in cards */
+.d-flex.justify-content-between.align-items-center {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Ensure proper table responsiveness in modals */
+.table-responsive {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Better modal sizing */
+.modal-lg {
+  max-width: 900px;
+}
+
+/* Fix file input styling */
+.form-control[type="file"] {
+  padding: 0.5rem;
+  border: 2px dashed #dee2e6;
+  background-color: #f8f9fa;
+}
+
+.form-control[type="file"]:focus {
+  border-color: #86b7fe;
+  background-color: #fff;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle file input changes
+  const fileInputs = document.querySelectorAll('input[type="file"]');
+  fileInputs.forEach(input => {
+    input.addEventListener('change', function(e) {
+      const fileName = e.target.files[0]?.name;
+      if (fileName) {
+        const label = e.target.parentElement.querySelector('.form-text');
+        if (label) {
+          label.textContent = `Selected: ${fileName}`;
+          label.style.color = '#198754';
+        }
+      }
+    });
+  });
+
+  // Handle modal events
+  const modals = document.querySelectorAll('.modal');
+  modals.forEach(modal => {
+    modal.addEventListener('hidden.bs.modal', function() {
+      // Reset file inputs when modal is closed
+      const fileInput = modal.querySelector('input[type="file"]');
+      if (fileInput) {
+        fileInput.value = '';
+        const label = modal.querySelector('.form-text');
+        if (label) {
+          label.textContent = 'Supported formats: CSV, Excel (.xlsx, .xls). Maximum size: 10MB';
+          label.style.color = '';
+        }
+      }
+    });
+  });
+
+  // Add smooth scrolling to cards
+  const importCards = document.querySelectorAll('.import-card');
+  importCards.forEach(card => {
+    card.addEventListener('click', function(e) {
+      if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+        return; // Don't interfere with button clicks
+      }
+
+      // Optional: Add click feedback
+      card.style.transform = 'scale(0.98)';
+      setTimeout(() => {
+        card.style.transform = '';
+      }, 150);
+    });
+  });
+});
+</script>

@@ -1,0 +1,826 @@
+<% content_for :page_title, "Life Insurance Policy Details" %>
+<% content_for :page_subtitle, "Policy ##{@life_insurance.policy_number}" %>
+
+<!-- Action Buttons -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <%= link_to admin_life_insurances_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-2"></i>
+      Back to List
+    <% end %>
+  </div>
+
+  <div class="d-flex gap-2">
+    <% if @life_insurance.can_be_renewed? %>
+      <%= link_to renew_admin_life_insurance_path(@life_insurance), class: "btn btn-success" do %>
+        <i class="bi bi-arrow-repeat me-2"></i>
+        Renew
+      <% end %>
+    <% end %>
+    <%= link_to edit_admin_life_insurance_path(@life_insurance), class: "btn btn-primary" do %>
+      <i class="bi bi-pencil me-2"></i>
+      Edit Policy
+    <% end %>
+  </div>
+</div>
+
+<!-- Client & Agent Details Section -->
+<div class="info-section-card">
+  <div class="section-header" data-bs-toggle="collapse" data-bs-target="#clientAgentCollapse" aria-expanded="true">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-person"></i>
+      </div>
+      <h5 class="section-title">Client & Agent Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="clientAgentCollapse" class="collapse show">
+    <div class="section-body">
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-3">
+          <div class="info-field">
+            <label>CLIENT NAME</label>
+            <div class="info-value"><%= @life_insurance.customer&.display_name || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="info-field">
+            <label>POLICY HOLDER</label>
+            <div class="info-value"><%= @life_insurance.policy_holder || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="info-field">
+            <label>AFFILIATE</label>
+            <div class="info-value"><%= @life_insurance.sub_agent&.display_name || 'Self' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="info-field">
+            <label>INSURED NAME</label>
+            <div class="info-value"><%= @life_insurance.insured_name || '-' %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Policy Details Section -->
+<div class="info-section-card">
+  <div class="section-header" data-bs-toggle="collapse" data-bs-target="#policyDetailsCollapse" aria-expanded="true">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-file-text"></i>
+      </div>
+      <h5 class="section-title">Policy Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="policyDetailsCollapse" class="collapse show">
+    <div class="section-body">
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>BROKER CODE</label>
+            <div class="info-value"><%= @life_insurance.broker_code_type || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>AGENCY CODE</label>
+            <div class="info-value"><%= @life_insurance.agency_code&.code || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>INSURANCE COMPANY NAME</label>
+            <div class="info-value"><%= @life_insurance.insurance_company_name || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>POLICY TYPE</label>
+            <div class="info-value"><%= @life_insurance.policy_type || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>PAYMENT MODE</label>
+            <div class="info-value"><%= @life_insurance.payment_mode || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>POLICY NUMBER</label>
+            <div class="info-value"><%= @life_insurance.policy_number || '-' %></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>POLICY BOOKING DATE</label>
+            <div class="info-value"><%= @life_insurance.policy_booking_date&.strftime('%Y-%m-%d') || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>POLICY START DATE</label>
+            <div class="info-value"><%= @life_insurance.policy_start_date&.strftime('%Y-%m-%d') || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>POLICY END DATE</label>
+            <div class="info-value"><%= @life_insurance.policy_end_date&.strftime('%Y-%m-%d') || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>RISK START DATE</label>
+            <div class="info-value"><%= @life_insurance.risk_start_date&.strftime('%Y-%m-%d') || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>PLAN NAME</label>
+            <div class="info-value"><%= @life_insurance.plan_name || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>POLICY TERM (YEARS)</label>
+            <div class="info-value"><%= @life_insurance.policy_term || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>PREMIUM PAYMENT TERM (YEARS)</label>
+            <div class="info-value"><%= @life_insurance.premium_payment_term || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>PPT ENTRY AGE</label>
+            <div class="info-value"><%= @life_insurance.respond_to?(:ppt_entry_age) ? (@life_insurance.ppt_entry_age || '-') : '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>MATURITY AGE</label>
+            <div class="info-value"><%= @life_insurance.respond_to?(:maturity_age) ? (@life_insurance.maturity_age || '-') : '-' %></div>
+          </div>
+        </div>
+      </div>
+  </div>
+</div>
+
+<!-- Premium Details Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#premiumDetailsCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-currency-rupee"></i>
+      </div>
+      <h5 class="section-title">Premium Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="premiumDetailsCollapse" class="collapse">
+    <div class="section-body">
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>SUM INSURED</label>
+            <div class="info-value"><%= indian_currency(@life_insurance.sum_insured) || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>NET PREMIUM</label>
+            <div class="info-value"><%= indian_currency(@life_insurance.net_premium) || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>1ST YEAR GST %</label>
+            <div class="info-value"><%= @life_insurance.first_year_gst_percentage ? "#{@life_insurance.first_year_gst_percentage}%" : '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>TOTAL PREMIUM</label>
+            <div class="info-value"><%= indian_currency(@life_insurance.total_premium) || '-' %></div>
+          </div>
+        </div>
+      </div>
+  </div>
+</div>
+
+<!-- Commission Calculation Table -->
+<% if @life_insurance.drwise_policy? %>
+  <%= render 'shared/commission_calculation_table', policy: @life_insurance %>
+<% end %>
+
+<!-- Bank Details Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#bankDetailsCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-bank"></i>
+      </div>
+      <h5 class="section-title">Bank Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="bankDetailsCollapse" class="collapse">
+    <div class="section-body">
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>BANK NAME</label>
+            <div class="info-value"><%= @life_insurance.bank_name || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>ACCOUNT TYPE</label>
+            <div class="info-value"><%= @life_insurance.account_type || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>ACCOUNT NUMBER</label>
+            <div class="info-value"><%= @life_insurance.account_number || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>IFSC CODE</label>
+            <div class="info-value"><%= @life_insurance.ifsc_code || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>ACCOUNT HOLDER NAME</label>
+            <div class="info-value"><%= @life_insurance.account_holder_name || '-' %></div>
+          </div>
+        </div>
+      </div>
+  </div>
+</div>
+
+<!-- Nominee Details Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#nomineeDetailsCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-people"></i>
+      </div>
+      <h5 class="section-title">Nominee Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="nomineeDetailsCollapse" class="collapse">
+    <div class="section-body">
+      <% if @life_insurance.life_insurance_nominees.any? %>
+        <!-- Display nominees from life_insurance_nominees association -->
+        <% @life_insurance.life_insurance_nominees.each_with_index do |nominee, index| %>
+          <div class="nominee-card <%= 'mb-4' if index < @life_insurance.life_insurance_nominees.count - 1 %>" style="border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="mb-0" style="color: #495057; font-weight: 600;">
+                <i class="bi bi-person-circle me-2"></i>Nominee <%= index + 1 %>
+              </h6>
+              <span class="badge bg-primary"><%= nominee.share_percentage || 0 %>% Share</span>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="info-field">
+                  <label>NOMINEE NAME</label>
+                  <div class="info-value"><%= nominee.nominee_name %></div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-field">
+                  <label>RELATIONSHIP</label>
+                  <div class="info-value"><%= nominee.relationship&.titleize || '-' %></div>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="info-field">
+                  <label>AGE</label>
+                  <div class="info-value"><%= nominee.age ? "#{nominee.age} years" : '-' %></div>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="info-field">
+                  <label>SHARE %</label>
+                  <div class="info-value"><%= nominee.share_percentage ? "#{nominee.share_percentage}%" : '-' %></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Summary section for multiple nominees -->
+        <% if @life_insurance.life_insurance_nominees.count > 1 %>
+          <div class="mt-4 p-3" style="background-color: #e7f3ff; border-radius: 6px; border-left: 4px solid #0d6efd;">
+            <div class="row">
+              <div class="col-md-6">
+                <strong>Total Nominees: <%= @life_insurance.life_insurance_nominees.count %></strong>
+              </div>
+              <div class="col-md-6">
+                <strong>Total Share: <%= @life_insurance.life_insurance_nominees.sum(:share_percentage) || 0 %>%</strong>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <!-- Fallback to legacy nominee fields if no associated nominees -->
+        <% if @life_insurance.nominee_name.present? || @life_insurance.nominee_relationship.present? || @life_insurance.nominee_age.present? %>
+          <div class="nominee-card" style="border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
+            <div class="d-flex align-items-center mb-3">
+              <h6 class="mb-0" style="color: #495057; font-weight: 600;">
+                <i class="bi bi-person-circle me-2"></i>Nominee Details
+              </h6>
+              <span class="badge bg-secondary ms-2">Legacy Data</span>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="info-field">
+                  <label>NOMINEE NAME</label>
+                  <div class="info-value"><%= @life_insurance.nominee_name || '-' %></div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-field">
+                  <label>RELATIONSHIP</label>
+                  <div class="info-value"><%= @life_insurance.nominee_relationship || '-' %></div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-field">
+                  <label>AGE</label>
+                  <div class="info-value"><%= @life_insurance.nominee_age ? "#{@life_insurance.nominee_age} years" : '-' %></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% else %>
+          <!-- No nominee data at all -->
+          <div class="text-center py-4" style="color: #6c757d;">
+            <i class="bi bi-person-x" style="font-size: 2rem; opacity: 0.5;"></i>
+            <p class="mt-2 mb-0">No nominee details available</p>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Notification Settings Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#notificationSettingsCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-bell"></i>
+      </div>
+      <h5 class="section-title">Notification Settings</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="notificationSettingsCollapse" class="collapse">
+    <div class="section-body">
+      <div class="row g-4">
+        <div class="col-12">
+          <div class="info-field">
+            <label>NOTIFICATION DATES (DAYS BEFORE POLICY END DATE)</label>
+            <div class="info-value"><%=
+              if @life_insurance.notification_dates.present?
+                begin
+                  # Try to parse as JSON first
+                  notifications = JSON.parse(@life_insurance.notification_dates)
+                  if notifications.is_a?(Array)
+                    # If it's an array of hashes, extract dates
+                    if notifications.first.is_a?(Hash)
+                      notifications.map { |n| n['date'] }.join(', ')
+                    else
+                      # If it's a simple array
+                      notifications.join(', ')
+                    end
+                  else
+                    @life_insurance.notification_dates
+                  end
+                rescue JSON::ParserError
+                  # If not JSON, assume it's already a string or array
+                  if @life_insurance.notification_dates.is_a?(Array)
+                    @life_insurance.notification_dates.join(', ')
+                  else
+                    @life_insurance.notification_dates
+                  end
+                end
+              else
+                '-'
+              end
+            %></div>
+            <small class="text-muted">Example: Enter 365 for 1 year before, 180 for 6 months before</small>
+          </div>
+        </div>
+      </div>
+  </div>
+</div>
+
+<!-- Additional Information Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#additionalInfoCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-info-circle"></i>
+      </div>
+      <h5 class="section-title">Additional Information</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="additionalInfoCollapse" class="collapse">
+    <div class="section-body">
+      <div class="row g-4">
+        <div class="col-12">
+          <div class="info-field">
+            <label>EXTRA NOTE</label>
+            <div class="info-value"><%= @life_insurance.extra_note || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>LEAD ID</label>
+            <div class="info-value"><%= @life_insurance.lead_id || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>STATUS</label>
+            <div class="info-value"><%= @life_insurance.status || 'Active' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>DAYS UNTIL EXPIRY</label>
+            <div class="info-value">
+              <% if @life_insurance.policy_end_date.present? %>
+                <% days_until_expiry = (@life_insurance.policy_end_date - Date.current).to_i %>
+                <span class="<%= days_until_expiry <= 30 ? 'text-danger' : days_until_expiry <= 60 ? 'text-warning' : 'text-success' %>">
+                  <%= days_until_expiry %> days
+                </span>
+              <% else %>
+                N/A
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Entry Source Information -->
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>ADDED BY ADMIN</label>
+            <div class="info-value"><%= @life_insurance.is_admin_added ? 'Yes' : 'No' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>ADDED BY CUSTOMER</label>
+            <div class="info-value"><%= @life_insurance.is_customer_added ? 'Yes' : 'No' %></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="info-field">
+            <label>ADDED BY AGENT</label>
+            <div class="info-value"><%= @life_insurance.is_agent_added ? 'Yes' : 'No' %></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Through Dr -->
+      <% if @life_insurance.respond_to?(:product_through_dr) %>
+        <div class="row g-4">
+          <div class="col-md-6 col-lg-4">
+            <div class="info-field">
+              <label>PRODUCT THROUGH DR</label>
+              <div class="info-value"><%= @life_insurance.product_through_dr ? 'Yes' : 'No' %></div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Timestamps -->
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="info-field">
+            <label>CREATED AT</label>
+            <div class="info-value"><%= @life_insurance.created_at&.strftime('%B %d, %Y at %I:%M %p') || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="info-field">
+            <label>LAST UPDATED AT</label>
+            <div class="info-value"><%= @life_insurance.updated_at&.strftime('%B %d, %Y at %I:%M %p') || '-' %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Policy Documents Section -->
+<%= render 'show_documents' %>
+
+<style>
+  .document-card {
+    transition: all 0.2s ease;
+  }
+  .document-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+  }
+
+  /* Improved info value styling for better readability */
+  .info-value {
+    min-height: 20px;
+    padding: 2px 0;
+    word-wrap: break-word;
+  }
+
+  /* Info Section Card Styles */
+  .info-section-card {
+    background: white;
+    border: 1px solid #e3e6f0;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+  }
+
+  .info-section-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .section-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #e3e6f0;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    user-select: none;
+  }
+
+  .section-header:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+  }
+
+  .section-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+  }
+
+  .section-icon i {
+    color: white;
+    font-size: 1.1rem;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3436;
+    margin: 0;
+    flex-grow: 1;
+  }
+
+  .section-count {
+    background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-left: 1rem;
+  }
+
+  .collapse-icon {
+    color: #94a3b8;
+    transition: transform 0.3s;
+  }
+
+  .section-header:not(.collapsed) .collapse-icon {
+    transform: rotate(180deg);
+  }
+
+  .section-header.collapsed .collapse-icon {
+    transform: rotate(0deg);
+  }
+
+  .section-body {
+    padding: 1.5rem;
+  }
+
+  /* CONSISTENT SPACING: Fix spacing between all sections */
+  .info-section-card {
+    margin-bottom: 1.5rem !important;
+  }
+
+  .info-section-card:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* Section body proper padding */
+  .section-body {
+    padding: 20px !important;
+  }
+
+  /* Info Fields - Customer page style */
+  .info-field {
+    margin-bottom: 10px;
+  }
+
+  .info-field label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1px;
+    display: block;
+    line-height: 1;
+  }
+
+  .info-value {
+    font-size: 15px;
+    color: #2c3e50;
+    font-weight: 500;
+    line-height: 1.2;
+    margin-top: -2px;
+  }
+
+  /* Row spacing for info fields */
+  .section-body .row + .row {
+    margin-top: 0.25rem;
+  }
+
+  /* Action buttons top spacing */
+  .d-flex.justify-content-between.align-items-center.mb-4 {
+    margin-bottom: 2rem !important;
+    padding: 1rem 0;
+  }
+
+  /* Clean page ending without removing necessary spacing */
+  main {
+    padding-bottom: 2rem !important;
+  }
+
+  /* Only remove bottom spacing from empty containers */
+  .container-fluid:empty,
+  .container:empty,
+  .row:empty {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* ANTI-OVERLAP: Ensure sections never overlap */
+  .info-section-card {
+    position: relative;
+    z-index: 1;
+    clear: both;
+  }
+
+  .info-section-card + .info-section-card {
+    margin-top: 0 !important;
+  }
+
+  /* Remove unused form styles - now using info-field pattern */
+
+  /* Page structure - ensure clean ending */
+  .container-fluid {
+    padding-top: 1rem;
+    padding-bottom: 0 !important;
+  }
+
+  /* Hide any empty containers at bottom */
+  div:empty:not([class*="collapse"]):not([id*="Collapse"]):not(.section-icon):not(.collapse-icon) {
+    display: none !important;
+  }
+
+  /* Remove bottom margins from last elements */
+  .info-section-card:last-of-type {
+    margin-bottom: 0 !important;
+  }
+
+  .info-section-card:last-of-type .section-body > *:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* Clean page ending */
+  body::after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+
+
+
+  /* Print styles */
+  @media print {
+    .btn, .d-flex {
+      display: none !important;
+    }
+    .card, .info-section-card {
+      break-inside: avoid;
+    }
+    .info-section-card:last-child {
+      margin-bottom: 0;
+    }
+  }
+</style>
+
+<script>
+// Enhanced cleanup function for life insurance page
+function aggressiveCleanup() {
+  console.log('🧹 Running life insurance page cleanup...');
+
+  // Find last actual section (Additional Information)
+  const lastSection = document.querySelector('.info-section-card:last-of-type');
+
+  if (lastSection) {
+    console.log('📍 Last section found:', lastSection.querySelector('.section-title')?.textContent);
+
+    // Remove ALL elements after the last section until we hit STYLE/SCRIPT
+    let nextElement = lastSection.nextElementSibling;
+    let removedCount = 0;
+
+    while (nextElement &&
+           nextElement.tagName !== 'STYLE' &&
+           nextElement.tagName !== 'SCRIPT') {
+      const toRemove = nextElement;
+      nextElement = nextElement.nextElementSibling;
+
+      console.log('🗑️ Removing element after last section:', toRemove.tagName, toRemove.className);
+      toRemove.remove();
+      removedCount++;
+    }
+
+    console.log(`✅ Removed ${removedCount} elements after last section`);
+  }
+
+  // Remove any empty info-section-cards
+  const allSections = document.querySelectorAll('.info-section-card');
+  allSections.forEach(section => {
+    const sectionBody = section.querySelector('.section-body');
+    if (sectionBody) {
+      const textContent = sectionBody.textContent.trim();
+      const hasInputs = sectionBody.querySelectorAll('input, textarea, select').length;
+
+      // Only remove if truly empty (no inputs and no text)
+      if (!hasInputs && textContent === '') {
+        console.log('🗑️ Removing empty section:', section);
+        section.remove();
+      }
+    }
+  });
+
+  // Remove empty divs that might be causing spacing issues
+  const allDivs = document.querySelectorAll('div');
+  allDivs.forEach(div => {
+    if (div.children.length === 0 &&
+        div.textContent.trim() === '' &&
+        !div.classList.contains('section-icon') &&
+        !div.classList.contains('collapse-icon') &&
+        !div.classList.contains('collapse') &&
+        !div.id.includes('Collapse')) {
+      console.log('🗑️ Removing empty div:', div);
+      div.remove();
+    }
+  });
+
+  console.log('✅ Life insurance page cleanup completed');
+}
+
+// Run cleanup with multiple triggers
+document.addEventListener('DOMContentLoaded', aggressiveCleanup);
+window.addEventListener('load', aggressiveCleanup);
+setTimeout(aggressiveCleanup, 100);
+setTimeout(aggressiveCleanup, 500);
+setTimeout(aggressiveCleanup, 1000);
+</script>

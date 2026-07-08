@@ -1,0 +1,220 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Payment Due Reports</h2>
+    <p class="text-muted mb-0">Policies with upcoming payment deadlines in the next 45 days</p>
+  </div>
+  <div class="d-flex gap-2">
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-download me-1"></i>
+        Export
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-text me-2"></i>Export as CSV</a></li>
+        <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-excel me-2"></i>Export as Excel</a></li>
+      </ul>
+    </div>
+    <button class="btn btn-warning" onclick="sendPaymentReminders()">
+      <i class="bi bi-bell me-1"></i>
+      Send Reminders
+    </button>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Payments Due</h6>
+            <h3 class="mb-0 text-warning">
+              <%= @payment_due_policies&.count || 0 %>
+            </h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-credit-card text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Amount Due</h6>
+            <h3 class="mb-0 text-danger">
+              Rs. <%= @payment_due_policies&.sum(:total_premium)&.to_i || 0 %>
+            </h3>
+          </div>
+          <div class="bg-danger bg-opacity-10 rounded p-3">
+            <i class="bi bi-currency-rupee text-danger fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Urgent (≤7 days)</h6>
+            <h3 class="mb-0 text-danger">
+              <%= @payment_due_policies&.select { |p| (p.end_date - Date.current).to_i <= 7 }&.count || 0 %>
+            </h3>
+          </div>
+          <div class="bg-danger bg-opacity-10 rounded p-3">
+            <i class="bi bi-exclamation-triangle text-danger fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Average Amount</h6>
+            <h3 class="mb-0 text-info">
+              Rs. <%= @payment_due_policies&.any? ? (@payment_due_policies.sum(:total_premium) / @payment_due_policies.count).to_i : 0 %>
+            </h3>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-calculator text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Due List -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">Policies with Upcoming Payments</h5>
+  </div>
+  <div class="card-body p-0">
+    <% if @payment_due_policies&.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Customer</th>
+              <th class="border-0">Policy</th>
+              <th class="border-0">Type</th>
+              <th class="border-0">Premium Amount</th>
+              <th class="border-0">Due Date</th>
+              <th class="border-0">Days Left</th>
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @payment_due_policies.each do |policy| %>
+              <tr>
+                <td>
+                  <div>
+                    <h6 class="mb-1"><%= policy.customer&.display_name || 'Unknown Customer' %></h6>
+                    <small class="text-muted"><%= policy.customer&.email || 'No email' %></small>
+                    <div><small class="text-muted"><%= policy.customer&.mobile || 'No mobile' %></small></div>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <div class="fw-semibold"><%= policy.policy_number %></div>
+                    <small class="text-muted"><%= policy.plan_name %></small>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-<%=
+                    case policy.insurance_type
+                    when 'health' then 'success'
+                    when 'life' then 'info'
+                    when 'motor' then 'warning'
+                    else 'secondary'
+                    end
+                  %>">
+                    <%= policy.insurance_type&.humanize || 'Policy' %>
+                  </span>
+                </td>
+                <td>
+                  <div>
+                    <div class="fw-semibold"><%= indian_currency(policy.total_premium) %></div>
+                    <small class="text-muted">Premium</small>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <div class="fw-semibold"><%= policy.end_date&.strftime("%d %b %Y") || 'N/A' %></div>
+                    <small class="text-muted">Due Date</small>
+                  </div>
+                </td>
+                <td>
+                  <% days_left = policy.end_date ? (policy.end_date - Date.current).to_i : 0 %>
+                  <span class="badge bg-<%= days_left <= 7 ? 'danger' : days_left <= 15 ? 'warning' : 'info' %>">
+                    <%= days_left %> days
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-primary" title="View Policy">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" title="Send Reminder" onclick="sendIndividualReminder('<%= policy.id %>')">
+                      <i class="bi bi-bell"></i>
+                    </button>
+                    <% if policy.customer&.mobile %>
+                      <%= link_to "tel:#{policy.customer.mobile}", class: "btn btn-sm btn-outline-info", title: "Call Customer" do %>
+                        <i class="bi bi-telephone"></i>
+                      <% end %>
+                    <% end %>
+                    <button class="btn btn-sm btn-outline-success" title="Mark as Paid" onclick="markAsPaid('<%= policy.id %>')">
+                      <i class="bi bi-check-circle"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-check-circle-fill fs-1 text-success d-block mb-3"></i>
+        <h5 class="text-muted">No payments due</h5>
+        <p class="text-muted mb-3">
+          Great! No policies have upcoming payment deadlines in the next 45 days.
+        </p>
+        <%= link_to "View All Policies", admin_health_insurances_path, class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+function sendPaymentReminders() {
+  if (confirm('Are you sure you want to send payment reminders to all customers with due payments?')) {
+    alert('Feature coming soon! This will send payment reminder notifications to all customers.');
+  }
+}
+
+function sendIndividualReminder(policyId) {
+  if (confirm('Are you sure you want to send a payment reminder to this customer?')) {
+    alert(`Feature coming soon! This will send a payment reminder for policy ID: ${policyId}`);
+  }
+}
+
+function markAsPaid(policyId) {
+  if (confirm('Are you sure this payment has been received?')) {
+    alert(`Feature coming soon! This will mark policy ID: ${policyId} as paid`);
+  }
+}
+</script>

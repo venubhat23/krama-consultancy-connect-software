@@ -1,0 +1,500 @@
+<% content_for :page_title, "Motor Insurance Policy Details" %>
+<% content_for :page_subtitle, "Policy ##{@motor_insurance.policy_number}" %>
+
+<!-- Action Buttons -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <%= link_to admin_motor_insurances_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-2"></i>
+      Back to List
+    <% end %>
+  </div>
+
+  <div class="d-flex gap-2">
+    <%= link_to edit_admin_motor_insurance_path(@motor_insurance), class: "btn btn-primary" do %>
+      <i class="bi bi-pencil me-2"></i>
+      Edit Policy
+    <% end %>
+    <%= link_to admin_motor_insurance_path(@motor_insurance), method: :delete,
+        class: "btn btn-outline-danger",
+        confirm: "Are you sure you want to delete this policy?",
+        data: { turbo_method: :delete } do %>
+      <i class="bi bi-trash me-2"></i>
+      Delete
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <!-- Policy Overview -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="bi bi-car-front me-2 text-primary"></i>
+          Policy Overview
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong>Policy Number:</strong><br>
+            <span class="text-primary"><%= @motor_insurance.policy_number %></span>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Policy Type:</strong><br>
+            <%= @motor_insurance.policy_type %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Insurance Company:</strong><br>
+            <%= @motor_insurance.insurance_company_name %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Insurance Type:</strong><br>
+            <%= @motor_insurance.insurance_type %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Policy Start Date:</strong><br>
+            <%= @motor_insurance.policy_start_date.strftime("%B %d, %Y") if @motor_insurance.policy_start_date %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Policy End Date:</strong><br>
+            <%= @motor_insurance.policy_end_date.strftime("%B %d, %Y") if @motor_insurance.policy_end_date %>
+            <% if @motor_insurance.expiring_soon? %>
+              <span class="badge bg-warning ms-2">Expiring Soon</span>
+            <% elsif @motor_insurance.expired? %>
+              <span class="badge bg-danger ms-2">Expired</span>
+            <% else %>
+              <span class="badge bg-success ms-2">Active</span>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vehicle Details -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="bi bi-car-front-fill me-2 text-success"></i>
+          Vehicle Details
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong>Registration Number:</strong><br>
+            <span class="text-success"><%= @motor_insurance.registration_number %></span>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Vehicle Type:</strong><br>
+            <%= @motor_insurance.vehicle_type %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Class of Vehicle:</strong><br>
+            <%= @motor_insurance.class_of_vehicle %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Policy Booking Date:</strong><br>
+            <%= @motor_insurance.policy_booking_date.strftime("%B %d, %Y") if @motor_insurance.policy_booking_date %>
+          </div>
+          <% if @motor_insurance.make.present? || @motor_insurance.model.present? %>
+            <div class="col-md-6 mb-3">
+              <strong>Make & Model:</strong><br>
+              <%= "#{@motor_insurance.make} #{@motor_insurance.model}".strip %>
+            </div>
+          <% end %>
+          <% if @motor_insurance.variant.present? %>
+            <div class="col-md-6 mb-3">
+              <strong>Variant:</strong><br>
+              <%= @motor_insurance.variant %>
+            </div>
+          <% end %>
+          <% if @motor_insurance.engine_number.present? %>
+            <div class="col-md-6 mb-3">
+              <strong>Engine Number:</strong><br>
+              <%= @motor_insurance.engine_number %>
+            </div>
+          <% end %>
+          <% if @motor_insurance.chassis_number.present? %>
+            <div class="col-md-6 mb-3">
+              <strong>Chassis Number:</strong><br>
+              <%= @motor_insurance.chassis_number %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Premium Details -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="bi bi-currency-rupee me-2 text-info"></i>
+          Premium Details
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong>Vehicle IDV:</strong><br>
+            <span class="text-warning"><%= indian_currency(@motor_insurance.vehicle_idv) if @motor_insurance.vehicle_idv %></span>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Total IDV:</strong><br>
+            <span class="text-warning"><%= indian_currency(@motor_insurance.total_idv) if @motor_insurance.total_idv %></span>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Sum Insured:</strong><br>
+            <span class="text-info"><%= indian_currency(@motor_insurance.sum_insured) if @motor_insurance.sum_insured %></span>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Third Party Premium:</strong><br>
+            <%= indian_currency(@motor_insurance.tp_premium) if @motor_insurance.tp_premium %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Net Premium:</strong><br>
+            <%= indian_currency(@motor_insurance.net_premium) if @motor_insurance.net_premium %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>GST (%):</strong><br>
+            <%= @motor_insurance.gst_percentage %>%
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Total Premium:</strong><br>
+            <span class="text-success h5"><%= indian_currency(@motor_insurance.total_premium) if @motor_insurance.total_premium %></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <!-- Customer Information -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="bi bi-person me-2 text-primary"></i>
+          Customer Information
+        </h5>
+      </div>
+      <div class="card-body">
+        <% if @motor_insurance.customer.present? %>
+          <div class="mb-3">
+            <strong>Name:</strong><br>
+            <%= @motor_insurance.customer.display_name %>
+          </div>
+          <div class="mb-3">
+            <strong>Email:</strong><br>
+            <%= @motor_insurance.customer.email %>
+          </div>
+          <div class="mb-3">
+            <strong>Mobile:</strong><br>
+            <%= @motor_insurance.customer.mobile %>
+          </div>
+          <div class="mb-3">
+            <strong>Policy Holder:</strong><br>
+            <%= @motor_insurance.policy_holder %>
+          </div>
+        <% else %>
+          <p class="text-muted">No customer information available</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Status & Actions -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="bi bi-info-circle me-2 text-warning"></i>
+          Policy Status
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <strong>Current Status:</strong><br>
+          <% if @motor_insurance.active? %>
+            <span class="badge bg-success fs-6">Active</span>
+          <% elsif @motor_insurance.expired? %>
+            <span class="badge bg-danger fs-6">Expired</span>
+          <% elsif @motor_insurance.expiring_soon? %>
+            <span class="badge bg-warning fs-6">Expiring Soon</span>
+          <% else %>
+            <span class="badge bg-secondary fs-6">Unknown</span>
+          <% end %>
+        </div>
+        <% if @motor_insurance.policy_end_date %>
+          <div class="mb-3">
+            <strong>Days Until Expiry:</strong><br>
+            <% days = @motor_insurance.days_until_expiry %>
+            <% if days > 0 %>
+              <span class="text-<%= days <= 30 ? 'warning' : 'success' %>"><%= days %> days</span>
+            <% else %>
+              <span class="text-danger">Expired <%= days.abs %> days ago</span>
+            <% end %>
+          </div>
+        <% end %>
+        <div class="mb-3">
+          <strong>Added By:</strong><br>
+          <% if @motor_insurance.is_admin_added %>
+            <span class="badge bg-primary">Admin</span>
+          <% elsif @motor_insurance.is_agent_added %>
+            <span class="badge bg-info">Agent</span>
+          <% elsif @motor_insurance.is_customer_added %>
+            <span class="badge bg-secondary">Customer</span>
+          <% else %>
+            <span class="text-muted">Unknown</span>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Optional Covers -->
+    <% if @motor_insurance.zero_depreciation.present? || @motor_insurance.roadside_assistance.present? ||
+          @motor_insurance.engine_protector.present? || @motor_insurance.key_replacement.present? %>
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-shield-plus me-2 text-success"></i>
+            Optional Covers
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if @motor_insurance.zero_depreciation.present? %>
+            <div class="d-flex align-items-center mb-2">
+              <i class="bi bi-check-circle text-success me-2"></i>
+              Zero Depreciation
+            </div>
+          <% end %>
+          <% if @motor_insurance.roadside_assistance.present? %>
+            <div class="d-flex align-items-center mb-2">
+              <i class="bi bi-check-circle text-success me-2"></i>
+              Roadside Assistance
+            </div>
+          <% end %>
+          <% if @motor_insurance.engine_protector.present? %>
+            <div class="d-flex align-items-center mb-2">
+              <i class="bi bi-check-circle text-success me-2"></i>
+              Engine Protector
+            </div>
+          <% end %>
+          <% if @motor_insurance.key_replacement.present? %>
+            <div class="d-flex align-items-center mb-2">
+              <i class="bi bi-check-circle text-success me-2"></i>
+              Key Replacement
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Documents Section - Improved Display -->
+<% if @motor_insurance.uploaded_documents.any? ||
+      (@motor_insurance.respond_to?(:policy_documents) && @motor_insurance.policy_documents.attached?) ||
+      (@motor_insurance.respond_to?(:documents) && @motor_insurance.documents.attached?) %>
+  <div class="row mt-4">
+    <div class="col-12">
+      <h4 class="mb-3">
+        <i class="bi bi-folder-open me-2 text-primary"></i>
+        Policy Documents
+      </h4>
+
+      <!-- Policy Documents Section -->
+      <% if @motor_insurance.respond_to?(:policy_documents) && @motor_insurance.policy_documents.attached? %>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-file-earmark-pdf me-2"></i>
+              Policy Documents
+              <span class="badge bg-white text-primary ms-2"><%= @motor_insurance.policy_documents.count %></span>
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <% @motor_insurance.policy_documents.each do |doc| %>
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                  <div class="card h-100 border-0 shadow-sm document-card">
+                    <div class="card-body p-3 text-center">
+                      <div class="mb-2">
+                        <div class="bg-danger bg-opacity-10 rounded d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                          <i class="bi bi-file-earmark-pdf text-danger fs-4"></i>
+                        </div>
+                      </div>
+                      <h6 class="card-title small mb-2" title="<%= doc.filename.to_s %>">
+                        <%= truncate(doc.filename.to_s, length: 20) %>
+                      </h6>
+                      <p class="small text-muted mb-3">
+                        <%= number_to_human_size(doc.byte_size) %>
+                      </p>
+                      <div class="btn-group-vertical btn-group-sm w-100">
+                        <% if doc.persisted? %>
+                          <%= link_to rails_blob_path(doc, disposition: "inline"),
+                              class: "btn btn-outline-primary btn-sm mb-1",
+                              target: "_blank",
+                              title: "View" do %>
+                            <i class="bi bi-eye"></i> View
+                          <% end %>
+                          <%= link_to rails_blob_path(doc, disposition: "attachment"),
+                              class: "btn btn-outline-success btn-sm",
+                              title: "Download" do %>
+                            <i class="bi bi-download"></i> Download
+                          <% end %>
+                        <% else %>
+                          <span class="btn btn-outline-secondary btn-sm disabled">
+                            <i class="bi bi-clock"></i> Processing
+                          </span>
+                        <% end %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Additional Documents Section -->
+      <% if @motor_insurance.respond_to?(:documents) && @motor_insurance.documents.attached? %>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-file-earmark-plus me-2"></i>
+              Additional Documents (RC, PUC, Insurance copy, etc.)
+              <span class="badge bg-white text-secondary ms-2"><%= @motor_insurance.documents.count %></span>
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <% @motor_insurance.documents.each do |doc| %>
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                  <div class="card h-100 border-0 shadow-sm document-card">
+                    <div class="card-body p-3 text-center">
+                      <div class="mb-2">
+                        <% if doc.content_type&.include?('image') %>
+                          <div class="bg-info bg-opacity-10 rounded d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-file-earmark-image text-info fs-4"></i>
+                          </div>
+                        <% elsif doc.content_type&.include?('pdf') %>
+                          <div class="bg-danger bg-opacity-10 rounded d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-file-earmark-pdf text-danger fs-4"></i>
+                          </div>
+                        <% else %>
+                          <div class="bg-secondary bg-opacity-10 rounded d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-file-earmark text-secondary fs-4"></i>
+                          </div>
+                        <% end %>
+                      </div>
+                      <h6 class="card-title small mb-2" title="<%= doc.filename.to_s %>">
+                        <%= truncate(doc.filename.to_s, length: 20) %>
+                      </h6>
+                      <p class="small text-muted mb-3">
+                        <%= number_to_human_size(doc.byte_size) %>
+                      </p>
+                      <div class="btn-group-vertical btn-group-sm w-100">
+                        <% if doc.persisted? %>
+                          <%= link_to rails_blob_path(doc, disposition: "inline"),
+                              class: "btn btn-outline-primary btn-sm mb-1",
+                              target: "_blank",
+                              title: "View" do %>
+                            <i class="bi bi-eye"></i> View
+                          <% end %>
+                          <%= link_to rails_blob_path(doc, disposition: "attachment"),
+                              class: "btn btn-outline-success btn-sm",
+                              title: "Download" do %>
+                            <i class="bi bi-download"></i> Download
+                          <% end %>
+                        <% else %>
+                          <span class="btn btn-outline-secondary btn-sm disabled">
+                            <i class="bi bi-clock"></i> Processing
+                          </span>
+                        <% end %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Legacy Uploaded Documents -->
+      <% if @motor_insurance.uploaded_documents.any? %>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-archive me-2"></i>
+              Other Uploaded Documents
+              <span class="badge bg-white text-info ms-2"><%= @motor_insurance.uploaded_documents.count %></span>
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <% @motor_insurance.uploaded_documents.each do |document| %>
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                  <div class="card h-100 border-0 shadow-sm document-card">
+                    <div class="card-body p-3 text-center">
+                      <div class="mb-2">
+                        <% case document.file_extension&.downcase %>
+                        <% when 'pdf' %>
+                          <div class="bg-danger bg-opacity-10 rounded d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-file-earmark-pdf text-danger fs-4"></i>
+                          </div>
+                        <% when 'jpg', 'jpeg', 'png', 'gif' %>
+                          <div class="bg-info bg-opacity-10 rounded d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-file-earmark-image text-info fs-4"></i>
+                          </div>
+                        <% when 'doc', 'docx' %>
+                          <div class="bg-primary bg-opacity-10 rounded d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-file-earmark-word text-primary fs-4"></i>
+                          </div>
+                        <% else %>
+                          <div class="bg-secondary bg-opacity-10 rounded d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-file-earmark text-secondary fs-4"></i>
+                          </div>
+                        <% end %>
+                      </div>
+                      <h6 class="card-title small mb-2" title="<%= document.title %>">
+                        <%= truncate(document.title, length: 20) %>
+                      </h6>
+                      <p class="small text-muted mb-3">
+                        <%= number_to_human_size(document.file_size) if document.file_size %>
+                      </p>
+                      <div class="btn-group-vertical btn-group-sm w-100">
+                        <%= link_to admin_document_path(document),
+                            class: "btn btn-outline-primary btn-sm mb-1",
+                            target: "_blank",
+                            title: "View" do %>
+                          <i class="bi bi-eye"></i> View
+                        <% end %>
+                        <%= link_to admin_document_path(document),
+                            class: "btn btn-outline-success btn-sm",
+                            download: true,
+                            title: "Download" do %>
+                          <i class="bi bi-download"></i> Download
+                        <% end %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <style>
+    .document-card {
+      transition: all 0.2s ease;
+    }
+    .document-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+    }
+  </style>
+<% end %>

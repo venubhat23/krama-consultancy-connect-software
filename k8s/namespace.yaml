@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: insurebook
+  labels:
+    name: insurebook
+    environment: production
+    app: insurebook
+---
+# Development namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: insurebook-dev
+  labels:
+    name: insurebook-dev
+    environment: development
+    app: insurebook
+---
+# Staging namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: insurebook-staging
+  labels:
+    name: insurebook-staging
+    environment: staging
+    app: insurebook

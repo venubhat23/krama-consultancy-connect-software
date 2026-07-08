@@ -1,0 +1,509 @@
+<div class="container-fluid">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <%= link_to "Home", root_path, class: "text-primary text-decoration-none" %>
+      </li>
+      <li class="breadcrumb-item">
+        <%= link_to "Motor Insurance", admin_motor_insurances_path, class: "text-primary text-decoration-none" %>
+      </li>
+      <li class="breadcrumb-item active">Renew Motor Insurance</li>
+    </ol>
+  </nav>
+
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h3 text-gray-800 mb-2">Renew Motor Insurance Policy</h1>
+          <p class="text-muted">
+            <i class="bi bi-arrow-clockwise text-success me-2"></i>
+            Renewing policy <strong><%= @motor_insurance.policy_number %></strong>
+            for vehicle <strong><%= @motor_insurance.registration_number %></strong>
+            <% if @motor_insurance.policy_end_date.present? %>
+              <span class="badge bg-warning text-dark ms-2">
+                Expires: <%= @motor_insurance.policy_end_date.strftime("%B %d, %Y") %>
+              </span>
+            <% end %>
+          </p>
+        </div>
+        <div class="d-flex gap-2">
+          <%= link_to admin_motor_insurance_path(@motor_insurance), class: "btn btn-outline-primary" do %>
+            <i class="bi bi-file-text me-1"></i>View Original Policy
+          <% end %>
+          <%= link_to admin_motor_insurances_path, class: "btn btn-outline-secondary" do %>
+            <i class="bi bi-arrow-left me-1"></i>Back to List
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Renewal Info Alert -->
+  <div class="alert alert-info border-0 shadow-sm mb-4">
+    <div class="d-flex align-items-center">
+      <i class="bi bi-info-circle fs-4 me-3"></i>
+      <div>
+        <h5 class="alert-heading mb-1">Renewal Information</h5>
+        <p class="mb-0">
+          This form has been pre-filled with data from the original policy.
+          The new policy will start from <strong><%= @renewed_policy.policy_start_date.strftime("%B %d, %Y") %></strong>
+          and end on <strong><%= @renewed_policy.policy_end_date.strftime("%B %d, %Y") %></strong>.
+          Please review and update the premium amounts and any changed information.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Renewal Form -->
+  <%= form_with model: @renewed_policy,
+                url: create_renewal_admin_motor_insurance_path(@motor_insurance),
+                method: :post,
+                local: true,
+                authenticity_token: true,
+                html: {
+                  class: "needs-validation",
+                  novalidate: true,
+                  "data-turbo": "false"
+                } do |form| %>
+
+    <!-- Add explicit CSRF token to ensure it's fresh -->
+    <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+
+    <% if @renewed_policy.errors.any? %>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <h6 class="alert-heading">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <%= pluralize(@renewed_policy.errors.count, "error") %> prohibited this renewal from being saved:
+        </h6>
+        <ul class="mb-0">
+          <% @renewed_policy.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <% end %>
+
+    <!-- Render the existing form partial with renewal context -->
+    <% original_motor_insurance_id = @motor_insurance.id %>
+    <% @motor_insurance = @renewed_policy %>
+    <%= render 'form', form: form %>
+
+    <!-- Submit Actions -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <%= link_to admin_motor_insurance_path(original_motor_insurance_id), class: "btn btn-outline-secondary" do %>
+            <i class="bi bi-x-circle me-1"></i>Cancel
+          <% end %>
+          <div class="d-flex gap-2">
+            <%= link_to admin_motor_insurances_path, class: "btn btn-outline-secondary" do %>
+              <i class="bi bi-arrow-left me-1"></i>Back to List
+            <% end %>
+            <%= form.submit "Renew Motor Insurance", class: "btn btn-success btn-lg px-5",
+                data: { disable_with: "Processing Renewal..." } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <% end %>
+</div>
+
+<style>
+  /* Highlight renewal-specific fields */
+  .renewal-field {
+    background-color: #f0f8ff;
+    border: 2px solid #0066cc;
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+
+  .renewal-field label {
+    color: #0066cc;
+    font-weight: 600;
+  }
+
+  /* Policy Type field styling for renewal */
+  #motor_insurance_policy_type {
+    background-color: #d1edff;
+    font-weight: bold;
+  }
+
+  /* Highlight new policy dates */
+  #motor_insurance_policy_start_date,
+  #motor_insurance_policy_end_date {
+    background-color: #fffacd;
+    border: 2px solid #ffc107;
+  }
+
+  /* Premium fields highlight */
+  #motor_insurance_net_premium,
+  #motor_insurance_total_premium {
+    background-color: #f0fff0;
+    border: 2px solid #28a745;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // CSRF Token Refresh Function
+  function refreshCSRFToken() {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const hiddenTokenField = document.querySelector('input[name="authenticity_token"]');
+
+    if (csrfToken && hiddenTokenField) {
+      hiddenTokenField.value = csrfToken;
+      console.log('✅ CSRF token refreshed for renewal form');
+    }
+  }
+
+  // Refresh CSRF token on page load and before form submission
+  refreshCSRFToken();
+
+  // Add form submission handler to refresh token one more time
+  const renewalForm = document.querySelector('form');
+  if (renewalForm) {
+    renewalForm.addEventListener('submit', function(e) {
+      refreshCSRFToken();
+      console.log('✅ CSRF token refreshed before form submission');
+    });
+  }
+
+  // Set Policy Type to 'Renewal' and make it read-only
+  const policyTypeSelect = document.getElementById('motor_insurance_policy_type') ||
+                           document.getElementById('policy_type_select');
+  if (policyTypeSelect) {
+    policyTypeSelect.value = 'Renewal';
+    policyTypeSelect.setAttribute('readonly', true);
+    policyTypeSelect.style.pointerEvents = 'none';
+    policyTypeSelect.style.backgroundColor = '#d1edff';
+
+    // Add hidden field to ensure policy_type is submitted
+    const hiddenPolicyType = document.createElement('input');
+    hiddenPolicyType.type = 'hidden';
+    hiddenPolicyType.name = 'motor_insurance[policy_type]';
+    hiddenPolicyType.value = 'Renewal';
+    policyTypeSelect.parentNode.appendChild(hiddenPolicyType);
+  }
+
+  // Highlight that this is a renewal
+  const formTitle = document.querySelector('h3.card-title');
+  if (formTitle) {
+    formTitle.innerHTML = '<i class="bi bi-arrow-clockwise text-success me-2"></i>Renewal: Motor Insurance Policy';
+  }
+
+  // Update submit button text (backup in case form partial doesn't work)
+  const submitButton = document.querySelector('button[type="submit"], input[type="submit"]');
+  if (submitButton && !submitButton.value.includes('Renew')) {
+    if (submitButton.tagName === 'INPUT') {
+      submitButton.value = 'Renew Motor Insurance';
+    } else {
+      submitButton.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Renew Motor Insurance';
+    }
+    submitButton.className = 'btn btn-success btn-lg px-5';
+  }
+
+  // Add renewal badge to the form
+  const badge = document.createElement('span');
+  badge.className = 'badge bg-success ms-3';
+  badge.textContent = 'RENEWAL';
+  const cardHeader = document.querySelector('.card-header h5');
+  if (cardHeader) {
+    cardHeader.appendChild(badge);
+  }
+
+  // Show a tooltip on premium fields
+  const premiumFields = ['net_premium', 'total_premium', 'tp_premium', 'vehicle_idv'];
+  premiumFields.forEach(field => {
+    const element = document.getElementById(`motor_insurance_${field}`);
+    if (element) {
+      element.setAttribute('title', 'Please update with current renewal premium');
+      element.setAttribute('data-bs-toggle', 'tooltip');
+      element.setAttribute('data-bs-placement', 'top');
+    }
+  });
+
+  // Initialize Bootstrap tooltips
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  });
+
+  // Enhanced Commission Auto-Calculation for Motor Insurance
+  function calculateCommissions() {
+    const netPremium = parseFloat(document.getElementById('motor_insurance_net_premium').value) || 0;
+
+    if (netPremium === 0) return;
+
+    // Calculate all commission types
+    const fields = ['main_agent', 'distributor', 'ambassador', 'investor'];
+    let totalDistributionPercentage = 0;
+
+    fields.forEach(field => {
+      const percentageInput = document.querySelector(`[data-field='${field}'].commission-input`);
+      const amountOutput = document.querySelector(`[data-field='${field}'].commission-amount`);
+      const tdsPercentageInput = document.querySelector(`[data-field='${field}'].tds-percentage`);
+      const tdsAmountOutput = document.querySelector(`[data-field='${field}'].tds-amount`);
+      const afterTdsOutput = document.querySelector(`[data-field='${field}'].after-tds-value`);
+
+      if (percentageInput && amountOutput) {
+        const percentage = parseFloat(percentageInput.value) || 0;
+        const amount = (netPremium * percentage) / 100;
+        const tdsPercentage = parseFloat(tdsPercentageInput?.value) || 0;
+        const tdsAmount = (amount * tdsPercentage) / 100;
+        const afterTds = amount - tdsAmount;
+
+        amountOutput.value = amount.toFixed(2);
+        if (tdsAmountOutput) tdsAmountOutput.value = tdsAmount.toFixed(2);
+        if (afterTdsOutput) afterTdsOutput.value = afterTds.toFixed(2);
+
+        // Add to total distribution (exclude main_agent)
+        if (field !== 'main_agent') {
+          totalDistributionPercentage += percentage;
+        }
+      }
+    });
+
+    // Update total distribution and profit calculations
+    const mainAgentPercentage = parseFloat(document.getElementById('motor_insurance_main_agent_commission_percentage').value) || 0;
+    const companyExpensesPercentage = parseFloat(document.getElementById('motor_insurance_company_expenses_percentage').value) || 0;
+
+    const totalDistField = document.getElementById('motor_insurance_total_distribution_percentage');
+    if (totalDistField) totalDistField.value = totalDistributionPercentage.toFixed(2);
+
+    const profitPercentage = mainAgentPercentage - totalDistributionPercentage - companyExpensesPercentage;
+    const profitAmount = (netPremium * profitPercentage) / 100;
+
+    const profitPercentField = document.getElementById('motor_insurance_profit_percentage');
+    const profitAmountField = document.getElementById('motor_insurance_profit_amount');
+
+    if (profitPercentField) profitPercentField.value = profitPercentage.toFixed(2);
+    if (profitAmountField) profitAmountField.value = profitAmount.toFixed(2);
+
+    // Update summary displays
+    const mainAgentSummary = document.getElementById('main_agent_summary');
+    const totalDistSummary = document.getElementById('total_distribution_summary');
+    const companyExpensesSummary = document.getElementById('company_expenses_summary');
+    const profitSummary = document.getElementById('profit_summary');
+
+    if (mainAgentSummary) mainAgentSummary.textContent = `${mainAgentPercentage}% of Net Premium (Rs. ${((netPremium * mainAgentPercentage) / 100).toFixed(2)})`;
+    if (totalDistSummary) totalDistSummary.textContent = `${totalDistributionPercentage.toFixed(1)}% (Rs. ${((netPremium * totalDistributionPercentage) / 100).toFixed(2)})`;
+    if (companyExpensesSummary) companyExpensesSummary.textContent = `${companyExpensesPercentage}% of Net Premium (Rs. ${((netPremium * companyExpensesPercentage) / 100).toFixed(2)})`;
+    if (profitSummary) profitSummary.textContent = `${profitPercentage.toFixed(2)}% (Rs. ${profitAmount.toFixed(2)})`;
+
+    console.log('✅ Commission calculations updated for Net Premium: Rs. ' + netPremium);
+  }
+
+  // Add event listeners for commission calculations
+  const netPremiumField = document.getElementById('motor_insurance_net_premium');
+  if (netPremiumField) {
+    netPremiumField.addEventListener('input', function() {
+      calculateCommissions();
+      console.log('Net Premium changed: Rs. ' + this.value);
+    });
+
+    netPremiumField.addEventListener('blur', calculateCommissions);
+    netPremiumField.addEventListener('change', calculateCommissions);
+  }
+
+  // Add listeners to percentage fields
+  document.querySelectorAll('.commission-input, .tds-percentage').forEach(input => {
+    input.addEventListener('input', calculateCommissions);
+    input.addEventListener('change', calculateCommissions);
+  });
+
+  const companyExpensesField = document.getElementById('motor_insurance_company_expenses_percentage');
+  if (companyExpensesField) {
+    companyExpensesField.addEventListener('input', calculateCommissions);
+    companyExpensesField.addEventListener('change', calculateCommissions);
+  }
+
+  // Auto-calculate NCB for renewal
+  const ncbField = document.getElementById('motor_insurance_ncb');
+  if (ncbField && ncbField.value) {
+    // Increase NCB by one tier for claim-free renewal
+    const currentNCB = parseFloat(ncbField.value) || 0;
+    let newNCB = 0;
+
+    if (currentNCB === 0) newNCB = 20;
+    else if (currentNCB === 20) newNCB = 25;
+    else if (currentNCB === 25) newNCB = 35;
+    else if (currentNCB === 35) newNCB = 45;
+    else if (currentNCB === 45) newNCB = 50;
+    else if (currentNCB === 50) newNCB = 50; // Max NCB
+
+    // Show NCB suggestion
+    const ncbHelpText = document.createElement('small');
+    ncbHelpText.className = 'form-text text-info';
+    ncbHelpText.innerHTML = `<i class="bi bi-info-circle"></i> Suggested NCB for claim-free renewal: ${newNCB}%`;
+    ncbField.parentElement.appendChild(ncbHelpText);
+  }
+
+  // Initialize broker/agency selection for renewal form
+  console.log('🔧 Initializing renewal form broker/agency selection...');
+
+  // Store the original policy values for renewal
+  const originalAgencyCodeId = '<%= @renewed_policy.agency_code_id %>';
+  const originalBrokerId = '<%= @renewed_policy.broker_id %>';
+  const originalBrokerCodeType = '<%= @renewed_policy.broker_code_type %>';
+  const originalInsuranceCompany = '<%= @renewed_policy.insurance_company_name %>';
+
+  console.log('Renewal policy values:', {
+    agencyCodeId: originalAgencyCodeId,
+    brokerId: originalBrokerId,
+    brokerCodeType: originalBrokerCodeType,
+    insuranceCompany: originalInsuranceCompany
+  });
+
+  // Initialize the broker flow for renewal
+  setTimeout(function() {
+    // Make sure motor broker flow is initialized first
+    if (typeof initializeMotorBrokerFlow === 'function') {
+      initializeMotorBrokerFlow();
+      console.log('✅ Motor broker flow initialized');
+    }
+
+    // Set broker code type first
+    const brokerCodeSelect = document.getElementById('motor_insurance_broker_code_type');
+    if (brokerCodeSelect && originalBrokerCodeType) {
+      brokerCodeSelect.value = originalBrokerCodeType;
+      console.log('✅ Set broker code type:', originalBrokerCodeType);
+
+      // Trigger broker code change to populate agency dropdown
+      setTimeout(function() {
+        $(brokerCodeSelect).trigger('change');
+        console.log('✅ Triggered broker code change');
+
+        // Listen for agency dropdown population
+        $('#motor_insurance_agency_code_id').on('dropdown:populated', function() {
+          console.log('🎯 Agency dropdown populated for renewal');
+          const agencySelect = this;
+
+          setTimeout(function() {
+            // Select the appropriate value based on broker type
+            if (originalBrokerCodeType === 'direct' && originalAgencyCodeId) {
+              // For direct mode, select agency code
+              const optionExists = Array.from(agencySelect.options).some(opt => opt.value === originalAgencyCodeId);
+              if (optionExists) {
+                $(agencySelect).val(originalAgencyCodeId).trigger('change');
+                console.log('✅ Selected original agency code:', originalAgencyCodeId);
+
+                // Auto-select insurance company after agency selection with retry logic
+                function selectInsuranceCompany() {
+                  const companySelect = document.getElementById('motor_insurance_insurance_company_name');
+                  if (companySelect && originalInsuranceCompany) {
+                    console.log('Attempting to select insurance company:', originalInsuranceCompany);
+                    console.log('Available options:', Array.from(companySelect.options).map(opt => opt.text));
+
+                    // Try multiple selection methods
+                    let companySelected = false;
+
+                    // Method 1: Match by text content
+                    const exactMatch = Array.from(companySelect.options).find(opt => opt.text.trim() === originalInsuranceCompany.trim());
+                    if (exactMatch) {
+                      $(companySelect).val(exactMatch.value).trigger('change');
+                      console.log('✅ Auto-selected insurance company (exact match):', originalInsuranceCompany);
+                      companySelected = true;
+                    } else {
+                      // Method 2: Match by value
+                      const valueMatch = Array.from(companySelect.options).find(opt => opt.value.trim() === originalInsuranceCompany.trim());
+                      if (valueMatch) {
+                        $(companySelect).val(valueMatch.value).trigger('change');
+                        console.log('✅ Auto-selected insurance company (value match):', originalInsuranceCompany);
+                        companySelected = true;
+                      } else {
+                        // Method 3: Partial/fuzzy match
+                        const partialMatch = Array.from(companySelect.options).find(opt =>
+                          opt.text.toLowerCase().includes(originalInsuranceCompany.toLowerCase()) ||
+                          originalInsuranceCompany.toLowerCase().includes(opt.text.toLowerCase())
+                        );
+                        if (partialMatch) {
+                          $(companySelect).val(partialMatch.value).trigger('change');
+                          console.log('✅ Auto-selected insurance company (partial match):', partialMatch.text);
+                          companySelected = true;
+                        }
+                      }
+                    }
+
+                    if (!companySelected) {
+                      console.log('❌ Failed to auto-select insurance company:', originalInsuranceCompany);
+                    }
+                  }
+                }
+
+                setTimeout(selectInsuranceCompany, 1000);
+                setTimeout(selectInsuranceCompany, 2000); // Retry after 2 seconds
+                setTimeout(selectInsuranceCompany, 3000); // Final retry after 3 seconds
+              }
+            }
+            else if (originalBrokerCodeType === 'broking' && originalBrokerId) {
+              // For broking mode, select broker in broker_X format
+              const brokerValue = 'broker_' + originalBrokerId;
+              const optionExists = Array.from(agencySelect.options).some(opt => opt.value === brokerValue);
+              if (optionExists) {
+                $(agencySelect).val(brokerValue).trigger('change');
+                console.log('✅ Selected original broker:', brokerValue);
+
+                // Auto-select insurance company with retry logic
+                function selectInsuranceCompanyBroking() {
+                  const companySelect = document.getElementById('motor_insurance_insurance_company_name');
+                  if (companySelect && originalInsuranceCompany) {
+                    console.log('Attempting to select insurance company (broking):', originalInsuranceCompany);
+                    console.log('Available options:', Array.from(companySelect.options).map(opt => opt.text));
+
+                    // Try multiple selection methods
+                    let companySelected = false;
+
+                    // Method 1: Match by text content
+                    const exactMatch = Array.from(companySelect.options).find(opt => opt.text.trim() === originalInsuranceCompany.trim());
+                    if (exactMatch) {
+                      $(companySelect).val(exactMatch.value).trigger('change');
+                      console.log('✅ Auto-selected insurance company (exact match):', originalInsuranceCompany);
+                      companySelected = true;
+                    } else {
+                      // Method 2: Match by value
+                      const valueMatch = Array.from(companySelect.options).find(opt => opt.value.trim() === originalInsuranceCompany.trim());
+                      if (valueMatch) {
+                        $(companySelect).val(valueMatch.value).trigger('change');
+                        console.log('✅ Auto-selected insurance company (value match):', originalInsuranceCompany);
+                        companySelected = true;
+                      } else {
+                        // Method 3: Partial/fuzzy match
+                        const partialMatch = Array.from(companySelect.options).find(opt =>
+                          opt.text.toLowerCase().includes(originalInsuranceCompany.toLowerCase()) ||
+                          originalInsuranceCompany.toLowerCase().includes(opt.text.toLowerCase())
+                        );
+                        if (partialMatch) {
+                          $(companySelect).val(partialMatch.value).trigger('change');
+                          console.log('✅ Auto-selected insurance company (partial match):', partialMatch.text);
+                          companySelected = true;
+                        }
+                      }
+                    }
+
+                    if (!companySelected) {
+                      console.log('❌ Failed to auto-select insurance company (broking):', originalInsuranceCompany);
+                    }
+                  }
+                }
+
+                setTimeout(selectInsuranceCompanyBroking, 1000);
+                setTimeout(selectInsuranceCompanyBroking, 2000); // Retry after 2 seconds
+                setTimeout(selectInsuranceCompanyBroking, 3000); // Final retry after 3 seconds
+              }
+            }
+          }, 500);
+        });
+      }, 1000);
+    }
+  }, 2000); // Initial delay to ensure all form scripts are loaded
+
+  // Initial commission calculation after page load
+  setTimeout(calculateCommissions, 1000);
+});
+</script>

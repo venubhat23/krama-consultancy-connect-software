@@ -1,0 +1,261 @@
+<div class="financial-info-container">
+  <!-- Financial Information 1: Basic Financial Details -->
+  <div class="info-section-card mb-3">
+    <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#financial1Collapse" aria-expanded="false">
+      <div class="d-flex align-items-center">
+        <div class="section-icon">
+          <i class="bi bi-currency-dollar"></i>
+        </div>
+        <h5 class="section-title">Financial Information 1 - Income & Assets</h5>
+        <span class="section-count">4 Fields</span>
+      </div>
+      <i class="bi bi-chevron-down collapse-icon"></i>
+    </div>
+    <div id="financial1Collapse" class="collapse">
+      <div class="section-body">
+        <div class="row g-4">
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>ANNUAL INCOME</label>
+              <div class="info-value">
+                <%= local_assigns[:annual_income].present? ? indian_currency(local_assigns[:annual_income]) : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>MONTHLY INCOME</label>
+              <div class="info-value">
+                <%= local_assigns[:monthly_income].present? ? indian_currency(local_assigns[:monthly_income]) : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>TOTAL ASSETS VALUE</label>
+              <div class="info-value">
+                <%= local_assigns[:total_assets].present? ? indian_currency(local_assigns[:total_assets]) : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>NET WORTH</label>
+              <div class="info-value">
+                <%= local_assigns[:net_worth].present? ? indian_currency(local_assigns[:net_worth]) : '-' %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Financial Information 2: Expenses & Liabilities -->
+  <div class="info-section-card mb-3">
+    <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#financial2Collapse" aria-expanded="false">
+      <div class="d-flex align-items-center">
+        <div class="section-icon">
+          <i class="bi bi-credit-card"></i>
+        </div>
+        <h5 class="section-title">Financial Information 2 - Expenses & Liabilities</h5>
+        <span class="section-count">4 Fields</span>
+      </div>
+      <i class="bi bi-chevron-down collapse-icon"></i>
+    </div>
+    <div id="financial2Collapse" class="collapse">
+      <div class="section-body">
+        <div class="row g-4">
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>MONTHLY EXPENSES</label>
+              <div class="info-value">
+                <%= local_assigns[:monthly_expenses].present? ? indian_currency(local_assigns[:monthly_expenses]) : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>ANNUAL EXPENSES</label>
+              <div class="info-value">
+                <%= local_assigns[:annual_expenses].present? ? indian_currency(local_assigns[:annual_expenses]) : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>TOTAL LIABILITIES</label>
+              <div class="info-value">
+                <%= local_assigns[:total_liabilities].present? ? indian_currency(local_assigns[:total_liabilities]) : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>DEBT TO INCOME RATIO</label>
+              <div class="info-value">
+                <%= local_assigns[:debt_to_income_ratio].present? ? "#{local_assigns[:debt_to_income_ratio]}%" : '-' %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Financial Information 3: Investment Portfolio -->
+  <div class="info-section-card mb-3">
+    <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#financial3Collapse" aria-expanded="false">
+      <div class="d-flex align-items-center">
+        <div class="section-icon">
+          <i class="bi bi-graph-up"></i>
+        </div>
+        <h5 class="section-title">Financial Information 3 - Investment Portfolio</h5>
+        <span class="section-count">4 Fields</span>
+      </div>
+      <i class="bi bi-chevron-down collapse-icon"></i>
+    </div>
+    <div id="financial3Collapse" class="collapse">
+      <div class="section-body">
+        <div class="row g-4">
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>EQUITY INVESTMENTS</label>
+              <div class="info-value">
+                <%= local_assigns[:equity_investments].present? ? indian_currency(local_assigns[:equity_investments]) : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>MUTUAL FUNDS</label>
+              <div class="info-value">
+                <%= local_assigns[:mutual_funds].present? ? indian_currency(local_assigns[:mutual_funds]) : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>FIXED DEPOSITS</label>
+              <div class="info-value">
+                <%= local_assigns[:fixed_deposits].present? ? indian_currency(local_assigns[:fixed_deposits]) : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>OTHER INVESTMENTS</label>
+              <div class="info-value">
+                <%= local_assigns[:other_investments].present? ? indian_currency(local_assigns[:other_investments]) : '-' %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Financial Information 4: Banking & Credit -->
+  <div class="info-section-card mb-3">
+    <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#financial4Collapse" aria-expanded="false">
+      <div class="d-flex align-items-center">
+        <div class="section-icon">
+          <i class="bi bi-bank"></i>
+        </div>
+        <h5 class="section-title">Financial Information 4 - Banking & Credit</h5>
+        <span class="section-count">4 Fields</span>
+      </div>
+      <i class="bi bi-chevron-down collapse-icon"></i>
+    </div>
+    <div id="financial4Collapse" class="collapse">
+      <div class="section-body">
+        <div class="row g-4">
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>PRIMARY BANK</label>
+              <div class="info-value">
+                <%= local_assigns[:primary_bank].present? ? local_assigns[:primary_bank] : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>CREDIT SCORE</label>
+              <div class="info-value">
+                <%= local_assigns[:credit_score].present? ? local_assigns[:credit_score] : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>SAVINGS ACCOUNT BALANCE</label>
+              <div class="info-value">
+                <%= local_assigns[:savings_balance].present? ? indian_currency(local_assigns[:savings_balance]) : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>CREDIT CARD LIMIT</label>
+              <div class="info-value">
+                <%= local_assigns[:credit_limit].present? ? indian_currency(local_assigns[:credit_limit]) : '-' %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Financial Information 5: Insurance & Financial Goals -->
+  <div class="info-section-card mb-3">
+    <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#financial5Collapse" aria-expanded="false">
+      <div class="d-flex align-items-center">
+        <div class="section-icon">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <h5 class="section-title">Financial Information 5 - Insurance & Goals</h5>
+        <span class="section-count">4 Fields</span>
+      </div>
+      <i class="bi bi-chevron-down collapse-icon"></i>
+    </div>
+    <div id="financial5Collapse" class="collapse">
+      <div class="section-body">
+        <div class="row g-4">
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>TOTAL INSURANCE COVERAGE</label>
+              <div class="info-value">
+                <%= local_assigns[:total_insurance_coverage].present? ? indian_currency(local_assigns[:total_insurance_coverage]) : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>ANNUAL PREMIUM BUDGET</label>
+              <div class="info-value">
+                <%= local_assigns[:annual_premium_budget].present? ? indian_currency(local_assigns[:annual_premium_budget]) : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>FINANCIAL GOAL</label>
+              <div class="info-value">
+                <%= local_assigns[:financial_goal].present? ? local_assigns[:financial_goal] : '-' %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-field">
+              <label>RISK APPETITE</label>
+              <div class="info-value">
+                <%= local_assigns[:risk_appetite].present? ? local_assigns[:risk_appetite] : '-' %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

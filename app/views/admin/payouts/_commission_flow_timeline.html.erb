@@ -1,0 +1,425 @@
+<!-- Commission Flow Timeline Partial -->
+<style>
+.flow-timeline {
+  position: relative;
+  padding: 20px 0;
+}
+
+.flow-step {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.flow-step::after {
+  content: '';
+  position: absolute;
+  left: 30px;
+  top: 70px;
+  width: 3px;
+  height: 50px;
+  background: linear-gradient(to bottom, #e3f2fd, #bbdefb);
+  border-radius: 2px;
+}
+
+.flow-step:last-child::after {
+  display: none;
+}
+
+.flow-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20px;
+  position: relative;
+  z-index: 2;
+  font-size: 1.5rem;
+}
+
+.flow-icon.paid {
+  background: linear-gradient(135deg, #4caf50, #81c784);
+  color: white;
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.flow-icon.pending {
+  background: linear-gradient(135deg, #ff9800, #ffb74d);
+  color: white;
+  box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+}
+
+.flow-icon.processing {
+  background: linear-gradient(135deg, #2196f3, #64b5f6);
+  color: white;
+  box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+}
+
+.flow-icon.not_initiated {
+  background: linear-gradient(135deg, #9e9e9e, #bdbdbd);
+  color: white;
+  box-shadow: 0 6px 20px rgba(158, 158, 158, 0.4);
+}
+
+.flow-content {
+  flex: 1;
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid #e3f2fd;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.flow-content:hover {
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.flow-header {
+  display: flex;
+  justify-content: between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.flow-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+}
+
+.flow-amount {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #27ae60;
+  margin: 0;
+}
+
+.flow-percentage {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-top: 4px;
+}
+
+.flow-details {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #ecf0f1;
+}
+
+.flow-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-paid {
+  background: rgba(76, 175, 80, 0.15);
+  color: #2e7d32;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.status-pending {
+  background: rgba(255, 152, 0, 0.15);
+  color: #f57c00;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.status-processing {
+  background: rgba(33, 150, 243, 0.15);
+  color: #1565c0;
+  border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
+.status-not_initiated {
+  background: rgba(158, 158, 158, 0.15);
+  color: #616161;
+  border: 1px solid rgba(158, 158, 158, 0.3);
+}
+
+.flow-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.btn-flow {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-flow-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-flow-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.policy-context {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+}
+
+.context-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.context-details {
+  opacity: 0.9;
+  font-size: 0.95rem;
+}
+</style>
+
+<% if defined?(policy_id) && defined?(policy_type) %>
+  <%
+    # Get policy and timeline data
+    timeline_data = commission_flow_timeline_data(policy_id, policy_type)
+
+    # Get the actual policy for context
+    policy = case policy_type
+             when 'health'
+               HealthInsurance.find_by(id: policy_id)
+             when 'life'
+               LifeInsurance.find_by(id: policy_id)
+             else
+               nil
+             end
+  %>
+
+  <% if policy %>
+    <!-- Policy Context Card -->
+    <div class="policy-context">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h3 class="context-title"><%= policy_type.humanize %> Insurance Policy</h3>
+          <div class="context-details">
+            <strong><%= policy.policy_number || "Policy ##{policy.id}" %></strong>
+            <br>
+            Customer: <%= policy.customer&.display_name || 'Unknown' %>
+            <br>
+            Premium: <%= format_currency(policy.total_premium || policy.net_premium) %>
+            <br>
+            Total Commission: <%= format_currency(total_commission_flow(policy)) %>
+          </div>
+        </div>
+        <div class="text-end">
+          <div class="context-details">
+            <small>Created <%= days_since_policy_created(policy) %> days ago</small>
+            <% sla = sla_status(days_since_policy_created(policy)) %>
+            <br>
+            <span class="badge bg-light <%= sla[:class] %>"><%= sla[:text] %></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Commission Flow Timeline -->
+    <div class="flow-timeline">
+      <% if timeline_data.any? %>
+        <% timeline_data.each_with_index do |flow_item, index| %>
+          <div class="flow-step">
+            <!-- Flow Icon -->
+            <div class="flow-icon <%= flow_item[:status] %>">
+              <% case flow_item[:status] %>
+              <% when 'paid' %>
+                <i class="bi bi-check-circle-fill"></i>
+              <% when 'pending' %>
+                <i class="bi bi-clock-fill"></i>
+              <% when 'processing' %>
+                <i class="bi bi-arrow-repeat"></i>
+              <% else %>
+                <i class="bi bi-circle"></i>
+              <% end %>
+            </div>
+
+            <!-- Flow Content -->
+            <div class="flow-content">
+              <div class="flow-header">
+                <div class="flex-grow-1">
+                  <h4 class="flow-title"><%= flow_item[:recipient] %></h4>
+                  <div class="d-flex align-items-baseline gap-3">
+                    <h3 class="flow-amount"><%= format_currency(flow_item[:amount]) %></h3>
+                    <span class="flow-percentage"><%= percentage_display(flow_item[:percentage]) %></span>
+                  </div>
+                </div>
+                <div>
+                  <span class="status-indicator status-<%= flow_item[:status] %>">
+                    <%= flow_item[:status].humanize %>
+                  </span>
+                </div>
+              </div>
+
+              <div class="flow-details">
+                <div class="flow-meta">
+                  <span class="text-muted">
+                    <% if flow_item[:date] %>
+                      <i class="bi bi-calendar me-1"></i>
+                      <%= flow_item[:date].strftime('%d %b %Y') %>
+                    <% else %>
+                      <i class="bi bi-calendar-x me-1"></i>
+                      Not scheduled
+                    <% end %>
+                  </span>
+                  <span class="text-muted">
+                    <% if flow_item[:reference] %>
+                      <i class="bi bi-hash me-1"></i>
+                      <%= flow_item[:reference] %>
+                    <% else %>
+                      <i class="bi bi-dash me-1"></i>
+                      No reference
+                    <% end %>
+                  </span>
+                </div>
+
+                <% if flow_item[:notes].present? %>
+                  <div class="mt-2">
+                    <small class="text-muted">
+                      <i class="bi bi-chat-quote me-1"></i>
+                      <%= flow_item[:notes] %>
+                    </small>
+                  </div>
+                <% end %>
+
+                <!-- Action Buttons -->
+                <div class="flow-actions">
+                  <% if flow_item[:status] == 'pending' %>
+                    <button class="btn btn-flow btn-flow-primary btn-sm"
+                            onclick="processPayment('<%= policy_id %>', '<%= flow_item[:recipient].downcase %>')">
+                      <i class="bi bi-play-fill me-1"></i>
+                      Process Payment
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm"
+                            onclick="editPayoutDetails('<%= policy_id %>', '<%= flow_item[:recipient].downcase %>')">
+                      <i class="bi bi-pencil me-1"></i>
+                      Edit Details
+                    </button>
+                  <% elsif flow_item[:status] == 'paid' %>
+                    <button class="btn btn-outline-success btn-sm"
+                            onclick="viewPaymentDetails('<%= policy_id %>', '<%= flow_item[:recipient].downcase %>')">
+                      <i class="bi bi-eye me-1"></i>
+                      View Details
+                    </button>
+                    <button class="btn btn-outline-info btn-sm"
+                            onclick="downloadReceipt('<%= policy_id %>', '<%= flow_item[:recipient].downcase %>')">
+                      <i class="bi bi-download me-1"></i>
+                      Receipt
+                    </button>
+                  <% elsif flow_item[:status] == 'not_initiated' %>
+                    <button class="btn btn-outline-primary btn-sm"
+                            onclick="initiatePayment('<%= policy_id %>', '<%= flow_item[:recipient].downcase %>')">
+                      <i class="bi bi-plus-circle me-1"></i>
+                      Initiate Payment
+                    </button>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <!-- No Commission Flow -->
+        <div class="text-center py-5">
+          <div class="mb-4">
+            <i class="bi bi-diagram-3 text-muted" style="font-size: 4rem;"></i>
+          </div>
+          <h5 class="text-muted">No Commission Flow Data</h5>
+          <p class="text-muted mb-4">
+            This policy doesn't have commission distribution configured yet.
+          </p>
+          <button class="btn btn-primary" onclick="setupCommissionFlow('<%= policy_id %>', '<%= policy_type %>')">
+            <i class="bi bi-gear me-2"></i>
+            Setup Commission Flow
+          </button>
+        </div>
+      <% end %>
+    </div>
+
+  <% else %>
+    <!-- Policy Not Found -->
+    <div class="text-center py-5">
+      <div class="mb-4">
+        <i class="bi bi-exclamation-triangle text-warning" style="font-size: 4rem;"></i>
+      </div>
+      <h5 class="text-muted">Policy Not Found</h5>
+      <p class="text-muted">
+        Unable to load commission flow for policy ID: <%= policy_id %>
+      </p>
+    </div>
+  <% end %>
+
+<% else %>
+  <!-- Missing Parameters -->
+  <div class="text-center py-5">
+    <div class="mb-4">
+      <i class="bi bi-info-circle text-info" style="font-size: 4rem;"></i>
+    </div>
+    <h5 class="text-muted">Select a Policy</h5>
+    <p class="text-muted">
+      Choose a policy to view its commission flow timeline.
+    </p>
+  </div>
+<% end %>
+
+<script>
+function processPayment(policyId, recipient) {
+  // Implementation for processing payment
+  console.log('Processing payment for policy:', policyId, 'recipient:', recipient);
+  // You can implement a modal or redirect to payment processing page
+}
+
+function editPayoutDetails(policyId, recipient) {
+  // Implementation for editing payout details
+  console.log('Editing payout details for policy:', policyId, 'recipient:', recipient);
+}
+
+function viewPaymentDetails(policyId, recipient) {
+  // Implementation for viewing payment details
+  console.log('Viewing payment details for policy:', policyId, 'recipient:', recipient);
+}
+
+function downloadReceipt(policyId, recipient) {
+  // Implementation for downloading receipt
+  console.log('Downloading receipt for policy:', policyId, 'recipient:', recipient);
+}
+
+function initiatePayment(policyId, recipient) {
+  // Implementation for initiating payment
+  console.log('Initiating payment for policy:', policyId, 'recipient:', recipient);
+}
+
+function setupCommissionFlow(policyId, policyType) {
+  // Implementation for setting up commission flow
+  console.log('Setting up commission flow for policy:', policyId, 'type:', policyType);
+}
+</script>

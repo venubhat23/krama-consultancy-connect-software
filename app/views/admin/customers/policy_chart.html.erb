@@ -1,0 +1,292 @@
+<% content_for :page_title, "Policy Coverage Chart" %>
+<% content_for :page_subtitle, "Insurance Policy Status for #{@customer.display_name}" %>
+
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="page-header mb-4">
+    <div class="row align-items-center">
+      <div class="col">
+        <h3 class="page-title mb-0">
+          <i class="bi bi-bar-chart me-2"></i>
+          Policy Coverage Chart
+        </h3>
+        <p class="page-subtitle text-muted mb-0">
+          Insurance policy status overview for <strong><%= @customer.display_name %></strong>
+        </p>
+      </div>
+      <div class="col-auto">
+        <%= link_to admin_customer_path(@customer), class: "btn btn-outline-secondary" do %>
+          <i class="bi bi-arrow-left me-1"></i> Back to Customer
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coverage Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <i class="bi bi-shield-check fs-2 text-success"></i>
+          </div>
+          <h3 class="text-success mb-1"><%= @total_policies %></h3>
+          <p class="text-muted mb-0">Total Policies</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <i class="bi bi-pie-chart fs-2 text-primary"></i>
+          </div>
+          <h3 class="text-primary mb-1"><%= @policy_types_with_coverage %></h3>
+          <p class="text-muted mb-0">Policy Types Covered</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <i class="bi bi-percent fs-2 text-info"></i>
+          </div>
+          <h3 class="text-info mb-1"><%= @coverage_percentage %>%</h3>
+          <p class="text-muted mb-0">Coverage Percentage</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <i class="bi bi-graph-up fs-2 text-warning"></i>
+          </div>
+          <h3 class="text-warning mb-1"><%= 4 - @policy_types_with_coverage %></h3>
+          <p class="text-muted mb-0">Missing Coverage</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Policy Status Chart -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-table me-2"></i>
+            Policy Coverage Status
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" class="text-center" style="width: 80px;">Icon</th>
+                  <th scope="col">Policy Type</th>
+                  <th scope="col" class="text-center" style="width: 120px;">Status</th>
+                  <th scope="col" class="text-center" style="width: 100px;">Count</th>
+                  <th scope="col" class="text-center" style="width: 120px;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @policy_status.each do |policy_type, details| %>
+                  <tr>
+                    <td class="text-center">
+                      <div class="icon-wrapper p-2 rounded-circle bg-<%= details[:color] %>-subtle">
+                        <i class="<%= details[:icon] %> fs-4 text-<%= details[:color] %>"></i>
+                      </div>
+                    </td>
+                    <td>
+                      <h6 class="mb-1"><%= policy_type %></h6>
+                      <small class="text-muted">
+                        <%= case policy_type
+                            when 'Health Insurance' then 'Medical and health coverage policies'
+                            when 'Life Insurance' then 'Life protection and investment policies'
+                            when 'Motor Insurance' then 'Vehicle insurance and protection'
+                            when 'General Insurance' then 'Travel, property and other policies'
+                            end %>
+                      </small>
+                    </td>
+                    <td class="text-center">
+                      <% if details[:exists] %>
+                        <span class="badge bg-success rounded-pill">
+                          <i class="bi bi-check-circle me-1"></i>
+                          Covered
+                        </span>
+                      <% else %>
+                        <span class="badge bg-danger rounded-pill">
+                          <i class="bi bi-x-circle me-1"></i>
+                          Not Covered
+                        </span>
+                      <% end %>
+                    </td>
+                    <td class="text-center">
+                      <% if details[:count] > 0 %>
+                        <span class="badge bg-<%= details[:color] %> rounded-pill fs-6">
+                          <%= details[:count] %>
+                        </span>
+                      <% else %>
+                        <span class="text-muted">0</span>
+                      <% end %>
+                    </td>
+                    <td class="text-center">
+                      <% if details[:exists] %>
+                        <% case policy_type
+                           when 'Health Insurance' %>
+                          <%= link_to admin_health_insurances_path(customer_id: @customer.id),
+                                      class: "btn btn-sm btn-outline-#{details[:color]}" do %>
+                            <i class="bi bi-eye me-1"></i>View
+                          <% end %>
+                        <% when 'Life Insurance' %>
+                          <%= link_to admin_life_insurances_path(customer_id: @customer.id),
+                                      class: "btn btn-sm btn-outline-#{details[:color]}" do %>
+                            <i class="bi bi-eye me-1"></i>View
+                          <% end %>
+                        <% when 'Motor Insurance' %>
+                          <%= link_to admin_motor_insurances_path(customer_id: @customer.id),
+                                      class: "btn btn-sm btn-outline-#{details[:color]}" do %>
+                            <i class="bi bi-eye me-1"></i>View
+                          <% end %>
+                        <% else %>
+                          <span class="text-muted">-</span>
+                        <% end %>
+                      <% else %>
+                        <% case policy_type
+                           when 'Health Insurance' %>
+                          <%= link_to new_admin_health_insurance_path(customer_id: @customer.id),
+                                      class: "btn btn-sm btn-#{details[:color]}" do %>
+                            <i class="bi bi-plus me-1"></i>Add
+                          <% end %>
+                        <% when 'Life Insurance' %>
+                          <%= link_to new_admin_life_insurance_path(customer_id: @customer.id),
+                                      class: "btn btn-sm btn-#{details[:color]}" do %>
+                            <i class="bi bi-plus me-1"></i>Add
+                          <% end %>
+                        <% when 'Motor Insurance' %>
+                          <%= link_to new_admin_motor_insurance_path(customer_id: @customer.id),
+                                      class: "btn btn-sm btn-#{details[:color]}" do %>
+                            <i class="bi bi-plus me-1"></i>Add
+                          <% end %>
+                        <% else %>
+                          <span class="text-muted">-</span>
+                        <% end %>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Policy Details Sections -->
+  <% @policy_status.each do |policy_type, details| %>
+    <% if details[:exists] && details[:policies].any? %>
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-<%= details[:color] %>-subtle border-0">
+              <h6 class="mb-0 text-<%= details[:color] %>">
+                <i class="<%= details[:icon] %> me-2"></i>
+                <%= policy_type %> Policies (<%= details[:count] %>)
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <% details[:policies].each do |policy| %>
+                  <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100 border-<%= details[:color] %> border-opacity-25">
+                      <div class="card-body">
+                        <h6 class="card-title text-<%= details[:color] %>">
+                          <%= policy.try(:policy_number) || "Policy ##{policy.id}" %>
+                        </h6>
+                        <p class="card-text small">
+                          <strong>Company:</strong> <%= policy.try(:insurance_company_name) || 'N/A' %><br>
+                          <strong>Premium:</strong> <%= indian_currency(policy.try(:total_premium).to_i) %><br>
+                          <strong>Start:</strong> <%= policy.try(:policy_start_date)&.strftime("%b %d, %Y") || 'N/A' %><br>
+                          <strong>End:</strong> <%= policy.try(:policy_end_date)&.strftime("%b %d, %Y") || 'N/A' %>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+
+  <!-- Recommendations -->
+  <% missing_policies = @policy_status.select { |_, details| !details[:exists] } %>
+  <% if missing_policies.any? %>
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm border-warning">
+          <div class="card-header bg-warning-subtle border-0">
+            <h6 class="mb-0 text-warning">
+              <i class="bi bi-lightbulb me-2"></i>
+              Coverage Recommendations
+            </h6>
+          </div>
+          <div class="card-body">
+            <p class="mb-3">Consider adding the following insurance types to provide comprehensive coverage:</p>
+            <div class="row">
+              <% missing_policies.each do |policy_type, details| %>
+                <div class="col-md-6 col-lg-3 mb-3">
+                  <div class="d-flex align-items-center p-3 border rounded">
+                    <div class="me-3">
+                      <i class="<%= details[:icon] %> fs-3 text-<%= details[:color] %>"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1"><%= policy_type %></h6>
+                      <small class="text-muted">Not covered</small>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<style>
+.icon-wrapper {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease;
+}
+
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+
+  .icon-wrapper {
+    width: 50px;
+    height: 50px;
+  }
+}
+</style>

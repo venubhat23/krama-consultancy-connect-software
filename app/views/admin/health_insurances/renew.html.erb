@@ -1,0 +1,2453 @@
+<% content_for :page_title, "Renew Health Insurance Policy" %>
+<% content_for :page_subtitle, "Create renewal policy for #{@health_insurance.policy_number}" %>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">
+      <i class="bi bi-arrow-clockwise me-2 text-warning"></i>
+      Renew Health Insurance Policy
+    </h2>
+    <p class="text-muted mb-0">
+      Creating renewal policy for: <strong><%= @health_insurance.policy_number %></strong>
+      <span class="badge bg-warning text-dark ms-2">
+        <% original_policy = HealthInsurance.find(params[:id]) %>
+        Expires: <%= original_policy.policy_end_date ? original_policy.policy_end_date.strftime('%B %d, %Y') : 'N/A' %>
+      </span>
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to admin_health_insurance_path(params[:id]), class: "btn btn-outline-info" do %>
+      <i class="bi bi-eye me-1"></i>
+      View Original Policy
+    <% end %>
+    <%= link_to admin_health_insurances_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Policies
+    <% end %>
+  </div>
+</div>
+
+<!-- Original vs Renewal Comparison -->
+<div class="alert alert-info d-flex align-items-center mb-4">
+  <i class="bi bi-info-circle me-3 fs-4"></i>
+  <div>
+    <h6 class="alert-heading mb-1">Policy Renewal Information</h6>
+    <p class="mb-0">
+      This form is pre-filled with data from the original policy. Please review and update any changes needed for the renewal.
+      The policy type has been automatically set to <strong>"Renewal"</strong>.
+      Please set new policy dates, policy number, and review all details before submitting.
+    </p>
+  </div>
+</div>
+
+<!-- Complete Renewal Form (Same as Create Form) -->
+<%= form_with model: [:admin, @health_insurance], url: create_renewal_admin_health_insurance_path(params[:id]), method: :post, local: true, class: "needs-validation", novalidate: true do |form| %>
+
+  <!-- Client & Agent Details Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-person me-2 text-primary"></i>
+        Client & Agent Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <% if @health_insurance.errors.any? %>
+        <div class="alert alert-danger alert-dismissible fade show">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <strong>Please correct the following errors:</strong>
+          <ul class="mb-0 mt-2">
+            <% @health_insurance.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% end %>
+
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <%= form.label :customer_id, "Client Name*", class: "form-label" %>
+          <%= form.select :customer_id,
+              options_for_select(@customers.map { |c| [c.display_name, c.id] }, @health_insurance.customer_id),
+              { prompt: 'Search and select client...' },
+              { class: "form-control #{'is-invalid' if @health_insurance.errors[:customer_id].any?}", required: true, id: "customer_select", data: { placeholder: "Type to search clients..." } } %>
+          <% if @health_insurance.errors[:customer_id].any? %>
+            <div class="invalid-feedback"><%= @health_insurance.errors[:customer_id].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_holder, "Policy Holder", class: "form-label" %>
+          <%
+            # Build policy holder options with family members
+            policy_holder_options = [['Self', 'Self']]
+            customer_family_members = @customer_family_members || []
+
+            if customer_family_members.any?
+              customer_family_members.each do |member|
+                option_text = "#{member.name} (#{member.relationship.humanize})"
+                option_value = member.name
+                policy_holder_options << [option_text, option_value]
+              end
+            end
+
+            # Always ensure the saved policy holder is included in options
+            saved_policy_holder = @health_insurance.policy_holder
+            if saved_policy_holder.present? && !policy_holder_options.any? { |opt| opt[1] == saved_policy_holder }
+              # Add the saved policy holder as an option
+              policy_holder_options << [saved_policy_holder, saved_policy_holder]
+            end
+          %>
+          <%= form.select :policy_holder,
+              options_for_select(policy_holder_options, @health_insurance.policy_holder),
+              {},
+              { class: "form-control", id: "policy_holder_select", data: { placeholder: "Type to search policy holders..." } } %>
+          <div class="form-text text-muted mt-1">
+            <small>Current selection: <strong><%= @health_insurance.policy_holder %></strong></small>
+            <% if customer_family_members.any? %>
+              <br><small class="text-info">Family members loaded: <%= customer_family_members.count %></small>
+            <% end %>
+
+          </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :sub_agent_id, "Affiliate", class: "form-label" %>
+          <%= form.select :sub_agent_id,
+              options_for_select([['Self', '']] + @sub_agents.map { |a| [a.display_name, a.id] }, @health_insurance.sub_agent_id || (@auto_select_affiliate == 'self' ? '' : @auto_select_affiliate)),
+              {},
+              { class: "form-control", id: "affiliate_select", data: { placeholder: "Type to search affiliates..." } } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Policy Details Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-file-text me-2 text-primary"></i>
+        Policy Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <!-- 1st: Broker Code dropdown with Direct/Broking options -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :broker_code_type, "Broker Code", class: "form-label" %>
+          <%= form.select :broker_code_type,
+              options_for_select([
+                ['Direct', 'direct'],
+                ['Broking', 'broking']
+              ], @health_insurance.broker_code_type),
+              { prompt: 'Select Broker Code' },
+              { class: "form-control", id: "health_insurance_broker_code_type" } %>
+        </div>
+
+        <!-- 2nd: Agency Code (shows Agents when Direct selected, Brokers when Broking selected) -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :agency_code_id, "Agency Code", class: "form-label" %>
+          <span class="dynamic-label" id="agency_code_label_text"></span>
+          <%= form.select :agency_code_id,
+              options_for_select(@agency_codes.map { |a| ["#{a.agent_name} - #{a.code}", a.id] }, @health_insurance.agency_code_id),
+              { prompt: 'Search and select agency code...' },
+              { class: "form-control #{'is-invalid' if @health_insurance.errors[:agency_code_id].any?}", required: true, id: "health_insurance_agency_code_id", data: { placeholder: "Type to search agency codes..." } } %>
+          <% if @health_insurance.errors[:agency_code_id].any? %>
+            <div class="invalid-feedback"><%= @health_insurance.errors[:agency_code_id].first %></div>
+          <% end %>
+        </div>
+
+        <!-- Hidden field for broker_id when needed -->
+        <%= form.hidden_field :broker_id, id: "broker_id_hidden" %>
+
+        <!-- 3rd: Insurance Company Name (Dynamic based on Agent/Broker selection) -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :insurance_company_name, "Insurance Company Name*", class: "form-label" %>
+          <%= form.select :insurance_company_name,
+              options_for_select(@insurance_companies.map { |c| [c, c] }, @health_insurance.insurance_company_name),
+              { prompt: 'Search and select company...' },
+              { class: "form-control #{'is-invalid' if @health_insurance.errors[:insurance_company_name].any?}", required: true, id: "health_insurance_insurance_company_name", data: { placeholder: "Type to search companies..." } } %>
+          <% if @health_insurance.errors[:insurance_company_name].any? %>
+            <div class="invalid-feedback"><%= @health_insurance.errors[:insurance_company_name].first %></div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_type, "Policy Type*", class: "form-label" %>
+          <%= form.select :policy_type,
+              options_for_select([['Renewal', 'Renewal']], 'Renewal'),
+              {},
+              { class: "form-control", required: true, id: "policy_type_select", readonly: true, style: "background-color: #e9ecef; pointer-events: none;" } %>
+          <div class="form-text">
+            <span class="badge bg-success">Renewal</span> Automatically set for renewal policies
+          </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :insurance_type, "Insurance Type*", class: "form-label" %>
+          <%= form.select :insurance_type,
+              options_for_select(HealthInsurance::INSURANCE_TYPES.map { |type| [type, type] }, @health_insurance.insurance_type),
+              { prompt: 'Select Insurance Type' },
+              { class: "form-control #{'is-invalid' if @health_insurance.errors[:insurance_type].any?}", required: true, id: "insurance_type_select" } %>
+          <% if @health_insurance.errors[:insurance_type].any? %>
+            <div class="invalid-feedback"><%= @health_insurance.errors[:insurance_type].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :payment_mode, "Payment Mode*", class: "form-label" %>
+          <%= form.select :payment_mode,
+              options_for_select(HealthInsurance::PAYMENT_MODES.map { |mode| [mode, mode] }, @health_insurance.payment_mode),
+              { prompt: 'Select Payment Mode' },
+              { class: "form-control #{'is-invalid' if @health_insurance.errors[:payment_mode].any?}", required: true, id: "payment_mode_select" } %>
+          <% if @health_insurance.errors[:payment_mode].any? %>
+            <div class="invalid-feedback"><%= @health_insurance.errors[:payment_mode].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_number, "Policy Number*", class: "form-label" %>
+          <%= form.text_field :policy_number,
+              class: "form-control #{'is-invalid' if @health_insurance.errors[:policy_number].any?}",
+              placeholder: "Enter new policy number for renewal", required: true %>
+          <% if @health_insurance.errors[:policy_number].any? %>
+            <div class="invalid-feedback"><%= @health_insurance.errors[:policy_number].first %></div>
+          <% end %>
+          <div class="form-text text-muted">
+            <i class="bi bi-info-circle"></i> Original Policy: <strong><%= @original_policy_number %></strong> | Enter new policy number for renewal
+          </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_booking_date, "Policy Booking Date", class: "form-label" %>
+          <%= form.date_field :policy_booking_date,
+              class: "form-control",
+              value: Date.current %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_start_date, "Policy Start Date*", class: "form-label" %>
+          <%= form.date_field :policy_start_date,
+              class: "form-control #{'is-invalid' if @health_insurance.errors[:policy_start_date].any?}",
+              required: true, id: "start_date" %>
+          <% if @health_insurance.errors[:policy_start_date].any? %>
+            <div class="invalid-feedback"><%= @health_insurance.errors[:policy_start_date].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_end_date, "Policy End Date*", class: "form-label" %>
+          <%= form.date_field :policy_end_date,
+              class: "form-control #{'is-invalid' if @health_insurance.errors[:policy_end_date].any?}",
+              required: true, id: "end_date" %>
+          <% if @health_insurance.errors[:policy_end_date].any? %>
+            <div class="invalid-feedback"><%= @health_insurance.errors[:policy_end_date].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :plan_name, "Plan Name", class: "form-label" %>
+          <%= form.text_field :plan_name,
+              class: "form-control",
+              placeholder: "Enter plan name" %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :sum_insured_text, "Sum Insured*", class: "form-label" %>
+          <%= form.text_field :sum_insured_text,
+              class: "form-control #{'is-invalid' if @health_insurance.errors[:sum_insured].any?}",
+              placeholder: "e.g., 90 lakhs, 5 crores, 1.5 crore",
+              value: @health_insurance.sum_insured_display_text,
+              required: true,
+              id: "sum_insured_text_input" %>
+          <div class="form-text">
+            Enter amount like: 90 lakhs, 5 crores, 1.5 crore, etc.
+            <span id="sum_insured_preview" class="text-primary fw-bold"></span>
+          </div>
+          <% if @health_insurance.errors[:sum_insured].any? %>
+            <div class="invalid-feedback"><%= @health_insurance.errors[:sum_insured].first %></div>
+          <% end %>
+          <%= form.hidden_field :sum_insured %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :net_premium, "Net Premium*", class: "form-label" %>
+          <%= form.number_field :net_premium,
+              class: "form-control #{'is-invalid' if @health_insurance.errors[:net_premium].any?}",
+              placeholder: "0", step: 0.01, required: true, id: "net_premium" %>
+          <% if @health_insurance.errors[:net_premium].any? %>
+            <div class="invalid-feedback"><%= @health_insurance.errors[:net_premium].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :gst_percentage, "GST %*", class: "form-label" %>
+          <%= form.number_field :gst_percentage,
+              class: "form-control",
+              value: @health_insurance.gst_percentage,
+              step: 0.01, id: "gst_percentage" %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :total_premium, "Total Premium*", class: "form-label" %>
+          <%= form.number_field :total_premium,
+              class: "form-control #{'is-invalid' if @health_insurance.errors[:total_premium].any?}",
+              placeholder: "0", step: 0.01, required: true, readonly: true, id: "total_premium" %>
+          <% if @health_insurance.errors[:total_premium].any? %>
+            <div class="invalid-feedback"><%= @health_insurance.errors[:total_premium].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_term, "Policy Term (Years)", class: "form-label" %>
+          <%= form.number_field :policy_term,
+              class: "form-control #{'is-invalid' if @health_insurance.errors[:policy_term].any?}",
+              placeholder: "e.g., 1, 2, 3",
+              min: 1,
+              step: 1 %>
+          <div class="form-text">Enter policy term in years (e.g., 1, 2, 3)</div>
+          <% if @health_insurance.errors[:policy_term].any? %>
+            <div class="invalid-feedback"><%= @health_insurance.errors[:policy_term].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :claim_process, "Claim Process", class: "form-label" %>
+          <%= form.select :claim_process,
+              options_for_select(HealthInsurance::CLAIM_PROCESSES.map { |process| [process, process] }, @health_insurance.claim_process),
+              { prompt: 'Select Claim Process' },
+              { class: "form-control", id: "claim_process_select" } %>
+        </div>
+
+        <!-- Additional fields from edit form -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :premium_frequency, "Premium Frequency", class: "form-label" %>
+          <%= form.select :premium_frequency,
+              options_for_select([
+                ['Annual', 'annual'],
+                ['Semi-Annual', 'semi_annual'],
+                ['Quarterly', 'quarterly'],
+                ['Monthly', 'monthly']
+              ], @health_insurance.premium_frequency),
+              { prompt: 'Select Frequency' },
+              { class: "form-control" } %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :status, "Status", class: "form-label" %>
+          <%= form.select :status,
+              options_for_select([
+                ['Active', 'active'],
+                ['Pending', 'pending'],
+                ['Expired', 'expired'],
+                ['Cancelled', 'cancelled']
+              ], @health_insurance.status),
+              { prompt: 'Select Status' },
+              { class: "form-control" } %>
+        </div>
+
+        <div class="col-md-12 mb-3">
+          <%= form.label :additional_details, "Additional Details", class: "form-label" %>
+          <%= form.text_area :additional_details,
+              class: "form-control",
+              rows: 4,
+              placeholder: "Enter any additional policy details, terms, or conditions...",
+              value: @health_insurance.additional_details %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Family/Employee Coverage Section -->
+  <div class="card mb-4" id="family_coverage_section">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-people me-2 text-primary"></i>
+        Family Coverage
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">Family Members</h6>
+        <button type="button" id="add_family_member" class="btn btn-primary">
+          <i class="bi bi-plus me-1"></i>Add Member
+        </button>
+      </div>
+
+      <div id="family_members">
+        <div class="text-center py-4 text-muted" id="no_members_message" <%= @health_insurance.health_insurance_members.any? ? 'style="display: none;"' : '' %>>
+          <i class="bi bi-people display-4 mb-3"></i>
+          <p class="mb-0">No family members added yet.</p>
+        </div>
+
+        <%= form.fields_for :health_insurance_members do |member_form| %>
+          <div class="family-member-row border rounded p-3 mb-3 bg-light">
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <%= member_form.label :member_name, "Member Name", class: "form-label" %>
+                <%= member_form.text_field :member_name, class: "form-control", placeholder: "Full Name" %>
+              </div>
+              <div class="col-md-2 mb-3">
+                <%= member_form.label :age, "Age", class: "form-label" %>
+                <%= member_form.number_field :age, class: "form-control", min: 1, max: 120 %>
+              </div>
+              <div class="col-md-3 mb-3">
+                <%= member_form.label :relationship, "Relationship", class: "form-label" %>
+                <%= member_form.select :relationship,
+                    options_for_select(HealthInsuranceMember::RELATIONSHIPS.map { |rel| [rel, rel] }, member_form.object.relationship),
+                    { prompt: 'Select Relationship' },
+                    { class: "form-select" } %>
+              </div>
+              <div class="col-md-3 mb-3">
+                <%= member_form.label :sum_insured, "Sum Insured", class: "form-label" %>
+                <%= member_form.number_field :sum_insured, class: "form-control", step: 0.01 %>
+              </div>
+              <div class="col-md-1 d-flex align-items-end mb-3">
+                <button type="button" class="btn btn-outline-danger remove-member-btn">
+                  <i class="bi bi-trash"></i>
+                </button>
+                <%= member_form.check_box :_destroy, style: "display: none;" %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <% if @health_insurance.drwise_policy? %>
+  <!-- Commission Calculation Table -->
+  <div class="card mb-4 shadow-sm commission-table">
+    <div class="card-header" style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="mb-0 text-dark fw-bold">
+            <i class="bi bi-calculator me-2 text-primary"></i>
+            Commission Calculation
+          </h5>
+        </div>
+        <div class="text-end">
+          <small class="text-muted fw-bold">Profit Formula:</small>
+          <div class="badge bg-light text-dark border" style="font-size: 0.8rem;">
+            Main Agent Commission - Total Distribution - Company Expenses
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table mb-0" style="font-size: 0.95rem;">
+          <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+            <tr>
+              <th class="py-3 px-4 fw-bold text-dark border-0" style="width: 20%;">COMMISSION DETAILS</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 12%;">(%)</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 18%;">COMMISSION</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 12%;">TDS (%)</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 15%;">TDS AMOUNT</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 23%; background: #f8f9fa;">ACTUAL AMOUNT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Main Agent -->
+            <tr style="border-bottom: 1px solid #e9ecef;">
+              <td class="py-3 px-4 fw-bold text-dark bg-light">Main Agent</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :main_agent_commission_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm",
+                    value: @health_insurance.main_agent_commission_percentage || 10.0,
+                    step: 0.01, id: "commission_percentage",
+                    style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :commission_amount,
+                    class: "form-control border-1 text-center",
+                    value: @health_insurance.commission_amount || 0,
+                    step: 0.01, readonly: true, id: "commission_amount",
+                    style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :tds_percentage,
+                    class: "form-control border-1 text-center",
+                    value: @health_insurance.tds_percentage || 0,
+                    step: 0.01, id: "tds_percentage",
+                    style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :tds_amount,
+                    class: "form-control border-1 text-center",
+                    value: @health_insurance.tds_amount || 0,
+                    step: 0.01, readonly: true, id: "tds_amount",
+                    style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <%= form.number_field :after_tds_value,
+                    class: "form-control border-1 text-center fw-bold fs-6",
+                    value: @health_insurance.after_tds_value || 0,
+                    step: 0.01, readonly: true, id: "after_tds_value",
+                    style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+            </tr>
+            <!-- Affiliate -->
+            <tr style="border-bottom: 1px solid #e9ecef;">
+              <td class="py-3 px-4 fw-bold text-dark">Affiliate</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_commission_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm sub-agent-commission-percentage",
+                    value: @health_insurance.sub_agent_commission_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_commission_amount,
+                    class: "form-control border-1 text-center sub-agent-commission-amount",
+                    value: @health_insurance.sub_agent_commission_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_tds_percentage,
+                    class: "form-control border-1 text-center sub-agent-tds-percentage",
+                    value: @health_insurance.sub_agent_tds_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_tds_amount,
+                    class: "form-control border-1 text-center sub-agent-tds-amount",
+                    value: @health_insurance.sub_agent_tds_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <%= form.number_field :sub_agent_after_tds_value,
+                    class: "form-control border-1 text-center fw-bold fs-6 sub-agent-after-tds-value",
+                    value: @health_insurance.sub_agent_after_tds_value || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+            </tr>
+            <!-- Ambassador -->
+            <tr style="border-bottom: 1px solid #e9ecef;">
+              <td class="py-3 px-4 fw-bold text-dark">Ambassador</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :ambassador_commission_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm ambassador-commission-percentage",
+                    value: @health_insurance.ambassador_commission_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :ambassador_commission_amount,
+                    class: "form-control border-1 text-center ambassador-commission-amount",
+                    value: @health_insurance.ambassador_commission_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :ambassador_tds_percentage,
+                    class: "form-control border-1 text-center ambassador-tds-percentage",
+                    value: @health_insurance.ambassador_tds_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :ambassador_tds_amount,
+                    class: "form-control border-1 text-center ambassador-tds-amount",
+                    value: @health_insurance.ambassador_tds_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <%= form.number_field :ambassador_after_tds_value,
+                    class: "form-control border-1 text-center fw-bold fs-6 ambassador-after-tds-value",
+                    value: @health_insurance.ambassador_after_tds_value || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+            </tr>
+            <!-- Investor -->
+            <tr style="border-bottom: 1px solid #e9ecef;">
+              <td class="py-3 px-4 fw-bold text-dark">Investor</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :investor_commission_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm investor-commission-percentage",
+                    value: @health_insurance.investor_commission_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :investor_commission_amount,
+                    class: "form-control border-1 text-center investor-commission-amount",
+                    value: @health_insurance.investor_commission_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <%= form.number_field :investor_commission_amount,
+                    class: "form-control border-1 text-center fw-bold fs-6 investor-commission-amount-display",
+                    value: @health_insurance.investor_commission_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+            </tr>
+            <%= form.hidden_field :investor_tds_percentage, value: 0, class: "investor-tds-percentage" %>
+            <!-- Company Expenses -->
+            <tr style="border-bottom: 1px solid #dee2e6; background: #f8f9fa;">
+              <td class="py-3 px-4 fw-bold text-dark">Company Expenses</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :company_expenses_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm company-expenses-percentage",
+                    value: @health_insurance.company_expenses_percentage || 2.0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :company_expenses_amount,
+                    class: "form-control border-1 text-center company-expenses-amount",
+                    value: @health_insurance.company_expenses_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <%= form.number_field :company_expenses_amount,
+                    class: "form-control border-1 text-center fw-bold fs-6 company-expenses-amount-display",
+                    value: @health_insurance.company_expenses_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+            </tr>
+            <!-- Profit -->
+            <tr style="border-bottom: 2px solid #198754; background: linear-gradient(135deg, #f0fff0 0%, #e8f5e8 100%);">
+              <td class="py-3 px-4 fw-bold text-dark" style="background: #e8f5e8;">
+                <i class="bi bi-currency-rupee me-1 text-success"></i>
+                Profit
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :profit_percentage,
+                    class: "form-control border-1 text-center fw-bold profit-percentage",
+                    value: @health_insurance.profit_percentage || 0,
+                    step: 0.01, readonly: true, style: "background: #f0fff0; border-color: #198754; color: #198754;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :profit_amount,
+                    class: "form-control border-1 text-center fw-bold profit-amount",
+                    value: @health_insurance.profit_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f0fff0; border-color: #198754; color: #198754;" %>
+              </td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-1 text-center" style="background: #f0fff0;">
+                <%= form.number_field :profit_amount,
+                    class: "form-control border-1 text-center fw-bold profit-amount-display",
+                    value: @health_insurance.profit_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f0fff0; border-color: #198754; color: #198754;" %>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <%= form.hidden_field :total_distribution_percentage, class: "total-distribution-percentage", value: @health_insurance.total_distribution_percentage || 0 %>
+    </div>
+  </div>
+  <% end %>
+
+  <!-- Nominee Details Section -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="bi bi-person-heart me-2 text-info"></i>
+        Nominee Details
+      </h5>
+      <button type="button" id="renew_add_nominee" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus me-1"></i>Add Nominee
+      </button>
+    </div>
+    <div class="card-body">
+      <div id="renew_nominees">
+        <% if @health_insurance.health_insurance_nominees.none? %>
+          <div class="text-center py-3 text-muted" id="renew_no_nominees_message">
+            <i class="bi bi-person-x fs-3 d-block mb-2"></i>
+            <p class="mb-0">No nominees added yet.</p>
+          </div>
+        <% end %>
+
+        <% renew_nominee_idx = 0 %>
+        <%= form.fields_for :health_insurance_nominees do |nf| %>
+          <div class="nominee-row border rounded p-3 mb-3 bg-light">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <%= nf.label :nominee_name, "Nominee Name", class: "form-label required" %>
+                <%= nf.text_field :nominee_name, class: "form-control", placeholder: "Full Name", required: true %>
+              </div>
+              <div class="col-md-3 mb-3">
+                <%= nf.label :relationship, "Relationship", class: "form-label required" %>
+                <%= nf.select :relationship,
+                    options_for_select(HealthInsuranceNominee::RELATIONSHIPS.map { |r| [r.humanize, r] }, nf.object.relationship),
+                    { prompt: 'Select' }, { class: "form-select", required: true } %>
+              </div>
+              <div class="col-md-2 mb-3">
+                <%= nf.label :age, "Age", class: "form-label required" %>
+                <%= nf.number_field :age, class: "form-control", min: 1, max: 120, required: true %>
+              </div>
+              <div class="col-md-2 mb-3">
+                <%= nf.label :share_percentage, "Share %", class: "form-label required" %>
+                <%= nf.number_field :share_percentage, class: "form-control", min: 0, max: 100, step: 0.01, placeholder: "100", required: true %>
+              </div>
+              <div class="col-md-1 d-flex align-items-end mb-3">
+                <button type="button" class="btn btn-outline-danger remove-renew-nominee-btn">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+            <%= nf.check_box :_destroy, style: "display:none;" %>
+          </div>
+          <% renew_nominee_idx += 1 %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      let renewNomineeIndex = <%= @health_insurance.health_insurance_nominees.length %>;
+
+      function toggleRenewNoNomineesMsg() {
+        const rows = document.querySelectorAll('#renew_nominees .nominee-row');
+        const msg  = document.getElementById('renew_no_nominees_message');
+        if (msg) msg.style.display = rows.length === 0 ? 'block' : 'none';
+      }
+      toggleRenewNoNomineesMsg();
+
+      document.getElementById('renew_add_nominee').addEventListener('click', function() {
+        const tpl = `
+          <div class="nominee-row border rounded p-3 mb-3 bg-light">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label required">Nominee Name</label>
+                <input type="text" name="health_insurance[health_insurance_nominees_attributes][${renewNomineeIndex}][nominee_name]" class="form-control" placeholder="Full Name" required>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label required">Relationship</label>
+                <select name="health_insurance[health_insurance_nominees_attributes][${renewNomineeIndex}][relationship]" class="form-select" required>
+                  <option value="">Select</option>
+                  <option value="father">Father</option>
+                  <option value="mother">Mother</option>
+                  <option value="spouse">Spouse</option>
+                  <option value="son">Son</option>
+                  <option value="daughter">Daughter</option>
+                  <option value="brother">Brother</option>
+                  <option value="sister">Sister</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label required">Age</label>
+                <input type="number" name="health_insurance[health_insurance_nominees_attributes][${renewNomineeIndex}][age]" class="form-control" min="1" max="120" required>
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label required">Share %</label>
+                <input type="number" name="health_insurance[health_insurance_nominees_attributes][${renewNomineeIndex}][share_percentage]" class="form-control" min="0" max="100" step="0.01" placeholder="100" required>
+              </div>
+              <div class="col-md-1 d-flex align-items-end mb-3">
+                <button type="button" class="btn btn-outline-danger remove-renew-nominee-btn"><i class="bi bi-trash"></i></button>
+              </div>
+            </div>
+          </div>`;
+        document.getElementById('renew_nominees').insertAdjacentHTML('beforeend', tpl);
+        renewNomineeIndex++;
+        toggleRenewNoNomineesMsg();
+      });
+
+      document.getElementById('renew_nominees').addEventListener('click', function(e) {
+        if (e.target.closest('.remove-renew-nominee-btn')) {
+          e.target.closest('.nominee-row').remove();
+          toggleRenewNoNomineesMsg();
+        }
+      });
+    })();
+  </script>
+
+  <!-- Autopay Installment Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-credit-card-2-back me-2 text-success"></i>
+        Autopay Installment
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <%= form.label :installment_autopay_start_date, "Installment Autopay Start Date", class: "form-label" %>
+          <%= form.date_field :installment_autopay_start_date,
+              class: "form-control",
+              value: @health_insurance.installment_autopay_start_date %>
+        </div>
+        <div class="col-md-6 mb-3">
+          <%= form.label :installment_autopay_end_date, "Installment Autopay End Date", class: "form-label" %>
+          <%= form.date_field :installment_autopay_end_date,
+              class: "form-control",
+              value: @health_insurance.installment_autopay_end_date %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Policy Documents Upload -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-file-earmark-plus me-2 text-primary"></i>
+        Policy Documents
+      </h5>
+    </div>
+    <div class="card-body">
+      <!-- R2 Main Policy Document -->
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <div class="border border-success border-2 rounded p-4" style="background-color: #f0fff0;">
+            <%= form.label :main_policy_document, class: "form-label fw-bold" do %>
+              <i class="bi bi-cloud-upload me-2 text-success"></i>
+              Main Policy Document (R2 Storage)
+            <% end %>
+            <%= form.file_field :main_policy_document,
+                class: "form-control",
+                accept: "application/pdf,image/jpeg,image/jpg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" %>
+            <div class="form-text mt-2">
+              <i class="bi bi-info-circle me-1"></i>
+              <strong>Secure R2 Storage:</strong> PDF, JPEG, PNG, Word files (Max: 10MB)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Documents -->
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <div class="border border-secondary border-2 rounded p-4" style="background-color: #f8f9fa;">
+            <%= form.label :documents, class: "form-label fw-bold" do %>
+              <i class="bi bi-file-earmark-plus me-2 text-secondary"></i>
+              Additional Documents
+              <span class="badge bg-secondary ms-2">Optional</span>
+            <% end %>
+            <%= form.file_field :documents,
+                class: "form-control",
+                multiple: true,
+                id: "additional_documents_upload",
+                accept: "application/pdf,image/jpeg,image/jpg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" %>
+            <div class="form-text mt-2">
+              <i class="bi bi-info-circle me-1"></i>
+              Medical reports, Identity proofs, etc.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document Management System -->
+      <div class="border-top pt-4 mt-2">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0">Organised Documents</h6>
+          <button type="button" class="btn btn-sm btn-primary" id="add_health_policy_document">
+            <i class="bi bi-plus-lg me-1"></i>
+            Add Document
+          </button>
+        </div>
+        <div id="health_policy_documents_container"></div>
+        <p class="text-muted mb-0 mt-2">
+          <small>Add documents with title and type for organised storage in R2</small>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Original Policy Documents for Reference -->
+  <% if params[:id].present? %>
+    <% original_policy = HealthInsurance.find(params[:id]) %>
+    <%= render 'shared/enhanced_documents_display',
+               documents: original_policy.uploaded_documents,
+               record: original_policy,
+               record_type: 'health_insurance',
+               title: 'Original Policy Documents (Reference)',
+               editable: false,
+               container_class: 'border-top pt-4 mt-4' %>
+  <% end %>
+
+  <!-- Renewal Actions -->
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <%= link_to admin_health_insurances_path, class: "btn btn-outline-secondary" do %>
+            <i class="bi bi-x-lg me-2"></i>
+            Cancel Renewal
+          <% end %>
+        </div>
+        <div class="d-flex gap-2">
+          <%= link_to admin_health_insurance_path(params[:id]), class: "btn btn-outline-info" do %>
+            <i class="bi bi-eye me-1"></i>
+            View Original
+          <% end %>
+          <%= form.submit "Create Renewal Policy", class: "btn btn-primary btn-lg fw-bold text-white shadow", style: "background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); border: none; min-width: 200px;" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<% end %>
+
+<!-- jQuery (required for Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Select2 CSS & JS for searchable dropdown -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Custom styling for enhanced Select2 dropdown -->
+<style>
+  .select2-container--bootstrap-5 .select2-selection--single {
+    height: 38px;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+
+  .select2-container--bootstrap-5 .select2-selection--single:focus-within {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+
+  .select2-container--bootstrap-5 .select2-selection__rendered {
+    color: #495057;
+    padding-left: 12px;
+    padding-right: 20px;
+    line-height: 36px;
+  }
+
+  .select2-container--bootstrap-5 .select2-results__option {
+    padding: 8px 12px;
+  }
+
+  .select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: #0d6efd;
+    color: white;
+  }
+
+  .select2-dropdown {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+
+  .select2-results__options {
+    max-height: 400px !important;
+    min-height: 200px;
+  }
+
+  .select2-dropdown-large .select2-results__options {
+    max-height: 600px !important;
+    min-height: 400px !important;
+    overflow-y: auto;
+  }
+
+  .select2-dropdown-large {
+    min-width: 100% !important;
+  }
+
+  .select2-dropdown-large .select2-results__option {
+    padding: 8px 12px !important;
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+  }
+
+  .select2-search__field {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 6px 12px;
+  }
+
+  .client-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    min-height: 45px;
+  }
+
+  .client-option-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #0d6efd, #6f42c1);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 10px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .client-option-details {
+    flex: 1;
+  }
+
+  .client-option-name {
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 2px;
+  }
+
+  .client-option-id {
+    font-size: 11px;
+    color: #6c757d;
+  }
+
+  /* Affiliate option styling */
+  .affiliate-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    min-height: 45px;
+  }
+
+  .affiliate-option-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 10px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .affiliate-option-details {
+    flex: 1;
+  }
+
+  .affiliate-option-name {
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 2px;
+  }
+
+  .affiliate-option-id {
+    font-size: 11px;
+    color: #6c757d;
+  }
+
+  /* Company option styling */
+  .company-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    min-height: 45px;
+  }
+
+  .company-option-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(45deg, #dc3545, #fd7e14);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 10px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .company-option-details {
+    flex: 1;
+  }
+
+  .company-option-name {
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 2px;
+  }
+
+  .company-option-type {
+    font-size: 11px;
+    color: #6c757d;
+  }
+
+  /* Agency Code option styling */
+  .agency-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    min-height: 45px;
+  }
+
+  .agency-option-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(45deg, #6f42c1, #e83e8c);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 10px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .agency-option-details {
+    flex: 1;
+  }
+
+  .agency-option-name {
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 2px;
+  }
+
+  .agency-option-code {
+    font-size: 11px;
+    color: #6c757d;
+  }
+</style>
+
+<script>
+// Global error suppression for common Rails/Stimulus issues
+(function() {
+  'use strict';
+
+  // Suppress common console warnings
+  const originalWarn = console.warn;
+  const originalError = console.error;
+
+  console.warn = function(...args) {
+    const message = String(args[0] || '');
+    if (message.includes('import map rule') ||
+        message.includes('hello_controller') ||
+        message.includes('Violation')) {
+      return;
+    }
+    originalWarn.apply(console, args);
+  };
+
+  console.error = function(...args) {
+    const message = String(args[0] || '');
+    if (message.includes('Uncaught SyntaxError') && message.includes('\x26')) {
+      console.warn('Suppressed syntax error:', message);
+      return;
+    }
+    originalError.apply(console, args);
+  };
+
+  // Global promise rejection handler
+  window.addEventListener('unhandledrejection', function(event) {
+    if (event.reason && (
+      event.reason.name === 'n' ||
+      event.reason.code === 403 ||
+      event.reason.httpError === false
+    )) {
+      event.preventDefault();
+      return;
+    }
+    console.warn('Promise rejection:', event.reason);
+    event.preventDefault();
+  });
+})();
+
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    // Error handling is now managed globally above
+
+    // Check if jQuery and Select2 are available
+    if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+      console.log('✅ jQuery and Select2 available, initializing enhanced dropdowns');
+
+      // Initialize Select2 for searchable dropdown
+      $('#customer_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select client...',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('body'),
+      dropdownCssClass: 'select2-dropdown-large',
+      minimumResultsForSearch: 0,
+      closeOnSelect: true,
+      templateResult: function(option) {
+        if (!option.id || option.element.value === '') {
+          return option.text;
+        }
+
+        // Generate avatar with initials
+        var initials = option.text.split(' ').map(function(name) {
+          return name.charAt(0).toUpperCase();
+        }).join('').substring(0, 2);
+
+        // Custom template for dropdown options with avatar
+        var $option = $(
+          '<div class="client-option">' +
+            '<div class="client-option-avatar">' + initials + '</div>' +
+            '<div class="client-option-details">' +
+              '<div class="client-option-name">' + option.text + '</div>' +
+              '<div class="client-option-id">Client ID: #' + option.id + '</div>' +
+            '</div>' +
+          '</div>'
+        );
+        return $option;
+      },
+      templateSelection: function(option) {
+        return option.text || 'Search and select client...';
+      },
+      escapeMarkup: function(markup) {
+        return markup;
+      }
+    });
+
+    // Initialize Select2 for Affiliate dropdown with AJAX search
+    $('#affiliate_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select affiliate...',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('body'),
+      dropdownCssClass: 'select2-dropdown-large',
+      minimumInputLength: 0,
+      ajax: {
+        url: '/api/v1/public/search_sub_agents',
+        dataType: 'json',
+        delay: 250,
+        data: function (params) {
+          var selectedCustomerId = $('#customer_select').val();
+
+          return {
+            q: params.term || '',
+            customer_id: selectedCustomerId,
+            limit: params.term ? 20 : 10
+          };
+        },
+        processResults: function (data) {
+          return {
+            results: data.results || []
+          };
+        },
+        error: function(xhr, status, error) {
+          console.error('Search affiliates AJAX error:', status, error);
+          return {
+            results: [{id: '', text: 'Error loading affiliates - please try again'}]
+          };
+        },
+        cache: false
+      },
+      templateResult: function(option) {
+        if (option.loading) return option.text;
+        if (!option.id || option.id === '') {
+          return option.text;
+        }
+
+        var initials = option.text.split(' ').map(function(name) {
+          return name.charAt(0).toUpperCase();
+        }).join('').substring(0, 2);
+
+        var $option = $(
+          '<div class="affiliate-option">' +
+            '<div class="affiliate-option-avatar">' + initials + '</div>' +
+            '<div class="affiliate-option-details">' +
+              '<div class="affiliate-option-name">' + option.text + '</div>' +
+              '<div class="affiliate-option-id">Affiliate ID: #' + option.id + '</div>' +
+            '</div>' +
+          '</div>'
+        );
+        return $option;
+      },
+      templateSelection: function(option) {
+        return option.text || 'Search and select affiliate...';
+      },
+      escapeMarkup: function(markup) {
+        return markup;
+      }
+    });
+
+    // Initialize Select2 for Insurance Company dropdown
+    $('#health_insurance_insurance_company_name').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select company...',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('body'),
+      dropdownCssClass: 'select2-dropdown-large',
+      minimumResultsForSearch: 0,
+      closeOnSelect: true,
+      templateResult: function(option) {
+        if (!option.id || option.element.value === '') {
+          return option.text;
+        }
+
+        var initials = option.text.split(' ').map(function(word) {
+          return word.charAt(0).toUpperCase();
+        }).join('').substring(0, 3);
+
+        var $option = $(
+          '<div class="company-option">' +
+            '<div class="company-option-avatar">' + initials + '</div>' +
+            '<div class="company-option-details">' +
+              '<div class="company-option-name">' + option.text + '</div>' +
+              '<div class="company-option-type">Insurance Company</div>' +
+            '</div>' +
+          '</div>'
+        );
+        return $option;
+      },
+      templateSelection: function(option) {
+        return option.text || 'Search and select company...';
+      },
+      escapeMarkup: function(markup) {
+        return markup;
+      }
+    });
+
+    // ---- Broker/Agency Code dynamic switching ----
+    var savedBrokerCodeType = '<%= @health_insurance.broker_code_type %>';
+    var savedBrokerId       = '<%= @health_insurance.broker_id %>';
+    var savedAgencyCodeId   = '<%= @health_insurance.agency_code_id %>';
+
+    function populateAgencyCodeDropdownRenew(data, placeholder, preselectId, isBroking) {
+      var agencyCodeSelect = document.getElementById('health_insurance_agency_code_id');
+      if (!agencyCodeSelect) return;
+      if ($(agencyCodeSelect).hasClass('select2-hidden-accessible')) {
+        $(agencyCodeSelect).select2('destroy');
+      }
+      agencyCodeSelect.innerHTML = '<option value="">' + placeholder + '</option>';
+      data.forEach(function(item) {
+        var option = document.createElement('option');
+        option.value = isBroking ? 'broker_' + item.id : item.id;
+        option.textContent = item.code && !item.text.includes(' - ') ? item.text + ' - ' + item.code : item.text;
+        option.setAttribute('data-code', item.code || '');
+        option.setAttribute('data-name', item.broker_name || item.agent_name || item.text);
+        var valueToCompare = isBroking ? 'broker_' + String(item.id) : String(item.id);
+        if (valueToCompare === String(preselectId)) option.selected = true;
+        agencyCodeSelect.appendChild(option);
+      });
+      $(agencyCodeSelect).select2({
+        theme: 'bootstrap-5', placeholder: placeholder, allowClear: true,
+        width: '100%', dropdownParent: $('body'), dropdownCssClass: 'select2-dropdown-large',
+        minimumResultsForSearch: 0, closeOnSelect: true
+      });
+    }
+
+    function loadBrokingModeRenew(preselectBrokerId) {
+      fetch('/admin/insurance/health/agency_codes_for_broker_type?broker_type=broking')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success && data.data) {
+            var preselect = preselectBrokerId ? 'broker_' + preselectBrokerId : '';
+            populateAgencyCodeDropdownRenew(data.data, 'Select Broker...', preselect, true);
+          }
+        });
+    }
+
+    function loadDirectModeRenew(preselectAgencyCodeId) {
+      fetch('/admin/insurance/health/agency_codes_for_broker_type?broker_type=direct')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success && data.data) {
+            populateAgencyCodeDropdownRenew(data.data, 'Select Agent...', preselectAgencyCodeId, false);
+          }
+        });
+    }
+
+    if (savedBrokerCodeType === 'broking') {
+      loadBrokingModeRenew(savedBrokerId || savedAgencyCodeId);
+    } else if (savedBrokerCodeType === 'direct') {
+      loadDirectModeRenew(savedAgencyCodeId);
+    } else {
+      $('#health_insurance_agency_code_id').select2({
+        theme: 'bootstrap-5', placeholder: 'Search and select agency code...', allowClear: true,
+        width: '100%', dropdownParent: $('body'), dropdownCssClass: 'select2-dropdown-large',
+        minimumResultsForSearch: 0, closeOnSelect: true
+      });
+    }
+
+    var brokerTypeSelectRenew = document.getElementById('health_insurance_broker_code_type');
+    if (brokerTypeSelectRenew) {
+      brokerTypeSelectRenew.addEventListener('change', function() {
+        if (this.value === 'broking') {
+          loadBrokingModeRenew(null);
+        } else if (this.value === 'direct') {
+          loadDirectModeRenew(null);
+        }
+      });
+    }
+    // ---- End broker/agency switching ----
+
+    // Initialize Select2 for Policy Holder dropdown
+    $('#policy_holder_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select policy holder...',
+      allowClear: false,
+      width: '100%',
+      dropdownParent: $('body'),
+      dropdownCssClass: 'select2-dropdown-large',
+      minimumResultsForSearch: 0,
+      closeOnSelect: true,
+      templateResult: function(option) {
+        if (!option.id || option.element.value === '') {
+          return option.text;
+        }
+
+        // Generate avatar with initials for policy holder
+        var initials = option.text.split(' ').map(function(name) {
+          return name.charAt(0).toUpperCase();
+        }).join('').substring(0, 2);
+
+        // Custom template for dropdown options with avatar
+        var $option = $(
+          '<div class="client-option">' +
+            '<div class="client-option-avatar">' + initials + '</div>' +
+            '<div class="client-option-details">' +
+              '<div class="client-option-name">' + option.text + '</div>' +
+              '<div class="client-option-id">Policy Holder</div>' +
+            '</div>' +
+          '</div>'
+        );
+        return $option;
+      },
+      templateSelection: function(option) {
+        return option.text || 'Search and select policy holder...';
+      },
+      escapeMarkup: function(markup) {
+        return markup;
+      }
+    });
+
+    // Initialize Select2 for Insurance Type dropdown
+    $('#insurance_type_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Select Insurance Type...',
+      allowClear: false,
+      width: '100%',
+      dropdownParent: $('body'),
+      dropdownCssClass: 'select2-dropdown-large',
+      minimumResultsForSearch: -1, // Disable search for small lists
+      closeOnSelect: true
+    });
+
+    // Initialize Select2 for Policy Type dropdown
+    $('#policy_type_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Select Policy Type...',
+      allowClear: false,
+      width: '100%',
+      dropdownParent: $('body'),
+      dropdownCssClass: 'select2-dropdown-large',
+      minimumResultsForSearch: -1, // Disable search for small lists
+      closeOnSelect: true
+    });
+
+    // Initialize Select2 for Payment Mode dropdown
+    $('#payment_mode_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Select Payment Mode...',
+      allowClear: false,
+      width: '100%',
+      dropdownParent: $('body'),
+      dropdownCssClass: 'select2-dropdown-large',
+      minimumResultsForSearch: -1, // Disable search for small lists
+      closeOnSelect: true
+    });
+
+    // Initialize Select2 for Claim Process dropdown
+    $('#claim_process_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Select Claim Process...',
+      allowClear: false,
+      width: '100%',
+      dropdownParent: $('body'),
+      dropdownCssClass: 'select2-dropdown-large',
+      minimumResultsForSearch: -1, // Disable search for small lists
+      closeOnSelect: true
+    });
+
+    // Load policy holder options when customer changes (with policy holder preservation)
+    function loadPolicyHolderOptions() {
+      const customerId = document.getElementById('customer_select').value;
+      const policyHolderSelect = document.getElementById('policy_holder_select');
+      const currentPolicyHolder = '<%= j(@health_insurance.policy_holder) %>';
+
+      if (customerId) {
+        // Store current selected value before clearing
+        const currentSelectedValue = policyHolderSelect.value;
+
+        // Clear current options and show loading
+        policyHolderSelect.innerHTML = '<option value="">Loading...</option>';
+
+        fetch(`/admin/insurance/health/policy_holder_options?customer_id=${customerId}`)
+          .then(response => response.json())
+          .then(data => {
+            // Rebuild options
+            policyHolderSelect.innerHTML = '<option value="">Select Policy Holder</option>';
+            data.options.forEach(option => {
+              const optionElement = new Option(option.label, option.value);
+              policyHolderSelect.add(optionElement);
+            });
+
+            // Try to restore the original policy holder value if it exists in new options
+            let valueToSet = currentPolicyHolder || currentSelectedValue;
+            if (valueToSet) {
+              const matchingOption = Array.from(policyHolderSelect.options).find(opt =>
+                opt.value === valueToSet || opt.text === valueToSet ||
+                opt.text.toLowerCase().includes(valueToSet.toLowerCase())
+              );
+
+              if (matchingOption) {
+                policyHolderSelect.value = matchingOption.value;
+                console.log('✅ Restored policy holder after customer change:', matchingOption.value);
+              } else {
+                // Add the original value if it doesn't exist
+                const newOption = new Option(valueToSet, valueToSet);
+                policyHolderSelect.add(newOption);
+                policyHolderSelect.value = valueToSet;
+                console.log('✅ Added and selected original policy holder:', valueToSet);
+              }
+
+              // Trigger change event for Select2
+              if (typeof $.fn.select2 !== 'undefined' && $(policyHolderSelect).hasClass('select2-hidden-accessible')) {
+                $(policyHolderSelect).trigger('change.select2');
+              }
+            }
+          })
+          .catch(error => {
+            console.error('Error loading policy holder options:', error);
+            policyHolderSelect.innerHTML = '<option value="">Error loading options</option>';
+
+            // Try to add the original policy holder even if loading failed
+            if (currentPolicyHolder) {
+              const newOption = new Option(currentPolicyHolder, currentPolicyHolder);
+              policyHolderSelect.add(newOption);
+              policyHolderSelect.value = currentPolicyHolder;
+              console.log('⚠️  Added original policy holder after loading error:', currentPolicyHolder);
+            }
+          });
+      } else {
+        // If no customer selected, show default options including the original policy holder
+        policyHolderSelect.innerHTML = '<option value="">Select Policy Holder</option><option value="Self">Self</option>';
+        if (currentPolicyHolder && currentPolicyHolder !== 'Self') {
+          const newOption = new Option(currentPolicyHolder, currentPolicyHolder);
+          policyHolderSelect.add(newOption);
+        }
+      }
+    }
+
+    // Use Select2 event listener instead of native event
+    $('#customer_select').on('select2:select', function(e) {
+      loadPolicyHolderOptions();
+
+      // Call our safe policy holder function after a delay to ensure options are loaded
+      setTimeout(function() {
+        setPolicyHolderValue();
+      }, 500);
+
+      $('#affiliate_select').val(null).trigger('change');
+      var selectedCustomerId = this.value;
+      if (selectedCustomerId) {
+        console.log('Customer selected, filtering affiliates for customer ID:', selectedCustomerId);
+      }
+    });
+
+    // Handle customer clearing
+    $('#customer_select').on('select2:clear', function(e) {
+      $('#affiliate_select').val(null).trigger('change');
+      console.log('Customer cleared, showing all affiliates');
+    });
+
+    // Function to safely set policy holder value with better error handling
+    function setPolicyHolderValue() {
+      <% if @health_insurance.policy_holder.present? %>
+        let policyHolderValue = '<%= j(@health_insurance.policy_holder) %>';
+        // Debug: Check if the option exists in the dropdown
+        let optionExists = $('#policy_holder_select option[value="' + policyHolderValue + '"]').length > 0;
+
+        // If exact match doesn't exist, try to find a similar option
+        if (!optionExists) {
+          const matchingOption = $('#policy_holder_select option').filter(function() {
+            const optionValue = $(this).val().trim();
+            const optionText = $(this).text().trim();
+            const searchValue = policyHolderValue.trim();
+            return optionValue === searchValue ||
+                   optionText === searchValue ||
+                   optionText.toLowerCase().includes(searchValue.toLowerCase()) ||
+                   optionValue.toLowerCase().includes(searchValue.toLowerCase());
+          });
+
+          if (matchingOption.length > 0) {
+            const bestMatch = matchingOption.first();
+            policyHolderValue = bestMatch.val();
+            optionExists = true;
+          }
+        }
+
+        if (optionExists) {
+          try {
+            // Set the value using both native and Select2 methods
+            $('#policy_holder_select').val(policyHolderValue);
+
+            // Trigger change event for Select2
+            if (typeof $.fn.select2 !== 'undefined' && $('#policy_holder_select').hasClass('select2-hidden-accessible')) {
+              $('#policy_holder_select').trigger('change.select2');
+            }
+
+            // Value set successfully
+          } catch(error) {
+            // Try fallback approach
+            document.getElementById('policy_holder_select').value = policyHolderValue;
+          }
+        } else {
+          // Fallback: Add the missing option and select it
+          try {
+            const newOption = new Option(policyHolderValue, policyHolderValue, true, true);
+            $('#policy_holder_select').append(newOption);
+
+            if (typeof $.fn.select2 !== 'undefined' && $('#policy_holder_select').hasClass('select2-hidden-accessible')) {
+              $('#policy_holder_select').trigger('change.select2');
+            }
+          } catch(error) {
+            // Silent fallback
+          }
+        }
+      <% else %>
+        // No policy holder value to set
+      <% end %>
+    }
+
+    // Set initial policy holder value after Select2 initialization
+    setTimeout(function() {
+      setPolicyHolderValue();
+    }, 800);
+
+    // Final safety check - try again if needed
+    setTimeout(function() {
+      const currentValue = $('#policy_holder_select').val();
+      const expectedValue = <% if @health_insurance.policy_holder.present? %>'<%= j(@health_insurance.policy_holder) %>'<% else %>null<% end %>;
+      if (!currentValue && expectedValue) {
+        setPolicyHolderValue();
+      }
+    }, 2000);
+
+    // Sum Insured Text Handler
+    function parseIndianAmountText(text) {
+      if (!text) return 0;
+      const cleanText = text.toLowerCase().replace(/,/g, '');
+      let amount = 0;
+      const croreMatch = cleanText.match(/(\d+\.?\d*)\s*crores?/);
+      const lakhMatch = cleanText.match(/(\d+\.?\d*)\s*lakhs?/);
+      if (croreMatch) {
+        amount += parseFloat(croreMatch[1]) * 10000000;
+      }
+      if (lakhMatch) {
+        amount += parseFloat(lakhMatch[1]) * 100000;
+      }
+      if (!croreMatch && !lakhMatch) {
+        const numberMatch = cleanText.match(/(\d+\.?\d*)/);
+        if (numberMatch) {
+          amount = parseFloat(numberMatch[1]);
+        }
+      }
+      return amount;
+    }
+
+    function formatPreviewText(amount) {
+      if (amount >= 10000000) {
+        const crores = amount / 10000000;
+        return `(Rs. ${crores === Math.floor(crores) ? crores.toString() : crores.toFixed(1)} crore${crores > 1 ? 's' : ''})`;
+      } else if (amount >= 100000) {
+        const lakhs = amount / 100000;
+        return `(Rs. ${lakhs === Math.floor(lakhs) ? lakhs.toString() : lakhs.toFixed(1)} lakh${lakhs > 1 ? 's' : ''})`;
+      } else if (amount > 0) {
+        return `(Rs. ${amount.toLocaleString()})`;
+      }
+      return '';
+    }
+
+    // Sum insured text input handler
+    if (document.getElementById('sum_insured_text_input')) {
+      document.getElementById('sum_insured_text_input').addEventListener('input', function() {
+        const textValue = this.value;
+        const numericValue = parseIndianAmountText(textValue);
+        const hiddenField = document.querySelector('input[name="health_insurance[sum_insured]"]');
+        if (hiddenField) {
+          hiddenField.value = numericValue;
+        }
+        const preview = document.getElementById('sum_insured_preview');
+        if (preview) {
+          preview.textContent = formatPreviewText(numericValue);
+        }
+      });
+
+      // Initialize preview on page load
+      const initialValue = document.getElementById('sum_insured_text_input').value;
+      if (initialValue) {
+        const numericValue = parseIndianAmountText(initialValue);
+        const hiddenField = document.querySelector('input[name="health_insurance[sum_insured]"]');
+        if (hiddenField) {
+          hiddenField.value = numericValue;
+        }
+        const preview = document.getElementById('sum_insured_preview');
+        if (preview) {
+          preview.textContent = formatPreviewText(numericValue);
+        }
+      }
+    }
+
+    } else {
+      console.log('⚠️  jQuery or Select2 not available, using basic dropdown functionality');
+      console.log('   Enhanced dropdowns will not be initialized');
+    }
+
+
+    // Auto-fill autopay dates based on policy dates
+    function autoFillAutopayDates() {
+      const policyStartDate = document.getElementById('start_date')?.value;
+      const policyEndDate = document.getElementById('end_date')?.value;
+
+      const autopayStartField = document.querySelector('input[name="health_insurance[installment_autopay_start_date]"]');
+      const autopayEndField = document.querySelector('input[name="health_insurance[installment_autopay_end_date]"]');
+
+      if (policyStartDate && autopayStartField) {
+        autopayStartField.value = policyStartDate;
+        console.log('Auto-filled autopay start date:', policyStartDate);
+      }
+
+      if (policyEndDate && autopayEndField) {
+        autopayEndField.value = policyEndDate;
+        console.log('Auto-filled autopay end date:', policyEndDate);
+      }
+    }
+
+    // Auto-calculate total premium
+    function calculateTotalPremium() {
+      const netPremiumField = document.getElementById('net_premium');
+      const gstField = document.getElementById('gst_percentage');
+      const totalPremiumField = document.getElementById('total_premium');
+
+      console.log('calculateTotalPremium called');
+      console.log('Net Premium field:', netPremiumField);
+      console.log('GST field:', gstField);
+      console.log('Total Premium field:', totalPremiumField);
+
+      if (!netPremiumField || !gstField || !totalPremiumField) {
+        console.error('One or more required fields not found!');
+        return;
+      }
+
+      const netPremium = parseFloat(netPremiumField.value) || 0;
+      // Default GST to 18% if field is empty
+      let gstPercentage = parseFloat(gstField.value);
+      if (isNaN(gstPercentage) || gstField.value === '') {
+        gstPercentage = 18.0;
+        gstField.value = '18.0';
+      }
+
+      console.log('Net Premium value:', netPremium);
+      console.log('GST Percentage:', gstPercentage);
+
+      const gstAmount = netPremium * (gstPercentage / 100);
+      const totalPremium = netPremium + gstAmount;
+
+      console.log('GST Amount:', gstAmount);
+      console.log('Total Premium:', totalPremium);
+
+      // Force update the readonly field
+      totalPremiumField.readOnly = false;
+      totalPremiumField.value = totalPremium.toFixed(2);
+      totalPremiumField.readOnly = true;
+
+      console.log('Total Premium field updated to:', totalPremium.toFixed(2));
+    }
+
+    // Auto-calculate commission amounts
+    function calculateCommission() {
+      const netPremium = parseFloat(document.getElementById('net_premium')?.value) || 0;
+      const commissionPercentage = parseFloat(document.getElementById('commission_percentage')?.value) || 0;
+      const tdsPercentage = parseFloat(document.getElementById('tds_percentage')?.value) || 0;
+
+      const commissionAmount = netPremium * (commissionPercentage / 100);
+      const tdsAmount = commissionAmount * (tdsPercentage / 100);
+      const afterTdsValue = commissionAmount - tdsAmount;
+
+      const commissionField = document.getElementById('commission_amount');
+      if (commissionField) {
+        commissionField.removeAttribute('readonly');
+        commissionField.value = commissionAmount.toFixed(2);
+        commissionField.setAttribute('readonly', true);
+      }
+
+      const tdsField = document.getElementById('tds_amount');
+      if (tdsField) {
+        tdsField.removeAttribute('readonly');
+        tdsField.value = tdsAmount.toFixed(2);
+        tdsField.setAttribute('readonly', true);
+      }
+
+      const afterTdsField = document.getElementById('after_tds_value');
+      if (afterTdsField) {
+        afterTdsField.removeAttribute('readonly');
+        afterTdsField.value = afterTdsValue.toFixed(2);
+        afterTdsField.setAttribute('readonly', true);
+      }
+    }
+
+    // Auto-calculate sub-agent commission
+    function calculateSubAgentCommission() {
+      const netPremium = parseFloat(document.getElementById('net_premium')?.value) || 0;
+      const commissionPercentage = parseFloat(document.querySelector('.sub-agent-commission-percentage')?.value) || 0;
+      const tdsPercentage = parseFloat(document.querySelector('.sub-agent-tds-percentage')?.value) || 0;
+
+      const commissionAmount = netPremium * (commissionPercentage / 100);
+      const tdsAmount = commissionAmount * (tdsPercentage / 100);
+      const afterTdsValue = commissionAmount - tdsAmount;
+
+      const commissionField = document.querySelector('.sub-agent-commission-amount');
+      if (commissionField) {
+        commissionField.removeAttribute('readonly');
+        commissionField.value = commissionAmount.toFixed(2);
+        commissionField.setAttribute('readonly', true);
+      }
+      const tdsField = document.querySelector('.sub-agent-tds-amount');
+      if (tdsField) {
+        tdsField.removeAttribute('readonly');
+        tdsField.value = tdsAmount.toFixed(2);
+        tdsField.setAttribute('readonly', true);
+      }
+      const afterTdsField = document.querySelector('.sub-agent-after-tds-value');
+      if (afterTdsField) {
+        afterTdsField.removeAttribute('readonly');
+        afterTdsField.value = afterTdsValue.toFixed(2);
+        afterTdsField.setAttribute('readonly', true);
+      }
+    }
+
+    // Auto-calculate investor commission
+    function calculateInvestorCommission() {
+      const netPremium = parseFloat(document.getElementById('net_premium')?.value) || 0;
+      const commissionPercentage = parseFloat(document.querySelector('.investor-commission-percentage')?.value) || 0;
+      const tdsPercentage = parseFloat(document.querySelector('.investor-tds-percentage')?.value) || 0;
+
+      const commissionAmount = netPremium * (commissionPercentage / 100);
+      const tdsAmount = commissionAmount * (tdsPercentage / 100);
+      const afterTdsValue = commissionAmount - tdsAmount;
+
+      const commissionField = document.querySelector('.investor-commission-amount');
+      if (commissionField) {
+        commissionField.removeAttribute('readonly');
+        commissionField.value = commissionAmount.toFixed(2);
+        commissionField.setAttribute('readonly', true);
+      }
+      const tdsField = document.querySelector('.investor-tds-amount');
+      if (tdsField) {
+        tdsField.removeAttribute('readonly');
+        tdsField.value = tdsAmount.toFixed(2);
+        tdsField.setAttribute('readonly', true);
+      }
+      const afterTdsField = document.querySelector('.investor-after-tds-value');
+      if (afterTdsField) {
+        afterTdsField.removeAttribute('readonly');
+        afterTdsField.value = afterTdsValue.toFixed(2);
+        afterTdsField.setAttribute('readonly', true);
+      }
+    }
+
+    // Auto-calculate ambassador commission
+    function calculateAmbassadorCommission() {
+      const netPremium = parseFloat(document.getElementById('net_premium')?.value) || 0;
+      const commissionPercentage = parseFloat(document.querySelector('.ambassador-commission-percentage')?.value) || 0;
+      const tdsPercentage = parseFloat(document.querySelector('.ambassador-tds-percentage')?.value) || 0;
+
+      const commissionAmount = netPremium * (commissionPercentage / 100);
+      const tdsAmount = commissionAmount * (tdsPercentage / 100);
+      const afterTdsValue = commissionAmount - tdsAmount;
+
+      const commissionField = document.querySelector('.ambassador-commission-amount');
+      if (commissionField) {
+        commissionField.removeAttribute('readonly');
+        commissionField.value = commissionAmount.toFixed(2);
+        commissionField.setAttribute('readonly', true);
+      }
+      const tdsField = document.querySelector('.ambassador-tds-amount');
+      if (tdsField) {
+        tdsField.removeAttribute('readonly');
+        tdsField.value = tdsAmount.toFixed(2);
+        tdsField.setAttribute('readonly', true);
+      }
+      const afterTdsField = document.querySelector('.ambassador-after-tds-value');
+      if (afterTdsField) {
+        afterTdsField.removeAttribute('readonly');
+        afterTdsField.value = afterTdsValue.toFixed(2);
+        afterTdsField.setAttribute('readonly', true);
+      }
+    }
+
+    // Calculate company expenses and profit
+    function calculateProfitAndExpenses() {
+      const netPremium = parseFloat(document.getElementById('net_premium')?.value) || 0;
+      const mainAgentCommissionPercentage = parseFloat(document.getElementById('commission_percentage')?.value) || 0;
+
+      const subAgentPercentage = parseFloat(document.querySelector('.sub-agent-commission-percentage')?.value) || 0;
+      const investorPercentage = parseFloat(document.querySelector('.investor-commission-percentage')?.value) || 0;
+      const companyExpensesPercentage = parseFloat(document.querySelector('.company-expenses-percentage')?.value) || 0;
+      const ambassadorPercentage = parseFloat(document.querySelector('.ambassador-commission-percentage')?.value) || 0;
+
+      const totalDistributionPercentage = subAgentPercentage + investorPercentage + ambassadorPercentage;
+      const profitPercentage = mainAgentCommissionPercentage - totalDistributionPercentage - companyExpensesPercentage;
+      const profitAmount = netPremium * (profitPercentage / 100);
+      const companyExpensesAmount = netPremium * (companyExpensesPercentage / 100);
+
+      if (document.querySelector('.total-distribution-percentage')) {
+        document.querySelector('.total-distribution-percentage').value = totalDistributionPercentage.toFixed(2);
+      }
+      if (document.querySelector('.profit-percentage')) {
+        document.querySelector('.profit-percentage').value = profitPercentage.toFixed(2);
+      }
+      if (document.querySelector('.profit-amount')) {
+        document.querySelector('.profit-amount').value = profitAmount.toFixed(2);
+      }
+      if (document.querySelector('.profit-amount-display')) {
+        document.querySelector('.profit-amount-display').value = profitAmount.toFixed(2);
+      }
+      if (document.querySelector('.company-expenses-amount')) {
+        document.querySelector('.company-expenses-amount').value = companyExpensesAmount.toFixed(2);
+      }
+      if (document.querySelector('.company-expenses-amount-display')) {
+        document.querySelector('.company-expenses-amount-display').value = companyExpensesAmount.toFixed(2);
+      }
+      const investorDisplayField = document.querySelector('.investor-commission-amount-display');
+      if (investorDisplayField) {
+        investorDisplayField.value = (netPremium * (investorPercentage / 100)).toFixed(2);
+      }
+    }
+
+    // Calculate all commissions when net premium changes
+    function calculateAllCommissions() {
+      console.log('Calculating all commissions for net premium:', document.getElementById('net_premium')?.value);
+      calculateCommission();
+      calculateSubAgentCommission();
+      calculateInvestorCommission();
+      calculateAmbassadorCommission();
+      calculateProfitAndExpenses();
+    }
+
+    // Enhanced auto-calculation for renewal dates based on payment mode
+    function formatDateForInput(date) {
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseInputDate(dateString) {
+      if (!dateString) return null;
+      // Handle YYYY-MM-DD format (HTML date input format)
+      if (dateString.includes('-')) {
+        return new Date(dateString);
+      }
+      // Handle MM/DD/YYYY format
+      if (dateString.includes('/')) {
+        return new Date(dateString);
+      }
+      return new Date(dateString);
+    }
+
+    // Calculate Policy End Date based on Policy Start Date and Payment Mode
+    function calculatePolicyEndDate() {
+      console.log('🔄 Calculating Policy End Date based on Start Date and Payment Mode...');
+
+      const startDateField = document.getElementById('start_date');
+      const endDateField = document.getElementById('end_date');
+      const paymentModeField = document.getElementById('payment_mode_select');
+
+      if (!startDateField?.value || !paymentModeField?.value || !endDateField) {
+        console.warn('Missing required fields for Policy End Date calculation');
+        return;
+      }
+
+      const startDate = parseInputDate(startDateField.value);
+      const paymentMode = paymentModeField.value;
+
+      console.log('Policy Start Date:', startDateField.value);
+      console.log('Payment Mode:', paymentMode);
+
+      if (!startDate) {
+        console.warn('Could not parse Policy Start Date:', startDateField.value);
+        return;
+      }
+
+      // Calculate Policy End Date based on Payment Mode
+      const endDate = new Date(startDate);
+
+      switch(paymentMode) {
+        case 'Yearly':
+        case 'Annual':
+          endDate.setFullYear(endDate.getFullYear() + 1);
+          endDate.setDate(endDate.getDate() - 1);
+          break;
+        case 'Half Yearly':
+        case 'Semi-Annual':
+          endDate.setMonth(endDate.getMonth() + 6);
+          endDate.setDate(endDate.getDate() - 1);
+          break;
+        case 'Quarterly':
+          endDate.setMonth(endDate.getMonth() + 3);
+          endDate.setDate(endDate.getDate() - 1);
+          break;
+        case 'Monthly':
+          endDate.setMonth(endDate.getMonth() + 1);
+          endDate.setDate(endDate.getDate() - 1);
+          break;
+        default:
+          // Default to yearly
+          endDate.setFullYear(endDate.getFullYear() + 1);
+          endDate.setDate(endDate.getDate() - 1);
+          console.log('Using default yearly calculation for payment mode:', paymentMode);
+      }
+
+      endDateField.value = formatDateForInput(endDate);
+      console.log('✅ Policy End Date automatically calculated and set to:', formatDateForInput(endDate));
+
+      // Also update autopay end date when policy dates change
+      calculateAutopayEndDate();
+    }
+
+    function calculateRenewalDates() {
+      console.log('🔄 Calculating initial renewal dates...');
+
+      // Get the original policy end date from the model (for initial setup)
+      const originalEndDate = <% if @health_insurance.policy_end_date %>'<%= @health_insurance.policy_end_date %>'<% else %>null<% end %>;
+      const paymentMode = document.getElementById('payment_mode_select')?.value ||
+                         document.getElementById('health_insurance_payment_mode')?.value;
+
+      console.log('Original end date from model:', originalEndDate);
+      console.log('Payment mode:', paymentMode);
+
+      if (!originalEndDate) {
+        console.warn('No original end date found from model');
+        // Use today + 1 year as fallback
+        const today = new Date();
+        const nextYear = new Date(today);
+        nextYear.setFullYear(nextYear.getFullYear() + 1);
+
+        const startDateField = document.getElementById('start_date');
+        if (startDateField && !startDateField.value) {
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          startDateField.value = formatDateForInput(tomorrow);
+        }
+
+        calculatePolicyEndDate();
+        return;
+      }
+
+      // Calculate Policy Start Date (day after original policy ends)
+      const endDate = parseInputDate(originalEndDate);
+      if (!endDate) {
+        console.warn('Could not parse original end date:', originalEndDate);
+        return;
+      }
+
+      const startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() + 1);
+
+      // Set Policy Start Date
+      const startDateField = document.getElementById('start_date');
+      if (startDateField) {
+        startDateField.value = formatDateForInput(startDate);
+        console.log('✅ Policy Start Date set to:', formatDateForInput(startDate));
+      }
+
+      // Now calculate end date based on the payment mode
+      calculatePolicyEndDate();
+
+      // Set default Autopay Start Date to today
+      setDefaultAutopayStartDate();
+    }
+
+    function setDefaultAutopayStartDate() {
+      const autopayStartField = document.querySelector('input[name="health_insurance[installment_autopay_start_date]"]');
+
+      if (autopayStartField && !autopayStartField.value) {
+        const today = new Date();
+        autopayStartField.value = formatDateForInput(today);
+        console.log('✅ Autopay Start Date set to today:', formatDateForInput(today));
+
+        // Trigger autopay end date calculation
+        calculateAutopayEndDate();
+      }
+    }
+
+    function calculateAutopayEndDate() {
+      const autopayStartField = document.querySelector('input[name="health_insurance[installment_autopay_start_date]"]');
+      const autopayEndField = document.querySelector('input[name="health_insurance[installment_autopay_end_date]"]');
+      const paymentMode = document.getElementById('payment_mode_select')?.value ||
+                         document.getElementById('health_insurance_payment_mode')?.value;
+
+      if (!autopayStartField?.value || !paymentMode || !autopayEndField) {
+        console.log('Missing fields for autopay calculation:', {
+          autopayStart: !!autopayStartField?.value,
+          paymentMode: !!paymentMode,
+          autopayEnd: !!autopayEndField
+        });
+        return;
+      }
+
+      console.log('🔄 Calculating autopay end date...');
+      console.log('Autopay start:', autopayStartField.value);
+      console.log('Payment mode:', paymentMode);
+
+      const startDate = parseInputDate(autopayStartField.value);
+      if (!startDate) return;
+
+      const endDate = new Date(startDate);
+
+      // Calculate autopay end date based on payment frequency
+      switch(paymentMode) {
+        case 'Yearly':
+        case 'Annual':
+          endDate.setFullYear(endDate.getFullYear() + 1);
+          break;
+        case 'Half Yearly':
+        case 'Semi-Annual':
+          endDate.setMonth(endDate.getMonth() + 6);
+          break;
+        case 'Quarterly':
+          endDate.setMonth(endDate.getMonth() + 3);
+          break;
+        case 'Monthly':
+          endDate.setMonth(endDate.getMonth() + 1);
+          break;
+        default:
+          endDate.setFullYear(endDate.getFullYear() + 1);
+      }
+
+      autopayEndField.value = formatDateForInput(endDate);
+      console.log('✅ Autopay End Date automatically set to:', formatDateForInput(endDate));
+    }
+
+    // Auto-calculate end date (legacy function for backward compatibility)
+    function calculateEndDate() {
+      const startDate = document.getElementById('start_date')?.value;
+      if (startDate) {
+        const start = new Date(startDate);
+        const end = new Date(start);
+        end.setFullYear(end.getFullYear() + 1);
+        end.setDate(end.getDate() - 1);
+        if (document.getElementById('end_date')) {
+          document.getElementById('end_date').value = end.toISOString().split('T')[0];
+        }
+      }
+    }
+
+    // Event listeners
+    const netPremiumInput = document.getElementById('net_premium');
+    console.log('Setting up Net Premium event listener...');
+    console.log('Net Premium input field:', netPremiumInput);
+
+    if (netPremiumInput) {
+      // Use both input and change events to ensure it works
+      netPremiumInput.addEventListener('input', function(e) {
+        console.log('Net Premium input event triggered, value:', e.target.value);
+        calculateTotalPremium();
+        calculateAllCommissions();
+      });
+
+      netPremiumInput.addEventListener('change', function(e) {
+        console.log('Net Premium change event triggered, value:', e.target.value);
+        calculateTotalPremium();
+        calculateAllCommissions();
+      });
+
+      console.log('Event listeners attached to net_premium field');
+    } else {
+      console.error('net_premium field not found - cannot attach event listeners!');
+    }
+    if (document.getElementById('gst_percentage')) {
+      document.getElementById('gst_percentage').addEventListener('input', calculateTotalPremium);
+    }
+    if (document.getElementById('commission_percentage')) {
+      document.getElementById('commission_percentage').addEventListener('input', function() {
+        calculateCommission();
+        calculateProfitAndExpenses();
+      });
+    }
+    if (document.getElementById('tds_percentage')) {
+      document.getElementById('tds_percentage').addEventListener('input', calculateCommission);
+    }
+    if (document.getElementById('start_date')) {
+      document.getElementById('start_date').addEventListener('change', calculateEndDate);
+    }
+
+    // Auto-fill autopay dates when policy dates change
+    if (document.getElementById('start_date')) {
+      document.getElementById('start_date').addEventListener('change', autoFillAutopayDates);
+    }
+    if (document.getElementById('end_date')) {
+      document.getElementById('end_date').addEventListener('change', autoFillAutopayDates);
+    }
+
+    // Initial auto-fill of autopay dates on page load
+    autoFillAutopayDates();
+
+    // Enhanced Payment Mode change listeners (for both regular and Select2 dropdowns)
+    function setupPaymentModeListeners() {
+      const paymentModeSelect = document.getElementById('payment_mode_select') ||
+                               document.getElementById('health_insurance_payment_mode');
+
+      if (paymentModeSelect) {
+        // Regular dropdown change event
+        paymentModeSelect.addEventListener('change', function() {
+          console.log('Payment Mode changed to:', this.value);
+          setTimeout(() => {
+            calculatePolicyEndDate(); // Calculate new end date based on current start date + payment mode
+          }, 100);
+        });
+
+        // Select2 specific events
+        if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+          $(paymentModeSelect).on('select2:select', function() {
+            console.log('Payment Mode changed via Select2 to:', this.value);
+            setTimeout(() => {
+              calculatePolicyEndDate(); // Calculate new end date based on current start date + payment mode
+            }, 100);
+          });
+        }
+
+        console.log('✅ Payment Mode event listeners attached');
+      }
+    }
+
+    // Policy Start Date change listeners
+    function setupPolicyStartDateListeners() {
+      const startDateField = document.getElementById('start_date');
+
+      if (startDateField) {
+        startDateField.addEventListener('change', function() {
+          console.log('Policy Start Date changed to:', this.value);
+          setTimeout(() => {
+            calculatePolicyEndDate(); // Recalculate end date when start date changes
+          }, 100);
+        });
+        console.log('✅ Policy Start Date listener attached');
+      }
+    }
+
+    // Autopay start date change listeners
+    function setupAutopayStartDateListeners() {
+      const autopayStartField = document.querySelector('input[name="health_insurance[installment_autopay_start_date]"]');
+
+      if (autopayStartField) {
+        autopayStartField.addEventListener('change', function() {
+          console.log('Autopay Start Date changed to:', this.value);
+          calculateAutopayEndDate();
+        });
+        console.log('✅ Autopay Start Date listener attached');
+      }
+    }
+
+    // Setup all date calculation event listeners
+    setupPaymentModeListeners();
+    setupPolicyStartDateListeners();
+    setupAutopayStartDateListeners();
+
+    // Sub-agent commission event listeners
+    if (document.querySelector('.sub-agent-commission-percentage')) {
+      document.querySelector('.sub-agent-commission-percentage').addEventListener('input', function() {
+        calculateSubAgentCommission();
+        calculateProfitAndExpenses();
+      });
+    }
+    if (document.querySelector('.sub-agent-tds-percentage')) {
+      document.querySelector('.sub-agent-tds-percentage').addEventListener('input', calculateSubAgentCommission);
+    }
+
+    // Investor commission event listeners
+    if (document.querySelector('.investor-commission-percentage')) {
+      document.querySelector('.investor-commission-percentage').addEventListener('input', function() {
+        calculateInvestorCommission();
+        calculateProfitAndExpenses();
+      });
+    }
+    if (document.querySelector('.investor-tds-percentage')) {
+      document.querySelector('.investor-tds-percentage').addEventListener('input', calculateInvestorCommission);
+    }
+
+    // Ambassador commission event listeners
+    if (document.querySelector('.ambassador-commission-percentage')) {
+      document.querySelector('.ambassador-commission-percentage').addEventListener('input', function() {
+        calculateAmbassadorCommission();
+        calculateProfitAndExpenses();
+      });
+    }
+    if (document.querySelector('.ambassador-tds-percentage')) {
+      document.querySelector('.ambassador-tds-percentage').addEventListener('input', calculateAmbassadorCommission);
+    }
+
+    // Family Members Management (copied from working edit page)
+    let memberIndex = <%= @health_insurance.health_insurance_members.length %>;
+    console.log('Family Members - Initial memberIndex:', memberIndex);
+
+    function toggleNoMembersMessage() {
+      const memberRows = document.querySelectorAll('.family-member-row');
+      const noMembersMsg = document.getElementById('no_members_message');
+
+      if (memberRows.length === 0 || Array.from(memberRows).every(row => row.style.display === 'none')) {
+        if (noMembersMsg) noMembersMsg.style.display = 'block';
+      } else {
+        if (noMembersMsg) noMembersMsg.style.display = 'none';
+      }
+    }
+
+    // Add Family Member functionality (copied from working edit page)
+    const addFamilyBtn = document.getElementById('add_family_member');
+    console.log('ADD MEMBER button found:', addFamilyBtn);
+
+    if (addFamilyBtn) {
+      addFamilyBtn.addEventListener('click', function() {
+        console.log('✅ ADD MEMBER button clicked! Current memberIndex:', memberIndex);
+        const memberTemplate = `
+          <div class="family-member-row border rounded p-3 mb-3 bg-light">
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Member Name</label>
+                <input type="text" name="health_insurance[health_insurance_members_attributes][${memberIndex}][member_name]" class="form-control" placeholder="Full Name">
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Age</label>
+                <input type="number" name="health_insurance[health_insurance_members_attributes][${memberIndex}][age]" class="form-control" min="1" max="120">
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Relationship</label>
+                <select name="health_insurance[health_insurance_members_attributes][${memberIndex}][relationship]" class="form-select">
+                  <option value="">Select Relationship</option>
+                  <option value="Self">Self</option>
+                  <option value="Spouse">Spouse</option>
+                  <option value="Son">Son</option>
+                  <option value="Daughter">Daughter</option>
+                  <option value="Father">Father</option>
+                  <option value="Mother">Mother</option>
+                  <option value="Brother">Brother</option>
+                  <option value="Sister">Sister</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Sum Insured</label>
+                <input type="number" name="health_insurance[health_insurance_members_attributes][${memberIndex}][sum_insured]" class="form-control" step="0.01">
+              </div>
+              <div class="col-md-1 d-flex align-items-end mb-3">
+                <button type="button" class="btn btn-outline-danger remove-member-btn">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('family_members').insertAdjacentHTML('beforeend', memberTemplate);
+        memberIndex++;
+        toggleNoMembersMessage();
+        console.log('✅ Family member added, new memberIndex:', memberIndex);
+      });
+    } else {
+      console.error('❌ ADD MEMBER button not found!');
+    }
+
+    // Remove family member
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.remove-member-btn')) {
+        const memberRow = e.target.closest('.family-member-row');
+        const destroyInput = memberRow.querySelector('input[name*="_destroy"]');
+
+        if (destroyInput) {
+          destroyInput.value = '1';
+          memberRow.style.display = 'none';
+        } else {
+          memberRow.remove();
+        }
+        toggleNoMembersMessage();
+        console.log('✅ Family member removed');
+      }
+    });
+
+    // Initialize calculations after a short delay to ensure DOM is ready
+    setTimeout(function() {
+      console.log('🚀 Running initial renewal form calculations...');
+
+      // Set default autopay start date first
+      setDefaultAutopayStartDate();
+
+      // Calculate renewal dates based on original policy
+      calculateRenewalDates();
+
+      // Calculate financial amounts
+      calculateTotalPremium();
+      calculateAllCommissions();
+
+      console.log('✅ Initial calculations completed');
+    }, 500); // Increased delay to ensure DOM and Select2 are ready
+
+    // Initialize the no members message state (must be after DOM is ready)
+    toggleNoMembersMessage();
+
+    // Health Insurance Policy Documents Manager
+    let healthPolicyDocumentIndex = 0;
+    const addHealthPolicyDocumentBtn = document.getElementById('add_health_policy_document');
+    const healthPolicyDocumentsContainer = document.getElementById('health_policy_documents_container');
+
+    if (addHealthPolicyDocumentBtn && healthPolicyDocumentsContainer) {
+      addHealthPolicyDocumentBtn.addEventListener('click', function() {
+        const documentHtml = `
+          <div class="document-entry p-3 mb-3 border rounded position-relative" data-index="${healthPolicyDocumentIndex}" style="background: #f8f9fa;">
+            <button type="button" class="btn btn-sm btn-outline-danger position-absolute" style="top: 10px; right: 10px;" onclick="this.closest('.document-entry').remove()">
+              <i class="bi bi-trash"></i>
+            </button>
+            <div class="row">
+              <div class="col-md-4">
+                <label class="form-label">Document Title <span class="text-danger">*</span></label>
+                <input type="text" name="health_insurance[health_insurance_documents_attributes][${healthPolicyDocumentIndex}][title]" class="form-control" placeholder="Enter document title" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Document Type <span class="text-danger">*</span></label>
+                <select name="health_insurance[health_insurance_documents_attributes][${healthPolicyDocumentIndex}][document_type]" class="form-select" required>
+                  <option value="">Select Document Type</option>
+                  <option value="policy_document">Policy Document</option>
+                  <option value="medical_report">Medical Report</option>
+                  <option value="identity_proof">Identity Proof</option>
+                  <option value="address_proof">Address Proof</option>
+                  <option value="income_proof">Income Proof</option>
+                  <option value="aadhar">Aadhar Card</option>
+                  <option value="pan_card">PAN Card</option>
+                  <option value="passport">Passport</option>
+                  <option value="claim_form">Claim Form</option>
+                  <option value="discharge_summary">Discharge Summary</option>
+                  <option value="pre_policy_checkup">Pre-Policy Checkup</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Document File <span class="text-danger">*</span></label>
+                <input type="file" name="health_insurance[health_insurance_documents_attributes][${healthPolicyDocumentIndex}][file]" class="form-control" accept="application/pdf,image/jpeg,image/jpg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required id="health_doc_file_${healthPolicyDocumentIndex}">
+              </div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-md-12">
+                <label class="form-label">Description (Optional)</label>
+                <textarea name="health_insurance[health_insurance_documents_attributes][${healthPolicyDocumentIndex}][description]" class="form-control" rows="2" placeholder="Optional description"></textarea>
+              </div>
+            </div>
+          </div>
+        `;
+        healthPolicyDocumentsContainer.insertAdjacentHTML('beforeend', documentHtml);
+        healthPolicyDocumentIndex++;
+      });
+    }
+
+  } catch (error) {
+    console.warn('Health insurance renewal form initialization error:', error.message);
+  }
+});
+</script>

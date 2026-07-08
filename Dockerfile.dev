@@ -1,0 +1,42 @@
+# Development Dockerfile for Rails
+FROM ruby:3.1-alpine
+
+# Install development dependencies
+RUN apk add --no-cache \
+    build-base \
+    postgresql-dev \
+    nodejs \
+    yarn \
+    git \
+    vim \
+    curl \
+    bash \
+    tzdata
+
+WORKDIR /app
+
+# Install gems
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+# Install JavaScript dependencies
+COPY package.json yarn.lock ./
+RUN yarn install
+
+# Create user with same UID/GID as host user to avoid permission issues
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+RUN addgroup -g ${GROUP_ID} -S appuser && \
+    adduser -S appuser -u ${USER_ID} -G appuser
+
+# Create necessary directories
+RUN mkdir -p /app/log /app/tmp /app/node_modules && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
+# Expose port
+EXPOSE 3000
+
+# Start Rails server in development mode
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000"]

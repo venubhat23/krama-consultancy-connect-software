@@ -1,0 +1,30 @@
+<%#
+  Conditional Pagination Partial
+  Usage: <%= render 'shared/pagination', records: @your_records
+%>
+
+<% if local_assigns[:records] && should_show_pagination?(records) %>
+  <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="text-muted" style="font-size:0.82rem;">
+        <% if records.respond_to?(:total_count) %>
+          Showing
+          <strong><%= records.offset_value + 1 %></strong>–<strong><%= [records.offset_value + records.limit_value, records.total_count].min %></strong>
+          of <strong><%= number_with_delimiter(records.total_count) %></strong>
+        <% end %>
+      </div>
+      <%= render 'shared/per_page_selector' %>
+    </div>
+    <div class="pagination-wrapper">
+      <%= paginate records %>
+    </div>
+  </div>
+<% elsif local_assigns[:records] %>
+  <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+    <div class="text-muted" style="font-size:0.82rem;">
+      <% total = records.respond_to?(:total_count) ? records.total_count : records.count %>
+      Showing all <strong><%= number_with_delimiter(total) %></strong> <%= 'record'.pluralize(total) %>
+    </div>
+    <%= render 'shared/per_page_selector' %>
+  </div>
+<% end %>

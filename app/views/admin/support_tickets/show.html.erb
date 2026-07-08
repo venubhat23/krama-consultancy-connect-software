@@ -1,0 +1,40 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><%= @ticket.subject %></h2>
+    <p class="text-muted mb-0">Raised by <%= @ticket.raised_by.full_name %> · <%= @ticket.forum&.name %><%= " / #{@ticket.chapter.name}" if @ticket.chapter %></p>
+  </div>
+  <%= form_with url: change_status_admin_platform_support_ticket_path(@ticket), method: :patch, local: true, class: "d-flex gap-2" do |form| %>
+    <%= select_tag :status, options_for_select(SupportTicket.statuses.keys.map { |s| [s.humanize, s] }, @ticket.status), class: "form-select form-select-sm" %>
+    <%= form.submit "Update", class: "btn btn-sm btn-primary" %>
+  <% end %>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body"><%= simple_format @ticket.body %></div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-header bg-transparent border-0"><h6 class="mb-0">Replies</h6></div>
+  <div class="card-body">
+    <% if @replies.any? %>
+      <% @replies.each do |reply| %>
+        <div class="mb-3 pb-3 border-bottom">
+          <strong><%= reply.user.full_name %></strong>
+          <small class="text-muted">· <%= reply.created_at.strftime("%b %d, %I:%M %p") %></small>
+          <p class="mb-0 mt-1"><%= reply.body %></p>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="text-muted mb-0">No replies yet.</p>
+    <% end %>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <%= form_with url: reply_admin_platform_support_ticket_path(@ticket), method: :post, local: true do %>
+      <%= text_area_tag :body, nil, class: "form-control mb-2", rows: 3, placeholder: "Write a reply...", required: true %>
+      <%= submit_tag "Post Reply", class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,13 @@
+development:
+  cloudflare_r2:
+    access_key_id: "52ed60ae0a0776fb357299dede45ab9f"
+    secret_access_key: "5b19ea5dede62f503eebb2b57de7719962f38d6b86ef387f993bcf0d6102f657"
+    bucket: "insurebook-uploads"
+    endpoint: "https://1f8982473cb9a48a41c053ca18db87ca.r2.cloudflarestorage.com"
+
+production:
+  cloudflare_r2:
+    access_key_id: "52ed60ae0a0776fb357299dede45ab9f"
+    secret_access_key: "5b19ea5dede62f503eebb2b57de7719962f38d6b86ef387f993bcf0d6102f657"
+    bucket: "insurebook-uploads-production"
+    endpoint: "https://1f8982473cb9a48a41c053ca18db87ca.r2.cloudflarestorage.com"

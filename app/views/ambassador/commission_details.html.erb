@@ -1,0 +1,313 @@
+<% content_for :title, "Commission Details" %>
+
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h1 class="h3 mb-0 text-gray-800">
+          <i class="bi bi-list-columns-reverse me-2 text-primary"></i>
+          Commission Details
+        </h1>
+        <p class="text-muted mt-1">Detailed breakdown of your commission earnings</p>
+      </div>
+      <div>
+        <%= link_to ambassador_dashboard_path, class: "btn btn-outline-primary" do %>
+          <i class="bi bi-arrow-left me-2"></i>
+          Back to Dashboard
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Commission Summary Cards -->
+<div class="row g-4 mb-5">
+  <div class="col-xl-3 col-md-6">
+    <div class="card border-left-success shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+              Total Earned
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= indian_currency((@distributor_stats&.dig(:total_commission) || 0).round) %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="bi bi-currency-rupee fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="card border-left-warning shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+              This Month
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= indian_currency((@monthly_trends&.dig(Date.current.strftime("%Y-%m"), :commission) || 0).round) %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="bi bi-calendar-month fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="card border-left-info shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+              Avg per Policy
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= (@distributor_stats&.dig(:total_policies) || 0) > 0 ? indian_currency(((@distributor_stats&.dig(:total_commission) || 0) / (@distributor_stats&.dig(:total_policies) || 1)).round) : indian_currency(0) %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="bi bi-calculator fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="card border-left-primary shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+              Policies
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= @distributor_stats&.dig(:total_policies) || 0 %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="bi bi-file-text fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Affiliate-wise Commission Breakdown -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="bi bi-people-fill me-2"></i>
+      Affiliate-wise Commission Breakdown
+    </h6>
+  </div>
+  <div class="card-body">
+    <% if @assigned_affiliates.any? %>
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+          <thead class="table-primary">
+            <tr>
+              <th>Affiliate</th>
+              <th>Health Insurance</th>
+              <th>Life Insurance</th>
+              <th>Motor Insurance</th>
+              <th>Total Commission</th>
+              <th>Total Premium</th>
+              <th>Commission %</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% (@assigned_affiliates || []).each do |affiliate| %>
+              <% stats = @affiliate_stats&.dig(affiliate.id) || {} %>
+              <% commission_percentage = (stats[:total_premium] || 0) > 0 ? (((stats[:total_commission] || 0) / (stats[:total_premium] || 1)) * 100) : 0 %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="avatar-circle me-2" style="width: 32px; height: 32px; font-size: 14px;">
+                      <%= affiliate.first_name&.first&.upcase || 'A' %>
+                    </div>
+                    <div>
+                      <div class="fw-bold"><%= affiliate.display_name %></div>
+                      <small class="text-muted"><%= affiliate.mobile %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="text-center">
+                    <div class="fw-bold"><%= indian_currency((stats[:health_commission] || 0).round) %></div>
+                    <small class="text-muted">(<%= stats[:health_policies] %> policies)</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="text-center">
+                    <div class="fw-bold"><%= indian_currency((stats[:life_commission] || 0).round) %></div>
+                    <small class="text-muted">(<%= stats[:life_policies] %> policies)</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="text-center">
+                    <div class="fw-bold"><%= indian_currency(
+                      begin
+                        # Try to sum commission amounts if column exists, otherwise return 0
+                        MotorInsurance.where(sub_agent_id: affiliate.id).sum(:main_agent_commission_amount)
+                      rescue ActiveRecord::StatementInvalid
+                        # Column doesn't exist yet, return 0 until commission structure is implemented
+                        0
+                      end.round
+                    ) %></div>
+                    <small class="text-muted">(<%= stats[:motor_policies] %> policies)</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="text-center">
+                    <span class="fw-bold text-success h6">
+                      <%= indian_currency(stats[:total_commission].round) %>
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <div class="text-center">
+                    <div class="fw-bold"><%= indian_currency(stats[:total_premium].round) %></div>
+                  </div>
+                </td>
+                <td>
+                  <div class="text-center">
+                    <span class="badge bg-info"><%= commission_percentage.round(2) %>%</span>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+            <tr class="table-secondary fw-bold">
+              <td>Total</td>
+              <td class="text-center">
+                <%= indian_currency((@assigned_affiliates || []).sum { |a| @affiliate_stats&.dig(a.id, :health_commission) || 0 }.round) %>
+              </td>
+              <td class="text-center">
+                <%= indian_currency((@assigned_affiliates || []).sum { |a| @affiliate_stats&.dig(a.id, :life_commission) || 0 }.round) %>
+              </td>
+              <td class="text-center">
+                <%= indian_currency((@assigned_affiliates || []).sum { |a|
+                  begin
+                    MotorInsurance.where(sub_agent_id: a.id).sum(:main_agent_commission_amount) || 0
+                  rescue ActiveRecord::StatementInvalid
+                    0
+                  end
+                }.round) %>
+              </td>
+              <td class="text-center text-success">
+                <%= indian_currency((@distributor_stats&.dig(:total_commission) || 0).round) %>
+              </td>
+              <td class="text-center">
+                <%= indian_currency((@distributor_stats&.dig(:total_premium) || 0).round) %>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-success">
+                  <%= (@distributor_stats&.dig(:total_premium) || 0) > 0 ? (((@distributor_stats&.dig(:total_commission) || 0) / (@distributor_stats&.dig(:total_premium) || 1)) * 100).round(2) : 0 %>%
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-people display-1"></i>
+        <h5 class="mt-3">No Affiliates Assigned</h5>
+        <p>You don't have any affiliates assigned to you yet.</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Recent Policies by Affiliates -->
+<div class="card shadow">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="bi bi-clock-history me-2"></i>
+      Recent Policies by Your Affiliates
+    </h6>
+  </div>
+  <div class="card-body">
+    <% recent_policies = [] %>
+    <% (@assigned_affiliates || []).each do |affiliate| %>
+      <% affiliate_recent = @affiliate_stats&.dig(affiliate.id, :recent_policies) || [] %>
+      <% recent_policies.concat(affiliate_recent) %>
+    <% end %>
+    <% recent_policies = recent_policies.sort_by { |p| p[:created_at] }.reverse.first(10) %>
+
+    <% if recent_policies.any? %>
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Policy Type</th>
+              <th>Policy Number</th>
+              <th>Customer</th>
+              <th>Premium</th>
+              <th>Commission</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% recent_policies.each do |policy| %>
+              <tr>
+                <td>
+                  <span class="badge bg-<%= policy[:type] == 'Health' ? 'success' : policy[:type] == 'Life' ? 'info' : 'warning' %>">
+                    <%= policy[:type] %>
+                  </span>
+                </td>
+                <td class="fw-bold"><%= policy[:policy_number] %></td>
+                <td><%= policy[:customer] %></td>
+                <td><%= indian_currency(policy[:premium].round) %></td>
+                <td class="text-success fw-bold"><%= indian_currency(policy[:commission].round) %></td>
+                <td><%= policy[:created_at].strftime("%b %d, %Y") %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center text-muted py-4">
+        <i class="bi bi-file-text display-4"></i>
+        <p class="mt-2">No recent policies found</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+.border-left-primary {
+  border-left: .25rem solid #4e73df!important;
+}
+.border-left-success {
+  border-left: .25rem solid #1cc88a!important;
+}
+.border-left-info {
+  border-left: .25rem solid #36b9cc!important;
+}
+.border-left-warning {
+  border-left: .25rem solid #f6c23e!important;
+}
+
+.avatar-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+}
+</style>

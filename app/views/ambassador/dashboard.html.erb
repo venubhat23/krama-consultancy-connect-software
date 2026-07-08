@@ -1,0 +1,421 @@
+<% content_for :title, "Ambassador Commission Dashboard" %>
+
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h1 class="h3 mb-0 text-gray-800">
+          <i class="bi bi-person-badge me-2 text-primary"></i>
+          Ambassador Commission Dashboard
+        </h1>
+        <p class="text-muted mt-1">Welcome back, <%= @ambassador.full_name %>!</p>
+      </div>
+      <div class="text-end">
+        <span class="badge bg-primary fs-6 px-3 py-2">
+          <i class="bi bi-briefcase me-2"></i>
+          Ambassador
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ambassador Overview Cards -->
+<div class="row g-4 mb-5">
+  <!-- Total Affiliates -->
+  <div class="col-xl-3 col-md-6">
+    <div class="card border-left-primary shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+              Total Affiliates
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= @distributor_stats[:total_affiliates] %>
+            </div>
+            <div class="text-success small">
+              <span class="text-success">
+                <i class="bi bi-person-check"></i>
+                <%= @distributor_stats[:active_affiliates] %> Active
+              </span>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="bi bi-people-fill fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Policies -->
+  <div class="col-xl-3 col-md-6">
+    <div class="card border-left-success shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+              Total Policies
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= @distributor_stats[:total_policies] %>
+            </div>
+            <div class="text-info small">
+              <span class="text-info">
+                <i class="bi bi-arrow-up-circle"></i>
+                <%= (@distributor_stats[:avg_policies_per_affiliate]).round(1) %> Avg per affiliate
+              </span>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="bi bi-file-text fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Premium -->
+  <div class="col-xl-3 col-md-6">
+    <div class="card border-left-info shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+              Total Premium
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= indian_currency(@distributor_stats[:total_premium].round) %>
+            </div>
+            <div class="text-warning small">
+              <span class="text-warning">
+                <i class="bi bi-currency-rupee"></i>
+                Premium Generated
+              </span>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="bi bi-cash-coin fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Commission -->
+  <div class="col-xl-3 col-md-6">
+    <div class="card border-left-warning shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+              Total Commission
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= indian_currency(@distributor_stats[:total_commission].round) %>
+            </div>
+            <div class="text-success small">
+              <span class="text-success">
+                <i class="bi bi-graph-up"></i>
+                Commission Earned
+              </span>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="bi bi-wallet2 fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Left Column -->
+  <div class="col-xl-8 col-lg-7">
+    <!-- Monthly Commission Trends -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="bi bi-graph-up me-2"></i>
+          Monthly Commission Trends
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="chart-container">
+          <canvas id="commissionTrendsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Affiliates Performance -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="bi bi-people-fill me-2"></i>
+          My Affiliates Performance
+        </h6>
+      </div>
+      <div class="card-body">
+        <% if @assigned_affiliates.any? %>
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+              <thead class="table-primary">
+                <tr>
+                  <th>Affiliate Name</th>
+                  <th>Policies</th>
+                  <th>Premium</th>
+                  <th>Commission</th>
+                  <th>Customers</th>
+                  <th>Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @assigned_affiliates.each do |affiliate| %>
+                  <% stats = @affiliate_stats[affiliate.id] %>
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="avatar-circle me-2" style="width: 32px; height: 32px; font-size: 14px;">
+                          <%= affiliate.first_name&.first&.upcase || 'A' %>
+                        </div>
+                        <div>
+                          <div class="fw-bold"><%= affiliate.display_name %></div>
+                          <small class="text-muted"><%= affiliate.mobile %></small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge bg-info"><%= stats[:total_policies] %></span>
+                      <br><small class="text-muted">
+                        H: <%= stats[:health_policies] %> |
+                        L: <%= stats[:life_policies] %> |
+                        M: <%= stats[:motor_policies] %>
+                      </small>
+                    </td>
+                    <td>
+                      <strong><%= indian_currency(stats[:total_premium].round) %></strong>
+                    </td>
+                    <td>
+                      <span class="text-success fw-bold">
+                        <%= indian_currency(stats[:total_commission].round) %>
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge bg-secondary"><%= stats[:customers_count] %></span>
+                    </td>
+                    <td>
+                      <small><%= stats[:joined_date].strftime("%b %Y") %></small>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <div class="text-center text-muted py-5">
+            <i class="bi bi-people display-1"></i>
+            <h5 class="mt-3">No Affiliates Assigned</h5>
+            <p>You don't have any affiliates assigned to you yet.</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div class="col-xl-4 col-lg-5">
+    <!-- Recent Commission Activity -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="bi bi-clock-history me-2"></i>
+          Recent Commission Activity
+        </h6>
+      </div>
+      <div class="card-body">
+        <% if @recent_commission_activity.any? %>
+          <% @recent_commission_activity.each do |activity| %>
+            <div class="d-flex align-items-center py-2 border-bottom">
+              <div class="flex-shrink-0">
+                <div class="icon-circle bg-success">
+                  <i class="bi bi-currency-rupee text-white"></i>
+                </div>
+              </div>
+              <div class="flex-grow-1 ms-3">
+                <div class="small font-weight-bold"><%= activity[:type] %></div>
+                <div class="small text-muted"><%= activity[:description] %></div>
+                <div class="small">
+                  <span class="text-success fw-bold">+<%= indian_currency(activity[:amount].round) %></span>
+                  <span class="text-muted ms-2"><%= activity[:date].strftime("%b %d") %></span>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-graph-up display-4"></i>
+            <p class="mt-2">No recent commission activity</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="bi bi-lightning me-2"></i>
+          Quick Actions
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <%= link_to ambassador_commission_details_path, class: "btn btn-outline-primary" do %>
+            <i class="bi bi-list-columns-reverse me-2"></i>
+            View Commission Details
+          <% end %>
+          <%= link_to ambassador_payout_history_path, class: "btn btn-outline-success" do %>
+            <i class="bi bi-wallet2 me-2"></i>
+            View Payout History
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.border-left-primary {
+  border-left: .25rem solid #4e73df!important;
+}
+.border-left-success {
+  border-left: .25rem solid #1cc88a!important;
+}
+.border-left-info {
+  border-left: .25rem solid #36b9cc!important;
+}
+.border-left-warning {
+  border-left: .25rem solid #f6c23e!important;
+}
+
+.icon-circle {
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+}
+
+.avatar-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Monthly Commission Trends Chart
+  const ctx = document.getElementById('commissionTrendsChart').getContext('2d');
+  const monthlyData = <%= @monthly_trends.to_json.html_safe %>;
+
+  const labels = Object.values(monthlyData).map(item => item.month);
+  const commissionData = Object.values(monthlyData).map(item => item.commission);
+  const policiesData = Object.values(monthlyData).map(item => item.policies_count);
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Commission (Rs.)',
+        data: commissionData,
+        borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+        tension: 0.1,
+        yAxisID: 'y'
+      }, {
+        label: 'Policies',
+        data: policiesData,
+        borderColor: 'rgb(255, 99, 132)',
+        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+        tension: 0.1,
+        yAxisID: 'y1'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              if (context.dataset.label === 'Commission (Rs.)') {
+                return 'Commission: Rs. ' + context.parsed.y.toLocaleString('en-IN');
+              } else {
+                return 'Policies: ' + context.parsed.y;
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          display: true,
+          title: {
+            display: true,
+            text: 'Month'
+          }
+        },
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          title: {
+            display: true,
+            text: 'Commission (Rs.)'
+          },
+          ticks: {
+            callback: function(value) {
+              return 'Rs. ' + value.toLocaleString('en-IN');
+            }
+          }
+        },
+        y1: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          title: {
+            display: true,
+            text: 'Policies Count'
+          },
+          grid: {
+            drawOnChartArea: false,
+          },
+        }
+      }
+    }
+  });
+});
+</script>

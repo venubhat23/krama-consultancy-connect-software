@@ -1,0 +1,2452 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">
+      <i class="bi bi-arrow-clockwise me-2 text-warning"></i>
+      Renew Life Insurance Policy
+    </h2>
+    <p class="text-muted mb-0">
+      Creating renewal policy for: <strong><%= @original_policy.policy_number %></strong>
+      <span class="badge bg-warning text-dark ms-2">
+        Expires: <%= @original_policy.policy_end_date&.strftime('%B %d, %Y') %>
+      </span>
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to admin_life_insurance_path(@original_policy), class: "btn btn-outline-info" do %>
+      <i class="bi bi-eye me-1"></i>
+      View Original Policy
+    <% end %>
+    <%= link_to admin_life_insurances_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Policies
+    <% end %>
+  </div>
+</div>
+
+<!-- Original vs Renewal Comparison -->
+<div class="alert alert-info d-flex align-items-center mb-4">
+  <i class="bi bi-info-circle me-3 fs-4"></i>
+  <div>
+    <h6 class="alert-heading mb-1">Policy Renewal Information</h6>
+    <p class="mb-0">
+      This form is pre-filled with data from the original policy. Please review and update any changes needed for the renewal.
+      The new policy will start from <strong><%= @renewed_policy.policy_start_date&.strftime('%B %d, %Y') %></strong>
+      and expire on <strong><%= @renewed_policy.policy_end_date&.strftime('%B %d, %Y') %></strong>.
+    </p>
+  </div>
+</div>
+
+<!-- Complete Renewal Form (Same as Create Form) -->
+<%= form_with model: [:admin, @renewed_policy], url: create_renewal_admin_life_insurance_path(@original_policy), method: :post, local: true, class: "needs-validation", novalidate: true do |form| %>
+
+  <!-- Client & Agent Details Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-person me-2 text-primary"></i>
+        Client & Agent Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <% if @renewed_policy.errors.any? %>
+        <div class="alert alert-danger alert-dismissible fade show">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <strong>Please correct the following errors:</strong>
+          <ul class="mb-0 mt-2">
+            <% @renewed_policy.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% end %>
+
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <%= form.label :customer_id, "Client Name*", class: "form-label" %>
+          <%= form.select :customer_id,
+              options_for_select(@customers.map { |c| [c.display_name, c.id] }, @renewed_policy.customer_id),
+              { prompt: 'Search and select client...' },
+              { class: "form-control #{'is-invalid' if @renewed_policy.errors[:customer_id].any?}", required: true, id: "customer_select", data: { placeholder: "Type to search clients..." } } %>
+          <% if @renewed_policy.errors[:customer_id].any? %>
+            <div class="invalid-feedback"><%= @renewed_policy.errors[:customer_id].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_holder, "Policy Holder", class: "form-label" %>
+          <%
+            policy_holder_options = [['Self', 'Self']]
+            if @customer_family_members&.any?
+              @customer_family_members.each do |member|
+                policy_holder_options << ["#{member.name} (#{member.relationship.humanize})", "#{member.name}"]
+              end
+            end
+          %>
+          <%= form.select :policy_holder,
+              options_for_select(policy_holder_options, @renewed_policy.policy_holder),
+              { prompt: 'Select Policy Holder' },
+              { class: "form-control", id: "policy_holder_select" } %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :sub_agent_id, "Affiliate", class: "form-label" %>
+          <%= form.select :sub_agent_id,
+              options_for_select([['Self', '']] + @sub_agents.map { |a| [a.display_name, a.id] }, @renewed_policy.sub_agent_id),
+              { prompt: 'Search and select affiliate...' },
+              { class: "form-control", id: "affiliate_select", data: { placeholder: "Type to search affiliates..." } } %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <%= form.label :insured_name, "Insured Name", class: "form-label" %>
+          <%= form.text_field :insured_name,
+              class: "form-control",
+              placeholder: "Enter insured name" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Policy Details Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-file-text me-2 text-primary"></i>
+        Policy Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <!-- 1st: Broker Code dropdown with Direct/Broking options -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :broker_code_type, "Broker Code", class: "form-label" %>
+          <%= form.select :broker_code_type,
+              options_for_select([
+                ['Direct', 'direct'],
+                ['Broking', 'broking']
+              ], @renewed_policy.broker_code_type),
+              { prompt: 'Select Broker Code' },
+              { class: "form-control", id: "life_insurance_broker_code_type" } %>
+        </div>
+
+        <!-- 2nd: Agency Code (shows Agents when Direct selected, Brokers when Broking selected) -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :agency_code_id, "Agency Code (All Agents)*", class: "form-label" %>
+          <span class="agency-code-label-extra" id="agency_code_label_text">
+            <%= @renewed_policy.broker_code_type == 'broking' ? ' (All Brokers)' : ' (All Agents)' %>
+          </span>
+          <%
+            if @renewed_policy.broker_code_type == 'direct'
+              agency_options = @agency_codes.map { |ac| ["#{ac.agent_name} (#{ac.code})", ac.id, { 'data-agent-name' => ac.agent_name, 'data-agent-code' => ac.code, 'data-company-name' => ac.insurance_company_name.to_s }] }
+              selected_agency = @renewed_policy.agency_code_id
+              agency_prompt = 'Select Agency Code'
+            elsif @renewed_policy.broker_code_type == 'broking'
+              agency_options = @brokers.map { |b| [b.name, "broker_#{b.id}", { 'data-broker-id' => b.id }] }
+              selected_agency = @renewed_policy.broker_id.present? ? "broker_#{@renewed_policy.broker_id}" : nil
+              agency_prompt = 'Select Broker'
+            else
+              agency_options = []
+              selected_agency = nil
+              agency_prompt = 'Select Agency Code'
+            end
+          %>
+          <%= form.select :agency_code_id,
+              options_for_select(agency_options, selected_agency),
+              { prompt: agency_prompt },
+              { class: "form-control", id: "life_insurance_agency_code_id", required: false } %>
+          <%= form.hidden_field :broker_id, id: "broker_id_hidden", value: @renewed_policy.broker_id %>
+          <%= form.hidden_field :distributor_id, id: "distributor_id_hidden" %>
+        </div>
+
+        <!-- 3rd: Insurance Company (depends on selected agent/broker) -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :insurance_company_name, "Insurance Company*", class: "form-label" %>
+          <%= form.select :insurance_company_name,
+              options_for_select(@insurance_companies.map { |company| [company, company] }, @renewed_policy.insurance_company_name),
+              { prompt: 'Select Company' },
+              { class: "form-control #{'is-invalid' if @renewed_policy.errors[:insurance_company_name].any?}", required: true, id: "life_insurance_insurance_company_name" } %>
+          <% if @renewed_policy.errors[:insurance_company_name].any? %>
+            <div class="invalid-feedback"><%= @renewed_policy.errors[:insurance_company_name].first %></div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_type, "Policy Type*", class: "form-label" %>
+          <%= form.select :policy_type,
+              options_for_select(@policy_types.map { |type| [type, type] }, @renewed_policy.policy_type),
+              { prompt: 'Select Policy Type' },
+              { class: "form-control #{'is-invalid' if @renewed_policy.errors[:policy_type].any?}", required: true, readonly: true } %>
+          <% if @renewed_policy.errors[:policy_type].any? %>
+            <div class="invalid-feedback"><%= @renewed_policy.errors[:policy_type].first %></div>
+          <% end %>
+          <div class="form-text text-muted">Policy type is set to "Renewal" for this renewal policy.</div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :payment_mode, "Payment Mode*", class: "form-label" %>
+          <%= form.select :payment_mode,
+              options_for_select(@payment_modes.map { |mode| [mode, mode] }, @renewed_policy.payment_mode),
+              { prompt: 'Select Payment Mode' },
+              { class: "form-control #{'is-invalid' if @renewed_policy.errors[:payment_mode].any?}", required: true, id: "payment_mode_select" } %>
+          <% if @renewed_policy.errors[:payment_mode].any? %>
+            <div class="invalid-feedback"><%= @renewed_policy.errors[:payment_mode].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_number, "Policy Number*", class: "form-label" %>
+          <%= form.text_field :policy_number,
+              class: "form-control #{'is-invalid' if @renewed_policy.errors[:policy_number].any?}",
+              placeholder: "Enter new policy number for renewal",
+              required: true %>
+          <% if @renewed_policy.errors[:policy_number].any? %>
+            <div class="invalid-feedback"><%= @renewed_policy.errors[:policy_number].first %></div>
+          <% end %>
+          <div class="form-text text-muted">Original Policy: <%= @original_policy.policy_number %></div>
+        </div>
+      </div>
+
+      <!-- Policy Dates -->
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <%= form.label :policy_booking_date, "Policy Booking Date*", class: "form-label" %>
+          <%= form.date_field :policy_booking_date,
+              class: "form-control #{'is-invalid' if @renewed_policy.errors[:policy_booking_date].any?}",
+              required: true %>
+          <% if @renewed_policy.errors[:policy_booking_date].any? %>
+            <div class="invalid-feedback"><%= @renewed_policy.errors[:policy_booking_date].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :policy_start_date, "Policy Start Date*", class: "form-label" %>
+          <%= form.date_field :policy_start_date,
+              class: "form-control #{'is-invalid' if @renewed_policy.errors[:policy_start_date].any?}",
+              required: true, id: "start_date" %>
+          <% if @renewed_policy.errors[:policy_start_date].any? %>
+            <div class="invalid-feedback"><%= @renewed_policy.errors[:policy_start_date].first %></div>
+          <% end %>
+          <div class="form-text text-muted">Original expires: <%= @original_policy.policy_end_date&.strftime('%d/%m/%Y') %></div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :policy_end_date, "Policy End Date*", class: "form-label" %>
+          <%= form.date_field :policy_end_date,
+              class: "form-control #{'is-invalid' if @renewed_policy.errors[:policy_end_date].any?}",
+              required: true, id: "end_date" %>
+          <% if @renewed_policy.errors[:policy_end_date].any? %>
+            <div class="invalid-feedback"><%= @renewed_policy.errors[:policy_end_date].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :risk_start_date, "Risk Start Date", class: "form-label" %>
+          <%= form.date_field :risk_start_date, class: "form-control" %>
+        </div>
+      </div>
+
+      <!-- Policy Terms -->
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_term, "Policy Term (Years)*", class: "form-label" %>
+          <%= form.number_field :policy_term,
+              class: "form-control #{'is-invalid' if @renewed_policy.errors[:policy_term].any?}",
+              placeholder: "Enter policy term in years",
+              min: 1,
+              max: 50,
+              required: true %>
+          <% if @renewed_policy.errors[:policy_term].any? %>
+            <div class="invalid-feedback"><%= @renewed_policy.errors[:policy_term].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :premium_payment_term, "Premium Payment Term (Years)*", class: "form-label" %>
+          <%= form.number_field :premium_payment_term,
+              class: "form-control #{'is-invalid' if @renewed_policy.errors[:premium_payment_term].any?}",
+              placeholder: "Enter premium payment term",
+              min: 1,
+              max: 50,
+              required: true %>
+          <% if @renewed_policy.errors[:premium_payment_term].any? %>
+            <div class="invalid-feedback"><%= @renewed_policy.errors[:premium_payment_term].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :plan_name, "Plan Name*", class: "form-label" %>
+          <%= form.text_field :plan_name,
+              class: "form-control #{'is-invalid' if @renewed_policy.errors[:plan_name].any?}",
+              placeholder: "Enter plan name",
+              required: true %>
+          <% if @renewed_policy.errors[:plan_name].any? %>
+            <div class="invalid-feedback"><%= @renewed_policy.errors[:plan_name].first %></div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <%= form.label :sum_insured, "Sum Insured", class: "form-label" %>
+          <%= form.select :sum_insured,
+              options_for_select([
+                ['Rs. 5 Lakhs', 500000],
+                ['Rs. 10 Lakhs', 1000000],
+                ['Rs. 15 Lakhs', 1500000],
+                ['Rs. 20 Lakhs', 2000000],
+                ['Rs. 25 Lakhs', 2500000],
+                ['Rs. 50 Lakhs', 5000000],
+                ['Rs. 75 Lakhs', 7500000],
+                ['Rs. 1 Crore', 10000000],
+                ['Rs. 1.5 Crore', 15000000],
+                ['Rs. 2 Crore', 20000000],
+                ['Rs. 5 Crore', 50000000]
+              ], @renewed_policy.sum_insured),
+              { prompt: 'Select Sum Insured' },
+              { class: "form-control #{'is-invalid' if @renewed_policy.errors[:sum_insured].any?}", required: true, id: "life_insurance_sum_insured" } %>
+          <% if @renewed_policy.errors[:sum_insured].any? %>
+            <div class="invalid-feedback"><%= @renewed_policy.errors[:sum_insured].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :net_premium, "Net Premium*", class: "form-label" %>
+          <%= form.number_field :net_premium,
+              class: "form-control #{'is-invalid' if @renewed_policy.errors[:net_premium].any?}",
+              placeholder: "0", step: 0.01, required: true, id: "net_premium" %>
+          <% if @renewed_policy.errors[:net_premium].any? %>
+            <div class="invalid-feedback"><%= @renewed_policy.errors[:net_premium].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :first_year_gst_percentage, "1st Year GST %", class: "form-label" %>
+          <%= form.number_field :first_year_gst_percentage,
+              class: "form-control",
+              value: @renewed_policy.first_year_gst_percentage || 18,
+              step: 0.01, min: 0, id: "first_year_gst" %>
+        </div>
+
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :total_premium, "Total Premium*", class: "form-label" %>
+          <%= form.number_field :total_premium,
+              class: "form-control #{'is-invalid' if @renewed_policy.errors[:total_premium].any?}",
+              placeholder: "0", step: 0.01, required: true, readonly: true, id: "total_premium" %>
+          <% if @renewed_policy.errors[:total_premium].any? %>
+            <div class="invalid-feedback"><%= @renewed_policy.errors[:total_premium].first %></div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nominee Details Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-people me-2 text-primary"></i>
+        Nominee Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <%= form.label :nominee_name, "Nominee Name", class: "form-label" %>
+          <%= form.text_field :nominee_name,
+              class: "form-control",
+              id: "renew_nominee_name",
+              placeholder: "Nominee Name" %>
+        </div>
+        <div class="col-md-3 mb-3">
+          <%= form.label :nominee_relationship, "Relationship", class: "form-label" %>
+          <%= form.select :nominee_relationship,
+              options_for_select(@relationships.map { |r| [r, r] }, @renewed_policy.nominee_relationship),
+              { prompt: 'Select Relationship' },
+              { class: "form-control", id: "nominee_relationship_select" } %>
+        </div>
+        <div class="col-md-3 mb-3">
+          <%= form.label :nominee_age, "Age", class: "form-label" %>
+          <%= form.number_field :nominee_age,
+              class: "form-control",
+              id: "renew_nominee_age",
+              placeholder: "Nominee Age" %>
+        </div>
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Share (%)</label>
+          <input type="number" class="form-control" id="renew_nominee_share" placeholder="100" min="0" max="100" step="0.01" value="100" disabled>
+          <small class="text-muted">Display only</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bank Details Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-bank me-2 text-primary"></i>
+        Bank Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <%= form.label :bank_name, "Bank Name", class: "form-label" %>
+          <%= form.text_field :bank_name,
+              class: "form-control",
+              placeholder: "Bank Name" %>
+        </div>
+        <div class="col-md-4 mb-3">
+          <%= form.label :account_type, "Account Type", class: "form-label" %>
+          <%= form.select :account_type,
+              options_for_select(@account_types.map { |t| [t, t] }, @renewed_policy.account_type),
+              { prompt: 'Account Type' },
+              { class: "form-control", id: "account_type_select" } %>
+        </div>
+        <div class="col-md-4 mb-3">
+          <%= form.label :account_number, "Account Number", class: "form-label" %>
+          <%= form.text_field :account_number,
+              class: "form-control",
+              placeholder: "Account Number" %>
+        </div>
+        <div class="col-md-6 mb-3">
+          <%= form.label :ifsc_code, "IFSC CODE", class: "form-label" %>
+          <%= form.text_field :ifsc_code,
+              class: "form-control",
+              placeholder: "IFSC CODE" %>
+        </div>
+        <div class="col-md-6 mb-3">
+          <%= form.label :account_holder_name, "Account Holder Name", class: "form-label" %>
+          <%= form.text_field :account_holder_name,
+              class: "form-control",
+              placeholder: "Holder Name" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Other Details Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-info-circle me-2 text-primary"></i>
+        Other Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <%= form.label :reference_by_name, "Reference By Name", class: "form-label" %>
+          <%= form.text_field :reference_by_name,
+              class: "form-control",
+              placeholder: "Enter reference name" %>
+        </div>
+        <div class="col-md-6 mb-3">
+          <%= form.label :broker_name, "Broker Name", class: "form-label" %>
+          <%= form.text_field :broker_name,
+              class: "form-control",
+              placeholder: "Broker Name" %>
+        </div>
+        <div class="col-md-6 mb-3">
+          <%= form.label :bonus, "Bonus", class: "form-label" %>
+          <%= form.number_field :bonus,
+              class: "form-control",
+              value: @renewed_policy.bonus || 0,
+              step: 0.01 %>
+        </div>
+        <div class="col-md-6 mb-3">
+          <%= form.label :fund, "Fund", class: "form-label" %>
+          <%= form.number_field :fund,
+              class: "form-control",
+              value: @renewed_policy.fund || 0,
+              step: 0.01 %>
+        </div>
+        <div class="col-12 mb-3">
+          <%= form.label :extra_note, "Extra Note", class: "form-label" %>
+          <%= form.text_area :extra_note,
+              class: "form-control",
+              rows: 4,
+              placeholder: "Enter additional notes or comments..." %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Commission Calculation Table -->
+  <div class="card mb-4 shadow-sm commission-table">
+    <div class="card-header" style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="mb-0 text-dark fw-bold">
+            <i class="bi bi-calculator me-2 text-primary"></i>
+            Commission Calculation
+          </h5>
+        </div>
+        <div class="text-end">
+          <small class="text-muted fw-bold">Profit Formula:</small>
+          <div class="badge bg-light text-dark border" style="font-size: 0.8rem;">
+            Main Agent Commission - Total Distribution - Company Expenses
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <!-- Commission Table -->
+      <div class="table-responsive">
+        <table class="table mb-0" style="font-size: 0.95rem;">
+          <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+            <tr>
+              <th class="py-3 px-4 fw-bold text-dark border-0" style="width: 20%;">COMMISSION DETAILS</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 12%;">(%)</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 18%;">COMMISSION</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 12%;">TDS (%)</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 15%;">TDS AMOUNT</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 23%; background: #f8f9fa;">ACTUAL AMOUNT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Main Agent -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark bg-light">Main Agent Commission</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :main_agent_commission_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm",
+                    value: @renewed_policy.main_agent_commission_percentage || 0,
+                    step: 0.01, id: "commission_percentage",
+                    style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :commission_amount,
+                    class: "form-control border-1 text-center",
+                    value: @renewed_policy.commission_amount || 0,
+                    step: 0.01, readonly: true, id: "commission_amount",
+                    style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :tds_percentage,
+                    class: "form-control border-1 text-center",
+                    value: @renewed_policy.tds_percentage || 0,
+                    step: 0.01, id: "tds_percentage",
+                    style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :tds_amount,
+                    class: "form-control border-1 text-center",
+                    value: @renewed_policy.tds_amount || 0,
+                    step: 0.01, readonly: true, id: "tds_amount",
+                    style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <%= form.number_field :after_tds_value,
+                    class: "form-control border-1 text-center fw-bold fs-6",
+                    value: @renewed_policy.after_tds_value || 0,
+                    step: 0.01, readonly: true, id: "after_tds_value",
+                    style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+            </tr>
+
+            <!-- Affiliate Commission -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark">Affiliate Commission</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_commission_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm sub-agent-commission-percentage",
+                    value: @renewed_policy.sub_agent_commission_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_commission_amount,
+                    class: "form-control border-1 text-center sub-agent-commission-amount",
+                    value: @renewed_policy.sub_agent_commission_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_tds_percentage,
+                    class: "form-control border-1 text-center sub-agent-tds-percentage",
+                    value: @renewed_policy.sub_agent_tds_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_tds_amount,
+                    class: "form-control border-1 text-center sub-agent-tds-amount",
+                    value: @renewed_policy.sub_agent_tds_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <%= form.number_field :sub_agent_after_tds_value,
+                    class: "form-control border-1 text-center fw-bold fs-6 sub-agent-after-tds-value",
+                    value: @renewed_policy.sub_agent_after_tds_value || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+            </tr>
+
+            <!-- Ambassador -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark">Ambassador</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :ambassador_commission_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm ambassador-commission-percentage",
+                    value: @renewed_policy.ambassador_commission_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :ambassador_commission_amount,
+                    class: "form-control border-1 text-center ambassador-commission-amount",
+                    value: @renewed_policy.ambassador_commission_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :ambassador_tds_percentage,
+                    class: "form-control border-1 text-center ambassador-tds-percentage",
+                    value: @renewed_policy.ambassador_tds_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :ambassador_tds_amount,
+                    class: "form-control border-1 text-center ambassador-tds-amount",
+                    value: @renewed_policy.ambassador_tds_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <%= form.number_field :ambassador_after_tds_value,
+                    class: "form-control border-1 text-center fw-bold fs-6 ambassador-after-tds-value",
+                    value: @renewed_policy.ambassador_after_tds_value || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+            </tr>
+
+            <!-- Investor -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark">Investor</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :investor_commission_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm investor-commission-percentage",
+                    value: @renewed_policy.investor_commission_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :investor_commission_amount,
+                    class: "form-control border-1 text-center investor-commission-amount",
+                    value: @renewed_policy.investor_commission_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <%= form.number_field :investor_commission_amount,
+                    class: "form-control border-1 text-center fw-bold fs-6 investor-commission-amount-display",
+                    value: @renewed_policy.investor_commission_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+            </tr>
+
+            <!-- Company -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark">Company</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :company_expenses_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm company-expenses-percentage",
+                    value: @renewed_policy.company_expenses_percentage || 0,
+                    step: 0.01, min: 0, max: 100, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <input type="number" class="form-control border-1 text-center company-expenses-amount"
+                       value="0.00" step="0.01" readonly style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+              </td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <input type="number" class="form-control border-1 text-center fw-bold fs-6 company-expenses-amount-display"
+                       value="0.00" step="0.01" readonly style="background: #f8f9fa; border-color: #dee2e6; color: #495057;">
+              </td>
+            </tr>
+
+            <!-- Profit -->
+            <tr class="border-bottom" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 50%);">
+              <td class="py-3 px-4 fw-bold text-dark bg-warning bg-opacity-25">Profit</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :profit_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm profit-percentage",
+                    value: @renewed_policy.profit_percentage || 0,
+                    step: 0.01, readonly: true, style: "background: #fff3cd; border-color: #ffc107; color: #856404;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :profit_amount,
+                    class: "form-control border-1 text-center fw-bold profit-amount",
+                    value: @renewed_policy.profit_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #fff3cd; border-color: #ffc107; color: #856404;" %>
+              </td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-1 text-center" style="background: #fff3cd;">
+                <%= form.number_field :profit_amount,
+                    class: "form-control border-1 text-center fw-bold fs-6 profit-amount-display",
+                    value: @renewed_policy.profit_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #fff3cd; border-color: #ffc107; color: #856404;" %>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Hidden fields for compatibility -->
+      <%= form.hidden_field :total_distribution_percentage, class: "total-distribution-percentage" %>
+      <%= form.hidden_field :investor_tds_percentage, value: 0, class: "investor-tds-percentage" %>
+    </div>
+  </div>
+
+  <!-- Policy Documents Manager Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-cloud-upload me-2 text-primary"></i>
+        Policy Documents Manager
+      </h5>
+      <small class="text-muted">Upload, organize and manage all policy-related documents with secure storage</small>
+    </div>
+    <div class="card-body p-4">
+      <!-- R2 Main Policy Document Upload -->
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <div class="border border-success border-2 rounded p-4" style="background-color: #f0fff0;">
+            <%= form.label :main_policy_document, class: "form-label fw-bold" do %>
+              <i class="bi bi-cloud-upload me-2 text-success"></i>
+              Main Policy Document (R2 Storage)
+            <% end %>
+
+            <%= form.file_field :main_policy_document,
+                class: "form-control",
+                accept: "application/pdf,image/jpeg,image/jpg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" %>
+            <div class="form-text mt-2">
+              <i class="bi bi-info-circle me-1"></i>
+              <strong>Secure R2 Storage:</strong> Supports PDF, JPEG, PNG, Word files (Max: 10MB) - files stored securely in Cloudflare R2
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12 mb-4">
+          <div class="border border-secondary border-2 rounded p-4" style="background-color: #f8f9fa;">
+            <%= form.label :documents, class: "form-label fw-bold" do %>
+              <i class="bi bi-file-earmark-plus me-2 text-secondary"></i>
+              Additional Documents
+              <span class="badge bg-secondary ms-2">Optional</span>
+            <% end %>
+            <%= form.file_field :documents,
+                class: "form-control",
+                multiple: true,
+                id: "additional_documents_upload",
+                accept: "application/pdf,image/jpeg,image/jpg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" %>
+            <div class="form-text mt-2">
+              <i class="bi bi-info-circle me-1"></i>
+              Supports PDF, Images, Word files - Identity proofs, Medical reports, etc.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document Management System -->
+      <div class="border-top pt-4 mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0">Document Management System</h6>
+          <button type="button" class="btn btn-sm btn-primary" id="add_policy_document">
+            <i class="bi bi-plus-lg me-1"></i>
+            Add Document
+          </button>
+        </div>
+
+        <div id="policy_documents_container">
+          <!-- New document system will be added here -->
+        </div>
+
+        <p class="text-muted mb-0 mt-2">
+          <small>Use this system to add organized documents with titles and types</small>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Autopay Installment Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-calendar-event me-2 text-primary"></i>
+        Autopay Installment
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <%= form.label :installment_autopay_start_date, "Installment Autopay Start Date", class: "form-label" %>
+          <%= form.date_field :installment_autopay_start_date,
+              class: "form-control",
+              id: "autopay_start_date",
+              value: @renewed_policy.installment_autopay_start_date || Date.current %>
+        </div>
+        <div class="col-md-6 mb-3">
+          <%= form.label :installment_autopay_end_date, "Installment Autopay End Date", class: "form-label" %>
+          <%= form.date_field :installment_autopay_end_date,
+              class: "form-control",
+              id: "autopay_end_date",
+              value: @renewed_policy.installment_autopay_end_date || Date.current %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="text-muted">
+          <i class="bi bi-info-circle me-2"></i>
+          Please review all details before creating the renewal policy.
+        </div>
+        <div class="d-flex gap-2">
+          <%= link_to admin_life_insurances_path, class: "btn btn-secondary" do %>
+            <i class="bi bi-x-lg me-1"></i>
+            Cancel
+          <% end %>
+          <%= form.submit "Create Renewal Policy", class: "btn btn-success btn-lg", style: "background: linear-gradient(45deg, #28a745, #20c997); border: none; font-weight: 600; padding: 12px 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<% end %>
+
+<!-- jQuery (required for Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Select2 CSS & JS for searchable dropdown -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Custom styling for enhanced Select2 dropdown -->
+<style>
+  .select2-container--bootstrap-5 .select2-selection--single {
+    height: 38px;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+
+  .select2-container--bootstrap-5 .select2-selection--single:focus-within {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+
+  .select2-container--bootstrap-5 .select2-selection__rendered {
+    color: #495057;
+    padding-left: 12px;
+    padding-right: 20px;
+    line-height: 36px;
+  }
+
+  .select2-container--bootstrap-5 .select2-results__option {
+    padding: 8px 12px;
+  }
+
+  .select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: #0d6efd;
+    color: white;
+  }
+
+  .select2-dropdown {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+
+  .select2-results__options {
+    max-height: 400px !important;
+    min-height: 200px;
+  }
+
+  .select2-dropdown-large .select2-results__options {
+    max-height: 600px !important;
+    min-height: 400px !important;
+    overflow-y: auto;
+  }
+
+  .select2-dropdown-large {
+    min-width: 100% !important;
+  }
+
+  .select2-dropdown-large .select2-results__option {
+    padding: 8px 12px !important;
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+  }
+
+  .select2-search__field {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 6px 12px;
+  }
+
+  /* Image preview styles */
+  .image-preview-container {
+    position: relative;
+    display: inline-block;
+    margin: 5px;
+  }
+
+  .image-preview {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .image-preview:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+
+  .remove-preview {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .remove-preview:hover {
+    background: #c82333;
+  }
+
+  .file-preview-container {
+    position: relative;
+    display: inline-block;
+    margin: 5px;
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #f8f9fa;
+    min-width: 120px;
+    text-align: center;
+  }
+
+  .file-icon {
+    font-size: 32px;
+    color: #6c757d;
+    margin-bottom: 5px;
+  }
+
+  .file-name {
+    font-size: 12px;
+    color: #495057;
+    word-break: break-word;
+    max-width: 100px;
+    margin: 0 auto;
+  }
+
+  /* Modal for full-size image preview */
+  .image-modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.9);
+    cursor: pointer;
+  }
+
+  .image-modal-content {
+    margin: auto;
+    display: block;
+    max-width: 90%;
+    max-height: 90%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .image-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .image-modal-close:hover,
+  .image-modal-close:focus {
+    color: #bbb;
+  }
+
+  .client-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    min-height: 45px;
+  }
+
+  .client-option-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #0d6efd, #6f42c1);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 10px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .affiliate-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    min-height: 45px;
+  }
+
+  .affiliate-option-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #198754, #20c997);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 10px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize Select2 for searchable dropdown
+  $('#customer_select').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Search and select client...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    dropdownCssClass: 'select2-dropdown-large',
+    minimumResultsForSearch: 0,
+    closeOnSelect: true,
+    templateResult: function(option) {
+      if (!option.id || option.element.value === '') {
+        return option.text;
+      }
+
+      // Generate avatar with initials
+      var initials = option.text.split(' ').map(function(name) {
+        return name.charAt(0).toUpperCase();
+      }).join('').substring(0, 2);
+
+      // Custom template for dropdown options with avatar
+      var $option = $(
+        '<div class="client-option">' +
+          '<div class="client-option-avatar">' + initials + '</div>' +
+          '<div class="client-option-details">' +
+            '<div class="client-option-name">' + option.text + '</div>' +
+            '<div class="client-option-id">Client ID: #' + option.id + '</div>' +
+          '</div>' +
+        '</div>'
+      );
+      return $option;
+    },
+    templateSelection: function(option) {
+      return option.text || 'Search and select client...';
+    },
+    escapeMarkup: function(markup) {
+      return markup;
+    }
+  });
+
+  // Pre-load affiliate data if exists
+  var originalAffiliateId = '<%= j(@renewed_policy.sub_agent_id.to_s) %>';
+  var originalAffiliateName = '<%= j(@sub_agents.find { |a| a.id.to_s == @renewed_policy.sub_agent_id.to_s }&.display_name || "") %>';
+
+  // Initialize Select2 for Affiliate dropdown with AJAX search
+  $('#affiliate_select').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Search and select affiliate...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    dropdownCssClass: 'select2-dropdown-large',
+    minimumInputLength: 0, // Allow opening without typing
+    ajax: {
+      url: '/api/v1/public/search_sub_agents',
+      dataType: 'json',
+      delay: 250,
+      timeout: 10000, // 10 second timeout
+      data: function (params) {
+        // Get the selected customer ID to filter affiliates
+        var selectedCustomerId = $('#customer_select').val();
+
+        console.log('Fetching affiliates with params:', {
+          q: params.term || '',
+          customer_id: selectedCustomerId,
+          limit: params.term ? 20 : 10
+        });
+
+        return {
+          q: params.term || '', // Send empty query to get default results
+          customer_id: selectedCustomerId, // Pass customer ID for filtering
+          limit: params.term ? 20 : 10 // Show fewer results when no search term
+        };
+      },
+      processResults: function (data) {
+        console.log('Search affiliates response:', data);
+
+        // Handle both array and object responses
+        var results = [];
+        if (data && Array.isArray(data.results)) {
+          results = data.results;
+        } else if (data && Array.isArray(data)) {
+          results = data;
+        } else {
+          console.warn('Unexpected API response format:', data);
+          results = [];
+        }
+
+        console.log('Processed affiliates results:', results);
+        return {
+          results: results
+        };
+      },
+      error: function(xhr, status, error) {
+        console.error('Search affiliates AJAX error:', {
+          status: status,
+          error: error,
+          responseText: xhr.responseText,
+          statusCode: xhr.status
+        });
+
+        // Show more helpful error message
+        var errorMessage = 'Error loading affiliates';
+        if (xhr.status === 0) {
+          errorMessage = 'Network connection error - please check your connection';
+        } else if (xhr.status === 500) {
+          errorMessage = 'Server error - please try again';
+        } else if (xhr.status === 404) {
+          errorMessage = 'Affiliate search endpoint not found';
+        }
+
+        return {
+          results: [{id: '', text: errorMessage}]
+        };
+      },
+      cache: false // Disable cache so customer changes refresh the affiliate list
+    },
+    templateResult: function(option) {
+      if (option.loading) return option.text;
+      if (!option.id || option.id === '') {
+        return option.text;
+      }
+
+      // Generate avatar with initials
+      var initials = option.text.split(' ').map(function(name) {
+        return name.charAt(0).toUpperCase();
+      }).join('').substring(0, 2);
+
+      // Custom template for affiliate options with green avatar
+      var $option = $(
+        '<div class="affiliate-option">' +
+          '<div class="affiliate-option-avatar">' + initials + '</div>' +
+          '<div class="affiliate-option-details">' +
+            '<div class="affiliate-option-name">' + option.text + '</div>' +
+            '<div class="affiliate-option-id">Affiliate ID: #' + option.id + '</div>' +
+          '</div>' +
+        '</div>'
+      );
+      return $option;
+    },
+    templateSelection: function(option) {
+      return option.text || 'Search and select affiliate...';
+    },
+    escapeMarkup: function(markup) {
+      return markup;
+    }
+  });
+
+  // Pre-select affiliate immediately after Select2 initialization if it exists
+  if (originalAffiliateId && originalAffiliateId !== '' && originalAffiliateName && originalAffiliateName !== '') {
+    console.log('Pre-selecting affiliate on initialization:', originalAffiliateName, 'ID:', originalAffiliateId);
+
+    // Create and append the option
+    var newOption = new Option(originalAffiliateName, originalAffiliateId, true, true);
+    $('#affiliate_select').append(newOption).trigger('change');
+
+    console.log('Affiliate pre-selected successfully');
+  }
+
+  // Function to fetch and set distributor for selected affiliate
+  function updateDistributorFromAffiliate(affiliateId) {
+    if (!affiliateId) {
+      $('#distributor_id_hidden').val('');
+      return;
+    }
+
+    // Fetch affiliate details to get distributor
+    $.ajax({
+      url: '/api/v1/public/sub_agent_details',
+      method: 'GET',
+      data: { id: affiliateId },
+      success: function(response) {
+        if (response && response.distributor_id) {
+          $('#distributor_id_hidden').val(response.distributor_id);
+          console.log('Distributor set from affiliate:', response.distributor_id);
+        } else {
+          $('#distributor_id_hidden').val('');
+          console.log('No distributor found for affiliate');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Error fetching affiliate details:', error);
+        $('#distributor_id_hidden').val('');
+      }
+    });
+  }
+
+  // Update distributor when affiliate is selected
+  $('#affiliate_select').on('select2:select', function(e) {
+    var affiliateId = e.params.data.id;
+    console.log('Affiliate selected:', affiliateId);
+    updateDistributorFromAffiliate(affiliateId);
+  });
+
+  // Clear distributor when affiliate is cleared
+  $('#affiliate_select').on('select2:clear', function(e) {
+    $('#distributor_id_hidden').val('');
+    console.log('Distributor cleared');
+  });
+
+  // Check if affiliate already has a value on page load (after a short delay to ensure form is ready)
+  setTimeout(function() {
+    var initialAffiliateId = $('#affiliate_select').val();
+    if (initialAffiliateId) {
+      console.log('Initial affiliate value found:', initialAffiliateId);
+      // Update distributor for the pre-selected affiliate
+      updateDistributorFromAffiliate(initialAffiliateId);
+    }
+  }, 1000);
+
+  // Initialize Select2 for Insurance Company dropdown
+  $('#life_insurance_insurance_company_name').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Select Insurance Company...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    dropdownCssClass: 'select2-dropdown-large',
+    minimumResultsForSearch: 0,
+    closeOnSelect: true
+  });
+
+  // Initialize Select2 for Agency Code dropdown
+  $('#life_insurance_agency_code_id').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Select Agency Code...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    dropdownCssClass: 'select2-dropdown-large',
+    minimumResultsForSearch: 0,
+    closeOnSelect: true
+  });
+
+  // Initialize Select2 for Nominee Relationship dropdown
+  $('#nominee_relationship_select').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Select Relationship...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    minimumResultsForSearch: 0,
+    closeOnSelect: true
+  });
+
+  // Initialize Select2 for Account Type dropdown
+  $('#account_type_select').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Select Account Type...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    minimumResultsForSearch: 0,
+    closeOnSelect: true
+  });
+
+  // Initialize Select2 for Policy Holder dropdown
+  $('#policy_holder_select').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Select Policy Holder...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    minimumResultsForSearch: 0,
+    closeOnSelect: true
+  });
+
+  // Initialize Select2 for Payment Mode dropdown
+  $('#payment_mode_select').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Select Payment Mode...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    minimumResultsForSearch: 0,
+    closeOnSelect: true
+  });
+
+  // Initialize Select2 for Broker Code Type dropdown
+  $('#life_insurance_broker_code_type').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Select Broker Code...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    minimumResultsForSearch: 0,
+    closeOnSelect: true
+  });
+
+  // Initialize Select2 for Sum Insured dropdown
+  $('#life_insurance_sum_insured').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Select Sum Insured...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    minimumResultsForSearch: 0,
+    closeOnSelect: true
+  });
+
+  // Auto-calculate commission when net premium or percentage changes
+  function calculateCommission() {
+    const netPremium = parseFloat(document.getElementById('net_premium')?.value) || 0;
+    const commissionPercentage = parseFloat(document.getElementById('commission_percentage')?.value) || 0;
+    const tdsPercentage = parseFloat(document.getElementById('tds_percentage')?.value) || 0;
+
+    const commissionAmount = netPremium * (commissionPercentage / 100);
+    const tdsAmount = commissionAmount * (tdsPercentage / 100);
+    const afterTdsAmount = commissionAmount - tdsAmount;
+
+    document.getElementById('commission_amount').value = commissionAmount.toFixed(2);
+    document.getElementById('after_tds_value').value = afterTdsAmount.toFixed(2);
+  }
+
+  // Auto-calculate total premium when net premium or GST changes
+  function calculateTotalPremium() {
+    const netPremium = parseFloat(document.getElementById('net_premium')?.value) || 0;
+    const firstYearGst = parseFloat(document.getElementById('first_year_gst')?.value) || 0;
+
+    const gstAmount = netPremium * (firstYearGst / 100);
+    const totalPremium = netPremium + gstAmount;
+
+    document.getElementById('total_premium').value = totalPremium.toFixed(2);
+  }
+
+  // Auto-calculate sub-agent commission
+  function calculateSubAgentCommission() {
+    const netPremium = parseFloat(document.getElementById('net_premium').value) || 0;
+    const commissionPercentage = parseFloat(document.querySelector('.sub-agent-commission-percentage').value) || 2.0;
+    const tdsPercentage = parseFloat(document.querySelector('.sub-agent-tds-percentage').value) || 0;
+
+    const commissionAmount = netPremium * (commissionPercentage / 100);
+    const tdsAmount = commissionAmount * (tdsPercentage / 100);
+    const afterTdsValue = commissionAmount - tdsAmount;
+
+    document.querySelector('.sub-agent-commission-amount').value = commissionAmount.toFixed(2);
+    document.querySelector('.sub-agent-tds-amount').value = tdsAmount.toFixed(2);
+    document.querySelector('.sub-agent-after-tds-value').value = afterTdsValue.toFixed(2);
+  }
+
+  // Auto-calculate ambassador commission
+  function calculateAmbassadorCommission() {
+    const netPremium = parseFloat(document.getElementById('net_premium').value) || 0;
+    const commissionPercentage = parseFloat(document.querySelector('.ambassador-commission-percentage').value) || 0;
+    const tdsPercentage = parseFloat(document.querySelector('.ambassador-tds-percentage').value) || 0;
+
+    const commissionAmount = netPremium * (commissionPercentage / 100);
+    const tdsAmount = commissionAmount * (tdsPercentage / 100);
+    const afterTdsValue = commissionAmount - tdsAmount;
+
+    document.querySelector('.ambassador-commission-amount').value = commissionAmount.toFixed(2);
+    document.querySelector('.ambassador-tds-amount').value = tdsAmount.toFixed(2);
+    document.querySelector('.ambassador-after-tds-value').value = afterTdsValue.toFixed(2);
+  }
+
+  // Auto-calculate investor commission
+  function calculateInvestorCommission() {
+    const netPremium = parseFloat(document.getElementById('net_premium').value) || 0;
+    const commissionPercentage = parseFloat(document.querySelector('.investor-commission-percentage').value) || 0;
+
+    const commissionAmount = netPremium * (commissionPercentage / 100);
+
+    document.querySelector('.investor-commission-amount').value = commissionAmount.toFixed(2);
+    document.querySelector('.investor-commission-amount-display').value = commissionAmount.toFixed(2);
+  }
+
+  // Auto-calculate company expenses
+  function calculateCompanyExpenses() {
+    const netPremium = parseFloat(document.getElementById('net_premium').value) || 0;
+    const companyExpensesPercentage = parseFloat(document.querySelector('.company-expenses-percentage').value) || 0;
+
+    const companyExpensesAmount = netPremium * (companyExpensesPercentage / 100);
+
+    document.querySelector('.company-expenses-amount').value = companyExpensesAmount.toFixed(2);
+    document.querySelector('.company-expenses-amount-display').value = companyExpensesAmount.toFixed(2);
+  }
+
+  // Calculate profit and distribution
+  function calculateProfitAndExpenses() {
+    const netPremium = parseFloat(document.getElementById('net_premium').value) || 0;
+    const mainAgentCommissionPercentage = parseFloat(document.getElementById('commission_percentage').value) || 0;
+
+    // Get commission percentages
+    const subAgentPercentage = parseFloat(document.querySelector('.sub-agent-commission-percentage').value) || 0;
+    const ambassadorPercentage = parseFloat(document.querySelector('.ambassador-commission-percentage').value) || 0;
+    const investorPercentage = parseFloat(document.querySelector('.investor-commission-percentage').value) || 0;
+    const companyExpensesPercentage = parseFloat(document.querySelector('.company-expenses-percentage').value) || 0;
+
+    // Calculate total distribution
+    const totalDistributionPercentage = subAgentPercentage + ambassadorPercentage + investorPercentage;
+
+    // Calculate profit: Main Agent Commission - Affiliate Commission - Investor Portion - Company Expenses
+    const profitPercentage = mainAgentCommissionPercentage - totalDistributionPercentage - companyExpensesPercentage;
+    const profitAmount = netPremium * (profitPercentage / 100);
+
+    // Update fields
+    document.querySelector('.total-distribution-percentage').value = totalDistributionPercentage.toFixed(2);
+    document.querySelector('.profit-percentage').value = profitPercentage.toFixed(2);
+    document.querySelector('.profit-amount').value = profitAmount.toFixed(2);
+    document.querySelector('.profit-amount-display').value = profitAmount.toFixed(2);
+  }
+
+
+  // Calculate all commissions when net premium changes
+  function calculateAllCommissions() {
+    calculateCommission();
+    calculateSubAgentCommission();
+    calculateAmbassadorCommission();
+    calculateInvestorCommission();
+    calculateCompanyExpenses();
+    calculateProfitAndExpenses();
+  }
+
+  // Auto-calculate end date when start date changes (1 year policy)
+  function calculateEndDate() {
+    const startDate = document.getElementById('start_date')?.value;
+    if (startDate) {
+      const endDateObj = new Date(startDate);
+      endDateObj.setFullYear(endDateObj.getFullYear() + 1);
+      endDateObj.setDate(endDateObj.getDate() - 1); // One day before next year
+
+      document.getElementById('end_date').value = endDateObj.toISOString().split('T')[0];
+    }
+  }
+
+  // Event listeners for calculations
+  document.getElementById('net_premium')?.addEventListener('input', function() {
+    calculateTotalPremium();
+    calculateAllCommissions();
+  });
+
+  document.getElementById('commission_percentage')?.addEventListener('input', function() {
+    calculateCommission();
+    calculateProfitAndExpenses();
+  });
+  document.getElementById('tds_percentage')?.addEventListener('input', calculateCommission);
+  document.getElementById('first_year_gst')?.addEventListener('input', calculateTotalPremium);
+  document.getElementById('start_date')?.addEventListener('change', calculateEndDate);
+
+  // Sub-agent commission event listeners
+  document.querySelector('.sub-agent-commission-percentage')?.addEventListener('input', function() {
+    calculateSubAgentCommission();
+    calculateProfitAndExpenses();
+  });
+  document.querySelector('.sub-agent-tds-percentage')?.addEventListener('input', calculateSubAgentCommission);
+
+  // Ambassador commission event listeners
+  document.querySelector('.ambassador-commission-percentage')?.addEventListener('input', function() {
+    calculateAmbassadorCommission();
+    calculateProfitAndExpenses();
+  });
+  document.querySelector('.ambassador-tds-percentage')?.addEventListener('input', calculateAmbassadorCommission);
+
+  // Investor commission event listeners
+  document.querySelector('.investor-commission-percentage')?.addEventListener('input', function() {
+    calculateInvestorCommission();
+    calculateProfitAndExpenses();
+  });
+
+  // Company expenses event listener
+  document.querySelector('.company-expenses-percentage')?.addEventListener('input', function() {
+    calculateCompanyExpenses();
+    calculateProfitAndExpenses();
+  });
+
+  // Validate renewal dates
+  document.getElementById('start_date')?.addEventListener('change', function() {
+    const originalEndDate = new Date('<%= @original_policy.policy_end_date&.strftime('%Y-%m-%d') %>');
+    const newStartDate = new Date(this.value);
+
+    if (newStartDate <= originalEndDate) {
+      this.setCustomValidity('Renewal start date must be after the original policy end date.');
+    } else {
+      this.setCustomValidity('');
+    }
+  });
+
+  // ==== BROKER CODE & AGENCY CODE DYNAMIC DROPDOWNS ====
+
+  // Get dropdown elements
+  const brokerCodeTypeSelect = document.getElementById('life_insurance_broker_code_type');
+  const agencyCodeSelect = document.getElementById('life_insurance_agency_code_id');
+  const insuranceCompanySelect = document.getElementById('life_insurance_insurance_company_name');
+  const brokerIdHidden = document.getElementById('broker_id_hidden');
+  const agencyCodeLabelText = document.getElementById('agency_code_label_text');
+
+  // Debug: Check if elements are found
+  console.log('Elements found:');
+  console.log('brokerCodeTypeSelect:', brokerCodeTypeSelect);
+  console.log('agencyCodeSelect:', agencyCodeSelect);
+  console.log('insuranceCompanySelect:', insuranceCompanySelect);
+
+  let currentSelectedAgentName = null;
+  let currentSelectedBrokerId = null;
+
+  // Get CSRF token for requests
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+  // Function to load all agents when "Direct" is selected
+  function loadAllAgentsForDirect() {
+    console.log('=== loadAllAgentsForDirect called ===');
+    console.log('agencyCodeSelect element:', agencyCodeSelect);
+    console.log('insuranceCompanySelect element:', insuranceCompanySelect);
+
+    // Check if elements exist before proceeding
+    if (!agencyCodeSelect || !insuranceCompanySelect) {
+      console.error('Required select elements not found');
+      return Promise.reject('Required elements not found');
+    }
+
+    // Destroy Select2 before updating options if it exists
+    if ($(agencyCodeSelect).hasClass('select2-hidden-accessible')) {
+      $(agencyCodeSelect).select2('destroy');
+    }
+
+    // Clear existing options and show loading
+    agencyCodeSelect.innerHTML = '<option value="">Loading agents...</option>';
+    insuranceCompanySelect.innerHTML = '<option value="">Select Company</option>';
+
+    // Update label
+    if (agencyCodeLabelText) {
+      agencyCodeLabelText.textContent = ' (All Agents)';
+    }
+
+    console.log('Loading agents for Direct from all_agents API...');
+
+    // Fetch agents from the dedicated all_agents API endpoint
+    const headers = {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'Content-Type': 'application/json'
+    };
+
+    if (csrfToken) {
+      headers['X-CSRF-Token'] = csrfToken;
+    }
+
+    return fetch('/admin/agency_codes/all_agents.json?insurance_type=Life', {
+      headers: headers,
+      credentials: 'same-origin'
+    })
+    .then(response => {
+      console.log('Agency Codes API response status:', response.status);
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Authentication required - please refresh the page');
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('All Agents API response data:', data);
+
+      if (data && data.success && data.agents && data.agents.length > 0) {
+        console.log('Loading', data.agents.length, 'agents');
+
+        // Clear and add agents to dropdown
+        agencyCodeSelect.innerHTML = '<option value="">Select Agency Code</option>';
+        data.agents.forEach(agent => {
+          const option = document.createElement('option');
+          option.value = agent.id;
+          option.setAttribute('data-agent-name', agent.agent_name);
+          option.setAttribute('data-agent-code', agent.code);
+          option.setAttribute('data-company-name', agent.company_name); // Store company name
+          // Format: Agent-name (Agency-code)
+          option.textContent = `${agent.agent_name} (${agent.code})`;
+          agencyCodeSelect.appendChild(option);
+        });
+        console.log('Loaded', data.agents.length, 'agents for Life insurance');
+
+        // Reinitialize Select2 after loading options
+        $(agencyCodeSelect).select2({
+          theme: 'bootstrap-5',
+          placeholder: 'Select Agency Code...',
+          allowClear: true,
+          width: '100%',
+          dropdownParent: $('body'),
+          dropdownCssClass: 'select2-dropdown-large',
+          minimumResultsForSearch: 0,
+          closeOnSelect: true
+        });
+
+        return data.agents;
+      } else {
+        console.warn('No Life insurance agents found');
+        agencyCodeSelect.innerHTML = '<option value="">No agents available for Life insurance</option>';
+        return [];
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching agency codes:', error);
+      agencyCodeSelect.innerHTML = '<option value="">Error loading agents</option>';
+      throw error;
+    });
+  }
+
+  // Function to load all brokers when "Broking" is selected
+  function loadAllBrokersForBroking() {
+    // Check if elements exist before proceeding
+    if (!agencyCodeSelect || !insuranceCompanySelect) {
+      console.error('Required select elements not found');
+      return Promise.reject('Required elements not found');
+    }
+
+    // Destroy Select2 before updating options if it exists
+    if ($(agencyCodeSelect).hasClass('select2-hidden-accessible')) {
+      $(agencyCodeSelect).select2('destroy');
+    }
+
+    // Clear existing options and show loading
+    agencyCodeSelect.innerHTML = '<option value="">Loading brokers...</option>';
+    insuranceCompanySelect.innerHTML = '<option value="">Select Company</option>';
+
+    // Update label
+    if (agencyCodeLabelText) {
+      agencyCodeLabelText.textContent = ' (All Brokers)';
+    }
+
+    console.log('Loading brokers for Broking from /admin/brokers...');
+
+    // Use the direct brokers endpoint for faster loading
+    const brokersHeaders = {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'Content-Type': 'application/json'
+    };
+
+    if (csrfToken) {
+      brokersHeaders['X-CSRF-Token'] = csrfToken;
+    }
+
+    return fetch('/admin/brokers.json', {
+      headers: brokersHeaders,
+      credentials: 'same-origin'
+    })
+    .then(response => {
+      console.log('Brokers API response status:', response.status);
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Authentication required - please refresh the page');
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Brokers API response data:', data);
+
+      // Clear loading message
+      agencyCodeSelect.innerHTML = '<option value="">Select Broker</option>';
+
+      // Handle different response formats
+      let brokers = data;
+      if (data && data.brokers) {
+        brokers = data.brokers;
+      }
+
+      if (brokers && Array.isArray(brokers) && brokers.length > 0) {
+        console.log('Loading', brokers.length, 'brokers');
+        brokers.forEach(broker => {
+          const option = document.createElement('option');
+          option.value = `broker_${broker.id}`;
+          option.setAttribute('data-broker-id', broker.id);
+          // Format: Broker-name (Broker-id)
+          option.textContent = broker.name;
+          agencyCodeSelect.appendChild(option);
+        });
+        console.log('Loaded', brokers.length, 'brokers successfully');
+
+        // Reinitialize Select2 after loading options
+        $(agencyCodeSelect).select2({
+          theme: 'bootstrap-5',
+          placeholder: 'Select Broker...',
+          allowClear: true,
+          width: '100%',
+          dropdownParent: $('body'),
+          dropdownCssClass: 'select2-dropdown-large',
+          minimumResultsForSearch: 0,
+          closeOnSelect: true
+        });
+
+        return brokers;
+      } else {
+        console.warn('No brokers found');
+        agencyCodeSelect.innerHTML = '<option value="">No brokers available</option>';
+        return [];
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching brokers:', error);
+      agencyCodeSelect.innerHTML = '<option value="">Error loading brokers</option>';
+      throw error;
+    });
+  }
+
+  // Function to load companies for selected agent (Direct mode) - DEPRECATED
+  // This function is no longer used as we now get the company directly from the agency code
+  // The company name is embedded in the agency code data attribute
+  /*
+  function loadCompaniesForAgent(agentName) {
+    // This function has been replaced by direct company selection from agency code data
+    console.log('loadCompaniesForAgent is deprecated - company now comes from agency code data');
+  }
+  */
+
+  // Function to load all companies for Broking mode (regardless of broker selection)
+  function loadAllCompaniesForBroking() {
+    if (!insuranceCompanySelect) {
+      console.error('Insurance company select element not found');
+      return Promise.reject('Insurance company select element not found');
+    }
+
+    // Show loading message
+    insuranceCompanySelect.innerHTML = '<option value="">Loading all companies...</option>';
+
+    console.log('Loading all companies for Broking mode...');
+
+    // Fetch all Life insurance companies from the database
+    const companiesHeaders = {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    };
+
+    if (csrfToken) {
+      companiesHeaders['X-CSRF-Token'] = csrfToken;
+    }
+
+    const fetchPromise = fetch('/admin/agency_codes/companies_by_type.json?insurance_type=life', {
+      headers: companiesHeaders,
+      credentials: 'same-origin'
+    });
+
+    // Add timeout for faster feedback
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Request timeout')), 8000)
+    );
+
+    return Promise.race([fetchPromise, timeoutPromise])
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('All companies response:', data);
+
+      // Clear loading message
+      insuranceCompanySelect.innerHTML = '<option value="">Select Company</option>';
+
+      if (data.success && data.companies && data.companies.length > 0) {
+        data.companies.forEach(company => {
+          const option = document.createElement('option');
+          option.value = company;
+          option.textContent = company;
+          insuranceCompanySelect.appendChild(option);
+        });
+        console.log(`Loaded ${data.companies.length} insurance companies for Broking mode`);
+        return data.companies;
+      } else {
+        insuranceCompanySelect.innerHTML = '<option value="">No companies available</option>';
+        console.log('No companies found');
+        return [];
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching all companies:', error);
+      insuranceCompanySelect.innerHTML = '<option value="">Error loading companies</option>';
+
+      // Show error message for a few seconds then reset
+      setTimeout(() => {
+        insuranceCompanySelect.innerHTML = '<option value="">Select Company</option>';
+      }, 3000);
+      throw error;
+    });
+  }
+
+  // Event listener for broker code type change
+  if (brokerCodeTypeSelect) {
+    brokerCodeTypeSelect.addEventListener('change', function() {
+      const selectedType = this.value;
+      console.log('Broker code type changed to:', selectedType);
+
+      if (selectedType === 'direct') {
+        // Load all agents when Direct is selected
+        loadAllAgentsForDirect();
+        // Clear broker ID
+        if (brokerIdHidden) brokerIdHidden.value = '';
+      } else if (selectedType === 'broking') {
+        // Load all brokers when Broking is selected
+        loadAllBrokersForBroking();
+        // Load ALL companies immediately for Broking mode (regardless of broker selection)
+        loadAllCompaniesForBroking();
+        // Clear agency code ID since we're using broker selection
+        if (agencyCodeSelect) agencyCodeSelect.value = '';
+      } else {
+        // No broker code type selected, clear all dropdowns
+        if (agencyCodeSelect) agencyCodeSelect.innerHTML = '<option value="">Select Agency Code</option>';
+        if (insuranceCompanySelect) insuranceCompanySelect.innerHTML = '<option value="">Select Company</option>';
+        if (agencyCodeLabelText) {
+          agencyCodeLabelText.textContent = '';
+        }
+        if (brokerIdHidden) brokerIdHidden.value = '';
+      }
+    });
+  } else {
+    console.warn('Broker code type select element not found');
+  }
+
+  // Event listener for agency code selection change - Works with Select2
+  if (agencyCodeSelect) {
+    // Use jQuery to bind to both regular change and Select2 events
+    $(agencyCodeSelect).on('select2:select change', function(e) {
+      const selectedValue = this.value;
+      const selectedOption = this.options[this.selectedIndex];
+
+      console.log('Agency code changed:', selectedValue);
+
+      if (!selectedValue) {
+        // Clear company dropdown if nothing selected
+        if (insuranceCompanySelect) {
+          // Check if Select2 is initialized on insurance company dropdown
+          if ($(insuranceCompanySelect).hasClass('select2-hidden-accessible')) {
+            $(insuranceCompanySelect).select2('destroy');
+          }
+          insuranceCompanySelect.innerHTML = '<option value="">Select Company</option>';
+          // Reinitialize Select2
+          $(insuranceCompanySelect).select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select Insurance Company...',
+            allowClear: true,
+            width: '100%'
+          });
+        }
+        return;
+      }
+
+      const brokerCodeType = brokerCodeTypeSelect ? brokerCodeTypeSelect.value : null;
+
+      if (brokerCodeType === 'direct') {
+        // Get company name directly from the selected agency code
+        const companyName = selectedOption.getAttribute('data-company-name');
+        const agentName = selectedOption.getAttribute('data-agent-name');
+
+        console.log('Direct mode - Loading company for agency code:', companyName);
+
+        if (companyName && insuranceCompanySelect) {
+          // Destroy Select2 if initialized
+          if ($(insuranceCompanySelect).hasClass('select2-hidden-accessible')) {
+            $(insuranceCompanySelect).select2('destroy');
+          }
+
+          // Clear and set only the specific company for this agency code
+          insuranceCompanySelect.innerHTML = '';
+
+          const defaultOption = document.createElement('option');
+          defaultOption.value = '';
+          defaultOption.textContent = 'Select Company';
+          insuranceCompanySelect.appendChild(defaultOption);
+
+          const option = document.createElement('option');
+          option.value = companyName;
+          option.textContent = companyName;
+          option.selected = true; // Auto-select the company
+          insuranceCompanySelect.appendChild(option);
+
+          // Reinitialize Select2 with the new option
+          $(insuranceCompanySelect).select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select Insurance Company...',
+            allowClear: true,
+            width: '100%'
+          });
+
+          // Trigger change to update the value
+          $(insuranceCompanySelect).val(companyName).trigger('change');
+
+          console.log(`Set company to '${companyName}' for agency code from agent '${agentName}'`);
+        }
+
+        currentSelectedAgentName = agentName;
+        // Clear broker ID for direct
+        if (brokerIdHidden) brokerIdHidden.value = '';
+      } else if (brokerCodeType === 'broking') {
+        // Get broker ID from data attribute
+        const brokerId = selectedOption.getAttribute('data-broker-id');
+        if (brokerId) {
+          currentSelectedBrokerId = brokerId;
+          // In Broking mode, ALL companies are already loaded regardless of broker selection
+          // Set broker ID in hidden field
+          if (brokerIdHidden) brokerIdHidden.value = brokerId;
+        }
+      }
+    });
+
+    // Also handle clear event
+    $(agencyCodeSelect).on('select2:clear', function(e) {
+      console.log('Agency code cleared');
+      // Clear company dropdown
+      if (insuranceCompanySelect) {
+        if ($(insuranceCompanySelect).hasClass('select2-hidden-accessible')) {
+          $(insuranceCompanySelect).select2('destroy');
+        }
+        insuranceCompanySelect.innerHTML = '<option value="">Select Company</option>';
+        $(insuranceCompanySelect).select2({
+          theme: 'bootstrap-5',
+          placeholder: 'Select Insurance Company...',
+          allowClear: true,
+          width: '100%'
+        });
+      }
+    });
+  }
+
+  // Initialize functionality on page load - check existing values and pre-select from original policy
+  if (brokerCodeTypeSelect && agencyCodeSelect && insuranceCompanySelect) {
+    const currentBrokerCodeType = brokerCodeTypeSelect.value;
+    const originalAgencyCodeId = '<%= j(@renewed_policy.agency_code_id.to_s) %>';
+    const originalBrokerId = '<%= j(@renewed_policy.broker_id.to_s) %>';
+    const originalInsuranceCompany = '<%= j(@renewed_policy.insurance_company_name.to_s) %>';
+
+    console.log('Initializing with original values:');
+    console.log('Broker Code Type:', currentBrokerCodeType);
+    console.log('Agency Code ID:', originalAgencyCodeId);
+    console.log('Broker ID:', originalBrokerId);
+    console.log('Insurance Company:', originalInsuranceCompany);
+
+    // If no broker code type is set but we have agency code or broker ID, trigger the change
+    if (!currentBrokerCodeType && (originalAgencyCodeId || originalBrokerId)) {
+      console.log('No broker code type set, but we have agency/broker data. Triggering change event.');
+      setTimeout(() => {
+        // Trigger the change event to load the appropriate dropdown options
+        $(brokerCodeTypeSelect).trigger('change');
+      }, 500);
+    }
+
+    if (currentBrokerCodeType === 'direct') {
+      loadAllAgentsForDirect().then(() => {
+        // After agents are loaded, pre-select the original agency code
+        if (originalAgencyCodeId) {
+          console.log('Pre-selecting agency code:', originalAgencyCodeId);
+
+          // Use Select2 to set the value and trigger change
+          $(agencyCodeSelect).val(originalAgencyCodeId).trigger('change');
+
+          // This will automatically trigger the change event which loads the company
+          console.log('Triggered change event for agency code');
+        }
+      }).catch(error => {
+        console.error('Error loading agents for Direct mode:', error);
+      });
+    } else if (currentBrokerCodeType === 'broking') {
+      Promise.all([
+        loadAllBrokersForBroking(),
+        loadAllCompaniesForBroking()
+      ]).then(() => {
+        // After brokers and companies are loaded, pre-select the original broker
+        if (originalBrokerId) {
+          console.log('Pre-selecting broker:', originalBrokerId);
+          const brokerOption = agencyCodeSelect.querySelector(`option[data-broker-id="${originalBrokerId}"]`);
+          if (brokerOption) {
+            // Use Select2 to set the value
+            $(agencyCodeSelect).val(brokerOption.value).trigger('change');
+            if (brokerIdHidden) brokerIdHidden.value = originalBrokerId;
+          }
+        }
+
+        // Pre-select insurance company using Select2
+        if (originalInsuranceCompany) {
+          console.log('Pre-selecting insurance company:', originalInsuranceCompany);
+          $(insuranceCompanySelect).val(originalInsuranceCompany).trigger('change');
+        }
+      }).catch(error => {
+        console.error('Error loading brokers/companies for Broking mode:', error);
+      });
+    }
+  } else {
+    console.warn('Some dropdown elements not found during initialization');
+  }
+
+  // Additional initialization after Select2 is loaded
+  setTimeout(() => {
+    // Initialize Select2 on broker code type and trigger change if needed
+    $('#life_insurance_broker_code_type').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Select Broker Code...',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('body'),
+      minimumResultsForSearch: 0,
+      closeOnSelect: true
+    });
+
+    // Check if broker code type should be auto-selected
+    const currentBrokerCodeType = document.getElementById('life_insurance_broker_code_type')?.value;
+    const originalAgencyCodeId = '<%= j(@renewed_policy.agency_code_id.to_s) %>';
+    const originalBrokerId = '<%= j(@renewed_policy.broker_id.to_s) %>';
+
+    console.log('Post-init check - Broker Code Type:', currentBrokerCodeType);
+    console.log('Post-init check - Agency Code ID:', originalAgencyCodeId);
+    console.log('Post-init check - Broker ID:', originalBrokerId);
+
+    // Auto-detect broker code type if not set
+    if (!currentBrokerCodeType && (originalAgencyCodeId || originalBrokerId)) {
+      let detectedType = null;
+
+      if (originalAgencyCodeId && !originalBrokerId) {
+        detectedType = 'direct';
+        console.log('Auto-detected broker type as "direct" based on agency_code_id');
+      } else if (originalBrokerId && !originalAgencyCodeId) {
+        detectedType = 'broking';
+        console.log('Auto-detected broker type as "broking" based on broker_id');
+      }
+
+      if (detectedType) {
+        // Set the broker code type and trigger change
+        $('#life_insurance_broker_code_type').val(detectedType);
+        console.log('Set broker code type to:', detectedType);
+      }
+    }
+
+    // Only trigger change if broker type was NOT already pre-set from the original policy
+    // (if it was pre-set, the init block above already loaded agents/brokers)
+    const finalBrokerCodeType = document.getElementById('life_insurance_broker_code_type')?.value;
+    const preSetBrokerCodeType = '<%= @renewed_policy.broker_code_type %>';
+    if (finalBrokerCodeType && !preSetBrokerCodeType) {
+      console.log('Triggering broker code type change for auto-detected type:', finalBrokerCodeType);
+      $('#life_insurance_broker_code_type').trigger('change');
+    }
+  }, 1000);
+
+  // Helper function to force refresh affiliate dropdown
+  function refreshAffiliateDropdown() {
+    var selectedCustomerId = $('#customer_select').val();
+    console.log('Refreshing affiliate dropdown for customer:', selectedCustomerId);
+
+    // Clear the affiliate dropdown
+    $('#affiliate_select').val(null);
+
+    // Destroy and recreate the affiliate Select2 to force refresh
+    $('#affiliate_select').select2('destroy');
+
+    // Reinitialize with the same configuration
+    $('#affiliate_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select affiliate...',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('body'),
+      dropdownCssClass: 'select2-dropdown-large',
+      minimumInputLength: 0,
+      ajax: {
+        url: '/api/v1/public/search_sub_agents',
+        dataType: 'json',
+        delay: 250,
+        timeout: 10000,
+        data: function (params) {
+          console.log('Refreshing with params:', {
+            q: params.term || '',
+            customer_id: selectedCustomerId,
+            limit: params.term ? 20 : 10
+          });
+
+          return {
+            q: params.term || '',
+            customer_id: selectedCustomerId,
+            limit: params.term ? 20 : 10
+          };
+        },
+        processResults: function (data) {
+          console.log('Refreshed affiliates response:', data);
+
+          // Handle both array and object responses
+          var results = [];
+          if (data && Array.isArray(data.results)) {
+            results = data.results;
+          } else if (data && Array.isArray(data)) {
+            results = data;
+          } else {
+            console.warn('Unexpected refresh API response format:', data);
+            results = [];
+          }
+
+          console.log('Processed refresh results:', results);
+          return {
+            results: results
+          };
+        },
+        error: function(xhr, status, error) {
+          console.error('Refresh affiliates AJAX error:', {
+            status: status,
+            error: error,
+            responseText: xhr.responseText,
+            statusCode: xhr.status
+          });
+
+          // Show more helpful error message
+          var errorMessage = 'Error refreshing affiliates';
+          if (xhr.status === 0) {
+            errorMessage = 'Network error - please check your connection';
+          } else if (xhr.status === 500) {
+            errorMessage = 'Server error - please try again';
+          } else if (xhr.status === 404) {
+            errorMessage = 'Affiliate search endpoint not found';
+          }
+
+          return {
+            results: [{id: '', text: errorMessage}]
+          };
+        },
+        cache: false
+      },
+      templateResult: function(option) {
+        if (option.loading) return option.text;
+        if (!option.id || option.id === '') {
+          return option.text;
+        }
+
+        var initials = option.text.split(' ').map(function(name) {
+          return name.charAt(0).toUpperCase();
+        }).join('').substring(0, 2);
+
+        var $option = $(
+          '<div class="affiliate-option">' +
+            '<div class="affiliate-option-avatar">' + initials + '</div>' +
+            '<div class="affiliate-option-details">' +
+              '<div class="affiliate-option-name">' + option.text + '</div>' +
+              '<div class="affiliate-option-id">Affiliate ID: #' + option.id + '</div>' +
+            '</div>' +
+          '</div>'
+        );
+        return $option;
+      },
+      templateSelection: function(option) {
+        return option.text || 'Search and select affiliate...';
+      },
+      escapeMarkup: function(markup) {
+        return markup;
+      }
+    });
+  }
+
+  // Customer selection change event listeners
+  $('#customer_select').on('select2:select', function(e) {
+    var selectedCustomerId = this.value;
+    console.log('Customer selected, filtering affiliates for customer ID:', selectedCustomerId);
+
+    // Refresh the affiliate dropdown with the new customer filter
+    setTimeout(function() {
+      refreshAffiliateDropdown();
+    }, 500);
+  });
+
+  // Handle customer clearing
+  $('#customer_select').on('select2:clear', function(e) {
+    // Clear affiliate dropdown when customer is cleared
+    $('#affiliate_select').val(null).trigger('change');
+    // Also clear distributor when customer is cleared
+    $('#distributor_id_hidden').val('');
+    console.log('Customer cleared, showing all affiliates and clearing distributor');
+    // Clear nominee fields
+    $('#renew_nominee_name').val('');
+    $('#nominee_relationship_select').val('').trigger('change');
+    $('#renew_nominee_age').val('');
+    $('#renew_nominee_share').val('');
+  });
+
+  // Auto-load nominees for the pre-selected customer on renew page
+  function loadRenewNominees(customerId) {
+    if (!customerId) return;
+    $.ajax({
+      url: '<%= load_customer_nominees_admin_life_insurances_path %>',
+      method: 'GET',
+      data: { customer_id: customerId },
+      success: function(response) {
+        if (response.success && response.nominees && response.nominees.length > 0) {
+          var n = response.nominees[0];
+          $('#renew_nominee_name').val(n.nominee_name || '');
+          var rel = (n.relationship || '').toLowerCase();
+          // Try to match to the available relationship options
+          var matchedRel = '';
+          $('#nominee_relationship_select option').each(function() {
+            if ($(this).val().toLowerCase() === rel || $(this).text().toLowerCase() === rel) {
+              matchedRel = $(this).val();
+            }
+          });
+          if (matchedRel) {
+            $('#nominee_relationship_select').val(matchedRel).trigger('change');
+          }
+          $('#renew_nominee_age').val(n.age || '');
+          $('#renew_nominee_share').val(100);
+          console.log('Nominee auto-loaded for customer:', customerId, n);
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Error loading nominees for renew:', error);
+      }
+    });
+  }
+
+  // Load nominees on page load for pre-selected customer
+  setTimeout(function() {
+    var preSelectedCustomer = $('#customer_select').val();
+    if (preSelectedCustomer) {
+      loadRenewNominees(preSelectedCustomer);
+    }
+  }, 600);
+
+  // Also load nominees when customer is manually changed
+  $('#customer_select').on('select2:select', function(e) {
+    loadRenewNominees(e.params.data.id);
+  });
+
+  // Check for customer-specific affiliate loading after a delay
+  setTimeout(function() {
+    var selectedCustomerId = $('#customer_select').val();
+    var currentAffiliateValue = $('#affiliate_select').val();
+
+    console.log('Checking affiliate dropdown status for customer:', selectedCustomerId);
+    console.log('Current affiliate value:', currentAffiliateValue);
+
+    // Only refresh if customer is selected but affiliate is not yet set
+    if (selectedCustomerId && !currentAffiliateValue) {
+      console.log('Customer is pre-selected but no affiliate selected, may need to refresh affiliate dropdown');
+
+      // Optional: Force refresh the affiliate dropdown for the specific customer
+      // This is usually not needed since we pre-select the affiliate above
+      // refreshAffiliateDropdown();
+    } else if (currentAffiliateValue) {
+      console.log('Affiliate already pre-selected:', currentAffiliateValue);
+    } else if (!selectedCustomerId) {
+      console.log('No customer pre-selected, affiliate dropdown will show all affiliates');
+    }
+  }, 2000); // Delay to ensure both Select2 dropdowns are initialized
+
+  // Initialize calculations on page load
+  setTimeout(() => {
+    console.log('=== Commission Values Check ===');
+    console.log('Main Agent Commission %:', document.getElementById('commission_percentage')?.value);
+    console.log('Sub Agent Commission %:', document.querySelector('.sub-agent-commission-percentage')?.value);
+    console.log('Ambassador Commission %:', document.querySelector('.ambassador-commission-percentage')?.value);
+    console.log('Investor Commission %:', document.querySelector('.investor-commission-percentage')?.value);
+    console.log('Company Expenses %:', document.querySelector('.company-expenses-percentage')?.value);
+    console.log('================================');
+
+    calculateAllCommissions();
+    calculateTotalPremium();
+    calculateEndDate();
+  }, 2000);
+
+  // Image preview functionality
+  function handleFileSelect(event, previewContainerId) {
+    const files = event.target.files;
+    const previewContainer = document.getElementById(previewContainerId);
+
+    // Clear existing previews only if new files are selected
+    if (files.length > 0) {
+      previewContainer.innerHTML = '';
+    }
+
+    Array.from(files).forEach((file, index) => {
+      const reader = new FileReader();
+
+      if (file.type.match('image.*')) {
+        // Handle image files
+        reader.onload = function(e) {
+          const container = document.createElement('div');
+          container.className = 'image-preview-container';
+          container.setAttribute('data-file-index', index);
+
+          const img = document.createElement('img');
+          img.className = 'image-preview';
+          img.src = e.target.result;
+          img.alt = file.name;
+          img.title = file.name;
+          img.onclick = function() {
+            showImageModal(e.target.result, file.name);
+          };
+
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'remove-preview';
+          removeBtn.innerHTML = '×';
+          removeBtn.onclick = function() {
+            removeFile(event.target, index, container);
+          };
+
+          container.appendChild(img);
+          container.appendChild(removeBtn);
+          previewContainer.appendChild(container);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // Handle non-image files
+        const container = document.createElement('div');
+        container.className = 'file-preview-container';
+        container.setAttribute('data-file-index', index);
+
+        const icon = document.createElement('div');
+        icon.className = 'file-icon';
+
+        // Set icon based on file type
+        if (file.type.includes('pdf')) {
+          icon.innerHTML = '<i class="bi bi-file-earmark-pdf-fill text-danger"></i>';
+        } else if (file.type.includes('word') || file.name.endsWith('.doc') || file.name.endsWith('.docx')) {
+          icon.innerHTML = '<i class="bi bi-file-earmark-word-fill text-primary"></i>';
+        } else {
+          icon.innerHTML = '<i class="bi bi-file-earmark-fill text-secondary"></i>';
+        }
+
+        const fileName = document.createElement('div');
+        fileName.className = 'file-name';
+        fileName.textContent = file.name.length > 20 ? file.name.substring(0, 17) + '...' : file.name;
+        fileName.title = file.name;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-preview';
+        removeBtn.innerHTML = '×';
+        removeBtn.onclick = function() {
+          removeFile(event.target, index, container);
+        };
+
+        container.appendChild(icon);
+        container.appendChild(fileName);
+        container.appendChild(removeBtn);
+        previewContainer.appendChild(container);
+      }
+    });
+  }
+
+  // Remove file from input
+  function removeFile(input, index, containerElement) {
+    const dt = new DataTransfer();
+    const files = input.files;
+
+    for (let i = 0; i < files.length; i++) {
+      if (i !== index) {
+        dt.items.add(files[i]);
+      }
+    }
+
+    input.files = dt.files;
+    containerElement.remove();
+
+    // If no files left, trigger change event to clear input
+    if (input.files.length === 0) {
+      $(input).val('').trigger('change');
+    }
+  }
+
+  // Show full-size image modal
+  function showImageModal(src, alt) {
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('imageModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'imageModal';
+      modal.className = 'image-modal';
+      modal.innerHTML = `
+        <span class="image-modal-close">&times;</span>
+        <img class="image-modal-content" id="modalImage">
+      `;
+      document.body.appendChild(modal);
+
+      // Close modal when clicking on X or outside the image
+      modal.onclick = function(e) {
+        if (e.target === modal || e.target.className === 'image-modal-close') {
+          modal.style.display = 'none';
+        }
+      };
+    }
+
+    // Set image and show modal
+    document.getElementById('modalImage').src = src;
+    document.getElementById('modalImage').alt = alt;
+    modal.style.display = 'block';
+  }
+
+  // Attach file input listeners
+  document.getElementById('policy_documents_upload').addEventListener('change', function(e) {
+    handleFileSelect(e, 'policy_documents_preview');
+  });
+
+  document.getElementById('additional_documents_upload').addEventListener('change', function(e) {
+    handleFileSelect(e, 'additional_documents_preview');
+  });
+
+  // Close modal on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('imageModal');
+      if (modal && modal.style.display === 'block') {
+        modal.style.display = 'none';
+      }
+    }
+  });
+});
+</script>

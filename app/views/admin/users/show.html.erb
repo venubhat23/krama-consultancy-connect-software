@@ -1,0 +1,348 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><%= [@user.first_name, @user.last_name].compact.join(' ') %></h2>
+    <p class="text-muted mb-0">
+      <span class="badge bg-<%=
+        case @user.user_type
+        when 'admin' then 'danger'
+        when 'agent' then 'primary'
+        when 'sub_agent' then 'info'
+        else 'secondary'
+        end
+      %> me-2">
+        <%= @user.user_type&.humanize || 'User' %>
+      </span>
+      User Details & Information
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to edit_admin_user_path(@user), class: "btn btn-outline-warning" do %>
+      <i class="bi bi-pencil me-1"></i>
+      Edit User
+    <% end %>
+    <%= link_to admin_users_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Users
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Main Information -->
+  <div class="col-lg-8">
+    <!-- Personal Details -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">
+          <i class="bi bi-person me-2 text-primary"></i>
+          Personal Information
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <strong>Full Name:</strong>
+            <div class="text-muted">
+              <%= [
+                @user.first_name,
+                (@user.respond_to?(:middle_name) ? @user.middle_name : nil),
+                @user.last_name
+              ].compact.join(' ') %>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <strong>Email:</strong>
+            <div class="text-muted">
+              <%= link_to @user.email, "mailto:#{@user.email}", class: "text-decoration-none" %>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <strong>Mobile:</strong>
+            <div class="text-muted">
+              <%= link_to @user.mobile, "tel:#{@user.mobile}", class: "text-decoration-none" %>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <strong>Status:</strong>
+            <div>
+              <span class="badge bg-<%= @user.status? ? 'success' : 'secondary' %>">
+                <%= @user.status? ? 'Active' : 'Inactive' %>
+              </span>
+            </div>
+          </div>
+          <% if @user.date_of_birth.present? %>
+            <div class="col-md-6">
+              <strong>Date of Birth:</strong>
+              <div class="text-muted"><%= @user.date_of_birth.strftime("%d %B %Y") %></div>
+            </div>
+          <% end %>
+          <% if @user.gender.present? %>
+            <div class="col-md-6">
+              <strong>Gender:</strong>
+              <div class="text-muted"><%= @user.gender.humanize %></div>
+            </div>
+          <% end %>
+          <% if @user.role.present? %>
+            <div class="col-md-6">
+              <strong>Role:</strong>
+              <div class="text-muted"><%= @user.role %></div>
+            </div>
+          <% end %>
+          <% if @user.respond_to?(:company_name) && @user.company_name.present? %>
+            <div class="col-md-6">
+              <strong>Company:</strong>
+              <div class="text-muted"><%= @user.company_name %></div>
+            </div>
+          <% end %>
+        </div>
+
+        <% if @user.address.present? || @user.city.present? || @user.state.present? %>
+          <hr>
+          <h6 class="fw-semibold mb-3">Address Information</h6>
+          <div class="row g-3">
+            <% if @user.address.present? %>
+              <div class="col-12">
+                <strong>Address:</strong>
+                <div class="text-muted"><%= @user.address %></div>
+              </div>
+            <% end %>
+            <% if @user.city.present? %>
+              <div class="col-md-6">
+                <strong>City:</strong>
+                <div class="text-muted"><%= @user.city %></div>
+              </div>
+            <% end %>
+            <% if @user.state.present? %>
+              <div class="col-md-6">
+                <strong>State:</strong>
+                <div class="text-muted"><%= @user.state %></div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+
+        <% if @user.pan_number.present? || @user.gst_number.present? %>
+          <hr>
+          <h6 class="fw-semibold mb-3">Tax Information</h6>
+          <div class="row g-3">
+            <% if @user.pan_number.present? %>
+              <div class="col-md-6">
+                <strong>PAN Number:</strong>
+                <div class="text-muted font-monospace"><%= @user.pan_number %></div>
+              </div>
+            <% end %>
+            <% if @user.gst_number.present? %>
+              <div class="col-md-6">
+                <strong>GST Number:</strong>
+                <div class="text-muted font-monospace"><%= @user.gst_number %></div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Bank Details -->
+    <% if @user.respond_to?(:bank_name) && (
+         @user.bank_name.present? ||
+         @user.respond_to?(:account_number) && @user.account_number.present? ||
+         @user.respond_to?(:ifsc_code) && @user.ifsc_code.present?
+       ) %>
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-bank me-2 text-success"></i>
+            Banking Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <% if @user.bank_name.present? %>
+              <div class="col-md-6">
+                <strong>Bank Name:</strong>
+                <div class="text-muted"><%= @user.bank_name %></div>
+              </div>
+            <% end %>
+            <% if @user.respond_to?(:account_number) && @user.account_number.present? %>
+              <div class="col-md-6">
+                <strong>Account Number:</strong>
+                <div class="text-muted font-monospace">
+                  **** **** <%= @user.account_number.to_s.last(4) %>
+                </div>
+              </div>
+            <% end %>
+            <% if @user.respond_to?(:ifsc_code) && @user.ifsc_code.present? %>
+              <div class="col-md-6">
+                <strong>IFSC Code:</strong>
+                <div class="text-muted font-monospace"><%= @user.ifsc_code %></div>
+              </div>
+            <% end %>
+            <% if @user.respond_to?(:account_holder_name) && @user.account_holder_name.present? %>
+              <div class="col-md-6">
+                <strong>Account Holder:</strong>
+                <div class="text-muted"><%= @user.account_holder_name %></div>
+              </div>
+            <% end %>
+            <% if @user.respond_to?(:account_type) && @user.account_type.present? %>
+              <div class="col-md-6">
+                <strong>Account Type:</strong>
+                <div class="text-muted"><%= @user.account_type.humanize %></div>
+              </div>
+            <% end %>
+            <% if @user.respond_to?(:upi_id) && @user.upi_id.present? %>
+              <div class="col-md-6">
+                <strong>UPI ID:</strong>
+                <div class="text-muted font-monospace"><%= @user.upi_id %></div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Recent Policies (if applicable) -->
+    <% if @policies&.any? %>
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-shield-check me-2 text-info"></i>
+            Recent Policies
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="bg-light">
+                <tr>
+                  <th class="border-0">Policy</th>
+                  <th class="border-0">Customer</th>
+                  <th class="border-0">Type</th>
+                  <th class="border-0">Amount</th>
+                  <th class="border-0">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @policies.each do |policy| %>
+                  <tr>
+                    <td>
+                      <div class="fw-semibold"><%= policy.policy_number %></div>
+                      <small class="text-muted"><%= policy.plan_name %></small>
+                    </td>
+                    <td><%= policy.customer.display_name %></td>
+                    <td>
+                      <span class="badge bg-primary"><%= policy.insurance_type.humanize %></span>
+                    </td>
+                    <td><%= indian_currency(policy.total_premium) %></td>
+                    <td><%= policy.created_at.strftime("%d %b %Y") %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <!-- Profile Card -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body text-center">
+        <div class="bg-<%=
+          case @user.user_type
+          when 'admin' then 'danger'
+          when 'agent' then 'primary'
+          when 'sub_agent' then 'info'
+          else 'secondary'
+          end
+        %> bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 120px; height: 120px;">
+          <i class="bi bi-person fs-1 text-<%=
+            case @user.user_type
+            when 'admin' then 'danger'
+            when 'agent' then 'primary'
+            when 'sub_agent' then 'info'
+            else 'secondary'
+            end
+          %>"></i>
+        </div>
+        <h5 class="mb-1"><%= [@user.first_name, @user.last_name].compact.join(' ') %></h5>
+        <p class="text-muted mb-3"><%= @user.email %></p>
+
+        <div class="d-grid gap-2">
+          <% if @user.email.present? %>
+            <%= link_to "mailto:#{@user.email}", class: "btn btn-outline-primary" do %>
+              <i class="bi bi-envelope me-1"></i>Send Email
+            <% end %>
+          <% end %>
+          <% if @user.mobile.present? %>
+            <%= link_to "tel:#{@user.mobile}", class: "btn btn-outline-success" do %>
+              <i class="bi bi-telephone me-1"></i>Call
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">Account Information</h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-2 text-sm">
+          <div class="col-5"><strong>User ID:</strong></div>
+          <div class="col-7 text-muted">#<%= @user.id %></div>
+
+          <div class="col-5"><strong>Type:</strong></div>
+          <div class="col-7">
+            <span class="badge bg-<%=
+              case @user.user_type
+              when 'admin' then 'danger'
+              when 'agent' then 'primary'
+              when 'sub_agent' then 'info'
+              else 'secondary'
+              end
+            %>">
+              <%= @user.user_type&.humanize || 'User' %>
+            </span>
+          </div>
+
+          <div class="col-5"><strong>Status:</strong></div>
+          <div class="col-7">
+            <span class="badge bg-<%= @user.status? ? 'success' : 'secondary' %>">
+              <%= @user.status? ? 'Active' : 'Inactive' %>
+            </span>
+          </div>
+
+          <div class="col-5"><strong>Created:</strong></div>
+          <div class="col-7 text-muted"><%= @user.created_at.strftime("%d %b %Y") %></div>
+
+          <div class="col-5"><strong>Last Updated:</strong></div>
+          <div class="col-7 text-muted"><%= @user.updated_at.strftime("%d %b %Y") %></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Code -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">Agent QR Code</h6>
+      </div>
+      <div class="card-body text-center">
+        <div class="border rounded-3 p-4 bg-light">
+          <div class="qr-code-placeholder d-flex align-items-center justify-content-center mb-3" style="height: 150px;">
+            <i class="bi bi-qr-code fs-1 text-muted"></i>
+          </div>
+          <small class="text-muted">Scan to view agent information</small>
+        </div>
+        <div class="mt-3">
+          <button class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-download me-1"></i>Download QR
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

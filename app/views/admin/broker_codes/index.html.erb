@@ -1,0 +1,255 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">
+      <% if @broker %>
+        Broker Codes for <%= @broker.name %>
+      <% else %>
+        All Broker Codes
+      <% end %>
+    </h2>
+    <p class="text-muted mb-0">Manage broker codes and agent assignments</p>
+  </div>
+  <div class="d-flex gap-2">
+    <% if @broker %>
+      <%= link_to admin_brokers_path, class: "btn btn-outline-secondary" do %>
+        <i class="bi bi-arrow-left me-1"></i>
+        Back to Brokers
+      <% end %>
+      <%= link_to new_admin_broker_broker_code_path(@broker), class: "btn btn-primary" do %>
+        <i class="bi bi-plus-lg me-1"></i>
+        Add Broker Code
+      <% end %>
+    <% else %>
+      <%= link_to new_admin_broker_code_path, class: "btn btn-primary" do %>
+        <i class="bi bi-plus-lg me-1"></i>
+        Add Broker Code
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Codes</h6>
+            <h3 class="mb-0 text-primary"><%= number_with_delimiter(@broker_codes.count) %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-code-square text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Active Codes</h6>
+            <h3 class="mb-0 text-success"><%= number_with_delimiter(@broker_codes.select(&:status).count) %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-check-circle text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Unique Companies</h6>
+            <h3 class="mb-0 text-info"><%= number_with_delimiter(@broker_codes.distinct.count(:company_name)) %></h3>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-building text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Unique Brokers</h6>
+            <h3 class="mb-0 text-warning"><%= number_with_delimiter(@broker_codes.distinct.count(:broker_id)) %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-people text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <%= form_with url: @broker ? admin_broker_broker_codes_path(@broker) : admin_broker_codes_path,
+                 method: :get, local: true, class: "d-flex flex-wrap gap-3 align-items-end" do |form| %>
+      <!-- Search -->
+      <div class="flex-grow-1 min-width-250">
+        <%= form.text_field :search, placeholder: "Search by broker name, broker code, or company...",
+                           value: params[:search],
+                           class: "form-control" %>
+      </div>
+
+      <!-- Status Filter -->
+      <div>
+        <%= form.select :status,
+            options_for_select([
+              ['All Status', 'all'],
+              ['Active', 'active'],
+              ['Inactive', 'inactive']
+            ], params[:status] || 'all'),
+            {},
+            { class: "form-select", style: "min-width: 120px;" } %>
+      </div>
+
+      <!-- Actions -->
+      <div class="d-flex gap-2">
+        <%= form.submit "Filter", class: "btn btn-outline-primary" %>
+        <%= link_to "Clear", @broker ? admin_broker_broker_codes_path(@broker) : admin_broker_codes_path,
+                   class: "btn btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Broker Codes List -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0" id="broker-code">
+    <h5 class="mb-0">Broker Codes</h5>
+  </div>
+  <div class="card-body p-0">
+    <% if @broker_codes.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Broker Details</th>
+              <th class="border-0">Broker Code</th>
+              <th class="border-0">Company Name</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Created</th>
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @broker_codes.each do |broker_code| %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                      <i class="bi bi-building text-success"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-1"><%= broker_code.broker.name %></h6>
+                      <small class="text-muted">ID: <%= broker_code.broker.id %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-primary-subtle text-primary fs-6">
+                    <%= broker_code.broker_code %>
+                  </span>
+                </td>
+                <td>
+                  <div>
+                    <h6 class="mb-1"><%= broker_code.company_name %></h6>
+                    <small class="text-muted">Insurance Company</small>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-<%= broker_code.status_color %>-subtle text-<%= broker_code.status_color %>">
+                    <i class="bi bi-<%= broker_code.status? ? 'check-circle' : 'pause-circle' %> me-1"></i>
+                    <%= broker_code.status_badge %>
+                  </span>
+                </td>
+                <td>
+                  <div>
+                    <div><%= broker_code.created_at.strftime("%b %d, %Y") %></div>
+                    <small class="text-muted"><%= time_ago_in_words(broker_code.created_at) %> ago</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <%= link_to edit_admin_broker_code_path(broker_code),
+                               class: "btn btn-sm btn-outline-warning", title: "Edit" do %>
+                      <i class="bi bi-pencil"></i>
+                    <% end %>
+                    <%= link_to toggle_status_admin_broker_code_path(broker_code),
+                        method: :patch,
+                        class: "btn btn-sm btn-outline-#{broker_code.status? ? 'secondary' : 'success'}",
+                        title: broker_code.status? ? 'Deactivate' : 'Activate',
+                        data: {
+                          confirm: "Are you sure you want to #{broker_code.status? ? 'deactivate' : 'activate'} this broker code?",
+                          turbo_method: :patch
+                        } do %>
+                      <i class="bi bi-#{broker_code.status? ? 'pause-circle' : 'play-circle'}"></i>
+                    <% end %>
+                    <%= button_to admin_broker_code_path(broker_code),
+                        method: :delete,
+                        class: "btn btn-sm btn-outline-danger",
+                        title: "Delete",
+                        data: {
+                          confirm: "Are you sure you want to delete this broker code? This action cannot be undone."
+                        },
+                        form: { style: "display: inline;" } do %>
+                      <i class="bi bi-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-code-square fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No broker codes found</h5>
+        <p class="text-muted mb-3">
+          <% if params[:search].present? || (params[:status].present? && params[:status] != 'all') %>
+            No broker codes match your search criteria.
+            <%= link_to "View all codes", @broker ? admin_broker_broker_codes_path(@broker) : admin_broker_codes_path,
+                       class: "text-decoration-none" %>.
+          <% else %>
+            Start by creating your first broker code.
+          <% end %>
+        </p>
+        <% if @broker %>
+          <%= link_to new_admin_broker_broker_code_path(@broker), class: "btn btn-primary" do %>
+            <i class="bi bi-plus-lg me-1"></i>
+            Create First Broker Code
+          <% end %>
+        <% else %>
+          <%= link_to new_admin_broker_code_path, class: "btn btn-primary" do %>
+            <i class="bi bi-plus-lg me-1"></i>
+            Create First Broker Code
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+.min-width-250 {
+  min-width: 250px;
+}
+</style>

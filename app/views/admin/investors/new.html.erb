@@ -1,0 +1,999 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Create Investor</h2>
+    <p class="text-muted mb-0">Fill in the details to create a new investor account</p>
+  </div>
+  <div>
+    <%= link_to admin_investors_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Investors
+    <% end %>
+  </div>
+</div>
+
+<%= form_with model: [:admin, @investor], local: true, multipart: true, class: "needs-validation", novalidate: true, data: { turbo: false } do |form| %>
+  <% if @investor.errors.any? %>
+    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+      <h6>Please correct the following errors:</h6>
+      <ul class="mb-0">
+        <% @investor.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% end %>
+
+  <!-- 1. Personal Details -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-person-circle me-2 text-primary"></i>
+      <h5 class="mb-0">Personal Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <%= form.label :first_name, class: "form-label" do %>
+            First Name <span class="text-danger">*</span>
+          <% end %>
+          <%= form.text_field :first_name, class: "form-control", placeholder: "Enter first name", required: true %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :middle_name, "Middle Name", class: "form-label" %>
+          <%= form.text_field :middle_name, class: "form-control", placeholder: "Enter middle name" %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :last_name, class: "form-label" do %>
+            Last Name <span class="text-danger">*</span>
+          <% end %>
+          <%= form.text_field :last_name, class: "form-control", placeholder: "Enter last name", required: true %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :mobile, class: "form-label" do %>
+            Mobile <span class="text-danger">*</span>
+          <% end %>
+          <%= form.telephone_field :mobile, class: "form-control mobile-input", placeholder: "Enter 10-digit mobile number", required: true, pattern: "[6789][0-9]{9}", title: "Must be a 10-digit number starting with 6, 7, 8, or 9", autocomplete: "tel", maxlength: "10" %>
+          <div class="form-text text-muted">
+            <small>Enter 10-digit mobile number starting with 6, 7, 8, or 9 (e.g., 9876543210)</small>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :email, class: "form-label" do %>
+            Email <span class="text-danger">*</span>
+          <% end %>
+          <%= form.email_field :email, class: "form-control", placeholder: "Enter email address", required: true %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :role_id, class: "form-label" do %>
+            Role <span class="text-danger">*</span>
+          <% end %>
+          <%= form.text_field :role_id, class: "form-control", value: 'investor', readonly: true %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :birth_date, "Birth Date", class: "form-label" %>
+          <%= form.date_field :birth_date, class: "form-control" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-4">
+          <%= form.label :state, "State", class: "form-label" %>
+          <%= form.select :state,
+              options_for_select(@states_for_select || [], @investor&.state),
+              { prompt: 'Search and select state...' },
+              { class: "form-select searchable-select", id: "investor_state", data: { placeholder: "Type to search states..." } } %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :city, "City", class: "form-label" %>
+          <%= form.select :city,
+              options_for_select([], @investor&.city),
+              { prompt: 'Search and select city...' },
+              { class: "form-select searchable-select", id: "investor_city", disabled: true, data: { placeholder: "Type to search cities..." } } %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :gender, "Gender", class: "form-label" %>
+          <%= form.select :gender,
+              options_for_select([
+                ['Male', 'Male'], ['Female', 'Female'], ['Other', 'Other']
+              ], @investor.gender),
+              { prompt: 'Select Gender' },
+              { class: "form-select" } %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-4">
+          <%= form.label :pan_no, "PAN No", class: "form-label" %>
+          <%= form.text_field :pan_no, class: "form-control", placeholder: "Enter PAN number" %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :gst_no, "GST No", class: "form-label" %>
+          <%= form.text_field :gst_no, class: "form-control", placeholder: "Enter GST number" %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :company_name, "Company Name", class: "form-label" %>
+          <%= form.text_field :company_name, class: "form-control", placeholder: "Enter company name" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-12">
+          <%= form.label :address, "Address", class: "form-label" %>
+          <%= form.text_area :address, class: "form-control", rows: 3, placeholder: "Enter full address" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Bank Details -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-bank me-2 text-success"></i>
+      <h5 class="mb-0">Bank Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <%= form.label :bank_name, "Bank Name", class: "form-label" %>
+          <%= form.text_field :bank_name, class: "form-control", placeholder: "Enter bank name" %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :account_no, "Account Number", class: "form-label" %>
+          <%= form.text_field :account_no, class: "form-control", placeholder: "Enter account number" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :ifsc_code, "IFSC Code", class: "form-label" %>
+          <%= form.text_field :ifsc_code, class: "form-control", placeholder: "Enter IFSC code" %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :account_holder_name, "Account Holder Name", class: "form-label" %>
+          <%= form.text_field :account_holder_name, class: "form-control", placeholder: "Enter account holder name" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :account_type, "Account Type", class: "form-label" %>
+          <%= form.select :account_type,
+              options_for_select([
+                ['Savings', 'Savings'], ['Current', 'Current'], ['Salary', 'Salary']
+              ], @investor.account_type),
+              { prompt: 'Select Account Type' },
+              { class: "form-select" } %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :upi_id, "UPI ID", class: "form-label" %>
+          <%= form.text_field :upi_id, class: "form-control", placeholder: "Enter UPI ID" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Investment Details -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-currency-rupee me-2 text-primary"></i>
+      <h5 class="mb-0">Investment Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <%= form.label :number_of_shares, "No. of Shares", class: "form-label" %>
+          <%= form.number_field :number_of_shares, class: "form-control", placeholder: "Enter number of shares", min: 0 %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :invested_amount, "Invested Amount (Rs.)", class: "form-label" %>
+          <%= form.number_field :invested_amount, class: "form-control", placeholder: "Enter invested amount", step: :any, min: 0 %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :investment_percentage, "Investment Percentage (%)", class: "form-label" %>
+          <%= form.number_field :investment_percentage, class: "form-control", placeholder: "Enter investment percentage", step: :any, min: 0, max: 100 %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Login Credentials -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-key me-2 text-info"></i>
+      <h5 class="mb-0">Login Credentials</h5>
+    </div>
+    <div class="card-body">
+      <!-- Login Information -->
+      <div class="alert alert-info d-flex align-items-start mb-4">
+        <i class="bi bi-info-circle me-2 fs-5"></i>
+        <div>
+          <h6 class="alert-heading">Login Information</h6>
+          <p class="mb-0">Investor can login using their <strong>email address</strong> or <strong>mobile number</strong> with the password set below.</p>
+        </div>
+      </div>
+
+      <!-- Password Creation Method -->
+      <div class="row">
+        <div class="col-12 mb-4">
+          <label class="form-label mb-3">Password Creation Method</label>
+          <!-- Auto Generate Option (Default) -->
+          <div class="form-check mb-3 p-3 border rounded bg-light">
+            <input class="form-check-input" type="radio" name="password_option" id="auto_generate_password" value="auto_generate" checked>
+            <label class="form-check-label w-100" for="auto_generate_password">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-cpu me-2 text-primary"></i>
+                <strong>Auto Generate Password (Recommended)</strong>
+              </div>
+              <small class="text-muted d-block mt-1">
+                System will automatically generate a secure password: <strong>Ganesha@123</strong>
+              </small>
+            </label>
+          </div>
+          <!-- Manual Entry Option -->
+          <div class="form-check mb-3 p-3 border rounded">
+            <input class="form-check-input" type="radio" name="password_option" id="manual_password" value="manual">
+            <label class="form-check-label w-100" for="manual_password">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-pencil me-2 text-success"></i>
+                <strong>Set Custom Password</strong>
+              </div>
+              <small class="text-muted d-block mt-1">
+                Manually enter a custom password for the investor
+              </small>
+            </label>
+          </div>
+        </div>
+
+        <!-- Manual Password Fields (hidden by default) -->
+        <div id="manual_password_fields" class="col-12" style="display: none;">
+          <div class="card bg-light border-0">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <label class="form-label" for="investor_password">
+                    Password <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <%= form.password_field :password, class: "form-control", placeholder: "Enter password", minlength: 8 %>
+                    <button class="btn btn-outline-secondary" type="button" id="toggle_password">
+                      <i class="bi bi-eye" id="password_icon"></i>
+                    </button>
+                  </div>
+                  <div class="mt-2">
+                    <div class="progress" style="height: 4px;">
+                      <div class="progress-bar" role="progressbar" id="password_strength_bar"></div>
+                    </div>
+                    <small class="text-muted">Strength: <span id="password_strength_text">Enter password</span></small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="investor_password_confirmation">
+                    Confirm Password <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <%= form.password_field :password_confirmation, class: "form-control", placeholder: "Confirm password" %>
+                    <button class="btn btn-outline-secondary" type="button" id="toggle_confirm_password">
+                      <i class="bi bi-eye" id="confirm_password_icon"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Documents & QR Code -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-file-earmark-arrow-up me-2 text-warning"></i>
+      <h5 class="mb-0">Documents & QR Code</h5>
+    </div>
+    <div class="card-body">
+      <!-- Main Document Upload -->
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <%= form.label :upload_main_document, "Upload Main Document", class: "form-label" %>
+          <div class="upload-area border-2 border-dashed rounded p-4 text-center position-relative"
+               onclick="document.getElementById('investor_upload_main_document').click()"
+               ondragover="event.preventDefault(); this.classList.add('border-primary', 'bg-light')"
+               ondragenter="event.preventDefault(); this.classList.add('border-primary', 'bg-light')"
+               ondragleave="this.classList.remove('border-primary', 'bg-light')"
+               ondrop="handleFileDrop(event, 'investor_upload_main_document')"
+               id="main-upload-area">
+            <div id="upload-placeholder">
+              <i class="bi bi-cloud-upload fs-1 text-muted mb-3"></i>
+              <h6 class="text-muted mb-2">Upload Main Document</h6>
+              <p class="mb-2">Click to upload or drag and drop</p>
+              <small class="text-muted">JPG, PNG, PDF (Max: 10MB)</small>
+            </div>
+            <%= form.file_field :upload_main_document, class: "form-control d-none",
+                accept: "image/jpeg,image/jpg,image/png,application/pdf",
+                onchange: "previewMainFile(this)" %>
+            <div id="main-document-preview" class="mt-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Repeatable Documents Section -->
+      <div class="border-top pt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0">Upload Documents</h6>
+          <button type="button" class="btn btn-sm btn-outline-primary" id="add_document">
+            <i class="bi bi-plus-lg me-1"></i>
+            Add Document
+          </button>
+        </div>
+
+        <div id="documents_container">
+          <!-- Dynamic documents will be added here -->
+        </div>
+
+        <p class="text-muted mb-0 mt-2">
+          <small>Document types: Aadhaar Card, Pancard, Driving License, Mediclaim, RC Book, Other File</small>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-end gap-2">
+        <%= link_to "Cancel", admin_investors_path, class: "btn btn-outline-secondary" %>
+        <%= form.submit "Create Investor", class: "btn btn-primary" %>
+      </div>
+    </div>
+  </div>
+
+<% end %>
+
+<style>
+.document-entry {
+  background: #f8f9fa;
+  border-radius: 8px;
+  position: relative;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.upload-area {
+  border: 2px dashed #dee2e6;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-height: 120px;
+  background: #fafbfc;
+}
+
+.upload-area:hover {
+  border-color: #6c757d;
+  background: #f8f9fa;
+}
+
+.upload-area.border-primary {
+  border-color: #0d6efd !important;
+  background: #e7f1ff !important;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.img-thumbnail {
+  border: 3px solid #fff;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.preview-container {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.file-icon-large {
+  font-size: 4rem;
+  opacity: 0.8;
+}
+
+.badge.fs-6 {
+  font-size: 0.9rem !important;
+  padding: 0.5rem 0.75rem;
+}
+</style>
+
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<!-- jQuery and Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Include Location Data -->
+<script>
+<%= File.read(Rails.root.join('app/assets/javascripts/location_data.js')).html_safe %>
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Mobile number validation - ensure 10 digits starting with 6/7/8/9
+  const mobileInput = document.querySelector('.mobile-input');
+  if (mobileInput) {
+    mobileInput.addEventListener('input', function(e) {
+      let value = e.target.value;
+
+      // Remove all non-digits
+      let cleaned = value.replace(/\D/g, '');
+
+      // Remove +91 prefix if present
+      if (cleaned.startsWith('91') && cleaned.length >= 12) {
+        cleaned = cleaned.substring(2);
+      }
+
+      // Limit to 10 digits
+      cleaned = cleaned.substring(0, 10);
+      e.target.value = cleaned;
+
+      // Validation: exactly 10 digits starting with 6/7/8/9
+      if (cleaned.length === 10 && /^[6789]/.test(cleaned)) {
+        e.target.classList.remove('is-invalid');
+        e.target.classList.add('is-valid');
+        e.target.setCustomValidity('');
+      } else if (cleaned.length > 0) {
+        e.target.classList.remove('is-valid');
+        e.target.classList.add('is-invalid');
+        if (cleaned.length < 10) {
+          e.target.setCustomValidity('Mobile number must be 10 digits');
+        } else if (!/^[6789]/.test(cleaned)) {
+          e.target.setCustomValidity('Mobile number must start with 6, 7, 8, or 9');
+        }
+      } else {
+        e.target.classList.remove('is-valid', 'is-invalid');
+        e.target.setCustomValidity('');
+      }
+    });
+
+    // Also validate on paste events
+    mobileInput.addEventListener('paste', function(e) {
+      setTimeout(() => {
+        e.target.dispatchEvent(new Event('input'));
+      }, 10);
+    });
+  }
+
+  // Initialize searchable state-city dropdowns
+  const stateSelect = document.getElementById('investor_state');
+  const citySelect = document.getElementById('investor_city');
+
+  // Use global location data or API fallback
+  let newInvestorCitiesData = {};
+
+  if (window.LocationData && window.LocationData.states) {
+    newInvestorCitiesData = Object.keys(window.LocationData.states).reduce((acc, key) => {
+      acc[key] = window.LocationData.states[key].cities;
+      return acc;
+    }, {});
+  }
+
+  function loadNewInvestorCitiesForState(stateValue, selectedCityValue = null) {
+    console.log('Loading cities for new investor form:', stateValue);
+    console.log('Selected city to set:', selectedCityValue);
+
+    if (!stateValue) {
+      citySelect.innerHTML = '<option value="">Select State First</option>';
+      citySelect.disabled = true;
+      return;
+    }
+
+    let cities = [];
+
+    // Try to get cities from location data using multiple methods
+    if (window.LocationData && window.LocationData.states) {
+      // Method 1: Direct key match
+      cities = newInvestorCitiesData[stateValue] || [];
+      console.log('Direct key match cities:', cities.length);
+
+      // Method 2: Match by state name if direct key fails
+      if (cities.length === 0) {
+        Object.keys(window.LocationData.states).forEach(key => {
+          const stateData = window.LocationData.states[key];
+          if (stateData.name === stateValue || key === stateValue) {
+            cities = stateData.cities || [];
+            console.log('Found by state name match:', cities.length);
+          }
+        });
+      }
+
+      // Method 3: Case-insensitive search
+      if (cities.length === 0) {
+        const stateLower = stateValue.toLowerCase();
+        Object.keys(window.LocationData.states).forEach(key => {
+          const stateData = window.LocationData.states[key];
+          if (stateData.name.toLowerCase() === stateLower || key.toLowerCase() === stateLower) {
+            cities = stateData.cities || [];
+            console.log('Found by case-insensitive match:', cities.length);
+          }
+        });
+      }
+    }
+
+    if (cities.length > 0) {
+      populateNewInvestorCityDropdown(cities, selectedCityValue);
+    } else {
+      console.warn('No cities found for state:', stateValue, 'using fallback');
+      populateNewInvestorCityDropdown([], selectedCityValue);
+    }
+  }
+
+  function populateNewInvestorCityDropdown(cities, selectedCityValue = null) {
+    // First destroy Select2 if it exists
+    const $newInvestorCitySelect = $(citySelect);
+    if ($newInvestorCitySelect.hasClass('select2-hidden-accessible')) {
+      $newInvestorCitySelect.select2('destroy');
+    }
+
+    // Clear dropdown and add cities
+    citySelect.innerHTML = '<option value="">Search and select city...</option>';
+    cities.forEach(function(city) {
+      const option = document.createElement('option');
+      option.value = city;
+      option.textContent = city;
+      if (selectedCityValue && city === selectedCityValue) {
+        option.selected = true;
+      }
+      citySelect.appendChild(option);
+    });
+
+    // Re-enable dropdown
+    citySelect.disabled = cities.length === 0;
+
+    // Re-initialize Select2 on city dropdown
+    setTimeout(() => {
+      $newInvestorCitySelect.select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select city...',
+        allowClear: true,
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+
+      // Set selected value if provided
+      if (selectedCityValue) {
+        $newInvestorCitySelect.val(selectedCityValue).trigger('change.select2');
+      }
+    }, 50);
+  }
+
+  // Initialize Select2 on state dropdown
+  if (stateSelect && typeof $ !== 'undefined' && $.fn.select2) {
+    $('#investor_state').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select state...',
+      allowClear: true,
+      width: '100%',
+      minimumResultsForSearch: 0
+    });
+  }
+
+  // Handle state change
+  stateSelect?.addEventListener('change', function() {
+    loadNewInvestorCitiesForState(this.value);
+  });
+
+  // Handle Select2 change event specifically
+  $('#investor_state').on('select2:select', function (e) {
+    const selectedValue = e.params.data.id;
+    stateSelect.value = selectedValue;
+    console.log('State selected via Select2:', selectedValue);
+    loadNewInvestorCitiesForState(selectedValue);
+  });
+
+  // Load cities if state is pre-selected
+  if (stateSelect && stateSelect.value) {
+    loadNewInvestorCitiesForState(stateSelect.value);
+  }
+
+  // Password Option Toggle Functionality
+  const autoGenerateRadio = document.getElementById('auto_generate_password');
+  const manualPasswordRadio = document.getElementById('manual_password');
+  const manualPasswordFields = document.getElementById('manual_password_fields');
+
+  function togglePasswordFields() {
+    if (manualPasswordRadio && manualPasswordRadio.checked) {
+      manualPasswordFields.style.display = 'block';
+      // Make password fields required
+      document.getElementById('investor_password').required = true;
+      document.getElementById('investor_password_confirmation').required = true;
+    } else {
+      manualPasswordFields.style.display = 'none';
+      // Clear and unrequire password fields
+      document.getElementById('investor_password').required = false;
+      document.getElementById('investor_password_confirmation').required = false;
+      document.getElementById('investor_password').value = '';
+      document.getElementById('investor_password_confirmation').value = '';
+    }
+  }
+
+  // Event listeners for radio buttons
+  autoGenerateRadio?.addEventListener('change', togglePasswordFields);
+  manualPasswordRadio?.addEventListener('change', togglePasswordFields);
+
+  // Password visibility toggle
+  const togglePasswordBtn = document.getElementById('toggle_password');
+  const toggleConfirmPasswordBtn = document.getElementById('toggle_confirm_password');
+  const passwordField = document.getElementById('investor_password');
+  const confirmPasswordField = document.getElementById('investor_password_confirmation');
+  const passwordIcon = document.getElementById('password_icon');
+  const confirmPasswordIcon = document.getElementById('confirm_password_icon');
+
+  togglePasswordBtn?.addEventListener('click', function() {
+    const type = passwordField.type === 'password' ? 'text' : 'password';
+    passwordField.type = type;
+    passwordIcon.classList.toggle('bi-eye');
+    passwordIcon.classList.toggle('bi-eye-slash');
+  });
+
+  toggleConfirmPasswordBtn?.addEventListener('click', function() {
+    const type = confirmPasswordField.type === 'password' ? 'text' : 'password';
+    confirmPasswordField.type = type;
+    confirmPasswordIcon.classList.toggle('bi-eye');
+    confirmPasswordIcon.classList.toggle('bi-eye-slash');
+  });
+
+  // Password strength checker
+  const strengthBar = document.getElementById('password_strength_bar');
+  const strengthText = document.getElementById('password_strength_text');
+
+  function checkPasswordStrength(password) {
+    let strength = 0;
+    const checks = {
+      length: password.length >= 8,
+      lower: /[a-z]/.test(password),
+      upper: /[A-Z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+
+    strength = Object.values(checks).filter(Boolean).length;
+
+    let strengthLevel = '';
+    let colorClass = '';
+    let widthPercent = 0;
+
+    switch(strength) {
+      case 0:
+      case 1:
+        strengthLevel = 'Very Weak';
+        colorClass = 'bg-danger';
+        widthPercent = 20;
+        break;
+      case 2:
+        strengthLevel = 'Weak';
+        colorClass = 'bg-warning';
+        widthPercent = 40;
+        break;
+      case 3:
+        strengthLevel = 'Fair';
+        colorClass = 'bg-info';
+        widthPercent = 60;
+        break;
+      case 4:
+        strengthLevel = 'Good';
+        colorClass = 'bg-primary';
+        widthPercent = 80;
+        break;
+      case 5:
+        strengthLevel = 'Strong';
+        colorClass = 'bg-success';
+        widthPercent = 100;
+        break;
+    }
+
+    if (strengthBar && strengthText) {
+      strengthBar.className = `progress-bar ${colorClass}`;
+      strengthBar.style.width = `${widthPercent}%`;
+      strengthText.textContent = strengthLevel;
+    }
+  }
+
+  passwordField?.addEventListener('input', function() {
+    checkPasswordStrength(this.value);
+  });
+
+  // Document management
+  let documentIndex = 0;
+  const addDocumentBtn = document.getElementById('add_document');
+  const documentsContainer = document.getElementById('documents_container');
+
+  addDocumentBtn?.addEventListener('click', function() {
+    const documentHtml = `
+      <div class="document-entry p-3 mb-3 border rounded position-relative" data-index="${documentIndex}">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-btn remove-document">
+          <i class="bi bi-trash"></i>
+        </button>
+        <div class="row">
+          <div class="col-md-6">
+            <label class="form-label">Document Type <span class="text-danger">*</span></label>
+            <select name="investor[investor_documents_attributes][${documentIndex}][document_type]" class="form-select" required>
+              <option value="">Select Document Type</option>
+              <option value="Aadhaar Card">Aadhaar Card</option>
+              <option value="Pancard">Pancard</option>
+              <option value="Driving License">Driving License</option>
+              <option value="Mediclaim">Mediclaim</option>
+              <option value="RC Book">RC Book</option>
+              <option value="Other File">Other File</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Document File <span class="text-danger">*</span></label>
+            <input type="file" name="investor[investor_documents_attributes][${documentIndex}][document_file]"
+                   class="form-control" accept="image/jpeg,image/jpg,image/png,application/pdf" required
+                   onchange="previewFile(this, 'preview-${documentIndex}')">
+            <div id="preview-${documentIndex}" class="mt-2"></div>
+          </div>
+        </div>
+      </div>
+    `;
+    documentsContainer.insertAdjacentHTML('beforeend', documentHtml);
+    documentIndex++;
+  });
+
+  // Event delegation for remove buttons
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-document')) {
+      e.target.closest('.document-entry').remove();
+    }
+  });
+
+  // File handling functions
+  window.handleFileDrop = function(event, inputId) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+      const input = document.getElementById(inputId);
+      input.files = files;
+
+      // Trigger change event for preview
+      const changeEvent = new Event('change', { bubbles: true });
+      input.dispatchEvent(changeEvent);
+    }
+
+    // Remove drag styling
+    event.target.classList.remove('border-primary', 'bg-light');
+  };
+
+  window.previewFile = function(input, previewId) {
+    const file = input.files[0];
+    const previewContainer = document.getElementById(previewId);
+
+    if (!file) {
+      previewContainer.innerHTML = '';
+      return;
+    }
+
+    // Validate file size (10MB = 10 * 1024 * 1024 bytes)
+    if (file.size > 10 * 1024 * 1024) {
+      previewContainer.innerHTML = '<div class="alert alert-danger p-2 mb-0"><small>File size must be less than 10MB</small></div>';
+      input.value = '';
+      return;
+    }
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+      previewContainer.innerHTML = '<div class="alert alert-danger p-2 mb-0"><small>Only JPG, PNG, and PDF files are allowed</small></div>';
+      input.value = '';
+      return;
+    }
+
+    // Create preview based on file type
+    if (file.type.includes('image/')) {
+      // Image preview with thumbnail
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const imagePreview = `
+          <div class="border rounded p-3 bg-light">
+            <div class="row align-items-center">
+              <div class="col-auto">
+                <img src="${e.target.result}" alt="Preview" class="img-thumbnail" style="max-width: 80px; max-height: 80px; object-fit: cover;">
+              </div>
+              <div class="col">
+                <div class="fw-medium">${file.name}</div>
+                <small class="text-muted">${(file.size / (1024 * 1024)).toFixed(2)} MB • ${file.type}</small>
+                <div class="mt-1">
+                  <span class="badge bg-success">
+                    <i class="bi bi-check-circle me-1"></i>Ready to Upload
+                  </span>
+                </div>
+              </div>
+              <div class="col-auto">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePreview('${previewId}', '${input.id}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        previewContainer.innerHTML = imagePreview;
+      };
+      reader.readAsDataURL(file);
+    } else if (file.type === 'application/pdf') {
+      // PDF preview
+      const pdfPreview = `
+        <div class="border rounded p-3 bg-light">
+          <div class="row align-items-center">
+            <div class="col-auto">
+              <div class="bg-danger text-white rounded d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                <i class="bi bi-file-earmark-pdf fs-1"></i>
+              </div>
+            </div>
+            <div class="col">
+              <div class="fw-medium">${file.name}</div>
+              <small class="text-muted">${(file.size / (1024 * 1024)).toFixed(2)} MB • PDF Document</small>
+              <div class="mt-1">
+                <span class="badge bg-success">
+                  <i class="bi bi-check-circle me-1"></i>Ready to Upload
+                </span>
+              </div>
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePreview('${previewId}', '${input.id}')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      previewContainer.innerHTML = pdfPreview;
+    }
+  };
+
+  // Function to remove file preview
+  window.removePreview = function(previewId, inputId) {
+    document.getElementById(previewId).innerHTML = '';
+    document.getElementById(inputId).value = '';
+  };
+
+  // Special function for main document preview
+  window.previewMainFile = function(input) {
+    const file = input.files[0];
+    const uploadArea = document.getElementById('main-upload-area');
+    const placeholder = document.getElementById('upload-placeholder');
+    const previewContainer = document.getElementById('main-document-preview');
+
+    if (!file) {
+      placeholder.style.display = 'block';
+      previewContainer.innerHTML = '';
+      uploadArea.onclick = function() { document.getElementById('investor_upload_main_document').click(); };
+      return;
+    }
+
+    // Validate file size (10MB = 10 * 1024 * 1024 bytes)
+    if (file.size > 10 * 1024 * 1024) {
+      previewContainer.innerHTML = '<div class="alert alert-danger p-2 mb-0"><small>File size must be less than 10MB</small></div>';
+      input.value = '';
+      return;
+    }
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+      previewContainer.innerHTML = '<div class="alert alert-danger p-2 mb-0"><small>Only JPG, PNG, and PDF files are allowed</small></div>';
+      input.value = '';
+      return;
+    }
+
+    // Hide placeholder and disable click
+    placeholder.style.display = 'none';
+    uploadArea.onclick = null;
+
+    // Create preview based on file type
+    if (file.type.includes('image/')) {
+      // Image preview with large thumbnail
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const imagePreview = `
+          <div class="text-center preview-container">
+            <div class="position-relative d-inline-block">
+              <img src="${e.target.result}" alt="Main Document Preview"
+                   class="img-thumbnail shadow-sm"
+                   style="max-width: 200px; max-height: 200px; object-fit: cover;">
+              <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle"
+                      style="transform: translate(25%, -25%); width: 30px; height: 30px; padding: 0;"
+                      onclick="removeMainPreview()"
+                      title="Remove file">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+            <div class="mt-3">
+              <div class="fw-medium text-dark">${file.name}</div>
+              <small class="text-muted">${(file.size / (1024 * 1024)).toFixed(2)} MB • Image</small>
+              <div class="mt-2">
+                <span class="badge bg-success fs-6">
+                  <i class="bi bi-check-circle me-1"></i>Main Document Ready
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+        previewContainer.innerHTML = imagePreview;
+      };
+      reader.readAsDataURL(file);
+    } else if (file.type === 'application/pdf') {
+      // PDF preview with large icon
+      const pdfPreview = `
+        <div class="text-center preview-container">
+          <div class="position-relative d-inline-block">
+            <div class="bg-danger text-white rounded shadow-sm d-flex align-items-center justify-content-center"
+                 style="width: 200px; height: 200px;">
+              <i class="bi bi-file-earmark-pdf file-icon-large"></i>
+            </div>
+            <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle"
+                    style="transform: translate(25%, -25%); width: 30px; height: 30px; padding: 0;"
+                    onclick="removeMainPreview()"
+                    title="Remove file">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+          <div class="mt-3">
+            <div class="fw-medium text-dark">${file.name}</div>
+            <small class="text-muted">${(file.size / (1024 * 1024)).toFixed(2)} MB • PDF Document</small>
+            <div class="mt-2">
+              <span class="badge bg-success fs-6">
+                <i class="bi bi-check-circle me-1"></i>Main Document Ready
+              </span>
+            </div>
+          </div>
+        </div>
+      `;
+      previewContainer.innerHTML = pdfPreview;
+    }
+  };
+
+  // Function to remove main document preview
+  window.removeMainPreview = function() {
+    const uploadArea = document.getElementById('main-upload-area');
+    const placeholder = document.getElementById('upload-placeholder');
+    const previewContainer = document.getElementById('main-document-preview');
+    const input = document.getElementById('investor_upload_main_document');
+
+    placeholder.style.display = 'block';
+    previewContainer.innerHTML = '';
+    input.value = '';
+    uploadArea.onclick = function() { document.getElementById('investor_upload_main_document').click(); };
+  };
+
+  // Add styling for upload areas
+  const uploadAreas = document.querySelectorAll('.upload-area');
+  uploadAreas.forEach(area => {
+    area.style.cursor = 'pointer';
+    area.style.transition = 'all 0.3s ease';
+
+    area.addEventListener('mouseenter', function() {
+      this.style.backgroundColor = '#f8f9fa';
+    });
+
+    area.addEventListener('mouseleave', function() {
+      if (!this.classList.contains('bg-light')) {
+        this.style.backgroundColor = '';
+      }
+    });
+  });
+});
+</script>

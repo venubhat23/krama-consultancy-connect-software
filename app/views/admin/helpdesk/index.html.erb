@@ -1,0 +1,776 @@
+<% content_for :title, "Drwise - Helpdesk Dashboard" %>
+
+<div class="helpdesk-dashboard">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="page-title mb-0">
+        <i class="bi bi-headset me-3 text-primary"></i>
+        Helpdesk Dashboard
+      </h2>
+      <p class="text-muted mb-0">Manage customer support tickets and requests</p>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to customer_tickets_admin_helpdesk_index_path, class: "btn btn-outline-info" do %>
+        <i class="bi bi-people me-2"></i>
+        Customer Tickets
+      <% end %>
+      <%= link_to admin_client_requests_path, class: "btn btn-outline-secondary" do %>
+        <i class="bi bi-list-ul me-2"></i>
+        All Tickets
+      <% end %>
+      <button class="btn btn-outline-primary">
+        <i class="bi bi-plus-lg me-2"></i>
+        New Ticket
+      </button>
+      <button class="btn btn-primary">
+        <i class="bi bi-bar-chart me-2"></i>
+        Analytics
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards Row -->
+  <div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+      <div class="stats-card gradient-blue">
+        <div class="stats-card-body">
+          <div class="stats-icon">
+            <i class="bi bi-ticket-perforated"></i>
+          </div>
+          <div class="stats-content">
+            <h3 class="stats-number"><%= @total_tickets.to_s.chars.each_slice(3).map(&:join).join(",") %></h3>
+            <p class="stats-label">Total Tickets</p>
+            <div class="stats-trend positive">
+              <i class="bi bi-arrow-up"></i>
+              <span>12% from last month</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+      <div class="stats-card gradient-orange">
+        <div class="stats-card-body">
+          <div class="stats-icon">
+            <i class="bi bi-hourglass-split"></i>
+          </div>
+          <div class="stats-content">
+            <h3 class="stats-number"><%= @open_tickets %></h3>
+            <p class="stats-label">Open Tickets</p>
+            <div class="stats-trend negative">
+              <i class="bi bi-arrow-down"></i>
+              <span>8% from yesterday</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+      <div class="stats-card gradient-green">
+        <div class="stats-card-body">
+          <div class="stats-icon">
+            <i class="bi bi-check-circle"></i>
+          </div>
+          <div class="stats-content">
+            <h3 class="stats-number"><%= @resolved_today %></h3>
+            <p class="stats-label">Resolved Today</p>
+            <div class="stats-trend positive">
+              <i class="bi bi-arrow-up"></i>
+              <span>15% from yesterday</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+      <div class="stats-card gradient-purple">
+        <div class="stats-card-body">
+          <div class="stats-icon">
+            <i class="bi bi-stopwatch"></i>
+          </div>
+          <div class="stats-content">
+            <h3 class="stats-number"><%= @avg_response_time %></h3>
+            <p class="stats-label">Avg Response</p>
+            <div class="stats-trend positive">
+              <i class="bi bi-arrow-down"></i>
+              <span>5% faster</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Tickets Summary -->
+  <div class="row g-4 mb-4">
+    <div class="col-12">
+      <div class="card modern-card bg-gradient-info text-white">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h5 class="card-title text-white mb-2">
+                <i class="bi bi-people me-2"></i>
+                Customer Helpdesk Tickets
+              </h5>
+              <p class="mb-0 opacity-90">
+                You have <strong><%= @stats[:customer_tickets] %></strong> tickets from customers,
+                with <strong><%= @stats[:urgent_priority] %></strong> urgent tickets requiring immediate attention.
+              </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+              <%= link_to customer_tickets_admin_helpdesk_index_path, class: "btn btn-light btn-lg" do %>
+                <i class="bi bi-eye me-2"></i>
+                View All Customer Tickets
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Recent Tickets Table -->
+    <div class="col-xl-8">
+      <div class="card modern-card">
+        <div class="card-header border-0 pb-0">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-list-task me-2 text-primary"></i>
+              Recent Tickets
+            </h5>
+            <div class="card-actions">
+              <button class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-funnel me-1"></i>
+                Filter
+              </button>
+              <button class="btn btn-sm btn-primary">
+                <i class="bi bi-eye me-1"></i>
+                View All
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover modern-table">
+              <thead>
+                <tr>
+                  <th>Ticket ID</th>
+                  <th>Customer</th>
+                  <th>Subject</th>
+                  <th>Status</th>
+                  <th>Priority</th>
+                  <th>Assigned To</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @recent_tickets.each do |ticket| %>
+                  <tr>
+                    <td>
+                      <span class="ticket-id"><%= ticket[:id] %></span>
+                    </td>
+                    <td>
+                      <div class="customer-info">
+                        <div class="customer-avatar">
+                          <%= ticket[:customer].split.map(&:first).join.upcase %>
+                        </div>
+                        <span class="customer-name"><%= ticket[:customer] %></span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="ticket-subject" title="<%= ticket[:subject] %>">
+                        <%= truncate(ticket[:subject], length: 30) %>
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge badge-status badge-<%= ticket[:status].downcase.gsub(' ', '-') %>">
+                        <i class="bi bi-circle-fill me-1"></i>
+                        <%= ticket[:status] %>
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge badge-priority badge-<%= ticket[:priority].downcase %>">
+                        <%= ticket[:priority] %>
+                      </span>
+                    </td>
+                    <td>
+                      <span class="assigned-agent"><%= ticket[:assigned_to] %></span>
+                    </td>
+                    <td>
+                      <span class="ticket-time" title="<%= ticket[:created_at].strftime('%B %d, %Y at %I:%M %p') %>">
+                        <%= time_ago_in_words(ticket[:created_at]) %> ago
+                      </span>
+                    </td>
+                    <td>
+                      <div class="action-buttons">
+                        <button class="btn btn-sm btn-outline-primary" title="View Details">
+                          <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" title="Reply">
+                          <i class="bi bi-reply"></i>
+                        </button>
+                        <div class="dropdown d-inline">
+                          <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots"></i>
+                          </button>
+                          <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>Edit</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-arrow-up-right me-2"></i>Escalate</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-person-plus me-2"></i>Reassign</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Close</a></li>
+                          </ul>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar with Quick Stats and Charts -->
+    <div class="col-xl-4">
+      <!-- Ticket Status Distribution -->
+      <div class="card modern-card mb-4">
+        <div class="card-header border-0 pb-0">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-pie-chart me-2 text-primary"></i>
+            Tickets by Status
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="status-chart-container">
+            <canvas id="statusChart" width="280" height="280"></canvas>
+          </div>
+          <div class="status-legend mt-3">
+            <% @ticket_stats_by_status.each do |stat| %>
+              <div class="legend-item">
+                <span class="legend-color" style="background-color: <%= stat[:color] %>"></span>
+                <span class="legend-label"><%= stat[:status] %></span>
+                <span class="legend-value"><%= stat[:count] %></span>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card modern-card mb-4">
+        <div class="card-header border-0 pb-0">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-lightning me-2 text-primary"></i>
+            Quick Actions
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="quick-actions">
+            <button class="quick-action-btn">
+              <div class="quick-action-icon gradient-blue">
+                <i class="bi bi-plus-lg"></i>
+              </div>
+              <span>Create Ticket</span>
+            </button>
+            <button class="quick-action-btn">
+              <div class="quick-action-icon gradient-green">
+                <i class="bi bi-search"></i>
+              </div>
+              <span>Search KB</span>
+            </button>
+            <button class="quick-action-btn">
+              <div class="quick-action-icon gradient-orange">
+                <i class="bi bi-clock-history"></i>
+              </div>
+              <span>View History</span>
+            </button>
+            <button class="quick-action-btn">
+              <div class="quick-action-icon gradient-purple">
+                <i class="bi bi-bar-chart"></i>
+              </div>
+              <span>Reports</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="card modern-card">
+        <div class="card-header border-0 pb-0">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-clock-history me-2 text-primary"></i>
+            Recent Activity
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="activity-feed">
+            <div class="activity-item">
+              <div class="activity-icon resolved">
+                <i class="bi bi-check-circle"></i>
+              </div>
+              <div class="activity-content">
+                <p class="activity-text">Ticket <strong>HD-001</strong> was resolved by Agent Smith</p>
+                <span class="activity-time">2 minutes ago</span>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon created">
+                <i class="bi bi-plus-circle"></i>
+              </div>
+              <div class="activity-content">
+                <p class="activity-text">New ticket <strong>HD-045</strong> created by John Doe</p>
+                <span class="activity-time">15 minutes ago</span>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon escalated">
+                <i class="bi bi-arrow-up-circle"></i>
+              </div>
+              <div class="activity-content">
+                <p class="activity-text">Ticket <strong>HD-032</strong> escalated to Senior Support</p>
+                <span class="activity-time">1 hour ago</span>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon assigned">
+                <i class="bi bi-person-plus"></i>
+              </div>
+              <div class="activity-content">
+                <p class="activity-text">Ticket <strong>HD-028</strong> assigned to Agent Johnson</p>
+                <span class="activity-time">2 hours ago</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.helpdesk-dashboard .page-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+/* Enhanced Stats Cards */
+.stats-card {
+  border-radius: 20px;
+  border: none;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s ease;
+  height: 140px;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.stats-card.gradient-blue {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.stats-card.gradient-orange {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.stats-card.gradient-green {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.stats-card.gradient-purple {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  color: #2d3748;
+}
+
+.stats-card-body {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.stats-icon {
+  font-size: 2.5rem;
+  margin-right: 1rem;
+  opacity: 0.8;
+}
+
+.stats-content h3 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.stats-content p {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.9;
+}
+
+.stats-trend {
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stats-trend.positive {
+  opacity: 0.8;
+}
+
+.stats-trend.negative {
+  opacity: 0.8;
+}
+
+/* Modern Card Design */
+.modern-card {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.modern-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  background: transparent;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1.5rem 1.5rem 1rem;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.card-actions .btn {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+}
+
+/* Enhanced Table Styles */
+.modern-table {
+  margin-bottom: 0;
+}
+
+.modern-table thead th {
+  background: #f7fafc;
+  color: #4a5568;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+  padding: 1rem 0.75rem;
+}
+
+.modern-table tbody td {
+  border: none;
+  padding: 1rem 0.75rem;
+  vertical-align: middle;
+}
+
+.modern-table tbody tr {
+  border-bottom: 1px solid #e2e8f0;
+  transition: background-color 0.2s ease;
+}
+
+.modern-table tbody tr:hover {
+  background-color: #f7fafc;
+}
+
+/* Ticket ID Styling */
+.ticket-id {
+  font-family: 'SF Mono', Monaco, monospace;
+  background: #e2e8f0;
+  color: #4a5568;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Customer Info */
+.customer-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.customer-avatar {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.customer-name {
+  font-weight: 500;
+  color: #2d3748;
+}
+
+/* Badge Styles */
+.badge-status {
+  font-size: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  font-weight: 500;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.badge-open { background: #fed7d7; color: #c53030; }
+.badge-in-progress { background: #bee3f8; color: #2b6cb0; }
+.badge-resolved { background: #c6f6d5; color: #22543d; }
+.badge-escalated { background: #fefcbf; color: #744210; }
+
+.badge-priority {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.6rem;
+  font-weight: 500;
+  border-radius: 12px;
+}
+
+.badge-high { background: #fed7d7; color: #c53030; }
+.badge-medium { background: #feebc8; color: #c05621; }
+.badge-low { background: #c6f6d5; color: #22543d; }
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.action-buttons .btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.quick-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: #4a5568;
+}
+
+.quick-action-btn:hover {
+  background: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.quick-action-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.1rem;
+}
+
+/* Status Chart */
+.status-chart-container {
+  position: relative;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.status-legend .legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.legend-item:last-child {
+  border-bottom: none;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  margin-right: 0.5rem;
+}
+
+.legend-label {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #4a5568;
+}
+
+.legend-value {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 0.85rem;
+}
+
+/* Activity Feed */
+.activity-feed {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.activity-icon.resolved { background: #c6f6d5; color: #22543d; }
+.activity-icon.created { background: #bee3f8; color: #2b6cb0; }
+.activity-icon.escalated { background: #feebc8; color: #c05621; }
+.activity-icon.assigned { background: #e9d8fd; color: #553c9a; }
+
+.activity-text {
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+  color: #4a5568;
+}
+
+.activity-time {
+  font-size: 0.75rem;
+  color: #a0aec0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .stats-card {
+    height: auto;
+  }
+
+  .stats-card-body {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .stats-icon {
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .action-buttons {
+    flex-wrap: wrap;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Status Chart
+  const ctx = document.getElementById('statusChart').getContext('2d');
+
+  const statusData = {
+    labels: <%= @ticket_stats_by_status.pluck(:status).to_json.html_safe %>,
+    datasets: [{
+      data: <%= @ticket_stats_by_status.pluck(:count).to_json.html_safe %>,
+      backgroundColor: <%= @ticket_stats_by_status.pluck(:color).to_json.html_safe %>,
+      borderWidth: 0,
+      hoverBorderWidth: 2,
+      hoverBorderColor: '#ffffff'
+    }]
+  };
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: statusData,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = Math.round((value / total) * 100);
+              return `${label}: ${value} (${percentage}%)`;
+            }
+          }
+        }
+      },
+      cutout: '70%',
+      animation: {
+        animateRotate: true,
+        duration: 1000
+      }
+    }
+  });
+});
+</script>

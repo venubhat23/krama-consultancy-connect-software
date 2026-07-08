@@ -1,0 +1,39 @@
+<%= form_with model: event, url: (event.persisted? ? forum_portal_event_path(event) : forum_portal_events_path), local: true do |form| %>
+  <% if event.errors.any? %>
+    <div class="alert alert-danger">
+      <ul class="mb-0"><% event.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %></ul>
+    </div>
+  <% end %>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Title</label>
+      <%= form.text_field :title, class: "form-control", required: true %>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Type</label>
+      <%= form.select :event_type, options_for_select([["Meeting", "meeting"], ["Workshop", "workshop"], ["Networking", "networking"], ["Other", "other"]], event.event_type), {}, class: "form-select" %>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Starts At</label>
+      <%= form.datetime_field :starts_at, class: "form-control", required: true %>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Venue</label>
+      <%= form.text_field :venue, class: "form-control" %>
+    </div>
+    <% if current_user.forum_admin? %>
+      <div class="col-md-6">
+        <label class="form-label">Chapter (leave blank for whole forum)</label>
+        <%= form.select :chapter_id, @chapters.map { |c| [c.name, c.id] }, { include_blank: "Whole Forum" }, class: "form-select" %>
+      </div>
+    <% end %>
+    <div class="col-12">
+      <label class="form-label">Description</label>
+      <%= form.text_area :description, rows: 3, class: "form-control" %>
+    </div>
+  </div>
+  <div class="mt-4 d-flex gap-2">
+    <%= form.submit event.persisted? ? "Save" : "Create Event", class: "btn btn-primary" %>
+    <%= link_to "Cancel", forum_portal_events_path, class: "btn btn-outline-secondary" %>
+  </div>
+<% end %>

@@ -1,0 +1,158 @@
+<style>
+  .kpi-card { border-radius: 12px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,.08); margin-bottom: 1rem; }
+  .kpi-card .card-body { padding: 1.25rem; }
+  .kpi-number { font-size: 1.6rem; font-weight: 700; margin-bottom: 2px; }
+  .kpi-label  { font-size: .78rem; color: #6c757d; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  .kpi-warning .kpi-number { color: #f39c12; }
+  .kpi-primary .kpi-number { color: #0d6efd; }
+  .kpi-success .kpi-number { color: #27ae60; }
+</style>
+
+<div class="container-fluid py-4">
+  <!-- Page header -->
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <%= link_to dashboard_path, class: "btn btn-outline-secondary btn-sm" do %>
+      <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+    <% end %>
+    <div>
+      <h4 class="mb-0 fw-bold"><i class="bi bi-cash-stack me-2 text-warning"></i>Average Policy Value Breakdown</h4>
+      <p class="text-muted mb-0" style="font-size:.85rem">Total Net Premium ÷ Total Policies (admin-added policies only)</p>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="avgLoading" class="text-center py-5">
+    <div class="spinner-border text-warning" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Loading policy value data...</p>
+  </div>
+
+  <!-- Content -->
+  <div id="avgContent" style="display:none"></div>
+</div>
+
+<script>
+function fmtINR(v) {
+  if (v == null || isNaN(v)) return '₹0';
+  return '₹' + Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  fetch('/admin/api/system_status/avg_policy_value', { credentials: 'same-origin' })
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(data => {
+      document.getElementById('avgLoading').style.display = 'none';
+      const content = document.getElementById('avgContent');
+      content.style.display = 'block';
+
+      if (!data.success) {
+        content.innerHTML = '<div class="alert alert-danger">Error loading policy value data</div>';
+        return;
+      }
+
+      const byTypeRows = data.by_type.map(d => {
+        const contribution = data.summary.total_premium > 0
+          ? ((d.total_premium / data.summary.total_premium) * 100).toFixed(1) : 0;
+        return `
+          <tr>
+            <td><span class="badge bg-info">${d.type}</span></td>
+            <td>${d.count}</td>
+            <td class="fw-bold">${fmtINR(d.total_premium)}</td>
+            <td class="fw-bold text-warning">${fmtINR(d.average)}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height:18px">
+                  <div class="progress-bar bg-success" style="width:${contribution}%">${contribution}%</div>
+                </div>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+
+      const distCards = data.distribution.map(item => `
+        <div class="col-md-6 col-lg-4 mb-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <h6 class="card-title text-muted">${item.range}</h6>
+              <h4 class="mb-0 fw-bold">${item.count}</h4>
+              <small class="text-muted">policies (${item.percentage}%)</small>
+              <div class="progress mt-2" style="height:10px">
+                <div class="progress-bar bg-primary" style="width:${item.percentage}%"></div>
+              </div>
+            </div>
+          </div>
+        </div>`).join('');
+
+      content.innerHTML = `
+        <div class="alert border-0 rounded-4 mb-4 p-4" style="background:linear-gradient(135deg,#667eea,#764ba2)">
+          <h6 class="text-white fw-bold mb-1"><i class="bi bi-calculator me-2"></i>Calculation Method</h6>
+          <p class="text-white mb-0 fw-semibold">${data.calculation_method}</p>
+        </div>
+
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <div class="kpi-card kpi-warning card">
+              <div class="card-body">
+                <div class="kpi-number">${fmtINR(data.summary.overall_average)}</div>
+                <div class="kpi-label">Overall Average</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="kpi-card kpi-primary card">
+              <div class="card-body">
+                <div class="kpi-number">${data.summary.total_policies}</div>
+                <div class="kpi-label">Total Policies</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="kpi-card kpi-success card">
+              <div class="card-body">
+                <div class="kpi-number">Rs. ${(data.summary.total_premium / 100000).toFixed(1)}L</div>
+                <div class="kpi-label">Total Premium</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white border-0 pt-3 pb-0">
+            <h5 class="mb-0 fw-bold">Average Premium by Insurance Type</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Insurance Type</th>
+                    <th>Policy Count</th>
+                    <th>Total Premium</th>
+                    <th>Average Premium</th>
+                    <th>Contribution</th>
+                  </tr>
+                </thead>
+                <tbody>${byTypeRows}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white border-0 pt-3 pb-0">
+            <h5 class="mb-0 fw-bold">Premium Distribution Analysis</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">${distCards}</div>
+          </div>
+        </div>`;
+    })
+    .catch(() => {
+      document.getElementById('avgLoading').style.display = 'none';
+      document.getElementById('avgContent').style.display = 'block';
+      document.getElementById('avgContent').innerHTML =
+        '<div class="alert alert-danger">Error loading data. Please try again.</div>';
+    });
+});
+</script>

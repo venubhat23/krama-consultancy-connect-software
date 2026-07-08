@@ -1,0 +1,309 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Add New Agency/Broker</h2>
+    <p class="text-muted mb-0">Create a new agency partner or insurance broker</p>
+  </div>
+  <div>
+    <%= link_to admin_agency_brokers_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Partners
+    <% end %>
+  </div>
+</div>
+
+<!-- Error Display -->
+<% if @agency_broker.errors.any? %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <div class="d-flex align-items-center">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <div>
+        <h6 class="mb-1"><%= pluralize(@agency_broker.errors.count, "error") %> prohibited this partner from being saved:</h6>
+        <ul class="mb-0">
+          <% @agency_broker.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% end %>
+
+<%= form_with model: [:admin, @agency_broker], local: true, class: "needs-validation", novalidate: true do |form| %>
+  <div class="row">
+    <div class="col-lg-8">
+      <!-- Basic Information -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-person-circle me-2 text-primary"></i>
+            <h5 class="mb-0">Basic Information</h5>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <%= form.label :first_name, class: "form-label" do %>
+                First Name <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :first_name,
+                  class: "form-control #{'is-invalid' if @agency_broker.errors[:first_name].any?}",
+                  placeholder: "Enter first name",
+                  required: true %>
+              <% if @agency_broker.errors[:first_name].any? %>
+                <div class="invalid-feedback">
+                  <%= @agency_broker.errors[:first_name].first %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <%= form.label :last_name, class: "form-label" do %>
+                Last Name <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :last_name,
+                  class: "form-control #{'is-invalid' if @agency_broker.errors[:last_name].any?}",
+                  placeholder: "Enter last name",
+                  required: true %>
+              <% if @agency_broker.errors[:last_name].any? %>
+                <div class="invalid-feedback">
+                  <%= @agency_broker.errors[:last_name].first %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <%= form.label :user_type, "Partner Type", class: "form-label" do %>
+                Partner Type <span class="text-danger">*</span>
+              <% end %>
+              <%= form.select :user_type,
+                  options_for_select([
+                    ['Agent', 'agent'],
+                    ['Affiliate', 'sub_agent']
+                  ], @agency_broker.user_type),
+                  { prompt: 'Select Partner Type' },
+                  { class: "form-select #{'is-invalid' if @agency_broker.errors[:user_type].any?}", required: true } %>
+              <% if @agency_broker.errors[:user_type].any? %>
+                <div class="invalid-feedback">
+                  <%= @agency_broker.errors[:user_type].first %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <%= form.label :role, "Role/Position", class: "form-label" %>
+              <%= form.text_field :role,
+                  class: "form-control #{'is-invalid' if @agency_broker.errors[:role].any?}",
+                  placeholder: "e.g., Senior Agent, Regional Manager" %>
+              <% if @agency_broker.errors[:role].any? %>
+                <div class="invalid-feedback">
+                  <%= @agency_broker.errors[:role].first %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="col-12 mb-3">
+              <div class="form-check form-switch">
+                <%= form.check_box :status, { class: "form-check-input", checked: true }, "true", "false" %>
+                <%= form.label :status, "Active Status", class: "form-check-label" %>
+              </div>
+              <small class="form-text text-muted">Enable this partner for active business</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Information -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-telephone me-2 text-primary"></i>
+            <h5 class="mb-0">Contact Information</h5>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <%= form.label :email, class: "form-label" do %>
+                Email Address <span class="text-danger">*</span>
+              <% end %>
+              <%= form.email_field :email,
+                  class: "form-control #{'is-invalid' if @agency_broker.errors[:email].any?}",
+                  placeholder: "partner@example.com",
+                  required: true %>
+              <% if @agency_broker.errors[:email].any? %>
+                <div class="invalid-feedback">
+                  <%= @agency_broker.errors[:email].first %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <%= form.label :mobile, "Mobile Number", class: "form-label" %>
+              <%= form.telephone_field :mobile,
+                  class: "form-control #{'is-invalid' if @agency_broker.errors[:mobile].any?}",
+                  placeholder: "Enter mobile number" %>
+              <% if @agency_broker.errors[:mobile].any? %>
+                <div class="invalid-feedback">
+                  <%= @agency_broker.errors[:mobile].first %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="col-12 mb-3">
+              <%= form.label :address, "Address", class: "form-label" %>
+              <%= form.text_area :address,
+                  class: "form-control #{'is-invalid' if @agency_broker.errors[:address].any?}",
+                  rows: 3,
+                  placeholder: "Enter complete address" %>
+              <% if @agency_broker.errors[:address].any? %>
+                <div class="invalid-feedback">
+                  <%= @agency_broker.errors[:address].first %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <%= form.label :state, "State", class: "form-label" %>
+              <%= form.text_field :state,
+                  class: "form-control #{'is-invalid' if @agency_broker.errors[:state].any?}",
+                  placeholder: "Enter state" %>
+              <% if @agency_broker.errors[:state].any? %>
+                <div class="invalid-feedback">
+                  <%= @agency_broker.errors[:state].first %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <%= form.label :city, "City", class: "form-label" %>
+              <%= form.text_field :city,
+                  class: "form-control #{'is-invalid' if @agency_broker.errors[:city].any?}",
+                  placeholder: "Enter city" %>
+              <% if @agency_broker.errors[:city].any? %>
+                <div class="invalid-feedback">
+                  <%= @agency_broker.errors[:city].first %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Business Information -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-briefcase me-2 text-primary"></i>
+            <h5 class="mb-0">Business Information</h5>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <%= form.label :pan_number, "PAN Number", class: "form-label" %>
+              <%= form.text_field :pan_number,
+                  class: "form-control #{'is-invalid' if @agency_broker.errors[:pan_number].any?}",
+                  placeholder: "Enter PAN number" %>
+              <% if @agency_broker.errors[:pan_number].any? %>
+                <div class="invalid-feedback">
+                  <%= @agency_broker.errors[:pan_number].first %>
+                </div>
+              <% end %>
+              <small class="form-text text-muted">For business verification</small>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <%= form.label :gst_number, "GST Number", class: "form-label" %>
+              <%= form.text_field :gst_number,
+                  class: "form-control #{'is-invalid' if @agency_broker.errors[:gst_number].any?}",
+                  placeholder: "Enter GST number" %>
+              <% if @agency_broker.errors[:gst_number].any? %>
+                <div class="invalid-feedback">
+                  <%= @agency_broker.errors[:gst_number].first %>
+                </div>
+              <% end %>
+              <small class="form-text text-muted">Optional - for registered businesses</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-end gap-2">
+            <%= link_to "Cancel", admin_agency_brokers_path, class: "btn btn-outline-secondary" %>
+            <%= form.submit "Create Partner", class: "btn btn-primary" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <!-- Help Information -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-0">
+          <h6 class="mb-0">
+            <i class="bi bi-question-circle me-2"></i>
+            Help & Guidelines
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="small">
+            <div class="mb-3">
+              <h6 class="text-primary">Partner Types</h6>
+              <p class="mb-2 text-muted">
+                <strong>Agent:</strong> Individual insurance agents who work directly with customers.
+              </p>
+              <p class="mb-0 text-muted">
+                <strong>Affiliate:</strong> Regional representatives who manage a specific area or customer segment.
+              </p>
+            </div>
+
+            <div class="mb-3">
+              <h6 class="text-primary">Required Information</h6>
+              <p class="mb-0 text-muted">
+                Ensure all required fields are filled accurately. This information will be used for business communications and compliance.
+              </p>
+            </div>
+
+            <div class="mb-3">
+              <h6 class="text-primary">Business Documentation</h6>
+              <p class="mb-0 text-muted">
+                PAN and GST numbers help verify business credentials and enable proper financial reporting.
+              </p>
+            </div>
+
+            <div class="alert alert-info">
+              <i class="bi bi-lightbulb me-2"></i>
+              <small>
+                <strong>Tip:</strong> All partners start as active by default. You can deactivate them later if needed.
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Form validation
+  const forms = document.querySelectorAll('.needs-validation');
+
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      form.classList.add('was-validated');
+    }, false);
+  });
+});
+</script>

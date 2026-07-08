@@ -1,0 +1,755 @@
+<%#
+  Policy Document Manager Component
+  Usage: render 'admin/policy_documents/document_manager', policy: @health_insurance, policy_type: 'health'
+%>
+
+<div class="card mt-4" id="policy-documents-manager" data-policy-type="<%= policy_type %>" data-policy-id="<%= policy.id %>">
+  <div class="card-header border-0 position-relative overflow-hidden" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%); color: white; min-height: 100px;">
+    <!-- Animated background elements -->
+    <div class="position-absolute top-0 end-0 opacity-10">
+      <i class="bi bi-cloud-upload" style="font-size: 4rem; transform: rotate(15deg);"></i>
+    </div>
+    <div class="position-absolute bottom-0 start-0 opacity-10">
+      <i class="bi bi-files" style="font-size: 3rem; transform: rotate(-15deg);"></i>
+    </div>
+
+    <div class="position-relative d-flex justify-content-between align-items-center h-100">
+      <div>
+        <h5 class="mb-2 fw-bold">
+          <i class="bi bi-cloud-upload me-2"></i>
+          Policy Documents Manager
+        </h5>
+        <p class="mb-0 small text-light">
+          Upload, organize and manage all policy-related documents with secure storage
+        </p>
+      </div>
+      <div class="ms-auto">
+        <% unless policy.persisted? %>
+          <button type="button" class="btn btn-light btn-sm" onclick="toggleDocumentUploader()">
+            <i class="bi bi-plus-circle me-1"></i> ADD DOCUMENTS
+          </button>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <!-- Document Upload Section -->
+    <div id="document-upload-section" class="border rounded p-3 mb-3" style="display: none;">
+      <h6 class="text-primary mb-3">
+        <i class="bi bi-cloud-upload me-2"></i> Upload Documents
+      </h6>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="upload-area border-dashed rounded p-4 text-center" id="policy-documents-dropzone">
+            <i class="bi bi-cloud-upload display-1 text-muted mb-3"></i>
+            <p class="mb-2">Drop files here or <a href="#" onclick="triggerFileInput()">choose files</a></p>
+            <small class="text-muted">Supports PDF, JPEG, PNG, Word files (Max: 10MB each)</small>
+            <input type="file" id="policy-document-files" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display: none;">
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div id="selected-files-preview"></div>
+        </div>
+      </div>
+
+      <!-- Upload Progress -->
+      <div id="upload-progress" class="mt-3" style="display: none;">
+        <div class="progress">
+          <div class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <small id="upload-status" class="text-muted"></small>
+      </div>
+
+      <!-- Upload Actions -->
+      <div class="mt-3 text-end">
+        <button type="button" class="btn btn-secondary btn-sm me-2" onclick="cancelUpload()">Cancel</button>
+        <button type="button" class="btn btn-success btn-sm" id="upload-selected-files" onclick="uploadSelectedFiles()" disabled>
+          <i class="fas fa-upload"></i> Upload Files
+        </button>
+      </div>
+    </div>
+
+    <!-- Document Statistics -->
+    <% policy_documents = PolicyDocument.for_policy(policy_type, policy.id).order(created_at: :desc) %>
+    <% if policy_documents.any? %>
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card bg-primary text-white text-center">
+            <div class="card-body py-3">
+              <h4 class="mb-1"><%= policy_documents.count %></h4>
+              <small>Total Documents</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-info text-white text-center">
+            <div class="card-body py-3">
+              <h4 class="mb-1"><%= policy_documents.map(&:document_type).uniq.count %></h4>
+              <small>Document Types</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-success text-white text-center">
+            <div class="card-body py-3">
+              <h4 class="mb-1"><%= number_to_human_size(policy_documents.sum(:r2_file_size) || 0) %></h4>
+              <small>Total Size</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-warning text-white text-center">
+            <div class="card-body py-3">
+              <h4 class="mb-1"><%= policy_documents.where('created_at > ?', 7.days.ago).count %></h4>
+              <small>Recent (7 days)</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Main Policy Document (R2 Storage) -->
+    <% if policy.respond_to?(:main_policy_document_key) && policy.main_policy_document_key.present? &&
+          policy.respond_to?(:main_policy_document_filename) && policy.respond_to?(:main_policy_document_size) &&
+          policy.respond_to?(:main_policy_document_content_type) %>
+      <div class="mb-4">
+        <h6 class="mb-3 text-primary">
+          <i class="bi bi-file-earmark-check me-2"></i>
+          Main Policy Document (R2 Storage)
+        </h6>
+        <div class="card border-light shadow-sm">
+          <div class="card-body p-3">
+            <div class="row align-items-center">
+              <div class="col-auto">
+                <div class="document-thumbnail">
+                  <% if policy.main_policy_document_content_type&.include?('image') %>
+                    <i class="bi bi-file-earmark-image text-info" style="font-size: 3rem;"></i>
+                  <% elsif policy.main_policy_document_content_type&.include?('pdf') %>
+                    <i class="bi bi-file-earmark-pdf text-danger" style="font-size: 3rem;"></i>
+                  <% else %>
+                    <i class="bi bi-file-earmark text-muted" style="font-size: 3rem;"></i>
+                  <% end %>
+                </div>
+              </div>
+              <div class="col">
+                <h6 class="mb-1">
+                  <%= policy.main_policy_document_filename || 'Main Document' %>
+                </h6>
+                <div class="small text-muted">
+                  <%= number_to_human_size(policy.main_policy_document_size || 0) %> • <%= policy.main_policy_document_content_type %>
+                  <br>
+                  <span class="badge bg-success ms-0 mt-1">Stored in Cloudflare R2</span>
+                </div>
+              </div>
+              <div class="col-auto">
+                <% if policy.main_policy_document_key.present? %>
+                  <%= link_to R2Service.public_url(policy.main_policy_document_key), target: "_blank", class: "btn btn-outline-primary btn-sm me-1" do %>
+                    <i class="bi bi-eye"></i>
+                  <% end %>
+                  <%= link_to R2Service.public_url(policy.main_policy_document_key), download: policy.main_policy_document_filename, class: "btn btn-outline-success btn-sm" do %>
+                    <i class="bi bi-download"></i>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+            <div class="mt-2">
+              <small class="text-primary">
+                <i class="bi bi-shield-check me-1"></i>
+                Replace document: Upload a new file to replace the current document
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Existing Documents List -->
+    <div id="existing-documents">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">
+          <i class="bi bi-files me-2"></i>
+          <% if policy_documents.any? %>
+            R2 Policy Documents
+          <% else %>
+            Policy Documents
+          <% end %>
+        </h6>
+        <% if policy_documents.any? %>
+          <span class="badge bg-primary"><%= policy_documents.count %> files</span>
+        <% end %>
+      </div>
+
+      <div id="documents-list">
+        <% policy_documents = PolicyDocument.for_policy(policy_type, policy.id).order(created_at: :desc) %>
+        <% if policy_documents.any? %>
+          <% policy_documents.each do |document| %>
+            <div class="document-item mb-3" data-document-id="<%= document.id %>">
+              <div class="card h-100 border-light shadow-sm">
+                <div class="card-body p-3">
+                  <div class="d-flex align-items-start">
+                    <div class="me-3">
+                      <% if document.r2_content_type&.include?('pdf') %>
+                        <div class="bg-danger bg-opacity-10 rounded d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                          <i class="bi bi-file-earmark-pdf text-danger fs-4"></i>
+                        </div>
+                      <% elsif document.r2_content_type&.include?('image') %>
+                        <div class="bg-info bg-opacity-10 rounded d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                          <i class="bi bi-file-earmark-image text-info fs-4"></i>
+                        </div>
+                      <% elsif document.r2_content_type&.include?('word') || document.r2_content_type&.include?('document') %>
+                        <div class="bg-primary bg-opacity-10 rounded d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                          <i class="bi bi-file-earmark-word text-primary fs-4"></i>
+                        </div>
+                      <% else %>
+                        <div class="bg-secondary bg-opacity-10 rounded d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                          <i class="bi bi-file-earmark text-secondary fs-4"></i>
+                        </div>
+                      <% end %>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1"><%= document.title %></h6>
+                      <small class="text-muted d-block mb-2">
+                        <span class="badge bg-primary me-2"><%= document.document_type %></span>
+                        <% if document.r2_file_size.present? %>
+                          <%= number_to_human_size(document.r2_file_size) %>
+                        <% end %>
+                      </small>
+                      <% if document.description.present? %>
+                        <p class="small mb-2"><%= document.description %></p>
+                      <% end %>
+                      <small class="text-muted">
+                        Document uploaded on <%= document.created_at.strftime("%Y-%m-%d") %>
+                      </small>
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                      <% if document.document_url.present? %>
+                        <a href="<%= document.document_url %>" target="_blank" class="btn btn-outline-primary btn-sm" title="View">
+                          <i class="bi bi-eye"></i>
+                        </a>
+                      <% end %>
+                      <% if document.download_url.present? %>
+                        <a href="<%= document.download_url %>" class="btn btn-outline-success btn-sm" title="Download">
+                          <i class="bi bi-download"></i>
+                        </a>
+                      <% end %>
+                      <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteDocument(<%= document.id %>, '<%= document.title.gsub("'", "\\'") %>')" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="mt-2 pt-2 border-top">
+                    <small class="text-success">
+                      <i class="bi bi-shield-check me-1"></i>
+                      Stored in Cloudflare R2 • Uploaded on <%= document.created_at.strftime("%B %d, %Y at %I:%M %p") %>
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-folder2-open display-1 mb-3"></i>
+            <p>No documents uploaded yet.</p>
+            <% unless policy.persisted? %>
+              <button type="button" class="btn btn-primary" onclick="toggleDocumentUploader()">
+                <i class="bi bi-plus-circle me-1"></i> Upload First Document
+              </button>
+            <% end %>
+          </div>
+        <% end %>
+
+        <!-- Add More Documents Section -->
+        <% if policy.persisted? %>
+          <div class="border-top pt-3 mt-3 text-center">
+            <h6 class="text-primary mb-3">Add More Documents</h6>
+            <button type="button" class="btn btn-primary" onclick="toggleDocumentUploader()">
+              <i class="bi bi-plus-circle me-1"></i> Add Document
+            </button>
+            <p class="small text-muted mt-2">Upload additional policy-related documents</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Animation styles for the header elements -->
+    <style>
+      @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(15deg); }
+        50% { transform: translateY(-10px) rotate(15deg); }
+      }
+
+      @keyframes floatReverse {
+        0%, 100% { transform: translateY(0px) rotate(-15deg); }
+        50% { transform: translateY(-8px) rotate(-15deg); }
+      }
+
+      .card-header .bi-cloud-upload {
+        animation: float 4s ease-in-out infinite;
+      }
+
+      .card-header .bi-files {
+        animation: floatReverse 5s ease-in-out infinite;
+      }
+
+      .document-thumbnail {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+      }
+    </style>
+  </div>
+</div>
+
+<!-- Document Item Template -->
+<script type="text/template" id="document-item-template">
+  <div class="document-item d-flex justify-content-between align-items-center p-2 mb-2 border rounded" data-document-id="{{id}}">
+    <div class="d-flex align-items-center">
+      <i class="{{fileIcon}} text-{{iconColor}} me-2"></i>
+      <div>
+        <strong>{{title}}</strong>
+        <small class="text-muted d-block">{{document_type}}</small>
+      </div>
+    </div>
+
+    <div class="btn-group btn-group-sm">
+      <a href="{{document_url}}" target="_blank" class="btn btn-outline-primary btn-sm" title="View">
+        <i class="fas fa-eye"></i>
+      </a>
+      <button type="button" class="btn btn-outline-success btn-sm" onclick="downloadDocument({{id}})" title="Download">
+        <i class="fas fa-download"></i>
+      </button>
+      <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteDocument({{id}}, '{{title}}')" title="Delete">
+        <i class="fas fa-trash"></i>
+      </button>
+    </div>
+  </div>
+</script>
+
+<style>
+.upload-area {
+  border: 2px dashed #dee2e6;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.upload-area:hover {
+  border-color: #0d6efd;
+  background-color: #e7f3ff;
+}
+
+.upload-area.dragover {
+  border-color: #198754;
+  background-color: #e8f5e9;
+}
+
+.border-dashed {
+  border-style: dashed !important;
+}
+
+.document-item {
+  transition: all 0.2s ease;
+  background-color: #f8f9fa;
+}
+
+.document-item:hover {
+  background-color: #e9ecef;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.file-preview-item {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.file-preview-item .remove-file {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  cursor: pointer;
+}
+</style>
+
+<script>
+// Policy Document Manager JavaScript
+let selectedFiles = [];
+let currentFilter = '';
+
+// Initialize the document manager
+function initializePolicyDocumentManager() {
+  // Skip loadExistingDocuments() since we render them server-side
+  setupDragAndDrop();
+  setupFileInput();
+}
+
+// Load existing documents
+function loadExistingDocuments() {
+  const policyType = document.querySelector('#policy-documents-manager').dataset.policyType;
+  const policyId = document.querySelector('#policy-documents-manager').dataset.policyId;
+
+  fetch(`/admin/policy_documents?policy_type=${policyType}&policy_id=${policyId}`, {
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'Accept': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      renderDocumentsList(data.policy_documents);
+      updateDocumentCount(data.policy_documents.length);
+    } else {
+      showNoDocumentsMessage();
+    }
+  })
+  .catch(error => {
+    console.error('Error loading documents:', error);
+    showNoDocumentsMessage();
+  });
+}
+
+// Render documents list
+function renderDocumentsList(documents) {
+  const listContainer = document.getElementById('documents-list');
+  const noDocsMessage = document.getElementById('no-documents-message');
+
+  if (documents.length === 0) {
+    showNoDocumentsMessage();
+    return;
+  }
+
+  noDocsMessage.style.display = 'none';
+  listContainer.innerHTML = documents.map(doc => renderDocumentItem(doc)).join('');
+}
+
+// Render individual document item
+function renderDocumentItem(doc) {
+  const template = document.getElementById('document-item-template').innerHTML;
+
+  // Determine file icon based on content type
+  let fileIcon = 'fas fa-file';
+  let iconColor = 'secondary';
+
+  if (doc.r2_content_type) {
+    if (doc.r2_content_type.includes('pdf')) {
+      fileIcon = 'fas fa-file-pdf';
+      iconColor = 'danger';
+    } else if (doc.r2_content_type.includes('image')) {
+      fileIcon = 'fas fa-file-image';
+      iconColor = 'success';
+    } else if (doc.r2_content_type.includes('word')) {
+      fileIcon = 'fas fa-file-word';
+      iconColor = 'primary';
+    }
+  }
+
+  return template
+    .replace(/{{id}}/g, doc.id)
+    .replace(/{{title}}/g, doc.title)
+    .replace(/{{document_type}}/g, doc.document_type)
+    .replace(/{{description}}/g, doc.description || '')
+    .replace(/{{filename}}/g, doc.filename)
+    .replace(/{{document_size}}/g, doc.document_size)
+    .replace(/{{document_url}}/g, doc.document_url)
+    .replace(/{{download_url}}/g, doc.download_url || doc.document_url || '')
+    .replace(/{{uploaded_by}}/g, doc.uploaded_by)
+    .replace(/{{created_at}}/g, doc.created_at)
+    .replace(/{{fileIcon}}/g, fileIcon)
+    .replace(/{{iconColor}}/g, iconColor);
+}
+
+// Show no documents message
+function showNoDocumentsMessage() {
+  document.getElementById('documents-list').innerHTML = '';
+  document.getElementById('no-documents-message').style.display = 'block';
+  updateDocumentCount(0);
+}
+
+// Update document count
+function updateDocumentCount(count) {
+  document.getElementById('document-count').textContent = count;
+}
+
+// Toggle document uploader
+function toggleDocumentUploader() {
+  const uploadSection = document.getElementById('document-upload-section');
+  const isVisible = uploadSection.style.display !== 'none';
+  uploadSection.style.display = isVisible ? 'none' : 'block';
+
+  if (!isVisible) {
+    document.getElementById('policy-document-files').value = '';
+    selectedFiles = [];
+    updateFilePreview();
+  }
+}
+
+// Setup drag and drop
+function setupDragAndDrop() {
+  const dropzone = document.getElementById('policy-documents-dropzone');
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, preventDefaults, false);
+  });
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
+  });
+
+  dropzone.addEventListener('drop', handleDrop, false);
+}
+
+// Handle file drop
+function handleDrop(e) {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  handleFiles(files);
+}
+
+// Setup file input
+function setupFileInput() {
+  document.getElementById('policy-document-files').addEventListener('change', function(e) {
+    handleFiles(e.target.files);
+  });
+}
+
+// Trigger file input
+function triggerFileInput() {
+  document.getElementById('policy-document-files').click();
+}
+
+// Handle selected files
+function handleFiles(files) {
+  selectedFiles = Array.from(files);
+  updateFilePreview();
+  updateUploadButton();
+}
+
+// Update file preview
+function updateFilePreview() {
+  const preview = document.getElementById('selected-files-preview');
+
+  if (selectedFiles.length === 0) {
+    preview.innerHTML = '<p class="text-muted">No files selected</p>';
+    return;
+  }
+
+  preview.innerHTML = selectedFiles.map((file, index) => `
+    <div class="file-preview-item">
+      <button type="button" class="remove-file" onclick="removeFile(${index})">&times;</button>
+      <strong>${file.name}</strong><br>
+      <small class="text-muted">${formatFileSize(file.size)} • ${file.type}</small>
+      <div class="mt-2">
+        <select class="form-select form-select-sm" id="doc-type-${index}">
+          <option value="Policy Document">Policy Document</option>
+          <option value="Additional Document">Additional Document</option>
+          <option value="Identity Proof">Identity Proof</option>
+          <option value="Medical Report">Medical Report</option>
+          <option value="RC Book">RC Book</option>
+          <option value="Other">Other</option>
+        </select>
+        <input type="text" class="form-control form-control-sm mt-1" placeholder="Document title" id="doc-title-${index}" value="${file.name}">
+        <textarea class="form-control form-control-sm mt-1" placeholder="Description (optional)" id="doc-desc-${index}" rows="2"></textarea>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Remove file from selection
+function removeFile(index) {
+  selectedFiles.splice(index, 1);
+  updateFilePreview();
+  updateUploadButton();
+}
+
+// Update upload button state
+function updateUploadButton() {
+  const uploadButton = document.getElementById('upload-selected-files');
+  uploadButton.disabled = selectedFiles.length === 0;
+}
+
+// Format file size
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Upload selected files
+function uploadSelectedFiles() {
+  if (selectedFiles.length === 0) return;
+
+  const policyType = document.querySelector('#policy-documents-manager').dataset.policyType;
+  const policyId = document.querySelector('#policy-documents-manager').dataset.policyId;
+
+  showUploadProgress(true);
+
+  const uploadPromises = selectedFiles.map((file, index) => {
+    const formData = new FormData();
+    formData.append('policy_type', policyType);
+    formData.append('policy_id', policyId);
+
+    const docType = document.getElementById(`doc-type-${index}`)?.value || 'Other';
+    const docTitle = document.getElementById(`doc-title-${index}`)?.value || file.name;
+    const docDesc = document.getElementById(`doc-desc-${index}`)?.value || '';
+
+    formData.append('policy_document[document_type]', docType);
+    formData.append('policy_document[title]', docTitle);
+    formData.append('policy_document[description]', docDesc);
+    formData.append('policy_document[file]', file);
+
+    return fetch('/admin/policy_documents', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      }
+    });
+  });
+
+  Promise.all(uploadPromises)
+    .then(responses => Promise.all(responses.map(r => r.json())))
+    .then(results => {
+      showUploadProgress(false);
+
+      const errors = results.filter(r => !r.success);
+      if (errors.length > 0) {
+        alert(`Some uploads failed: ${errors.map(e => e.error).join(', ')}`);
+      } else {
+        showToast('All documents uploaded successfully!', 'success');
+      }
+
+      // Refresh the page to show newly uploaded documents
+      window.location.href = window.location.href.split('#')[0];
+    })
+    .catch(error => {
+      console.error('Upload error:', error);
+      showUploadProgress(false);
+      alert('Upload failed. Please try again.');
+    });
+}
+
+// Show/hide upload progress
+function showUploadProgress(show) {
+  document.getElementById('upload-progress').style.display = show ? 'block' : 'none';
+  document.getElementById('upload-selected-files').disabled = show;
+}
+
+// Cancel upload
+function cancelUpload() {
+  selectedFiles = [];
+  updateFilePreview();
+  updateUploadButton();
+  toggleDocumentUploader();
+}
+
+// Removed refresh and filter functionality since documents are rendered server-side
+
+// Download document
+function downloadDocument(documentId) {
+  window.open(`/admin/policy_documents/${documentId}/download`, '_blank');
+}
+
+// Delete document
+function deleteDocument(documentId, title) {
+  if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+
+  fetch(`/admin/policy_documents/${documentId}`, {
+    method: 'DELETE',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showToast('Document deleted successfully', 'success');
+      // Refresh the page to show updated documents list
+      window.location.href = window.location.href.split('#')[0];
+    } else {
+      alert('Failed to delete document: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Delete error:', error);
+    alert('Failed to delete document');
+  });
+}
+
+
+// Copy URL to clipboard
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(function() {
+    // Show success feedback
+    const btn = event.target.closest('button');
+    if (btn) {
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check text-success"></i>';
+
+      setTimeout(() => {
+        btn.innerHTML = originalHTML;
+      }, 2000);
+    }
+    showToast('URL copied to clipboard!', 'success');
+  }).catch(function() {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      showToast('URL copied to clipboard!', 'success');
+    } catch (err) {
+      alert('Unable to copy URL to clipboard');
+    }
+    document.body.removeChild(textArea);
+  });
+}
+
+// Show toast notification
+function showToast(message, type = 'info') {
+  // You can implement a toast notification system here
+  console.log(`Toast [${type}]: ${message}`);
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('policy-documents-manager')) {
+    initializePolicyDocumentManager();
+  }
+});
+</script>

@@ -1,0 +1,1552 @@
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Edit Affiliate</h2>
+    <p class="text-muted mb-0">Update Affiliate details: <%= @sub_agent.display_name %></p>
+  </div>
+  <div>
+    <%= link_to admin_sub_agents_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Affiliates
+    <% end %>
+  </div>
+</div>
+
+<%= form_with model: [:admin, @sub_agent], local: true, multipart: true, class: "needs-validation", novalidate: true, data: { turbo: false } do |form| %>
+  <% if @sub_agent.errors.any? %>
+    <div class="alert alert-danger alert-dismissible show mb-4" role="alert">
+      <h6>Please correct the following errors:</h6>
+      <ul class="mb-0">
+        <% @sub_agent.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% end %>
+
+  <!-- 1. Personal Details -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-person-circle me-2 text-primary"></i>
+      <h5 class="mb-0">Personal Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <%= form.label :first_name, class: "form-label" do %>
+            First Name <span class="text-danger">*</span>
+          <% end %>
+          <%= form.text_field :first_name, class: "form-control", placeholder: "Enter first name", required: true %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :middle_name, "Middle Name", class: "form-label" %>
+          <%= form.text_field :middle_name, class: "form-control", placeholder: "Enter middle name" %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :last_name, class: "form-label" do %>
+            Last Name <span class="text-danger">*</span>
+          <% end %>
+          <%= form.text_field :last_name, class: "form-control", placeholder: "Enter last name", required: true %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :mobile, class: "form-label" do %>
+            Mobile <span class="text-danger">*</span>
+          <% end %>
+          <%= form.telephone_field :mobile,
+              class: "form-control",
+              placeholder: "9876543210 or +919876543210",
+              required: true %>
+          <small class="form-text text-muted">Enter 10-digit number (6-9 as first digit) or +91 format</small>
+          <div class="invalid-feedback">
+            Please enter a valid 10-digit Indian mobile number
+          </div>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :email, class: "form-label" do %>
+            Email <span class="text-danger">*</span>
+          <% end %>
+          <%= form.email_field :email, class: "form-control", placeholder: "Enter email address", required: true %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :role_id, class: "form-label" do %>
+            Role <span class="text-danger">*</span>
+          <% end %>
+          <%= form.select :role_id,
+              options_for_select([
+                ['Affiliate', Role.find_by(name: 'sub_agent')&.id]
+              ], @sub_agent.role_id),
+              { prompt: 'Select Role' },
+              { class: "form-select", required: true } %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :birth_date, "Birth Date", class: "form-label" %>
+          <%= form.date_field :birth_date,
+              class: "form-control",
+              max: Date.today.strftime("%Y-%m-%d"),
+              min: (Date.today - 100.years).strftime("%Y-%m-%d"),
+              placeholder: "YYYY-MM-DD" %>
+          <small class="form-text text-muted">Format: YYYY-MM-DD</small>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-4">
+          <%= form.label :state, "State", class: "form-label" %>
+          <%= form.select :state,
+              options_for_select(LocationData.states_for_select, @sub_agent.state),
+              { prompt: 'Search and select state...' },
+              { class: "form-select searchable-select", id: "sub_agent_state", data: { placeholder: "Type to search states..." } } %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :city, "City", class: "form-label" %>
+          <%= form.select :city,
+              options_for_select(@sub_agent.city.present? ? [[@sub_agent.city, @sub_agent.city]] : [], @sub_agent.city),
+              { prompt: 'Search and select city...' },
+              { class: "form-select searchable-select", id: "sub_agent_city", disabled: @sub_agent.state.blank?, data: { placeholder: "Type to search cities...", saved_city: @sub_agent.city } } %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :gender, "Gender", class: "form-label" %>
+          <%= form.select :gender,
+              options_for_select([
+                ['Male', 'Male'], ['Female', 'Female'], ['Other', 'Other']
+              ], @sub_agent.gender),
+              { prompt: 'Select Gender' },
+              { class: "form-select" } %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-4">
+          <%= form.label :pan_no, "PAN No", class: "form-label" %>
+          <%= form.text_field :pan_no, class: "form-control", placeholder: "Enter PAN number" %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :gst_no, "GST No", class: "form-label" %>
+          <%= form.text_field :gst_no, class: "form-control", placeholder: "Enter GST number" %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :company_name, "Company Name", class: "form-label" %>
+          <%= form.text_field :company_name, class: "form-control", placeholder: "Enter company name" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-12">
+          <%= form.label :address, "Address", class: "form-label" %>
+          <%= form.text_area :address, class: "form-control", rows: 3, placeholder: "Enter full address" %>
+        </div>
+      </div>
+
+      <!-- Profile Image Upload Section -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-person-circle me-2 text-primary"></i>
+            Profile Image
+          </h5>
+          <p class="text-muted mb-0 mt-1">Upload or update affiliate profile picture</p>
+        </div>
+        <div class="card-body">
+          <div class="row align-items-center">
+            <!-- Current Profile Image Display -->
+            <div class="col-md-4">
+              <div class="text-center">
+                <div class="profile-image-container mb-3">
+                  <% if @sub_agent.has_r2_profile_image? %>
+                    <img src="<%= @sub_agent.r2_profile_image_url %>"
+                         alt="Profile Image"
+                         class="profile-preview-large rounded-circle shadow-sm"
+                         style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #e9ecef;"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                         style="width: 120px; height: 120px; border: 3px solid #e9ecef; display: none;">
+                      <i class="bi bi-person-fill text-secondary" style="font-size: 2.5rem;"></i>
+                    </div>
+                  <% elsif @sub_agent.has_profile_image? %>
+                    <% image_data = @sub_agent.safe_profile_image_display %>
+                    <% if image_data && !image_data[:error] %>
+                      <img src="<%= image_data[:url] %>"
+                           alt="Profile Image"
+                           class="profile-preview-large rounded-circle shadow-sm"
+                           style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #e9ecef;"
+                           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                      <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                           style="width: 120px; height: 120px; border: 3px solid #e9ecef; display: none;">
+                        <i class="bi bi-person-fill text-secondary" style="font-size: 2.5rem;"></i>
+                      </div>
+                    <% else %>
+                      <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                           style="width: 120px; height: 120px; border: 3px solid #e9ecef;">
+                        <i class="bi bi-person-fill text-secondary" style="font-size: 2.5rem;"></i>
+                      </div>
+                    <% end %>
+                  <% else %>
+                    <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                         style="width: 120px; height: 120px; border: 3px solid #e9ecef;">
+                      <i class="bi bi-person-fill text-secondary" style="font-size: 2.5rem;"></i>
+                    </div>
+                  <% end %>
+                </div>
+                <% if @sub_agent.has_r2_profile_image? || @sub_agent.has_profile_image? %>
+                  <small class="text-success">
+                    <i class="bi bi-check-circle-fill me-1"></i>
+                    Profile image uploaded
+                  </small>
+                <% else %>
+                  <small class="text-muted">No profile image</small>
+                <% end %>
+              </div>
+            </div>
+
+            <!-- Upload Form -->
+            <div class="col-md-8">
+              <div id="sub_agent_profile_image_upload_form" class="border rounded p-3 bg-light">
+                <h6 class="mb-3">
+                  <i class="bi bi-cloud-upload me-2"></i>
+                  <%= @sub_agent.has_r2_profile_image? || @sub_agent.has_profile_image? ? 'Update' : 'Upload' %> Profile Image
+                </h6>
+
+                <div class="row">
+                  <div class="col-12">
+                    <label class="form-label">Choose Profile Image</label>
+                    <input type="file"
+                           class="form-control"
+                           accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                           id="sub_agent_profile_image_file">
+                    <div class="form-text">
+                      <i class="bi bi-info-circle me-1"></i>
+                      Supported formats: JPG, PNG, GIF, WebP. Maximum size: 10MB.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                  <button type="button" class="btn btn-primary btn-sm" id="upload_sub_agent_profile_image_btn">
+                    Upload Profile Image
+                  </button>
+                  <% if @sub_agent.has_r2_profile_image? %>
+                    <%= link_to "Remove Current Image",
+                                admin_sub_agent_sub_agent_document_path(@sub_agent, @sub_agent.r2_profile_image),
+                                method: :delete,
+                                data: {
+                                  confirm: "Are you sure you want to remove this profile image?",
+                                  turbo_method: :delete
+                                },
+                                class: "btn btn-outline-danger btn-sm" %>
+                  <% end %>
+                </div>
+              </div>
+
+              <!-- Image Preview for selected file -->
+              <div id="sub_agent_image_preview_container" style="display: none;" class="mt-3 p-3 border rounded bg-white">
+                <h6 class="mb-2">Preview:</h6>
+                <img id="sub_agent_image_preview"
+                     src=""
+                     alt="Preview"
+                     class="rounded shadow-sm"
+                     style="max-width: 200px; max-height: 200px; object-fit: cover;">
+              </div>
+
+              <!-- Upload Progress -->
+              <div id="sub_agent_upload_progress" style="display: none;" class="mt-3">
+                <div class="d-flex align-items-center">
+                  <div class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Uploading...</span>
+                  </div>
+                  <small class="text-muted">Uploading image to cloud storage...</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Bank Details -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-bank me-2 text-success"></i>
+      <h5 class="mb-0">Bank Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <%= form.label :bank_name, "Bank Name", class: "form-label" %>
+          <%= form.text_field :bank_name, class: "form-control", placeholder: "Enter bank name" %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :account_no, "Account Number", class: "form-label" %>
+          <%= form.text_field :account_no, class: "form-control", placeholder: "Enter account number" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :ifsc_code, "IFSC Code", class: "form-label" %>
+          <%= form.text_field :ifsc_code, class: "form-control", placeholder: "Enter IFSC code" %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :account_holder_name, "Account Holder Name", class: "form-label" %>
+          <%= form.text_field :account_holder_name, class: "form-control", placeholder: "Enter account holder name" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :account_type, "Account Type", class: "form-label" %>
+          <%= form.select :account_type,
+              options_for_select([
+                ['Savings', 'Savings'], ['Current', 'Current'], ['Salary', 'Salary']
+              ], @sub_agent.account_type),
+              { prompt: 'Select Account Type' },
+              { class: "form-select" } %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :upi_id, "UPI ID", class: "form-label" %>
+          <%= form.text_field :upi_id, class: "form-control", placeholder: "Enter UPI ID" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Ambassador Assignment -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-person-badge me-2 text-info"></i>
+      <h5 class="mb-0">Ambassador Assignment</h5>
+    </div>
+    <div class="card-body">
+      <!-- Current Assignment Display -->
+      <% if @assigned_distributor.present? %>
+        <div class="alert alert-info" role="alert">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-info-circle me-2"></i>
+            <div>
+              <strong>Currently Assigned To:</strong> <%= @assigned_distributor.display_name %><br>
+              <small class="text-muted">
+                Assigned on: <%= @distributor_assignment&.assigned_at&.strftime("%d %B, %Y") || "Date not available" %>
+              </small>
+            </div>
+          </div>
+        </div>
+      <% else %>
+        <div class="alert alert-warning" role="alert">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <div>
+              <strong>No Ambassador Assigned</strong><br>
+              <small>This affiliate is not currently assigned to any ambassador.</small>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Assignment Form -->
+      <div class="row">
+        <div class="col-md-12">
+          <label class="form-label">
+            <i class="bi bi-person-plus me-1"></i>
+            Assign to Ambassador
+          </label>
+          <%= select_tag 'assigned_distributor_id',
+              options_for_select([
+                ['-- No Ambassador (Remove Assignment) --', '']
+              ] +
+              @available_distributors.map { |distributor|
+                [
+                  "#{distributor.display_name} - #{distributor.email}",
+                  distributor.id,
+                  {
+                    'data-email' => distributor.email,
+                    'data-mobile' => distributor.mobile,
+                    'data-status' => distributor.status
+                  }
+                ]
+              }, @assigned_distributor&.id),
+              {
+                class: "form-select",
+                id: "distributor_select"
+              } %>
+          <small class="form-text text-muted">
+            Select an ambassador to assign this affiliate to. Choose "No Ambassador" to remove current assignment.
+          </small>
+        </div>
+      </div>
+
+      <!-- Ambassador Preview -->
+      <div id="distributor_preview" class="mt-3" style="<%= @assigned_distributor.present? ? '' : 'display: none;' %>">
+        <div class="card bg-light">
+          <div class="card-body">
+            <h6 class="card-title mb-2">
+              <i class="bi bi-person-circle me-1"></i>
+              Selected Ambassador Details
+            </h6>
+            <div class="row">
+              <div class="col-md-4">
+                <small class="text-muted">Name:</small>
+                <div id="preview_name"><%= @assigned_distributor&.display_name %></div>
+              </div>
+              <div class="col-md-4">
+                <small class="text-muted">Email:</small>
+                <div id="preview_email"><%= @assigned_distributor&.email %></div>
+              </div>
+              <div class="col-md-4">
+                <small class="text-muted">Mobile:</small>
+                <div id="preview_mobile"><%= @assigned_distributor&.mobile %></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Documents -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-file-earmark-text me-2 text-warning"></i>
+        <h5 class="mb-0">Documents</h5>
+      </div>
+      <% if @documents && @documents.any? %>
+        <span class="badge bg-info">
+          <i class="bi bi-files me-1"></i><%= @documents.count %> Documents
+        </span>
+      <% end %>
+    </div>
+    <div class="card-body">
+      <!-- Existing Documents -->
+      <% if @documents && @documents.any? %>
+        <div class="mb-4">
+          <h6 class="mb-3 text-muted">Current Documents</h6>
+          <div class="row g-3">
+            <% @documents.each_with_index do |document, index| %>
+              <div class="col-md-6 col-lg-4 document-card" id="document_card_<%= document.id %>">
+                <div class="card h-100 border shadow-sm">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <div>
+                        <h6 class="card-title mb-1">
+                          <% case document.document_type %>
+                          <% when 'Aadhaar Card' %>
+                            <i class="bi bi-person-vcard text-primary me-1"></i>
+                          <% when 'Pancard' %>
+                            <i class="bi bi-credit-card-2-front text-success me-1"></i>
+                          <% when 'Driving License' %>
+                            <i class="bi bi-car-front text-info me-1"></i>
+                          <% when 'Mediclaim' %>
+                            <i class="bi bi-hospital text-danger me-1"></i>
+                          <% when 'RC Book' %>
+                            <i class="bi bi-book text-warning me-1"></i>
+                          <% else %>
+                            <i class="bi bi-file-earmark text-secondary me-1"></i>
+                          <% end %>
+                          <%= document.document_type %>
+                        </h6>
+                        <small class="text-muted">
+                          <% if document.document_file.attached? %>
+                            <%= document.document_file.filename.to_s.truncate(30) %>
+                          <% else %>
+                            No file attached
+                          <% end %>
+                        </small>
+                      </div>
+                      <div class="d-flex gap-1">
+                        <% if document.document_file.attached? %>
+                          <%= link_to document.document_url || rails_blob_path(document.document_file, disposition: "inline"),
+                                      target: "_blank",
+                                      class: "btn btn-sm btn-outline-primary",
+                                      title: "Preview Document" do %>
+                            <i class="bi bi-eye"></i>
+                          <% end %>
+                          <%= link_to rails_blob_path(document.document_file, disposition: "attachment"),
+                                      class: "btn btn-sm btn-outline-secondary",
+                                      title: "Download Document" do %>
+                            <i class="bi bi-download"></i>
+                          <% end %>
+                        <% end %>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger delete-document"
+                                data-document-id="<%= document.id %>"
+                                onclick="markSubAgentDocumentForDeletion('<%= document.id %>')"
+                                title="Delete Document">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <% if document.document_file.attached? %>
+                      <div class="mt-2">
+                        <small class="text-muted">
+                          <i class="bi bi-file-earmark me-1"></i>
+                          <%= number_to_human_size(document.document_file.byte_size) %>
+                        </small>
+                        <small class="text-muted ms-2">
+                          <i class="bi bi-calendar me-1"></i>
+                          <%= document.created_at.strftime("%d %b %Y") %>
+                        </small>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+                <!-- Hidden fields for deletion -->
+                <%= hidden_field_tag "sub_agent[sub_agent_documents_attributes][#{index}][id]", document.id %>
+                <%= hidden_field_tag "sub_agent[sub_agent_documents_attributes][#{index}][_destroy]", false,
+                                    id: "document_destroy_#{document.id}", class: "document-destroy-field" %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+        <hr class="my-4">
+      <% end %>
+
+      <!-- Add New Documents Section -->
+      <div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0">Add New Documents</h6>
+          <button type="button" class="btn btn-sm btn-primary" id="add_document">
+            <i class="bi bi-plus-lg me-1"></i>Add Document
+          </button>
+        </div>
+
+        <div id="documents_container">
+          <!-- Dynamic documents will be added here -->
+        </div>
+
+        <% if !@documents || @documents.empty? %>
+          <div class="text-center py-4 text-muted" id="no-documents-message">
+            <i class="bi bi-file-earmark-plus fs-1"></i>
+            <p class="mt-2 mb-1">No documents uploaded yet</p>
+            <small>Click "Add Document" to upload documents</small>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Form Actions -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-end gap-2">
+        <%= link_to "Cancel", admin_sub_agents_path, class: "btn btn-outline-secondary" %>
+        <%= form.submit "Update Affiliate", class: "btn btn-primary" %>
+      </div>
+    </div>
+  </div>
+
+<% end %>
+
+<style>
+/* Match Create Client Page Styling */
+
+/* Card Styling */
+.card {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 1.25rem;
+  font-weight: 500;
+  border: none;
+}
+
+.card-header h5 {
+  color: white !important;
+  margin-bottom: 0;
+  font-weight: 600;
+}
+
+.card-header i {
+  color: white !important;
+  opacity: 0.9;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* Form Controls */
+.form-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-control, .form-select {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  background-color: #fff;
+}
+
+.form-control[type="file"] {
+  padding: 0.5rem 0.875rem;
+}
+
+/* Document Entry Styling */
+.document-entry {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border: 1px solid #e3e6f0;
+  border-radius: 10px;
+  padding: 1rem;
+  position: relative;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.document-entry:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  background: linear-gradient(135deg, #ffffff 0%, #e6e9f0 100%);
+  border-color: #667eea;
+}
+
+/* Document Cards */
+.document-card {
+  transition: all 0.3s ease;
+}
+
+.document-card .card {
+  border-radius: 10px;
+  border: 1px solid #e3e6f0;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.document-card .card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.15);
+  border-color: #667eea;
+}
+
+.document-card.marked-for-deletion {
+  opacity: 0.5;
+  position: relative;
+}
+
+.document-card.marked-for-deletion::after {
+  content: "Will be deleted";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  z-index: 10;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Remove Button */
+.remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+  background: white;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.remove-btn:hover {
+  opacity: 1;
+  transform: rotate(90deg) scale(1.1);
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+/* Button Styles */
+.btn {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 0.5rem 1.5rem;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.85rem;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b4299 100%);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-outline-secondary {
+  border: 2px solid #dee2e6;
+  color: #6c757d;
+  background: white;
+}
+
+.btn-outline-secondary:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+  transform: translateY(-2px);
+}
+
+.btn-outline-primary {
+  border: 2px solid #667eea;
+  color: #667eea;
+  background: white;
+}
+
+.btn-outline-primary:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+}
+
+.btn-outline-danger {
+  border: 2px solid #f5576c;
+  color: #f5576c;
+}
+
+.btn-outline-danger:hover {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border-color: transparent;
+}
+
+/* Badge Styling */
+.badge {
+  font-weight: 600;
+  padding: 0.35em 0.65em;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge.bg-info {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+/* Alert Styling */
+.alert {
+  border: none;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.alert-info {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #01579b;
+  border-left: 4px solid #667eea;
+}
+
+.alert-warning {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  color: #e65100;
+  border-left: 4px solid #ff9800;
+}
+
+.alert-danger {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  color: #b71c1c;
+  border-left: 4px solid #f5576c;
+}
+
+/* Ambassador Preview Card */
+#distributor_preview .card {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+#distributor_preview .card-body {
+  padding: 1.25rem;
+}
+
+#distributor_preview .card-title {
+  color: #495057;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+}
+
+/* Page Header */
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h2 {
+  font-weight: 700;
+  color: #2c3e50;
+  font-size: 1.75rem;
+}
+
+.page-header .text-muted {
+  color: #6c757d !important;
+  font-size: 0.95rem;
+}
+
+/* Animation Effects */
+.animate-in {
+  animation: slideIn 0.4s ease forwards;
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.animate-in.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+#no-documents-message {
+  animation: fadeIn 0.5s ease;
+  padding: 3rem 1rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 10px;
+  margin-top: 1rem;
+}
+
+#no-documents-message i {
+  color: #667eea;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .document-card {
+    margin-bottom: 1rem;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  .card-header .badge {
+    margin-top: 0.5rem;
+  }
+
+  .btn {
+    padding: 0.375rem 1rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Select2 Custom Styling */
+.select2-container--bootstrap-5 .select2-selection--single {
+  height: calc(2.25rem + 2px);
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single:focus-within {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.select2-dropdown {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin-top: 4px;
+}
+
+.select2-results__option--highlighted {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white;
+}
+
+/* Form Section Icons */
+.card-header i {
+  font-size: 1.1rem;
+  margin-right: 0.5rem;
+}
+</style>
+
+<!-- jQuery and Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Include Location Data -->
+<script>
+<%= File.read(Rails.root.join('app/assets/javascripts/location_data.js')).html_safe %>
+</script>
+
+<!-- State-City Dependency Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Mobile number handling - same logic as create form
+  const mobileInput = document.querySelector('input[name="sub_agent[mobile]"]');
+  if (mobileInput && mobileInput.value) {
+    // Show the stored value as-is; server-side format_mobile_number will normalize on save
+    // Optionally strip +91 prefix for cleaner display
+    let cleanNumber = mobileInput.value.replace(/^\+91\s*/, '').replace(/\s+/g, '');
+    if (cleanNumber.length === 10 && /^[6-9]\d{9}$/.test(cleanNumber)) {
+      mobileInput.value = cleanNumber;
+    }
+  }
+
+  const stateSelect = document.getElementById('sub_agent_state');
+  const citySelect = document.getElementById('sub_agent_city');
+  const currentCityId = '<%= @sub_agent.city_id %>';
+
+  // Use global location data
+  let citiesData = {};
+  if (window.LocationData && window.LocationData.states) {
+    citiesData = Object.keys(window.LocationData.states).reduce((acc, key) => {
+      acc[key] = window.LocationData.states[key].cities;
+      return acc;
+    }, {});
+  }
+
+  function loadCitiesForState(stateValue, selectedCityValue = null) {
+    console.log('Loading cities for state:', stateValue);
+    if (!stateValue) {
+      populateCityDropdown([], selectedCityValue);
+      citySelect.disabled = true;
+      return;
+    }
+
+    // Get cities for this state from local data
+    let cities = citiesData[stateValue] || [];
+    populateCityDropdown(cities, selectedCityValue);
+  }
+
+  function populateCityDropdown(cities, selectedCityValue = null) {
+    // First destroy Select2 if it exists
+    const $citySelect = $(citySelect);
+    if ($citySelect.hasClass('select2-hidden-accessible')) {
+      $citySelect.select2('destroy');
+    }
+
+    // Clear dropdown and add cities
+    citySelect.innerHTML = '<option value="">Select City</option>';
+    cities.forEach(city => {
+      const option = document.createElement('option');
+      option.value = city;
+      option.textContent = city;
+      if (city === selectedCityValue) {
+        option.selected = true;
+      }
+      citySelect.appendChild(option);
+    });
+
+    citySelect.disabled = false;
+    console.log(`Loaded ${cities.length} cities`);
+
+    // Reinitialize Select2
+    setTimeout(() => {
+      $citySelect.select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select city...',
+        allowClear: true,
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+
+      // Set the selected value after Select2 initialization
+      if (selectedCityValue) {
+        $citySelect.val(selectedCityValue).trigger('change');
+      }
+    }, 50);
+  }
+
+  // Initialize Select2 for state and city dropdowns
+  if (typeof $ !== 'undefined' && $.fn.select2) {
+    $(stateSelect).select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select state...',
+      allowClear: true,
+      width: '100%',
+      minimumResultsForSearch: 0
+    });
+
+    $(citySelect).select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select city...',
+      allowClear: true,
+      width: '100%',
+      minimumResultsForSearch: 0
+    });
+  }
+
+  // Handle state change
+  stateSelect.addEventListener('change', function() {
+    loadCitiesForState(this.value);
+  });
+
+  // Handle Select2 change event specifically
+  $('#sub_agent_state').on('select2:select', function (e) {
+    const selectedValue = e.params.data.id;
+    loadCitiesForState(selectedValue);
+  });
+
+  // Load cities if state is pre-selected (for edit page auto-fill)
+  const savedState = '<%= @sub_agent.state %>';
+  const savedCity = '<%= @sub_agent.city %>';
+
+  console.log('Initializing sub agent edit form with saved state:', savedState, 'and city:', savedCity);
+
+  // Initialize properly with saved values
+  setTimeout(() => {
+    console.log('Starting sub agent edit form initialization...');
+    console.log('Sub agent state select value:', stateSelect.value);
+
+    // If state has a value, load cities
+    if (stateSelect.value || savedState) {
+      const stateToUse = stateSelect.value || savedState;
+      console.log('Loading cities for state:', stateToUse);
+
+      // Set state value if not already set
+      if (!stateSelect.value && savedState) {
+        stateSelect.value = savedState;
+        $('#sub_agent_state').val(savedState).trigger('change.select2');
+      }
+
+      // Load cities with proper saved city handling
+      loadCitiesForStateWithCity(stateToUse, savedCity);
+    } else if (savedCity) {
+      // If there's a saved city but no state, still show it
+      console.log('Saved city exists without state, adding it manually');
+      const $citySelect = $(citySelect);
+      citySelect.disabled = false;
+
+      // Add the saved city option
+      const option = document.createElement('option');
+      option.value = savedCity;
+      option.textContent = savedCity;
+      option.selected = true;
+      citySelect.appendChild(option);
+
+      // Reinitialize Select2
+      setTimeout(() => {
+        if ($citySelect.hasClass('select2-hidden-accessible')) {
+          $citySelect.select2('destroy');
+        }
+        $citySelect.select2({
+          theme: 'bootstrap-5',
+          placeholder: 'Search and select city...',
+          allowClear: true,
+          width: '100%',
+          minimumResultsForSearch: 0
+        });
+        $citySelect.val(savedCity).trigger('change.select2');
+      }, 100);
+    }
+  }, 200);
+
+  function loadCitiesForStateWithCity(stateValue, selectedCityName = null) {
+    console.log('Loading cities for state:', stateValue, 'with city name:', selectedCityName);
+    if (!stateValue) {
+      populateCityDropdownWithCity([], selectedCityName);
+      citySelect.disabled = true;
+      return;
+    }
+
+    // Get cities for this state from local data
+    let cities = citiesData[stateValue] || [];
+    populateCityDropdownWithCity(cities, selectedCityName);
+  }
+
+  function populateCityDropdownWithCity(cities, selectedCityName = null) {
+    // First destroy Select2 if it exists
+    const $citySelect = $(citySelect);
+    if ($citySelect.hasClass('select2-hidden-accessible')) {
+      $citySelect.select2('destroy');
+    }
+
+    // Clear dropdown and add cities
+    citySelect.innerHTML = '<option value="">Select City</option>';
+
+    let selectedCityFound = false;
+
+    cities.forEach(city => {
+      const option = document.createElement('option');
+      option.value = city;
+      option.textContent = city;
+      if (selectedCityName && city === selectedCityName) {
+        option.selected = true;
+        selectedCityFound = true;
+      }
+      citySelect.appendChild(option);
+    });
+
+    // If selected city wasn't found in the list but exists, add it as an option
+    if (selectedCityName && !selectedCityFound) {
+      const option = document.createElement('option');
+      option.value = selectedCityName;
+      option.textContent = selectedCityName;
+      option.selected = true;
+      citySelect.appendChild(option);
+      selectedCityFound = true;
+      console.log('Added saved city as additional option:', selectedCityName);
+    }
+
+    citySelect.disabled = false;
+    console.log(`Loaded ${cities.length} cities for sub agent, selected: ${selectedCityName}, found: ${selectedCityFound}`);
+
+    // Reinitialize Select2
+    setTimeout(() => {
+      $citySelect.select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select city...',
+        allowClear: true,
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+
+      // Set the selected value after Select2 initialization
+      if (selectedCityName && selectedCityFound) {
+        $citySelect.val(selectedCityName).trigger('change.select2');
+      }
+    }, 50);
+  }
+
+
+  // Ambassador assignment management
+  const distributorSelect = document.getElementById('distributor_select');
+  const distributorPreview = document.getElementById('distributor_preview');
+  const previewName = document.getElementById('preview_name');
+  const previewEmail = document.getElementById('preview_email');
+  const previewMobile = document.getElementById('preview_mobile');
+
+  distributorSelect?.addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+
+    if (this.value === '' || this.value === null) {
+      // No ambassador selected
+      distributorPreview.style.display = 'none';
+      previewName.textContent = '';
+      previewEmail.textContent = '';
+      previewMobile.textContent = '';
+    } else {
+      // Ambassador selected
+      const name = selectedOption.textContent.split(' - ')[0];
+      const email = selectedOption.getAttribute('data-email') || '';
+      const mobile = selectedOption.getAttribute('data-mobile') || '';
+
+      previewName.textContent = name;
+      previewEmail.textContent = email;
+      previewMobile.textContent = mobile;
+      distributorPreview.style.display = 'block';
+    }
+  });
+
+  // Document management
+  let documentIndex = <%= @documents ? @documents.size : 0 %>;
+  const addDocumentBtn = document.getElementById('add_document');
+  const documentsContainer = document.getElementById('documents_container');
+  const noDocumentsMessage = document.getElementById('no-documents-message');
+
+  addDocumentBtn?.addEventListener('click', function() {
+    // Hide the no documents message if it exists
+    if (noDocumentsMessage) {
+      noDocumentsMessage.style.display = 'none';
+    }
+
+    const documentHtml = `
+      <div class="document-entry p-3 mb-3 position-relative animate-in" data-index="${documentIndex}">
+        <button type="button" class="btn btn-sm btn-danger remove-btn remove-document" title="Remove this document">
+          <i class="bi bi-x-lg"></i>
+        </button>
+        <div class="row align-items-end">
+          <div class="col-md-5">
+            <label class="form-label">
+              <i class="bi bi-file-earmark-text me-1"></i>Document Type <span class="text-danger">*</span>
+            </label>
+            <select name="sub_agent[sub_agent_documents_attributes][${documentIndex}][document_type]"
+                    class="form-select" required>
+              <option value="">Select Document Type</option>
+              <option value="Aadhaar Card">Aadhaar Card</option>
+              <option value="Pancard">Pancard</option>
+              <option value="Driving License">Driving License</option>
+              <option value="Mediclaim">Mediclaim</option>
+              <option value="RC Book">RC Book</option>
+              <option value="Other File">Other File</option>
+            </select>
+          </div>
+          <div class="col-md-7">
+            <label class="form-label">
+              <i class="bi bi-upload me-1"></i>Upload File <span class="text-danger">*</span>
+            </label>
+            <input type="file"
+                   name="sub_agent[sub_agent_documents_attributes][${documentIndex}][document_file]"
+                   class="form-control"
+                   accept="image/*,application/pdf"
+                   required>
+            <small class="text-muted mt-1">Supported: JPG, PNG, PDF (Max 10MB)</small>
+          </div>
+        </div>
+      </div>
+    `;
+    documentsContainer.insertAdjacentHTML('beforeend', documentHtml);
+
+    // Add animation
+    setTimeout(() => {
+      const newEntry = documentsContainer.lastElementChild;
+      if (newEntry) {
+        newEntry.classList.add('show');
+      }
+    }, 10);
+
+    documentIndex++;
+  });
+
+  // Event delegation for remove buttons with animation
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-document')) {
+      const entry = e.target.closest('.document-entry');
+      if (entry) {
+        entry.style.transition = 'all 0.3s ease';
+        entry.style.transform = 'translateX(100%)';
+        entry.style.opacity = '0';
+        setTimeout(() => {
+          entry.remove();
+          // Show no documents message if all removed
+          const remainingDocs = documentsContainer.querySelectorAll('.document-entry');
+          if (remainingDocs.length === 0 && noDocumentsMessage) {
+            noDocumentsMessage.style.display = 'block';
+          }
+        }, 300);
+      }
+    }
+  });
+
+  // R2 Profile Image Upload Functionality
+  const subAgentProfileImageFile = document.getElementById('sub_agent_profile_image_file');
+  const subAgentImagePreview = document.getElementById('sub_agent_image_preview');
+  const subAgentImagePreviewContainer = document.getElementById('sub_agent_image_preview_container');
+  const subAgentUploadProgress = document.getElementById('sub_agent_upload_progress');
+  const uploadSubAgentBtn = document.getElementById('upload_sub_agent_profile_image_btn');
+
+  // Handle file selection for preview
+  subAgentProfileImageFile?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+        this.value = '';
+        subAgentImagePreviewContainer.style.display = 'none';
+        return;
+      }
+
+      // Validate file size (10MB max)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        this.value = '';
+        subAgentImagePreviewContainer.style.display = 'none';
+        return;
+      }
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        subAgentImagePreview.src = e.target.result;
+        subAgentImagePreviewContainer.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      subAgentImagePreviewContainer.style.display = 'none';
+    }
+  });
+
+  // Handle R2 profile image upload button click
+  uploadSubAgentBtn?.addEventListener('click', async function(e) {
+    e.preventDefault();
+
+    const file = subAgentProfileImageFile.files[0];
+    if (!file) {
+      alert('Please select an image file first');
+      return;
+    }
+
+    // Show upload progress
+    subAgentUploadProgress.style.display = 'block';
+    subAgentImagePreviewContainer.style.display = 'none';
+
+    // Disable upload button
+    const originalText = this.textContent;
+    this.disabled = true;
+    this.textContent = 'Uploading...';
+
+    try {
+      // Get CSRF token
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append('sub_agent_document[document_type]', 'Profile Image');
+      formData.append('sub_agent_document[document_file]', file);
+      formData.append('authenticity_token', csrfToken);
+
+      // Upload to sub agent documents endpoint
+      const response = await fetch('<%= admin_sub_agent_sub_agent_documents_path(@sub_agent) %>', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': csrfToken,
+          'Accept': 'application/json'
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Show success message
+        showSubAgentProfileImageAlert('success', result.message || 'Profile image uploaded successfully!');
+
+        // Reset form
+        subAgentProfileImageFile.value = '';
+        subAgentImagePreviewContainer.style.display = 'none';
+
+        // Reload page to show new profile image
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        throw new Error(result.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      showSubAgentProfileImageAlert('danger', error.message || 'Upload failed');
+    } finally {
+      // Re-enable button and hide progress
+      subAgentUploadProgress.style.display = 'none';
+      this.disabled = false;
+      this.textContent = originalText;
+    }
+  });
+
+  // Function to show sub agent profile image alerts
+  function showSubAgentProfileImageAlert(type, message) {
+    // Remove existing alerts
+    const existingAlerts = document.querySelectorAll('.sub-agent-profile-image-alert');
+    existingAlerts.forEach(alert => alert.remove());
+
+    // Create new alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-3 sub-agent-profile-image-alert`;
+    alertDiv.innerHTML = `
+      <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Insert after the sub agent profile image form
+    document.getElementById('sub_agent_profile_image_upload_form').insertAdjacentElement('afterend', alertDiv);
+
+    // Auto-dismiss success alerts after 3 seconds
+    if (type === 'success') {
+      setTimeout(() => {
+        if (alertDiv.parentElement) {
+          alertDiv.remove();
+        }
+      }, 3000);
+    }
+  }
+
+  // Legacy Profile image preview functionality (keeping for backward compatibility)
+  const profileImageInput = document.getElementById('sub_agent_profile_image');
+  const profileImagePreview = document.getElementById('sub_agent_profile_image_preview');
+  const previewImg = document.getElementById('preview_img');
+  const currentImageDiv = document.getElementById('current_profile_image');
+
+  if (profileImageInput && profileImagePreview && previewImg) {
+    profileImageInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+
+      if (!file) {
+        profileImagePreview.style.display = 'none';
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (JPG, PNG, GIF)');
+        this.value = '';
+        profileImagePreview.style.display = 'none';
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Profile image size should be less than 5MB');
+        this.value = '';
+        profileImagePreview.style.display = 'none';
+        return;
+      }
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        previewImg.src = e.target.result;
+        profileImagePreview.style.display = 'block';
+
+        // Hide current image when new image is selected
+        if (currentImageDiv) {
+          currentImageDiv.style.opacity = '0.5';
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+});
+
+// Function to immediately delete sub agent documents
+function markSubAgentDocumentForDeletion(documentId) {
+  const documentCard = document.getElementById('document_card_' + documentId);
+
+  if (!documentCard) return;
+
+  const message = 'Are you sure you want to permanently delete this document? This action cannot be undone.';
+
+  if (confirm(message)) {
+    // Show loading state
+    const deleteBtn = documentCard.querySelector('.delete-document');
+    if (deleteBtn) {
+      deleteBtn.disabled = true;
+      deleteBtn.innerHTML = '<i class="bi bi-clock"></i>';
+      deleteBtn.title = 'Deleting...';
+    }
+
+    // Make AJAX call to delete immediately
+    const subAgentId = document.querySelector('form').action.match(/\/sub_agents\/(\d+)/)[1];
+    const deleteUrl = `/admin/sub_agents/${subAgentId}/sub_agent_documents/${documentId}/destroy_immediate`;
+
+    fetch(deleteUrl, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Remove the document card from DOM with animation
+        documentCard.style.transition = 'all 0.3s ease';
+        documentCard.style.transform = 'translateX(100%)';
+        documentCard.style.opacity = '0';
+        setTimeout(() => {
+          documentCard.remove();
+          // Show success message
+          showNotification('Document deleted successfully', 'success');
+        }, 300);
+      } else {
+        showNotification('Failed to delete document: ' + data.message, 'error');
+        // Reset button state
+        if (deleteBtn) {
+          deleteBtn.disabled = false;
+          deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+          deleteBtn.title = 'Delete Document';
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      showNotification('An error occurred while deleting the document', 'error');
+      // Reset button state
+      if (deleteBtn) {
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+        deleteBtn.title = 'Delete Document';
+      }
+    });
+  }
+}
+
+// Helper function to show notifications
+function showNotification(message, type) {
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+  notification.style.top = '20px';
+  notification.style.right = '20px';
+  notification.style.zIndex = '9999';
+  notification.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  document.body.appendChild(notification);
+
+  // Auto-remove after 3 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.remove();
+    }
+  }, 3000);
+}
+</script>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Expired Insurance Report</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      line-height: 1.3;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 15px;
+    }
+    .header h1 {
+      margin: 0;
+      color: #007bff;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .header .subtitle {
+      margin: 5px 0 0 0;
+      color: #666;
+      font-size: 14px;
+    }
+    .report-info {
+      margin-bottom: 20px;
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    .report-info .info-row {
+      display: inline-block;
+      margin-right: 30px;
+      margin-bottom: 5px;
+    }
+    .report-info .label {
+      font-weight: bold;
+      color: #495057;
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .table th {
+      background-color: #007bff;
+      color: white;
+      padding: 12px 8px;
+      text-align: left;
+      font-weight: bold;
+      border: 1px solid #ddd;
+      font-size: 11px;
+    }
+    .table td {
+      padding: 10px 8px;
+      border: 1px solid #ddd;
+      font-size: 11px;
+      vertical-align: top;
+    }
+    .table tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    .table tr:hover {
+      background-color: #e9ecef;
+    }
+    .currency {
+      text-align: right;
+      font-weight: 500;
+    }
+    .text-danger {
+      color: #dc3545;
+      font-weight: bold;
+    }
+    .text-warning {
+      color: #ffc107;
+      font-weight: bold;
+    }
+    .policy-type {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .health { background: #e7f3ff; color: #0066cc; }
+    .motor { background: #fff0e6; color: #cc6600; }
+    .life { background: #e6ffe6; color: #006600; }
+    .other { background: #f0f0f0; color: #666666; }
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      font-style: italic;
+    }
+    .summary {
+      margin-top: 30px;
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      page-break-inside: avoid;
+    }
+    .summary-title {
+      font-weight: bold;
+      color: #495057;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .summary-stats {
+      display: flex;
+      justify-content: space-between;
+    }
+    .summary-stat {
+      text-align: center;
+      flex: 1;
+    }
+    .summary-stat .number {
+      font-size: 20px;
+      font-weight: bold;
+      color: #007bff;
+      display: block;
+    }
+    .summary-stat .label {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 10px;
+      color: #666;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Expired Insurance Report</h1>
+    <div class="subtitle">Generated on <%= Date.current.strftime('%B %d, %Y') %></div>
+  </div>
+
+  <div class="report-info">
+    <div class="info-row">
+      <span class="label">Report Date:</span> <%= Date.current.strftime('%d/%m/%Y') %>
+    </div>
+    <div class="info-row">
+      <span class="label">Total Policies:</span> <%= @expired_data.length %>
+    </div>
+    <div class="info-row">
+      <span class="label">Period:</span> All expired policies as of today
+    </div>
+  </div>
+
+  <% if @expired_data.any? %>
+    <table class="table">
+      <thead>
+        <tr>
+          <% @selected_columns.each do |column| %>
+            <th>
+              <%= case column
+                  when 'policy_number' then 'Policy Number'
+                  when 'policy_type' then 'Type'
+                  when 'customer_name' then 'Customer'
+                  when 'insurance_company' then 'Insurance Company'
+                  when 'end_date' then 'Expiry Date'
+                  when 'days_expired' then 'Days Expired'
+                  when 'premium_amount' then 'Premium (Rs.)'
+                  when 'sum_insured' then 'Sum Insured (Rs.)'
+                  when 'sub_agent_name' then 'Sub Agent'
+                  when 'policy_holder' then 'Policy Holder'
+                  when 'payment_mode' then 'Payment Mode'
+                  else column.humanize
+                  end %>
+            </th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% @expired_data.each do |policy| %>
+          <tr>
+            <% @selected_columns.each do |column| %>
+              <td class="<%= 'currency' if %w[premium_amount sum_insured].include?(column) %>">
+                <% case column %>
+                <% when 'policy_type' %>
+                  <span class="policy-type <%= policy[:policy_type].downcase %>">
+                    <%= policy[:policy_type] %>
+                  </span>
+                <% when 'end_date' %>
+                  <%= policy[:end_date]&.strftime('%d/%m/%Y') || 'N/A' %>
+                <% when 'days_expired' %>
+                  <span class="<%= policy[:days_expired] > 30 ? 'text-danger' : 'text-warning' %>">
+                    <%= policy[:days_expired] %> days
+                  </span>
+                <% when 'premium_amount' %>
+                  <%= indian_currency(policy[:premium_amount]) %>
+                <% when 'sum_insured' %>
+                  <%= indian_currency(policy[:sum_insured]) %>
+                <% when 'sub_agent_name' %>
+                  <%= policy[:sub_agent_name] == 'N/A' ? 'Direct' : policy[:sub_agent_name] %>
+                <% else %>
+                  <%= policy[column.to_sym] || 'N/A' %>
+                <% end %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <div class="summary">
+      <div class="summary-title">Summary Statistics</div>
+      <div class="summary-stats">
+        <div class="summary-stat">
+          <span class="number"><%= @expired_data.count { |p| p[:policy_type] == 'Health' } %></span>
+          <span class="label">Health Policies</span>
+        </div>
+        <div class="summary-stat">
+          <span class="number"><%= @expired_data.count { |p| p[:policy_type] == 'Motor' } %></span>
+          <span class="label">Motor Policies</span>
+        </div>
+        <div class="summary-stat">
+          <span class="number"><%= @expired_data.count { |p| p[:policy_type] == 'Life' } %></span>
+          <span class="label">Life Policies</span>
+        </div>
+        <div class="summary-stat">
+          <span class="number"><%= @expired_data.count { |p| p[:policy_type] == 'Other' } %></span>
+          <span class="label">Other Policies</span>
+        </div>
+        <div class="summary-stat">
+          <span class="number"><%= indian_currency(@expired_data.sum { |p| p[:premium_amount] || 0 }) %></span>
+          <span class="label">Total Premium Value</span>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <div class="no-data">
+      <h3>No expired insurance policies found</h3>
+      <p>There are no policies that have expired for the selected criteria.</p>
+    </div>
+  <% end %>
+
+  <div class="footer">
+    <p>This report was generated automatically by the DrWise Insurance Management System</p>
+    <p>Report generated on <%= Time.current.strftime('%d/%m/%Y at %I:%M %p') %></p>
+  </div>
+</body>
+</html>

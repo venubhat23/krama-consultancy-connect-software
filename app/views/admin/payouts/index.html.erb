@@ -1,0 +1,597 @@
+<!-- Commission Distribution & Traceability Dashboard -->
+<style>
+.commission-flow-timeline {
+  position: relative;
+  padding: 20px 0;
+}
+
+.flow-step {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.flow-step::after {
+  content: '';
+  position: absolute;
+  left: 30px;
+  top: 60px;
+  width: 2px;
+  height: 40px;
+  background: linear-gradient(to bottom, #e3f2fd, #bbdefb);
+  border-radius: 1px;
+}
+
+.flow-step:last-child::after {
+  display: none;
+}
+
+.flow-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.flow-icon.paid {
+  background: linear-gradient(135deg, #4caf50, #81c784);
+  color: white;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.flow-icon.pending {
+  background: linear-gradient(135deg, #ff9800, #ffb74d);
+  color: white;
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+.flow-icon.failed {
+  background: linear-gradient(135deg, #f44336, #e57373);
+  color: white;
+  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+}
+
+.flow-content {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e3f2fd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.flow-content:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.policy-context-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-paid {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.status-pending {
+  background: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.status-failed {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.summary-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--accent-color, #667eea), var(--accent-light, #764ba2));
+}
+
+.summary-card.total::before { --accent-color: #667eea; --accent-light: #764ba2; }
+.summary-card.paid::before { --accent-color: #4caf50; --accent-light: #81c784; }
+.summary-card.pending::before { --accent-color: #ff9800; --accent-light: #ffb74d; }
+.summary-card.failed::before { --accent-color: #f44336; --accent-light: #e57373; }
+
+.commission-breakdown-table {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.layer-row {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.layer-row:hover {
+  background-color: #f8f9fa;
+}
+
+.action-drawer {
+  position: fixed;
+  right: -400px;
+  top: 0;
+  width: 400px;
+  height: 100vh;
+  background: white;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+  transition: right 0.3s ease;
+  z-index: 1050;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+.action-drawer.open {
+  right: 0;
+}
+
+.audit-log-item {
+  padding: 12px;
+  border-left: 4px solid #e3f2fd;
+  margin-bottom: 12px;
+  background: #fafbfc;
+  border-radius: 0 8px 8px 0;
+}
+
+.filters-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+</style>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Commission Control Center</h2>
+    <p class="text-muted mb-0">Complete commission distribution & money flow traceability</p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to summary_admin_payouts_path, class: "btn btn-outline-primary" do %>
+      <i class="bi bi-bar-chart me-1"></i>
+      Analytics
+    <% end %>
+    <%= link_to new_admin_payout_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg me-1"></i>
+      Create Payout
+    <% end %>
+  </div>
+</div>
+
+<!-- KPI Summary Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="summary-card total">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h6 class="text-muted mb-2">Total Premium Collected</h6>
+          <h3 class="mb-0 fw-bold"><%= indian_currency((@summary[:total_amount] || 0).to_i) %></h3>
+          <small class="text-muted"><%= number_with_delimiter(@summary[:total_payouts] || 0) %> policies</small>
+        </div>
+        <div class="bg-primary bg-opacity-10 rounded p-3">
+          <i class="bi bi-cash-stack text-primary fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="summary-card paid">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h6 class="text-muted mb-2">Paid Commissions</h6>
+          <h3 class="mb-0 fw-bold text-success"><%= indian_currency((@summary[:paid_amount] || 0).to_i) %></h3>
+          <small class="text-muted"><%= @summary[:paid_count] || 0 %> completed</small>
+        </div>
+        <div class="bg-success bg-opacity-10 rounded p-3">
+          <i class="bi bi-check-circle text-success fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="summary-card pending">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h6 class="text-muted mb-2">Pending Payouts</h6>
+          <h3 class="mb-0 fw-bold text-warning"><%= indian_currency((@summary[:pending_amount] || 0).to_i) %></h3>
+          <small class="text-muted"><%= @summary[:pending_count] || 0 %> waiting</small>
+        </div>
+        <div class="bg-warning bg-opacity-10 rounded p-3">
+          <i class="bi bi-clock text-warning fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="summary-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h6 class="text-muted mb-2">This Month</h6>
+          <h3 class="mb-0 fw-bold text-info"><%= indian_currency((@summary[:this_month] || 0).to_i) %></h3>
+          <small class="text-muted">
+            <% change = @summary[:this_month].to_f / [@summary[:last_month].to_f, 1].max %>
+            <% if change > 1 %>
+              <span class="text-success">
+                <i class="bi bi-arrow-up"></i>
+                +<%= number_to_percentage((change - 1) * 100, precision: 1) %>
+              </span>
+            <% elsif change < 1 %>
+              <span class="text-danger">
+                <i class="bi bi-arrow-down"></i>
+                <%= number_to_percentage((change - 1) * 100, precision: 1) %>
+              </span>
+            <% else %>
+              <span class="text-muted">No change</span>
+            <% end %>
+          </small>
+        </div>
+        <div class="bg-info bg-opacity-10 rounded p-3">
+          <i class="bi bi-calendar-month text-info fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Advanced Filters -->
+<div class="filters-card">
+  <%= form_with url: admin_payouts_path, method: :get, local: true, class: "row g-3" do |f| %>
+    <div class="col-md-3">
+      <%= f.text_field :search, value: params[:search], placeholder: "🔍 Search policies, agents...", class: "form-control" %>
+    </div>
+    <div class="col-md-2">
+      <%= f.select :policy_type, options_for_select([['All Insurance Types', ''], ['Health', 'health'], ['Life', 'life'], ['Motor', 'motor'], ['Other', 'other']], params[:policy_type]), {}, { class: "form-select" } %>
+    </div>
+    <div class="col-md-2">
+      <%= f.select :payout_to, options_for_select([['All Recipients', ''], ['Agent', 'agent'], ['Ambassador', 'distributor'], ['Affiliate', 'sub_agent'], ['Investor', 'investor']], params[:payout_to]), {}, { class: "form-select" } %>
+    </div>
+    <div class="col-md-2">
+      <%= f.select :status, options_for_select([['All Statuses', ''], ['Paid ✓', 'paid'], ['Pending ⏳', 'pending'], ['Processing 🔄', 'processing'], ['Failed ❌', 'cancelled']], params[:status]), {}, { class: "form-select" } %>
+    </div>
+    <div class="col-md-2">
+      <%= f.date_field :date_from, value: params[:date_from], class: "form-control", placeholder: "From Date", min: "1900-01-01", max: "2099-12-31" %>
+    </div>
+    <div class="col-md-1">
+      <%= f.submit "Filter", class: "btn btn-primary w-100" %>
+    </div>
+  <% end %>
+</div>
+
+<!-- Policy-wise Commission Breakdown Table -->
+<div class="commission-breakdown-table">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <tr>
+          <th class="border-0">Policy Details</th>
+          <th class="border-0">Main Agent</th>
+          <th class="border-0">Affiliate</th>
+          <th class="border-0">Ambassador</th>
+          <th class="border-0">Investor</th>
+          <th class="border-0">Company</th>
+          <th class="border-0">Total Flow</th>
+          <th class="border-0">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if @payouts.any? %>
+          <% grouped_payouts = @payouts.group_by(&:policy_id) %>
+          <% grouped_payouts.each do |policy_id, policy_payouts| %>
+            <% policy = policy_payouts.first %>
+            <%
+              # Use preloaded policy objects to avoid N+1 queries
+              actual_policy = @preloaded_policies&.dig(policy.policy_type, policy_id)
+            %>
+            <tr class="layer-row" onclick="showPolicyFlow(<%= policy_id %>, '<%= policy.policy_type %>')">
+              <td>
+                <div>
+                  <strong class="text-capitalize"><%= policy.policy_type %> Insurance</strong>
+                  <span class="badge bg-light text-dark ms-1">#<%= actual_policy&.policy_number || policy_id %></span>
+                </div>
+                <% if actual_policy %>
+                  <small class="text-muted d-block">
+                    <%= actual_policy.customer&.display_name %>
+                    • Premium: <%= indian_currency((actual_policy.total_premium || actual_policy.net_premium || 0).to_i) %>
+                  </small>
+                <% end %>
+              </td>
+
+              <!-- Main Agent Commission -->
+              <td>
+                <% main_agent_payout = policy_payouts.find { |p| p.payout_to == 'agent' } %>
+                <% if actual_policy&.commission_amount.to_f > 0 %>
+                  <div class="d-flex align-items-center">
+                    <span class="fw-bold"><%= indian_currency(actual_policy.commission_amount.to_i) %></span>
+                    <% if main_agent_payout %>
+                      <i class="bi bi-check-circle text-success ms-2" data-bs-toggle="tooltip" title="Paid"></i>
+                    <% else %>
+                      <i class="bi bi-clock text-warning ms-2" data-bs-toggle="tooltip" title="Not Paid"></i>
+                    <% end %>
+                  </div>
+                  <% if actual_policy.respond_to?(:main_agent_commission_percentage) && actual_policy.main_agent_commission_percentage %>
+                    <small class="text-muted">(<%= actual_policy.main_agent_commission_percentage %>%)</small>
+                  <% end %>
+                <% else %>
+                  <span class="text-muted">-</span>
+                <% end %>
+              </td>
+
+              <!-- Affiliate Commission -->
+              <td>
+                <% sub_agent_payout = policy_payouts.find { |p| p.payout_to == 'sub_agent' } %>
+                <% if actual_policy&.respond_to?(:sub_agent_after_tds_value) && actual_policy.sub_agent_after_tds_value.to_f > 0 %>
+                  <div class="d-flex align-items-center">
+                    <span class="fw-bold"><%= indian_currency(actual_policy.sub_agent_after_tds_value.to_i) %></span>
+                    <% if sub_agent_payout&.status == 'paid' %>
+                      <i class="bi bi-check-circle text-success ms-2"></i>
+                    <% elsif sub_agent_payout&.status == 'pending' %>
+                      <i class="bi bi-clock text-warning ms-2"></i>
+                    <% else %>
+                      <i class="bi bi-x-circle text-danger ms-2"></i>
+                    <% end %>
+                  </div>
+                  <% if actual_policy.respond_to?(:sub_agent_commission_percentage) && actual_policy.sub_agent_commission_percentage %>
+                    <small class="text-muted">(<%= actual_policy.sub_agent_commission_percentage %>%)</small>
+                  <% end %>
+                <% else %>
+                  <span class="text-muted">-</span>
+                <% end %>
+              </td>
+
+              <!-- Ambassador Commission -->
+              <td>
+                <% distributor_payout = policy_payouts.find { |p| p.payout_to == 'distributor' } %>
+                <% if actual_policy&.respond_to?(:distributor_after_tds_value) && actual_policy.distributor_after_tds_value.to_f > 0 %>
+                  <div class="d-flex align-items-center">
+                    <span class="fw-bold"><%= indian_currency(actual_policy.distributor_after_tds_value.to_i) %></span>
+                    <% if distributor_payout&.status == 'paid' %>
+                      <i class="bi bi-check-circle text-success ms-2"></i>
+                    <% elsif distributor_payout&.status == 'pending' %>
+                      <i class="bi bi-clock text-warning ms-2"></i>
+                    <% else %>
+                      <i class="bi bi-x-circle text-danger ms-2"></i>
+                    <% end %>
+                  </div>
+                  <% if actual_policy.respond_to?(:distributor_commission_percentage) && actual_policy.distributor_commission_percentage %>
+                    <small class="text-muted">(<%= actual_policy.distributor_commission_percentage %>%)</small>
+                  <% end %>
+                <% else %>
+                  <span class="text-muted">-</span>
+                <% end %>
+              </td>
+
+              <!-- Investor Commission -->
+              <td>
+                <% investor_payout = policy_payouts.find { |p| p.payout_to == 'investor' } %>
+                <% if actual_policy&.respond_to?(:investor_after_tds_value) && actual_policy.investor_after_tds_value.to_f > 0 %>
+                  <div class="d-flex align-items-center">
+                    <span class="fw-bold"><%= indian_currency(actual_policy.investor_after_tds_value.to_i) %></span>
+                    <% if investor_payout&.status == 'paid' %>
+                      <i class="bi bi-check-circle text-success ms-2"></i>
+                    <% elsif investor_payout&.status == 'pending' %>
+                      <i class="bi bi-clock text-warning ms-2"></i>
+                    <% else %>
+                      <i class="bi bi-x-circle text-danger ms-2"></i>
+                    <% end %>
+                  </div>
+                  <% if actual_policy.respond_to?(:investor_commission_percentage) && actual_policy.investor_commission_percentage %>
+                    <small class="text-muted">(<%= actual_policy.investor_commission_percentage %>%)</small>
+                  <% end %>
+                <% else %>
+                  <span class="text-muted">-</span>
+                <% end %>
+              </td>
+
+              <!-- Company Expenses -->
+              <td>
+                <% if actual_policy&.respond_to?(:company_expenses_percentage) && actual_policy.company_expenses_percentage %>
+                  <div>
+                    <span class="fw-bold text-info">
+                      <%= indian_currency(((actual_policy.total_premium || actual_policy.net_premium || 0) * actual_policy.company_expenses_percentage / 100).to_i) %>
+                    </span>
+                    <br><small class="text-muted">(<%= actual_policy.company_expenses_percentage %>%)</small>
+                  </div>
+                <% else %>
+                  <span class="text-muted">-</span>
+                <% end %>
+              </td>
+
+              <!-- Total Flow -->
+              <td>
+                <div>
+                  <span class="fw-bold text-primary"><%= indian_currency(policy_payouts.sum(&:payout_amount).to_i) %></span>
+                  <br>
+                  <% paid_count = policy_payouts.count { |p| p.status == 'paid' } %>
+                  <% total_count = policy_payouts.count %>
+                  <small class="<%= paid_count == total_count ? 'text-success' : 'text-warning' %>">
+                    <%= paid_count %>/<%= total_count %> paid
+                  </small>
+                </div>
+              </td>
+
+              <td>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Flow Actions
+                  </button>
+                  <ul class="dropdown-menu">
+                    <% first_payout = policy_payouts.first %>
+                    <li><a class="dropdown-item" href="#" onclick="viewCommissionFlow(<%= first_payout.id %>)">
+                      <i class="bi bi-diagram-3 me-2"></i>View Flow Timeline
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="openPayoutDrawer(<%= policy_id %>)">
+                      <i class="bi bi-cash-coin me-2"></i>Process Payouts
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" onclick="viewAuditTrail(<%= policy_id %>)">
+                      <i class="bi bi-clock-history me-2"></i>Audit Trail
+                    </a></li>
+                    <li><%= link_to "Export Statement", "#", class: "dropdown-item" %></li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="8" class="text-center py-5">
+              <div>
+                <i class="bi bi-cash-coin text-muted" style="font-size: 3rem;"></i>
+                <h5 class="text-muted mt-3">No commission flows found</h5>
+                <p class="text-muted">Policies with commission structures will appear here.</p>
+                <%= link_to new_admin_payout_path, class: "btn btn-primary" do %>
+                  <i class="bi bi-plus-lg me-1"></i>
+                  Create First Payout
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Action Drawer (Initially Hidden) -->
+<div class="action-drawer" id="payoutDrawer">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="mb-0">Commission Payout Actions</h5>
+    <button class="btn btn-sm btn-outline-secondary" onclick="closePayoutDrawer()">
+      <i class="bi bi-x"></i>
+    </button>
+  </div>
+
+  <div id="drawerContent">
+    <!-- Dynamic content loaded via JavaScript -->
+  </div>
+</div>
+
+<!-- Modal for Commission Flow Timeline -->
+<div class="modal fade" id="commissionFlowModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Commission Flow Timeline</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="flowTimelineContent">
+          <!-- Dynamic content -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pagination -->
+<% if @payouts.respond_to?(:current_page) %>
+  <div class="d-flex justify-content-between align-items-center mt-4">
+    <div>
+      <span class="text-muted">
+        Showing <%= (@payouts.current_page - 1) * @payouts.limit_value + 1 %> to
+        <%= [(@payouts.current_page - 1) * @payouts.limit_value + @payouts.limit_value, @payouts.total_count].min %>
+        of <%= @payouts.total_count %> commission flows
+      </span>
+    </div>
+    <%= paginate @payouts %>
+  </div>
+<% end %>
+
+<script>
+function showPolicyFlow(policyId, policyType) {
+  // Highlight the row temporarily
+  event.target.closest('tr').style.background = '#f8f9ff';
+  setTimeout(() => {
+    event.target.closest('tr').style.background = '';
+  }, 300);
+}
+
+function viewCommissionFlow(payoutId) {
+  // Load commission flow timeline
+  fetch(`/admin/payouts/${payoutId}/flow_timeline`)
+    .then(response => response.text())
+    .then(html => {
+      document.getElementById('flowTimelineContent').innerHTML = html;
+      new bootstrap.Modal(document.getElementById('commissionFlowModal')).show();
+    })
+    .catch(error => {
+      console.error('Error loading timeline:', error);
+      document.getElementById('flowTimelineContent').innerHTML = '<div class="alert alert-danger">Error loading timeline</div>';
+      new bootstrap.Modal(document.getElementById('commissionFlowModal')).show();
+    });
+}
+
+function openPayoutDrawer(policyId) {
+  document.getElementById('payoutDrawer').classList.add('open');
+
+  // Load payout actions for this policy
+  fetch(`/admin/payouts/policies/${policyId}/actions`)
+    .then(response => response.text())
+    .then(html => {
+      document.getElementById('drawerContent').innerHTML = html;
+    });
+}
+
+function closePayoutDrawer() {
+  document.getElementById('payoutDrawer').classList.remove('open');
+}
+
+function viewAuditTrail(policyId) {
+  // Implementation for audit trail
+  console.log('Viewing audit trail for policy:', policyId);
+}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+});
+</script>

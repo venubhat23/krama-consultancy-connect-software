@@ -1,0 +1,780 @@
+<style>
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(220,53,69,.7); }
+    70%  { box-shadow: 0 0 0 10px rgba(220,53,69,0); }
+    100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); }
+  }
+  .pulse-animation { animation: pulse 1.5s infinite; }
+  .btn-danger.pulse-animation:hover { animation:none; transform:scale(1.05); transition:transform .2s; }
+  .btn-success:hover, .btn-primary:hover, .btn-warning:hover { transform:scale(1.05); transition:transform .2s; }
+  .btn-success.text-white.fw-bold  { background-color:#198754!important; border-color:#198754!important; color:#fff!important; font-weight:bold!important; }
+  .btn-warning.text-dark.fw-bold   { background-color:#ffc107!important; border-color:#ffc107!important; color:#212529!important; font-weight:bold!important; }
+  .btn-danger                      { background-color:#dc3545!important; border-color:#dc3545!important; color:#fff!important; font-weight:bold!important; }
+  .btn-success.text-white.fw-bold:hover { background-color:#157347!important; border-color:#146c43!important; transform:scale(1.05); }
+  .btn-warning.text-dark.fw-bold:hover  { background-color:#ffcd39!important; border-color:#ffc720!important; transform:scale(1.05); }
+  .btn-danger:hover                     { background-color:#bb2d3b!important; border-color:#b02a37!important; transform:scale(1.05); }
+
+  /* Column config */
+  .col-hidden { display:none!important; }
+  #colConfigModal .col-check-item { display:flex; align-items:center; gap:.5rem; padding:.35rem .5rem; border-radius:6px; cursor:pointer; }
+  #colConfigModal .col-check-item:hover { background:#f0f4ff; }
+  #colConfigModal .col-check-item input { width:16px; height:16px; cursor:pointer; accent-color:#2c3e7a; }
+  #colConfigModal .col-check-item label { cursor:pointer; font-size:.875rem; margin:0; }
+  .col-count-badge { font-size:.75rem; font-weight:600; padding:.2em .6em; border-radius:20px; }
+</style>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Health Insurance Policies</h2>
+  </div>
+  <div class="d-flex gap-2">
+    <div class="dropdown download-dropdown">
+      <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-download me-1"></i> Download
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <a class="dropdown-item" data-turbo="false" href="<%= download_admin_health_insurances_path(request.query_parameters.merge(format_type: 'csv')) %>">
+            <i class="bi bi-filetype-csv text-success me-2"></i>CSV
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" data-turbo="false" href="<%= download_admin_health_insurances_path(request.query_parameters.merge(format_type: 'excel')) %>">
+            <i class="bi bi-file-earmark-excel text-success me-2"></i>Excel
+          </a>
+        </li>
+      </ul>
+    </div>
+    <%= link_to new_admin_health_insurance_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg me-1"></i>Add New Health Policy
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Health Policies</h6>
+            <h3 class="mb-0 text-primary"><%= number_with_delimiter((@drwise_count || 0) + (@non_drwise_count || 0)) %></h3>
+            <div class="d-flex gap-2 mt-2">
+              <small class="text-success"><i class="bi bi-check-circle me-1"></i>DrWise: <%= @drwise_count %></small>
+              <small class="text-warning"><i class="bi bi-x-circle me-1"></i>Non-DrWise: <%= @non_drwise_count %></small>
+            </div>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3"><i class="bi bi-hospital text-primary fs-4"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Premium</h6>
+            <h3 class="mb-0 text-success"><%= indian_currency((@drwise_premium || 0) + (@non_drwise_premium || 0)) %></h3>
+            <div class="mt-2">
+              <small class="text-muted d-block">DrWise: <%= indian_currency(@drwise_premium || 0) %></small>
+              <small class="text-muted d-block">Non-DrWise: <%= indian_currency(@non_drwise_premium || 0) %></small>
+            </div>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3"><i class="bi bi-currency-rupee text-success fs-4"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Coverage</h6>
+            <h3 class="mb-0 text-info"><%= indian_currency((@drwise_coverage || 0) + (@non_drwise_coverage || 0)) %></h3>
+            <div class="mt-2">
+              <small class="text-muted d-block">DrWise: <%= indian_currency(@drwise_coverage || 0) %></small>
+              <small class="text-muted d-block">Non-DrWise: <%= indian_currency(@non_drwise_coverage || 0) %></small>
+            </div>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3"><i class="bi bi-shield-check text-info fs-4"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Covered Members</h6>
+            <%
+              total_members    = HealthInsuranceMember.joins(:health_insurance).count
+              drwise_members   = HealthInsuranceMember.joins(:health_insurance).where(health_insurances: { is_admin_added: true, is_customer_added: false, is_agent_added: false }).count
+              non_drwise_members = total_members - drwise_members
+            %>
+            <h3 class="mb-0 text-warning"><%= number_with_delimiter(total_members) %></h3>
+            <div class="d-flex gap-2 mt-2">
+              <small class="text-success"><i class="bi bi-check-circle me-1"></i>DrWise: <%= drwise_members %></small>
+              <small class="text-warning"><i class="bi bi-x-circle me-1"></i>Non-DrWise: <%= non_drwise_members %></small>
+            </div>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3"><i class="bi bi-people text-warning fs-4"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body p-0">
+    <ul class="nav nav-tabs border-0" role="tablist">
+      <li class="nav-item" role="presentation">
+        <%= link_to admin_health_insurances_path(tab: 'drwise', search: params[:search], insurance_type: params[:insurance_type], payment_mode: params[:payment_mode]),
+            class: "nav-link #{'active' if @current_tab == 'drwise'}", role: "tab" do %>
+          <i class="bi bi-check-circle me-2"></i>DrWise Policies
+          <span class="badge bg-success ms-2"><%= @drwise_count %></span>
+        <% end %>
+      </li>
+      <li class="nav-item" role="presentation">
+        <%= link_to admin_health_insurances_path(tab: 'non_drwise', search: params[:search], insurance_type: params[:insurance_type], payment_mode: params[:payment_mode]),
+            class: "nav-link #{'active' if @current_tab == 'non_drwise'}", role: "tab" do %>
+          <i class="bi bi-x-circle me-2"></i>Non-DrWise Policies
+          <span class="badge bg-warning ms-2"><%= @non_drwise_count %></span>
+        <% end %>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- Search & Filters -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet"/>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <%= form_with url: admin_health_insurances_path, method: :get, local: true, id: "health-filter-form" do |form| %>
+      <%= form.hidden_field :tab, value: @current_tab %>
+
+      <!-- Basic filter row -->
+      <div class="row g-2 align-items-end mb-2">
+        <div class="col-md-4">
+          <%= form.text_field :search, placeholder: "Search by policy no., customer, company…", value: params[:search], class: "form-control" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.select :status, options_for_select([
+            ['All Statuses', ''],
+            ['Active', 'active'],
+            ['Expiring Soon', 'expiring_soon'],
+            ['Expired', 'expired']
+          ], params[:status]), {}, { class: "form-select" } %>
+        </div>
+        <div class="col-md-2">
+          <%= form.submit "Search", class: "btn btn-primary w-100" %>
+        </div>
+        <div class="col-md-2">
+          <button type="button" class="btn btn-outline-secondary w-100" id="toggle-hi-adv-filter">
+            <i class="bi bi-funnel me-1"></i>Advanced
+            <% hi_adv_active = [params[:company], params[:sub_agent_id], params[:policy_type], params[:payment_mode], params[:from_date], params[:to_date], params[:insurance_type]].any?(&:present?) %>
+            <% if hi_adv_active %>
+              <span class="badge bg-primary ms-1" id="hi-adv-dot">●</span>
+            <% else %>
+              <span class="badge bg-secondary ms-1 d-none" id="hi-adv-dot">●</span>
+            <% end %>
+          </button>
+        </div>
+        <div class="col-md-2">
+          <button type="button" class="btn btn-outline-secondary w-100" id="hi-col-config-btn"
+                  title="Configure visible columns">
+            <i class="bi bi-layout-three-columns me-1"></i>Columns
+            <span class="badge bg-secondary ms-1" id="hi-col-count-badge">7</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Advanced filter panel -->
+      <div id="hi-adv-panel" class="border rounded p-3 mt-2 bg-light" style="display: <%= hi_adv_active ? 'block' : 'none' %>;">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small text-muted">Company Name</label>
+            <select name="company" class="form-select hi-adv-select2">
+              <option value="">All Companies</option>
+              <% @filter_companies.each do |co| %>
+                <option value="<%= co %>" <%= 'selected' if params[:company] == co %>><%= co %></option>
+              <% end %>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small text-muted">Affiliate</label>
+            <select name="sub_agent_id" class="form-select hi-adv-select2">
+              <option value="">All Affiliates</option>
+              <% @filter_sub_agents.each do |sa| %>
+                <option value="<%= sa.id %>" <%= 'selected' if params[:sub_agent_id].to_s == sa.id.to_s %>><%= sa.display_name %></option>
+              <% end %>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small text-muted">Insurance Type</label>
+            <select name="insurance_type" class="form-select hi-adv-select2">
+              <option value="">All Types</option>
+              <option value="Individual" <%= 'selected' if params[:insurance_type] == 'Individual' %>>Individual</option>
+              <option value="Family" <%= 'selected' if params[:insurance_type] == 'Family' %>>Family</option>
+              <option value="Group" <%= 'selected' if params[:insurance_type] == 'Group' %>>Group</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold small text-muted">Policy Type</label>
+            <select name="policy_type" class="form-select hi-adv-select2">
+              <option value="">All Types</option>
+              <% @filter_policy_types.each do |pt| %>
+                <option value="<%= pt %>" <%= 'selected' if params[:policy_type] == pt %>><%= pt %></option>
+              <% end %>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold small text-muted">Start Date — From</label>
+            <div class="input-group">
+              <span class="input-group-text bg-primary text-white border-0"><i class="bi bi-calendar3"></i></span>
+              <%= form.date_field :from_date, value: params[:from_date], class: "form-control" %>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold small text-muted">Start Date — To</label>
+            <div class="input-group">
+              <span class="input-group-text bg-primary text-white border-0"><i class="bi bi-calendar3"></i></span>
+              <%= form.date_field :to_date, value: params[:to_date], class: "form-control" %>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold small text-muted">Payment Mode</label>
+            <select name="payment_mode" class="form-select hi-adv-select2">
+              <option value="">All Modes</option>
+              <% @filter_payment_modes.each do |pm| %>
+                <option value="<%= pm %>" <%= 'selected' if params[:payment_mode] == pm %>><%= pm %></option>
+              <% end %>
+            </select>
+          </div>
+          <div class="col-md-12 d-flex justify-content-end gap-2 mt-1">
+            <%= form.submit "Apply Filter", class: "btn btn-primary" %>
+            <%= link_to "Reset", admin_health_insurances_path(tab: params[:tab]), class: "btn btn-outline-secondary" %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Policies Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">
+      <% if @current_tab == 'drwise' %>
+        <i class="bi bi-check-circle text-success me-2"></i>DrWise Health Insurance Policies
+      <% else %>
+        <i class="bi bi-x-circle text-warning me-2"></i>Non-DrWise Health Insurance Policies
+      <% end %>
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <% if @health_insurances.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" id="hiTable">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0" data-col="policy">Policy</th>
+              <th class="border-0" data-col="customer">Customer</th>
+              <th class="border-0" data-col="company">Company</th>
+              <th class="border-0" data-col="source">Source & Type</th>
+              <th class="border-0" data-col="coverage">Coverage</th>
+              <th class="border-0" data-col="premium">Premium</th>
+              <th class="border-0" data-col="status">Status</th>
+              <!-- Optional columns -->
+              <th class="border-0" data-col="policy_holder">Policy Holder</th>
+              <th class="border-0" data-col="insurance_type">Insurance Type</th>
+              <th class="border-0" data-col="plan_name">Plan Name</th>
+              <th class="border-0" data-col="net_premium">Net Premium</th>
+              <th class="border-0" data-col="start_date">Start Date</th>
+              <th class="border-0" data-col="end_date">End Date</th>
+              <th class="border-0" data-col="booking_date">Booking Date</th>
+              <th class="border-0" data-col="payment_mode">Payment Mode</th>
+              <th class="border-0" data-col="affiliate">Affiliate</th>
+              <th class="border-0" data-col="ambassador">Ambassador</th>
+              <th class="border-0" data-col="main_agent_comm">Main Agent Comm.</th>
+              <th class="border-0" data-col="main_agent_comm_pct">Main Agent Comm. %</th>
+              <th class="border-0" data-col="sub_agent_comm">Sub Agent Comm.</th>
+              <th class="border-0" data-col="sub_agent_comm_pct">Sub Agent Comm. %</th>
+              <th class="border-0" data-col="reference_by">Reference By</th>
+              <th class="border-0" data-col="broker_name">Broker Name</th>
+              <!-- Actions always visible -->
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @health_insurances.each do |policy| %>
+              <tr>
+                <!-- Policy -->
+                <td data-col="policy">
+                  <h6 class="mb-1"><%= policy.policy_number %></h6>
+                  <small class="text-muted"><%= policy.policy_type&.humanize %></small><br>
+                  <% doc_count = policy.total_documents_count %>
+                  <small class="<%= doc_count > 0 ? 'text-success' : 'text-danger' %>">
+                    <i class="bi bi-file-earmark-<%= doc_count > 0 ? 'check' : 'x' %> me-1"></i><%= doc_count %> doc<%= doc_count == 1 ? '' : 's' %>
+                  </small>
+                </td>
+                <!-- Customer -->
+                <td data-col="customer">
+                  <h6 class="mb-1"><%= policy.customer&.display_name %></h6>
+                  <small class="text-muted"><%= policy.customer&.mobile %></small>
+                </td>
+                <!-- Company -->
+                <td data-col="company">
+                  <h6 class="mb-1"><%= policy.insurance_company_code || policy.insurance_company_name %></h6>
+                </td>
+                <!-- Source & Type -->
+                <td data-col="source">
+                  <div class="d-flex flex-column gap-1">
+                    <div>
+                      <% if policy.is_customer_added? %>
+                        <span class="badge bg-info-subtle text-info"><i class="bi bi-person-check me-1"></i>Customer</span>
+                      <% elsif policy.is_agent_added? %>
+                        <span class="badge bg-success-subtle text-success"><i class="bi bi-person-badge me-1"></i>Agent</span>
+                      <% elsif policy.is_admin_added? %>
+                        <span class="badge bg-primary-subtle text-primary"><i class="bi bi-shield-check me-1"></i>Admin</span>
+                      <% else %>
+                        <span class="badge bg-secondary-subtle text-secondary"><i class="bi bi-question-circle me-1"></i>Unknown</span>
+                      <% end %>
+                    </div>
+                    <div>
+                      <span class="badge bg-light text-dark border"><i class="bi bi-hospital me-1"></i><%= policy.insurance_type %></span>
+                    </div>
+                  </div>
+                </td>
+                <!-- Coverage -->
+                <td data-col="coverage">
+                  <small class="text-muted d-block" style="font-size:.75rem;">Sum Insured</small>
+                  <div class="fw-bold text-primary" style="font-size:1rem;" title="<%= indian_currency(policy.sum_insured) %>" data-bs-toggle="tooltip">
+                    <%= amount_in_words(policy.sum_insured) %>
+                  </div>
+                </td>
+                <!-- Premium -->
+                <td data-col="premium">
+                  <small class="text-muted d-block" style="font-size:.75rem;"><%= policy.payment_mode&.humanize || 'Yearly' %></small>
+                  <div class="fw-bold text-success" style="font-size:1rem;"><%= indian_currency(policy.total_premium) %></div>
+                </td>
+                <!-- Status -->
+                <td data-col="status">
+                  <% if policy.has_been_renewed? && policy.expired? %>
+                    <span class="badge" style="background-color:#6f42c1;">Renewed</span>
+                  <% elsif policy.active? %>
+                    <span class="badge bg-success">Active</span>
+                  <% elsif policy.expiring_soon? %>
+                    <span class="badge bg-warning">Expiring Soon</span>
+                  <% elsif policy.expired? %>
+                    <span class="badge bg-danger">Expired</span>
+                  <% else %>
+                    <span class="badge bg-info">Active</span>
+                  <% end %>
+                </td>
+                <!-- Optional: Policy Holder -->
+                <td data-col="policy_holder"><%= policy.policy_holder.presence || '—' %></td>
+                <!-- Optional: Insurance Type -->
+                <td data-col="insurance_type"><%= policy.insurance_type.presence || '—' %></td>
+                <!-- Optional: Plan Name -->
+                <td data-col="plan_name"><%= policy.plan_name.presence || '—' %></td>
+                <!-- Optional: Net Premium -->
+                <td data-col="net_premium">
+                  <% if policy.net_premium.present? %>
+                    <div class="fw-bold"><%= indian_currency(policy.net_premium) %></div>
+                  <% else %>
+                    <span class="text-muted">—</span>
+                  <% end %>
+                </td>
+                <!-- Optional: Start Date -->
+                <td data-col="start_date">
+                  <%= policy.policy_start_date&.strftime('%d %b %Y') || '—' %>
+                </td>
+                <!-- Optional: End Date -->
+                <td data-col="end_date">
+                  <%= policy.policy_end_date&.strftime('%d %b %Y') || '—' %>
+                </td>
+                <!-- Optional: Booking Date -->
+                <td data-col="booking_date">
+                  <%= policy.policy_booking_date&.strftime('%d %b %Y') || '—' %>
+                </td>
+                <!-- Optional: Payment Mode -->
+                <td data-col="payment_mode"><%= policy.payment_mode&.humanize || '—' %></td>
+                <!-- Optional: Affiliate -->
+                <td data-col="affiliate">
+                  <% if policy.sub_agent.present? %>
+                    <span class="fw-semibold"><%= policy.sub_agent.display_name %></span>
+                    <% if policy.sub_agent.mobile.present? %>
+                      <small class="text-muted d-block"><%= policy.sub_agent.mobile %></small>
+                    <% end %>
+                  <% else %>
+                    <span class="text-muted">—</span>
+                  <% end %>
+                </td>
+                <!-- Optional: Ambassador -->
+                <td data-col="ambassador">
+                  <% if policy.distributor.present? %>
+                    <span class="fw-semibold"><%= policy.distributor.display_name %></span>
+                  <% else %>
+                    <span class="text-muted">—</span>
+                  <% end %>
+                </td>
+                <!-- Optional: Main Agent Commission -->
+                <td data-col="main_agent_comm">
+                  <% if policy.main_agent_commission_amount.present? && policy.main_agent_commission_amount > 0 %>
+                    <%= indian_currency(policy.main_agent_commission_amount) %>
+                  <% else %>
+                    <span class="text-muted">—</span>
+                  <% end %>
+                </td>
+                <!-- Optional: Main Agent Commission % -->
+                <td data-col="main_agent_comm_pct">
+                  <% pct = policy.main_agent_commission_percentage || policy.main_agent_commission_percent %>
+                  <%= pct.present? && pct > 0 ? "#{pct}%" : '—' %>
+                </td>
+                <!-- Optional: Sub Agent Commission -->
+                <td data-col="sub_agent_comm">
+                  <% if policy.sub_agent_commission_amount.present? && policy.sub_agent_commission_amount > 0 %>
+                    <%= indian_currency(policy.sub_agent_commission_amount) %>
+                  <% else %>
+                    <span class="text-muted">—</span>
+                  <% end %>
+                </td>
+                <!-- Optional: Sub Agent Commission % -->
+                <td data-col="sub_agent_comm_pct">
+                  <%= policy.sub_agent_commission_percentage.present? && policy.sub_agent_commission_percentage > 0 ? "#{policy.sub_agent_commission_percentage}%" : '—' %>
+                </td>
+                <!-- Optional: Reference By -->
+                <td data-col="reference_by"><%= policy.reference_by_name.presence || '—' %></td>
+                <!-- Optional: Broker Name -->
+                <td data-col="broker_name"><%= policy.broker_name.presence || '—' %></td>
+                <!-- Actions (always visible) -->
+                <td>
+                  <div class="d-flex gap-1">
+                    <% if can_view?('health_insurances') %>
+                      <%= link_to admin_health_insurance_path(policy), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                        <i class="bi bi-eye"></i>
+                      <% end %>
+                    <% end %>
+                    <% if can_edit?('health_insurances') %>
+                      <%= link_to edit_admin_health_insurance_path(policy), class: "btn btn-sm btn-outline-warning", title: "Edit" do %>
+                        <i class="bi bi-pencil"></i>
+                      <% end %>
+                    <% end %>
+                    <% if policy.has_been_renewed? %>
+                      <span class="btn btn-sm btn-success disabled" title="This policy has been renewed">
+                        <i class="bi bi-check-circle"></i>
+                        <span class="d-none d-md-inline ms-1">Renewed</span>
+                      </span>
+                    <% elsif policy.can_be_renewed? %>
+                      <% days_to_expiry = (policy.policy_end_date - Date.current).to_i %>
+                      <%
+                        button_class = if days_to_expiry <= 7
+                          'btn-danger'
+                        elsif days_to_expiry <= 30
+                          'btn-warning text-dark fw-bold'
+                        else
+                          'btn-success text-white fw-bold'
+                        end
+                      %>
+                      <% if can_edit?('health_insurances') %>
+                        <%= link_to renew_admin_health_insurance_path(policy),
+                            class: "btn btn-sm #{button_class}",
+                            title: "Renew Policy (#{days_to_expiry} days to expiry)",
+                            style: "min-width:70px;" do %>
+                          <i class="bi bi-arrow-clockwise"></i>
+                          <span class="d-none d-md-inline ms-1">Renew</span>
+                        <% end %>
+                      <% end %>
+                    <% elsif policy.is_renewal? %>
+                      <span class="btn btn-sm btn-outline-secondary disabled" title="This is a renewal policy">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        <span class="d-none d-md-inline ms-1">Renewal</span>
+                      </span>
+                    <% end %>
+                    <% if can_delete?('health_insurances') %>
+                      <%= link_to admin_health_insurance_path(policy),
+                          class: "btn btn-sm btn-outline-danger delete-policy-btn",
+                          title: "Delete Policy & All Data",
+                          method: :delete,
+                          data: {
+                            policy_number: policy.policy_number,
+                            customer_name: policy.customer&.display_name,
+                            company_name: policy.insurance_company_name,
+                            premium_amount: number_to_currency(policy.total_premium, unit: 'Rs. ', precision: 0),
+                            turbo_method: :delete,
+                            turbo_confirm: false
+                          },
+                          onclick: "return confirmPolicyDeletion(this, event);" do %>
+                        <i class="bi bi-trash"></i>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <% if @health_insurances.respond_to?(:current_page) %>
+        <div class="card-footer bg-transparent border-0">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+              <% if @health_insurances.respond_to?(:total_count) %>
+                <small class="text-muted">
+                  Showing <strong><%= @health_insurances.offset_value + 1 %></strong>–<strong><%= [@health_insurances.offset_value + @health_insurances.limit_value, @health_insurances.total_count].min %></strong> of <strong><%= number_with_delimiter(@health_insurances.total_count) %></strong>
+                </small>
+              <% end %>
+              <%= render 'shared/per_page_selector' %>
+            </div>
+            <% if @health_insurances.respond_to?(:total_pages) && @health_insurances.total_pages > 1 %>
+              <%= paginate @health_insurances %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-hospital fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No health insurance policies found</h5>
+        <p class="text-muted mb-3">
+          <% if params[:search].present? || params[:insurance_type].present? || params[:payment_mode].present? %>
+            Try adjusting your search criteria or
+            <%= link_to "view all policies", admin_health_insurances_path, class: "text-decoration-none" %>.
+          <% else %>
+            Start by adding your first health insurance policy to the system.
+          <% end %>
+        </p>
+        <% if can_create?('health_insurances') %>
+          <%= link_to new_admin_health_insurance_path, class: "btn btn-primary" do %>
+            <i class="bi bi-plus-lg me-1"></i>Add First Health Policy
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Health Insurance Customize Columns Modal -->
+<div class="modal fade" id="hiColConfigModal" tabindex="-1" aria-labelledby="hiColConfigModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-semibold" id="hiColConfigModalLabel">
+          <i class="bi bi-layout-three-columns me-2 text-primary"></i>Customize Columns
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body pt-3">
+        <div class="border rounded p-3" style="background:#f8fbff;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="fw-semibold text-primary">Select Columns</span>
+            <div class="form-check mb-0">
+              <input type="checkbox" class="form-check-input" id="hi-col-check-all">
+              <label class="form-check-label fw-semibold" for="hi-col-check-all">Check All</label>
+            </div>
+          </div>
+          <div class="row g-2" id="hi-col-checkboxes"></div>
+          <div class="mt-3 text-muted small">
+            <i class="bi bi-info-circle me-1"></i>Maximum <strong>9 columns</strong> can be selected. <strong>Actions</strong> is always visible.
+          </div>
+          <div id="hi-col-validation" class="alert alert-danger mt-2 mb-0 py-2 d-none">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            <span id="hi-col-validation-text">Maximum 9 columns allowed.</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary px-4" id="hi-apply-cols">
+          <i class="bi bi-check-lg me-1"></i>Apply Changes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Health Insurance Column Config ─────────────────────────────────────────
+const HI_COL_MAX = 9;
+const HI_COL_KEY = 'health_insurance_columns_v1';
+
+const HI_COL_CONFIG = [
+  { key: 'policy',              label: 'Policy',                 defaultOn: true  },
+  { key: 'customer',            label: 'Customer',               defaultOn: true  },
+  { key: 'company',             label: 'Insurance Company',      defaultOn: true  },
+  { key: 'source',              label: 'Source & Type',          defaultOn: true  },
+  { key: 'coverage',            label: 'Coverage (Sum Insured)', defaultOn: true  },
+  { key: 'premium',             label: 'Total Premium',          defaultOn: true  },
+  { key: 'status',              label: 'Status',                 defaultOn: true  },
+  { key: 'policy_holder',       label: 'Policy Holder',          defaultOn: false },
+  { key: 'insurance_type',      label: 'Insurance Type',         defaultOn: false },
+  { key: 'plan_name',           label: 'Plan Name',              defaultOn: false },
+  { key: 'net_premium',         label: 'Net Premium',            defaultOn: false },
+  { key: 'start_date',          label: 'Policy Start Date',      defaultOn: false },
+  { key: 'end_date',            label: 'Policy End Date',        defaultOn: false },
+  { key: 'booking_date',        label: 'Booking Date',           defaultOn: false },
+  { key: 'payment_mode',        label: 'Payment Mode',           defaultOn: false },
+  { key: 'affiliate',           label: 'Affiliate / Sub Agent',  defaultOn: false },
+  { key: 'ambassador',          label: 'Ambassador',             defaultOn: false },
+  { key: 'main_agent_comm',     label: 'Main Agent Commission',  defaultOn: false },
+  { key: 'main_agent_comm_pct', label: 'Main Agent Comm. %',     defaultOn: false },
+  { key: 'sub_agent_comm',      label: 'Sub Agent Commission',   defaultOn: false },
+  { key: 'sub_agent_comm_pct',  label: 'Sub Agent Comm. %',      defaultOn: false },
+  { key: 'reference_by',        label: 'Reference By',           defaultOn: false },
+  { key: 'broker_name',         label: 'Broker Name',            defaultOn: false },
+];
+
+function hiGetCols() {
+  try { var s = localStorage.getItem(HI_COL_KEY); if (s) return JSON.parse(s); } catch(e) {}
+  return HI_COL_CONFIG.filter(function(c) { return c.defaultOn; }).map(function(c) { return c.key; });
+}
+function hiSaveCols(cols) { localStorage.setItem(HI_COL_KEY, JSON.stringify(cols)); }
+function hiApplyCols(cols) {
+  HI_COL_CONFIG.forEach(function(col) {
+    var show = cols.includes(col.key);
+    document.querySelectorAll('[data-col="' + col.key + '"]').forEach(function(el) {
+      el.style.display = show ? '' : 'none';
+    });
+  });
+  var badge = document.getElementById('hi-col-count-badge');
+  if (badge) badge.textContent = cols.length;
+}
+function hiBuildCbs(cols) {
+  var c = document.getElementById('hi-col-checkboxes');
+  c.innerHTML = '';
+  HI_COL_CONFIG.forEach(function(col) {
+    var d = document.createElement('div'); d.className = 'col-md-4';
+    d.innerHTML = '<div class="form-check" style="padding:.35rem .5rem .35rem 1.75rem;border-radius:6px;">' +
+      '<input class="form-check-input hi-col-cb" type="checkbox" id="hi-cb-' + col.key + '" value="' + col.key + '"' + (cols.includes(col.key) ? ' checked' : '') + '>' +
+      '<label class="form-check-label" for="hi-cb-' + col.key + '">' + col.label + '</label></div>';
+    c.appendChild(d);
+  });
+}
+function hiSyncCheckAll() {
+  var cbs = document.querySelectorAll('.hi-col-cb');
+  var all = Array.from(cbs).every(function(cb) { return cb.checked; });
+  var any = Array.from(cbs).some(function(cb) { return cb.checked; });
+  var ca = document.getElementById('hi-col-check-all');
+  if (ca) { ca.checked = all; ca.indeterminate = !all && any; }
+}
+function hiHideVal() { document.getElementById('hi-col-validation').classList.add('d-none'); }
+function hiShowVal(msg) { document.getElementById('hi-col-validation-text').textContent = msg; document.getElementById('hi-col-validation').classList.remove('d-none'); }
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Apply saved columns on page load
+  hiApplyCols(hiGetCols());
+
+  // Open column config modal
+  var hiColBtn = document.getElementById('hi-col-config-btn');
+  if (hiColBtn) {
+    hiColBtn.addEventListener('click', function() {
+      hiBuildCbs(hiGetCols()); hiSyncCheckAll(); hiHideVal();
+      new bootstrap.Modal(document.getElementById('hiColConfigModal')).show();
+    });
+  }
+
+  // Check All
+  var hiCheckAll = document.getElementById('hi-col-check-all');
+  if (hiCheckAll) {
+    hiCheckAll.addEventListener('change', function() {
+      var cbs = document.querySelectorAll('.hi-col-cb');
+      if (this.checked && cbs.length > HI_COL_MAX) {
+        hiShowVal('Cannot select all — maximum is ' + HI_COL_MAX + ' columns.'); this.checked = false; return;
+      }
+      hiHideVal();
+      var checked = this.checked;
+      cbs.forEach(function(cb) { cb.checked = checked; });
+      hiSyncCheckAll();
+    });
+  }
+
+  // Individual checkbox
+  var hiCbList = document.getElementById('hi-col-checkboxes');
+  if (hiCbList) {
+    hiCbList.addEventListener('change', function(e) {
+      if (!e.target.classList.contains('hi-col-cb')) return;
+      var count = document.querySelectorAll('.hi-col-cb:checked').length;
+      if (count > HI_COL_MAX) { e.target.checked = false; hiShowVal('Maximum ' + HI_COL_MAX + ' columns allowed.'); }
+      else hiHideVal();
+      hiSyncCheckAll();
+    });
+  }
+
+  // Apply Changes
+  var hiApplyBtn = document.getElementById('hi-apply-cols');
+  if (hiApplyBtn) {
+    hiApplyBtn.addEventListener('click', function() {
+      var sel = Array.from(document.querySelectorAll('.hi-col-cb:checked')).map(function(cb) { return cb.value; });
+      if (!sel.length) { hiShowVal('Please select at least 1 column.'); return; }
+      if (sel.length > HI_COL_MAX) { hiShowVal('Maximum ' + HI_COL_MAX + ' columns allowed.'); return; }
+      hiSaveCols(sel); hiApplyCols(sel);
+      bootstrap.Modal.getInstance(document.getElementById('hiColConfigModal')).hide();
+    });
+  }
+
+  // ── Advanced filter toggle ─────────────────────────────────────────────────
+  var hiToggleBtn = document.getElementById('toggle-hi-adv-filter');
+  var hiPanel     = document.getElementById('hi-adv-panel');
+  var hiDot       = document.getElementById('hi-adv-dot');
+
+  if (hiToggleBtn) {
+    hiToggleBtn.addEventListener('click', function() {
+      var open = hiPanel.style.display !== 'none';
+      hiPanel.style.display = open ? 'none' : 'block';
+      hiToggleBtn.classList.toggle('btn-outline-secondary', open);
+      hiToggleBtn.classList.toggle('btn-secondary', !open);
+      if (!open) initHiSelect2();
+    });
+  }
+
+  function initHiSelect2() {
+    if (typeof $ === 'undefined') return;
+    $('.hi-adv-select2').each(function() {
+      if ($(this).data('select2')) return;
+      $(this).select2({ theme: 'bootstrap-5', width: '100%', allowClear: true, placeholder: $(this).find('option:first').text() });
+    });
+  }
+
+  if (hiPanel && hiPanel.style.display !== 'none') initHiSelect2();
+
+  if (hiPanel) {
+    var hiAdvFields = hiPanel.querySelectorAll('select, input[type=date]');
+    hiAdvFields.forEach(function(el) {
+      el.addEventListener('change', function() {
+        var anyFilled = Array.from(hiAdvFields).some(function(f) { return f.value !== ''; });
+        hiDot.classList.toggle('d-none', !anyFilled);
+      });
+    });
+  }
+});
+
+// ── Policy deletion confirmation ───────────────────────────────────────────
+function confirmPolicyDeletion(element, event) {
+  event.preventDefault();
+  const { policyNumber, customerName, companyName, premiumAmount } = element.dataset;
+  const msg = `⚠️ PERMANENT DELETION WARNING ⚠️\n\nYou are about to permanently delete:\n\n📋 Policy: ${policyNumber}\n👤 Customer: ${customerName}\n🏢 Company: ${companyName}\n💰 Premium: ${premiumAmount}\n\n🗑️ This will also delete ALL associated data:\n• Policy members and nominees\n• Commission payouts and invoices\n• Related lead records\n• All uploaded documents\n\n❌ THIS CANNOT BE UNDONE!\n\nAre you absolutely sure you want to proceed?`;
+  if (!confirm(msg)) return false;
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = element.href;
+  form.style.display = 'none';
+  const csrf = document.querySelector('meta[name="csrf-token"]');
+  if (csrf) { const i = document.createElement('input'); i.type='hidden'; i.name='authenticity_token'; i.value=csrf.getAttribute('content'); form.appendChild(i); }
+  const m = document.createElement('input'); m.type='hidden'; m.name='_method'; m.value='delete'; form.appendChild(m);
+  document.body.appendChild(form);
+  form.submit();
+  return false;
+}
+</script>

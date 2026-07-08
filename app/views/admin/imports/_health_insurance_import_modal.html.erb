@@ -1,0 +1,92 @@
+<!-- Health Insurance Import Modal -->
+<div class="modal fade" id="healthInsuranceImportModal" tabindex="-1" aria-labelledby="healthInsuranceImportModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title" id="healthInsuranceImportModalLabel">
+          <i class="fas fa-heartbeat me-2"></i>
+          Import Health Insurance Policies
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <%= form_with url: admin_import_health_insurances_path, method: :post, multipart: true, local: true, class: "import-form" do |form| %>
+        <div class="modal-body">
+          <div class="alert alert-info" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Health Insurance Import Requirements:</strong>
+            <ul class="mb-0 mt-2">
+              <li>Customer must exist (link by email)</li>
+              <li>Required: policy_number, premium details</li>
+              <li>Automatic commission calculation</li>
+              <li>Duplicate policy number detection</li>
+            </ul>
+          </div>
+
+          <div class="mb-3">
+            <label for="healthInsuranceFile" class="form-label fw-bold">
+              <i class="fas fa-file-upload me-1"></i>
+              Select Health Insurance Data File
+            </label>
+            <%= form.file_field :file,
+                                id: "healthInsuranceFile",
+                                class: "form-control",
+                                accept: ".csv,.xlsx,.xls",
+                                required: true %>
+            <div class="form-text">
+              Supported formats: CSV, Excel (.xlsx, .xls). Maximum size: 10MB
+            </div>
+          </div>
+
+          <!-- Sample Data Preview -->
+          <div class="border rounded p-3 bg-light">
+            <h6 class="text-muted mb-2">
+              <i class="fas fa-eye me-1"></i>
+              Sample Data Format:
+            </h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered">
+                <thead class="table-dark">
+                  <tr>
+                    <th>customer_email</th>
+                    <th>policy_number</th>
+                    <th>insurance_company</th>
+                    <th>sum_insured</th>
+                    <th>net_premium</th>
+                    <th>plan_name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>john@example.com</td>
+                    <td>HLT001234</td>
+                    <td>HDFC ERGO</td>
+                    <td>500000</td>
+                    <td>25000</td>
+                    <td>Complete Health</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>
+            Cancel
+          </button>
+          <%= link_to download_template_admin_imports_path(template_type: 'health_insurances'),
+                      class: "btn btn-outline-info",
+                      target: "_blank" do %>
+            <i class="fas fa-download me-1"></i> Download Template
+          <% end %>
+          <%= form.submit "Import Health Insurance", class: "btn btn-info" do %>
+            <i class="fas fa-upload me-1"></i>
+            Import Health Insurance
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,185 @@
+<% content_for :title, "Affiliate Payout Details" %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1"><%= @affiliate[:name] %></h1>
+    <p class="text-muted mb-0"><%= @affiliate[:email] %></p>
+  </div>
+  <%= link_to 'Back to Affiliate Payouts', admin_affiliate_payouts_path, class: 'btn btn-outline-secondary' %>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+  <div class="col-md-2">
+    <div class="card border-info">
+      <div class="card-body text-center py-3">
+        <h6 class="card-title text-info mb-1">Total Leads</h6>
+        <h3 class="text-info mb-0"><%= @summary[:total_leads] %></h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card border-success">
+      <div class="card-body text-center py-3">
+        <h6 class="card-title text-success mb-1">Total Commission</h6>
+        <h3 class="text-success mb-0">Rs. <%= @summary[:total_commission].round(0) %></h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card border-primary">
+      <div class="card-body text-center py-3">
+        <h6 class="card-title text-primary mb-1">Paid</h6>
+        <h3 class="text-primary mb-0">Rs. <%= @summary[:paid_amount].round(0) %></h3>
+        <small class="text-muted"><%= @summary[:paid_count] %> leads</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card border-warning">
+      <div class="card-body text-center py-3">
+        <h6 class="card-title text-warning mb-1">Pending</h6>
+        <h3 class="text-warning mb-0">Rs. <%= @summary[:pending_amount].round(0) %></h3>
+        <small class="text-muted"><%= @summary[:pending_count] %> leads</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-secondary">
+      <div class="card-body py-3">
+        <h6 class="card-title mb-2">Payment Progress</h6>
+        <% paid_percentage = @summary[:total_commission] > 0 ? (@summary[:paid_amount] / @summary[:total_commission] * 100) : 0 %>
+        <div class="progress mb-1" style="height: 8px;">
+          <div class="progress-bar bg-success" style="width: <%= paid_percentage %>%"></div>
+        </div>
+        <small class="text-muted"><%= paid_percentage.round(1) %>% completed</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lead-wise Commission Details -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0">Lead-wise Commission Details</h5>
+    <small class="text-muted"><%= @lead_wise_commissions.count %> total leads</small>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Lead Details</th>
+            <th>Policy Info</th>
+            <th>Commission</th>
+            <th>Status</th>
+            <th>Payment Details</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if @lead_wise_commissions.any? %>
+            <% @lead_wise_commissions.each do |lead| %>
+              <tr>
+                <td>
+                  <div>
+                    <strong>Lead #<%= lead[:lead_id] %></strong><br>
+                    <small class="text-muted"><%= lead[:customer_name] %></small>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <span class="badge bg-light text-dark"><%= lead[:policy_type] %></span><br>
+                    <small class="text-muted"><%= lead[:policy_number] %></small>
+                  </div>
+                </td>
+                <td>
+                  <strong class="text-success"><%= indian_currency(lead[:commission_amount]) %></strong>
+                </td>
+                <td>
+                  <% if lead[:status] == 'paid' %>
+                    <span class="badge bg-success">
+                      <i class="fas fa-check-circle"></i> Paid
+                    </span>
+                  <% elsif lead[:status] == 'pending' %>
+                    <span class="badge bg-warning">
+                      <i class="fas fa-clock"></i> Pending
+                    </span>
+                  <% elsif lead[:status] == 'processing' %>
+                    <span class="badge bg-info">
+                      <i class="fas fa-spinner"></i> Processing
+                    </span>
+                  <% else %>
+                    <span class="badge bg-secondary"><%= lead[:status].titleize %></span>
+                  <% end %>
+                </td>
+                <td>
+                  <% if lead[:status] == 'paid' %>
+                    <div>
+                      <% if lead[:transaction_id].present? %>
+                        <small class="text-muted">
+                          <strong>TXN:</strong> <%= lead[:transaction_id] %>
+                        </small><br>
+                      <% end %>
+                      <% if lead[:payout_date].present? %>
+                        <small class="text-success">
+                          <i class="fas fa-calendar-check"></i>
+                          <%= lead[:payout_date].strftime('%d %b %Y') %>
+                        </small>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <small class="text-muted">-</small>
+                  <% end %>
+                </td>
+                <td>
+                  <small class="text-muted">
+                    <%= lead[:created_at].strftime('%d %b %Y') %><br>
+                    <%= lead[:created_at].strftime('%I:%M %p') %>
+                  </small>
+                </td>
+              </tr>
+            <% end %>
+          <% else %>
+            <tr>
+              <td colspan="6" class="text-center py-4">
+                <div class="text-muted">
+                  <i class="fas fa-info-circle mb-2" style="font-size: 2rem;"></i><br>
+                  No commission records found for this affiliate
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Notes Section (if any) -->
+<% notes = @lead_wise_commissions.map { |lead| lead[:notes] }.compact.uniq.reject(&:blank?) %>
+<% if notes.any? %>
+  <div class="card mt-4">
+    <div class="card-header">
+      <h6 class="card-title mb-0">Payment Notes</h6>
+    </div>
+    <div class="card-body">
+      <% notes.each do |note| %>
+        <p class="mb-2"><i class="fas fa-sticky-note text-muted"></i> <%= note %></p>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<style>
+  .card-title {
+    font-weight: 600;
+  }
+  .table th {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .badge {
+    font-size: 0.8rem;
+  }
+</style>

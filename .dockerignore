@@ -1,0 +1,147 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+CHANGELOG*
+LICENSE*
+
+# Docker files
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Development files
+.env.local
+.env.*.local
+.env.development
+.env.test
+
+# Dependencies
+node_modules/
+bower_components/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+log/
+logs/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+.nyc_output/
+
+# Temporary directories
+tmp/
+temp/
+.tmp/
+
+# Editor and IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.settings/
+.classpath
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+
+# Ruby/Rails specific
+.bundle/
+vendor/bundle/
+*.gem
+.rvm*
+.rbenv*
+.ruby-version
+.ruby-gemset
+.rvmrc
+.byebug_history
+
+# Rails specific
+public/assets/
+public/packs/
+public/packs-test/
+/storage/*
+!/storage/.keep
+/public/uploads/*
+!/public/uploads/.keep
+
+# Test artifacts
+spec/tmp/
+test/tmp/
+coverage/
+.rspec
+.cucumber
+capybara-*.html
+
+# Database
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-shm
+*.sqlite3-wal
+/db/*.sqlite3*
+
+# Assets and compiled files
+/public/assets
+/public/packs*
+/node_modules
+/yarn-error.log
+yarn-debug.log*
+.yarn-integrity
+
+# Configuration files that might contain secrets
+/config/master.key
+/config/credentials.yml.enc
+/config/database.yml
+/config/cable.yml
+.env
+
+# Cache and temporary files
+.sass-cache/
+.cache/
+.parcel-cache/
+
+# Build outputs
+dist/
+build/
+out/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# System files
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Network files
+*.tmp
+.apt_generated
+
+# Terraform (if used for infrastructure)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Kubernetes (if manifests are in the same repo)
+*.local.yaml
+*.local.yml

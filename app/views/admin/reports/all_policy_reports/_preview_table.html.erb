@@ -1,0 +1,166 @@
+<% if @preview_data && @preview_data.any? %>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="bg-light">
+        <tr>
+          <th class="border-0">Policy Details</th>
+          <th class="border-0">Customer</th>
+          <th class="border-0">Policy Type</th>
+          <th class="border-0">Start Date</th>
+          <th class="border-0">End Date</th>
+          <th class="border-0">Premium</th>
+          <th class="border-0">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @preview_data.each do |policy| %>
+          <tr>
+            <!-- Policy Details -->
+            <td>
+              <div>
+                <h6 class="mb-1"><%= policy[:policy_number] %></h6>
+                <small class="text-muted">
+                  <%= policy[:insurance_company] %>
+                </small>
+                <% if policy[:lead_id] %>
+                  <small class="text-muted d-block">
+                    Lead: <%= policy[:lead_id] %>
+                  </small>
+                <% end %>
+              </div>
+            </td>
+
+            <!-- Customer -->
+            <td>
+              <div>
+                <h6 class="mb-1"><%= policy[:customer_name] %></h6>
+                <small class="text-muted">
+                  Policy Holder: <%= policy[:policy_holder] || 'N/A' %>
+                </small>
+              </div>
+            </td>
+
+            <!-- Policy Type -->
+            <td>
+              <span class="badge bg-<%= policy[:policy_type] == 'health' ? 'success' : (policy[:policy_type] == 'motor' ? 'warning' : 'info') %>">
+                <%= policy[:policy_type]&.capitalize %>
+              </span>
+            </td>
+
+            <!-- Start Date -->
+            <td>
+              <% if policy[:start_date] %>
+                <%= policy[:start_date].strftime('%d %b %Y') %>
+              <% else %>
+                <span class="text-muted">N/A</span>
+              <% end %>
+            </td>
+
+            <!-- End Date -->
+            <td>
+              <% if policy[:end_date] %>
+                <%= policy[:end_date].strftime('%d %b %Y') %>
+                <% days_remaining = (policy[:end_date] - Date.current).to_i %>
+                <% if days_remaining < 0 %>
+                  <small class="text-danger d-block">Expired</small>
+                <% elsif days_remaining <= 30 %>
+                  <small class="text-warning d-block">
+                    <%= pluralize(days_remaining, 'day') %> left
+                  </small>
+                <% end %>
+              <% else %>
+                <span class="text-muted">N/A</span>
+              <% end %>
+            </td>
+
+            <!-- Premium -->
+            <td>
+              <div>
+                <strong><%= indian_currency(policy[:premium_amount] || 0) %></strong>
+                <% if policy[:sum_insured] && policy[:sum_insured] > 0 %>
+                  <small class="text-muted d-block">
+                    SI: <%= indian_currency(policy[:sum_insured]) %>
+                  </small>
+                <% end %>
+              </div>
+            </td>
+
+            <!-- Status -->
+            <td>
+              <% case policy[:status] %>
+              <% when 'Expired' %>
+                <span class="badge bg-danger">Expired</span>
+              <% when 'Expiring Soon' %>
+                <span class="badge bg-warning">Expiring Soon</span>
+              <% else %>
+                <span class="badge bg-success">Active</span>
+              <% end %>
+              <% if policy[:payment_mode] %>
+                <small class="text-muted d-block mt-1">
+                  <%= policy[:payment_mode] %>
+                </small>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination for preview (if there are many policies) -->
+  <% if @preview_data.size > 20 %>
+    <div class="card-footer bg-light text-center">
+      <small class="text-muted">
+        Showing first 20 of <%= @preview_data.size %> policies. Full report will contain all policies.
+      </small>
+    </div>
+  <% end %>
+
+  <!-- Summary Statistics -->
+  <div class="card-footer bg-light">
+    <div class="row text-center">
+      <div class="col-md-2">
+        <h6 class="text-muted mb-1">Total Policies</h6>
+        <h4 class="mb-0"><%= @preview_data.size %></h4>
+      </div>
+      <div class="col-md-2">
+        <h6 class="text-muted mb-1">Active</h6>
+        <h4 class="mb-0 text-success">
+          <%= @preview_data.count { |p| p[:status] == 'Active' } %>
+        </h4>
+      </div>
+      <div class="col-md-2">
+        <h6 class="text-muted mb-1">Expiring Soon</h6>
+        <h4 class="mb-0 text-warning">
+          <%= @preview_data.count { |p| p[:status] == 'Expiring Soon' } %>
+        </h4>
+      </div>
+      <div class="col-md-2">
+        <h6 class="text-muted mb-1">Expired</h6>
+        <h4 class="mb-0 text-danger">
+          <%= @preview_data.count { |p| p[:status] == 'Expired' } %>
+        </h4>
+      </div>
+      <div class="col-md-2">
+        <h6 class="text-muted mb-1">Total Premium</h6>
+        <h4 class="mb-0 text-primary">
+          <%= indian_currency(@preview_data.sum { |p| p[:premium_amount] || 0 }) %>
+        </h4>
+      </div>
+      <div class="col-md-2">
+        <h6 class="text-muted mb-1">Total Sum Insured</h6>
+        <h4 class="mb-0 text-info">
+          <%= indian_currency(@preview_data.sum { |p| p[:sum_insured] || 0 }) %>
+        </h4>
+      </div>
+    </div>
+  </div>
+<% else %>
+  <div class="text-center py-5">
+    <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+    <h5 class="text-muted">No data found</h5>
+    <p class="text-muted mb-0">
+      No policies found for the selected filters.
+    </p>
+  </div>
+<% end %>

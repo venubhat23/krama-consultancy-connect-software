@@ -1,0 +1,400 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Agency Code Management</h2>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to new_admin_agency_code_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg me-1"></i>
+      Add New Agency Code
+    <% end %>
+  </div>
+</div>
+
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Agency Codes</h6>
+            <h3 class="mb-0 text-primary"><%= number_with_delimiter(@total_codes) %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-collection text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Health Insurance</h6>
+            <h3 class="mb-0 text-success"><%= number_with_delimiter(@health_codes) %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-heart-pulse text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Motor Insurance</h6>
+            <h3 class="mb-0 text-warning"><%= number_with_delimiter(@motor_codes) %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-car-front text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Life Insurance</h6>
+            <h3 class="mb-0 text-info"><%= number_with_delimiter(@life_codes) %></h3>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-life-preserver text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <%= form_with url: admin_agency_codes_path, method: :get, local: true, class: "d-flex flex-wrap gap-3 align-items-end", id: "search_form" do |form| %>
+      <!-- Search -->
+      <div class="flex-grow-1 min-width-250">
+        <%= form.text_field :search, placeholder: "Search by company, agent name, or code... (min 3 characters)",
+                           value: params[:search],
+                           class: "form-control",
+                           id: "search_input",
+                           data: { min_length: 3 } %>
+      </div>
+
+      <!-- Insurance Type Filter -->
+      <div class="filter-type-small">
+        <%= form.select :insurance_type,
+                       options_for_select([
+                         ['All Types', ''],
+                         ['Health Insurance', 'Health Insurance'],
+                         ['Life Insurance', 'Life Insurance'],
+                         ['Motor and Other Insurance', 'Motor and Other Insurance']
+                       ], params[:insurance_type]),
+                       {},
+                       { class: "form-select", id: "insurance_type_filter" } %>
+      </div>
+
+      <!-- Company Filter -->
+      <div class="filter-company-large">
+        <%= form.select :company,
+                       options_for_select([['All Companies', '']] + @insurance_companies.map { |company| [company, company] }, params[:company]),
+                       {},
+                       { class: "form-select searchable-company-select", id: "company_filter", data: { placeholder: "Search companies..." } } %>
+      </div>
+
+
+      <!-- Actions -->
+      <div class="d-flex gap-2">
+        <%= link_to "Clear", admin_agency_codes_path, class: "btn btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+.min-width-250 {
+  min-width: 250px;
+}
+
+/* Filter spacing adjustments */
+.filter-type-small {
+  min-width: 180px;
+  max-width: 200px;
+}
+
+.filter-company-large {
+  min-width: 280px;
+  flex: 1;
+}
+
+/* Ensure consistent heights for ALL filter elements */
+#search_input,
+.filter-type-small .form-select,
+.filter-company-large .form-select,
+.select2-container--bootstrap-5 .select2-selection--single {
+  height: 38px !important;
+  line-height: 1.5 !important;
+  padding: 6px 12px !important;
+  font-size: 1rem !important;
+  border: 1px solid #ced4da !important;
+  border-radius: 6px !important;
+  box-sizing: border-box !important;
+}
+
+/* Fix Select2 specific styling to match form-select */
+.select2-container--bootstrap-5 .select2-selection__rendered {
+  line-height: 26px !important;
+  padding-left: 12px !important;
+  padding-right: 20px !important;
+}
+
+/* Ensure search input matches exactly */
+#search_input {
+  min-height: 38px !important;
+  max-height: 38px !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .filter-type-small,
+  .filter-company-large {
+    min-width: unset;
+    max-width: unset;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}
+</style>
+
+<!-- Agency Codes Table -->
+<div id="agency-codes-table">
+  <%= render 'agency_codes_table', agency_codes: @agency_codes, total_filtered_count: @total_filtered_count %>
+</div>
+
+
+<style>
+.table-responsive {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table th {
+  background-color: #f8f9fa;
+  border: none;
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1rem 0.75rem;
+}
+
+.table td {
+  border: none;
+  border-bottom: 1px solid #f1f3f4;
+  padding: 1rem 0.75rem;
+  vertical-align: middle;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.badge {
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.company-badge {
+  background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.type-badge-health { background-color: #d4edda; color: #155724; }
+.type-badge-motor { background-color: #fff3cd; color: #856404; }
+.type-badge-life { background-color: #cce7ff; color: #004085; }
+.type-badge-general { background-color: #f8d7da; color: #721c24; }
+.type-badge-other { background-color: #e2e3e5; color: #383d41; }
+
+/* Pagination styling */
+.pagination-wrapper .pagination {
+  margin-bottom: 0;
+}
+
+.pagination-wrapper .pagination .page-link {
+  border-radius: 6px;
+  margin: 0 2px;
+  border: 1px solid #dee2e6;
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.pagination-wrapper .pagination .page-item.active .page-link {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.pagination-wrapper .pagination .page-link:hover {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+  color: #0d6efd;
+}
+
+@media (max-width: 576px) {
+  .pagination-wrapper .pagination {
+    justify-content: center;
+    font-size: 0.8rem;
+  }
+
+  .card-footer .d-flex {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('search_input');
+  const insuranceTypeFilter = document.getElementById('insurance_type_filter');
+  const companyFilter = document.getElementById('company_filter');
+  const searchForm = document.getElementById('search_form');
+  let searchTimeout;
+
+  // Auto-search on typing after 3 characters
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const searchValue = this.value;
+
+    searchTimeout = setTimeout(() => {
+      if (searchValue.length >= 3 || searchValue.length === 0) {
+        searchForm.submit();
+      }
+    }, 500); // 500ms delay after typing stops
+  });
+
+  // Auto-submit on insurance type filter change
+  insuranceTypeFilter.addEventListener('change', function() {
+    searchForm.submit();
+  });
+
+  // Auto-submit on company filter change
+  companyFilter.addEventListener('change', function() {
+    searchForm.submit();
+  });
+
+});
+</script>
+
+<!-- jQuery and Select2 for searchable company dropdown -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function() {
+  // Initialize Select2 for company dropdown
+  $('.searchable-company-select').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Search and select company...',
+    allowClear: true,
+    width: '100%',
+    minimumResultsForSearch: 0, // Show search box always
+    dropdownParent: $('body'),
+    matcher: function(params, data) {
+      // If there are no search terms, return all data
+      if ($.trim(params.term) === '') {
+        return data;
+      }
+
+      // Skip if there is no 'children' property
+      if (typeof data.children === 'undefined') {
+        // Check if the text contains the term (case insensitive)
+        if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+          return data;
+        }
+      }
+
+      // Return null if the term should not be displayed
+      return null;
+    }
+  });
+
+  // Handle Select2 change event for company filter
+  $('.searchable-company-select').on('select2:select select2:clear', function() {
+    // Trigger form submission when company is selected or cleared
+    setTimeout(() => {
+      $('#search_form').submit();
+    }, 100);
+  });
+});
+</script>
+
+<style>
+/* Select2 Bootstrap 5 styling for company dropdown */
+.select2-container--bootstrap-5 .select2-selection--single:focus-within {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.select2-container--bootstrap-5 .select2-selection__rendered {
+  color: #212529;
+}
+
+.select2-container--bootstrap-5 .select2-results__option {
+  padding: 6px 12px;
+  font-size: 1rem;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.select2-dropdown {
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.select2-results__options {
+  max-height: 300px !important;
+  overflow-y: auto;
+}
+
+.select2-search__field {
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 1rem;
+}
+
+.select2-search__field:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  outline: 0;
+}
+</style>

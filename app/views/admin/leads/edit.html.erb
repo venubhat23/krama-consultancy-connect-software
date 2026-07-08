@@ -1,0 +1,1420 @@
+<!-- Edit Lead Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Edit Lead</h2>
+    <p class="text-muted mb-0">Update lead information for <%= @lead.name %></p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to admin_lead_path(@lead), class: "btn btn-outline-info" do %>
+      <i class="bi bi-eye me-1"></i>
+      View Lead
+    <% end %>
+    <%= link_to admin_leads_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Leads
+    <% end %>
+  </div>
+</div>
+
+<!-- Lead Form -->
+<div class="row">
+  <div class="col-md-8">
+        <%= form_with model: [:admin, @lead], local: true, class: "needs-validation", novalidate: true do |form| %>
+      <!-- Customer Type Selection -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">Customer Type</h5>
+        </div>
+        <div class="card-body">
+          <% if @lead.errors.any? %>
+            <div class="alert alert-danger alert-dismissible fade show mb-3">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              <strong>Please correct the following errors:</strong>
+              <ul class="mb-0 mt-2">
+                <% @lead.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <% end %>
+
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <%= form.label :customer_type, class: "form-label" do %>
+                Customer Type <span class="text-danger">*</span>
+              <% end %>
+              <%= form.select :customer_type, options_for_select([
+                ['Individual Customer', 'individual'],
+                ['Corporate Customer', 'corporate']
+              ], @lead.customer_type), { prompt: 'Select Customer Type' }, { class: "form-select", required: true, id: "customer_type" } %>
+              <div class="invalid-feedback">Please select a customer type.</div>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :contact_number, class: "form-label" do %>
+                Contact Number <span class="text-danger">*</span>
+              <% end %>
+              <%
+                # Remove +91 prefix if present for display
+                contact_number_display = @lead.contact_number
+                if contact_number_display.present?
+                  contact_number_display = contact_number_display.gsub(/^\+?91\s?/, '').gsub(/\s+/, '')
+                end
+              %>
+              <%= form.text_field :contact_number,
+                  class: "form-control",
+                  placeholder: "9876543210",
+                  required: true,
+                  value: contact_number_display %>
+              <div class="invalid-feedback">Please provide a contact number.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Individual Customer Fields -->
+      <div id="individual_fields" class="card border-0 shadow-sm mb-4" style="display: <%= @lead.individual? ? 'block' : 'none' %>;">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-person me-2 text-primary"></i>
+            Individual Customer Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+
+            <div class="col-md-4">
+              <%= form.label :first_name, class: "form-label" do %>
+                First Name <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :first_name, class: "form-control", placeholder: "Enter first name" %>
+              <div class="invalid-feedback">Please provide a first name.</div>
+            </div>
+
+            <div class="col-md-4">
+              <%= form.label :middle_name, "Middle Name", class: "form-label" %>
+              <%= form.text_field :middle_name, class: "form-control", placeholder: "Enter middle name" %>
+            </div>
+
+            <div class="col-md-4">
+              <%= form.label :last_name, class: "form-label" do %>
+                Last Name <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :last_name, class: "form-control", placeholder: "Enter last name" %>
+              <div class="invalid-feedback">Please provide a last name.</div>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :email, "Email Address", class: "form-label" %>
+              <%= form.email_field :email, class: "form-control", placeholder: "name@email.com" %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :birth_date, "Date of Birth", class: "form-label" %>
+              <%= form.date_field :birth_date, class: "form-control", min: "1900-01-01", max: "2099-12-31" %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :gender, "Gender", class: "form-label" %>
+              <%= form.select :gender, options_for_select([
+                ['Male', 'male'],
+                ['Female', 'female'],
+                ['Other', 'other']
+              ], @lead.gender), { prompt: 'Select Gender' }, { class: "form-select" } %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :marital_status, "Marital Status", class: "form-label" %>
+              <%= form.select :marital_status, options_for_select([
+                ['Single', 'single'],
+                ['Married', 'married'],
+                ['Divorced', 'divorced'],
+                ['Widowed', 'widowed']
+              ], @lead.marital_status), { prompt: 'Select Status' }, { class: "form-select" } %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :pan_no, "PAN Number", class: "form-label" %>
+              <%= form.text_field :pan_no, class: "form-control", placeholder: "ABCDE1234F", pattern: "[A-Z]{5}[0-9]{4}[A-Z]{1}" %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :birth_place, "Birth Place", class: "form-label" %>
+              <%= form.text_field :birth_place, class: "form-control", placeholder: "Enter birth place" %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :height, "Height", class: "form-label" %>
+              <%= form.select :height, options_for_select([
+                ['Select Height', ''],
+                ['3.0 feet', 3.0], ['3.1 feet', 3.08], ['3.2 feet', 3.17], ['3.3 feet', 3.25], ['3.4 feet', 3.33], ['3.5 feet', 3.42], ['3.6 feet', 3.5], ['3.7 feet', 3.58], ['3.8 feet', 3.67], ['3.9 feet', 3.75], ['3.10 feet', 3.83], ['3.11 feet', 3.92],
+                ['4.0 feet', 4.0], ['4.1 feet', 4.08], ['4.2 feet', 4.17], ['4.3 feet', 4.25], ['4.4 feet', 4.33], ['4.5 feet', 4.42], ['4.6 feet', 4.5], ['4.7 feet', 4.58], ['4.8 feet', 4.67], ['4.9 feet', 4.75], ['4.10 feet', 4.83], ['4.11 feet', 4.92],
+                ['5.0 feet', 5.0], ['5.1 feet', 5.08], ['5.2 feet', 5.17], ['5.3 feet', 5.25], ['5.4 feet', 5.33], ['5.5 feet', 5.42], ['5.6 feet', 5.5], ['5.7 feet', 5.58], ['5.8 feet', 5.67], ['5.9 feet', 5.75], ['5.10 feet', 5.83], ['5.11 feet', 5.92],
+                ['6.0 feet', 6.0], ['6.1 feet', 6.08], ['6.2 feet', 6.17], ['6.3 feet', 6.25], ['6.4 feet', 6.33], ['6.5 feet', 6.42], ['6.6 feet', 6.5], ['6.7 feet', 6.58], ['6.8 feet', 6.67], ['6.9 feet', 6.75], ['6.10 feet', 6.83], ['6.11 feet', 6.92],
+                ['7.0 feet', 7.0], ['7.1 feet', 7.08], ['7.2 feet', 7.17], ['7.3 feet', 7.25], ['7.4 feet', 7.33], ['7.5 feet', 7.42], ['7.6 feet', 7.5], ['7.7 feet', 7.58], ['7.8 feet', 7.67], ['7.9 feet', 7.75], ['7.10 feet', 7.83], ['7.11 feet', 7.92],
+                ['8.0 feet', 8.0], ['8.1 feet', 8.08], ['8.2 feet', 8.17], ['8.3 feet', 8.25], ['8.4 feet', 8.33], ['8.5 feet', 8.42], ['8.6 feet', 8.5], ['8.7 feet', 8.58], ['8.8 feet', 8.67], ['8.9 feet', 8.75], ['8.10 feet', 8.83], ['8.11 feet', 8.92]
+              ], @lead.height), {}, { class: "form-select" } %>
+              <div class="form-text">Select height from the dropdown</div>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :weight, "Weight (Kg)", class: "form-label" %>
+              <%= form.number_field :weight, class: "form-control", min: 10, max: 300, placeholder: "70" %>
+              <div class="form-text">Range: 10 - 300 kg</div>
+            </div>
+
+            <div class="col-md-12">
+              <h6 class="text-secondary mt-4 mb-3">Advance Details</h6>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :education, "Education", class: "form-label" %>
+              <%= form.text_field :education, class: "form-control", placeholder: "Enter education" %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :business_job, "Business/Job", class: "form-label" %>
+              <%= form.select :business_job, options_for_select([
+                ['Salaried', 'salaried'],
+                ['Self Employed', 'self_employed'],
+                ['Business', 'business'],
+                ['Professional', 'professional'],
+                ['Student', 'student'],
+                ['Retired', 'retired'],
+                ['Unemployed', 'unemployed'],
+                ['Other', 'other']
+              ], @lead.business_job), { prompt: 'Select Business/Job' }, { class: "form-select" } %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :business_name, "Name of Business/Job", class: "form-label" %>
+              <%= form.text_field :business_name, class: "form-control", placeholder: "Enter business/job name" %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :job_name, "Job Name", class: "form-label" %>
+              <%= form.text_field :job_name, class: "form-control", placeholder: "Enter job name" %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :occupation, "Occupation", class: "form-label" %>
+              <%= form.text_field :occupation, class: "form-control", placeholder: "Enter occupation" %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :type_of_duty, "Type of Duty", class: "form-label" %>
+              <%= form.text_field :type_of_duty, class: "form-control", placeholder: "Enter type of duty" %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :annual_income, "Annual Income", class: "form-label" %>
+              <%= form.number_field :annual_income, class: "form-control", step: 0.01, placeholder: "Enter annual income" %>
+            </div>
+
+            <div class="col-md-12">
+              <%= form.label :additional_information, "Additional Information", class: "form-label" %>
+              <%= form.text_area :additional_information, class: "form-control", rows: 3, placeholder: "Enter additional notes" %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Corporate Customer Fields -->
+      <div id="corporate_fields" class="card border-0 shadow-sm mb-4" style="display: <%= @lead.corporate? ? 'block' : 'none' %>;">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-building me-2 text-primary"></i>
+            Corporate Customer Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <%= form.label :company_name, class: "form-label" do %>
+                Company Name <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :company_name, class: "form-control", placeholder: "Enter company name" %>
+              <div class="invalid-feedback">Please provide a company name.</div>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :email, class: "form-label" do %>
+                Company Email <span class="text-danger">*</span>
+              <% end %>
+              <%= form.email_field :email, class: "form-control", placeholder: "company@email.com" %>
+              <div class="invalid-feedback">Please provide a valid email address.</div>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :pan_no, "PAN Number", class: "form-label" %>
+              <%= form.text_field :pan_no, class: "form-control", placeholder: "ABCDE1234F", pattern: "[A-Z]{5}[0-9]{4}[A-Z]{1}" %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :gst_no, "GST Number", class: "form-label" %>
+              <%= form.text_field :gst_no, class: "form-control", placeholder: "22AAAAA0000A1Z5", pattern: "[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z0-9A-Z]{1}[0-9A-Z]{1}" %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- General Fields -->
+      <div id="general_fields" class="card border-0 shadow-sm mb-4" style="display: <%= @lead.customer_type.present? ? 'block' : 'none' %>;">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-briefcase me-2 text-primary"></i>
+            Product Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <%= form.label :product_category, class: "form-label" do %>
+                Product Category <span class="text-danger">*</span>
+              <% end %>
+              <%= form.select :product_category, options_for_select([
+                ['Insurance', 'insurance'],
+                ['Investments', 'investments'],
+                ['Loans', 'loans'],
+                ['Taxation', 'taxation']
+              ], @lead.product_category), { prompt: 'Select Category' }, { class: "form-select searchable-select", required: true, id: "product_category", data: { placeholder: "Search and select category..." } } %>
+              <div class="invalid-feedback">Please select a product category.</div>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :product_subcategory, class: "form-label" do %>
+                Product Type <span class="text-danger">*</span>
+              <% end %>
+              <%= form.select :product_subcategory, options_for_select([
+                ['Select Category First', '']
+              ], @lead.product_subcategory), {}, { class: "form-select searchable-select", required: true, id: "product_subcategory", data: { placeholder: "Search and select product type...", selected: @lead.product_subcategory } } %>
+              <div class="invalid-feedback">Please select a product type.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legacy name field (hidden but kept for compatibility) -->
+      <%= form.hidden_field :name, value: @lead.name %>
+
+      <!-- Address Information -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-geo-alt me-2 text-primary"></i>
+            Address Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-12">
+              <%= form.label :address, "Address", class: "form-label" %>
+              <%= form.text_area :address, class: "form-control", rows: 2, placeholder: "Complete address" %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :state, "State", class: "form-label" %>
+              <%= form.select :state,
+                  options_for_select(LocationData.states_for_select, @lead&.state),
+                  { prompt: 'Search and select state...' },
+                  { class: "form-select searchable-select", id: "lead_state", data: { placeholder: "Type to search states..." } } %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :city, "City", class: "form-label" %>
+              <%= form.select :city,
+                  options_for_select(@lead&.city.present? ? [[@lead.city, @lead.city]] : [], @lead&.city),
+                  { prompt: 'Search and select city...' },
+                  { class: "form-select searchable-select", id: "lead_city", disabled: @lead&.state.blank?, data: { placeholder: "Type to search cities...", saved_city: @lead&.city } } %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lead Details -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-info-circle me-2 text-primary"></i>
+            Lead Details
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+
+            <div class="col-md-12">
+              <div class="form-check">
+                <%= form.check_box :is_direct, { checked: @lead.is_direct }, { class: "form-check-input", id: "direct_lead_checkbox" } %>
+                <%= form.label :is_direct, "Direct Lead", class: "form-check-label" %>
+                <small class="form-text text-muted d-block">Check if this is a direct lead, uncheck if referred</small>
+              </div>
+            </div>
+
+            <div class="col-md-6" id="affiliate_selection" style="display: <%= @lead.is_direct ? 'none' : 'block' %>;">
+              <%= form.label :affiliate_id, "Select Affiliate", class: "form-label" %>
+              <%= form.select :affiliate_id, options_for_select([
+                ['Select Affiliate', '']
+              ] + SubAgent.active.collect { |agent| [agent.display_name, agent.id] }, @lead.affiliate_id),
+              { include_blank: false },
+              { class: "form-select searchable-select", id: "affiliate_dropdown_edit", data: { placeholder: "Search and select affiliate...", search_url: "/admin/leads/search_sub_agents" } } %>
+            </div>
+
+            <div class="col-md-6" id="referred_by_field" style="display: <%= @lead.is_direct ? 'none' : 'block' %>;">
+              <%= form.label :referred_by, "Referred By", class: "form-label" %>
+              <%= form.text_field :referred_by, class: "form-control", placeholder: "Agent name or source" %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :current_stage, class: "form-label" do %>
+                Current Stage <span class="text-danger">*</span>
+              <% end %>
+              <%= form.select :current_stage, options_for_select([
+                ['🟢 Lead Generated', 'lead_generated'],
+                ['📅 Consultation Scheduled', 'consultation_scheduled'],
+                ['🤝 One-on-One Discussion', 'one_on_one'],
+                ['🔁 Follow-Up', 'follow_up'],
+                ['✅ Follow-Up Successful', 'follow_up_successful'],
+                ['❌ Follow-Up Unsuccessful', 'follow_up_unsuccessful'],
+                ['🚫 Not Interested', 'not_interested'],
+                ['🔄 Re-Follow Up', 're_follow_up'],
+                ['👤 Convert to Customer', 'converted'],
+                ['📁 Lead Close - Follow-Up Unsuccessful', 'lead_closed']
+              ], @lead.current_stage), { prompt: 'Select Stage' }, { class: "form-select searchable-select", required: true, data: { placeholder: "Search and select stage..." } } %>
+              <div class="invalid-feedback">Please select a current stage.</div>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :lead_source, class: "form-label" do %>
+                Lead Source <span class="text-danger">*</span>
+              <% end %>
+              <%= form.select :lead_source, options_for_select([
+                ['Online', 'online'],
+                ['Offline', 'offline'],
+                ['Agent Referral', 'agent_referral'],
+                ['Walk-in', 'walk_in'],
+                ['Tele Calling', 'tele_calling'],
+                ['Campaign', 'campaign']
+              ], @lead.lead_source), { prompt: 'Select Source' }, { class: "form-select searchable-select", required: true, data: { placeholder: "Search and select lead source..." } } %>
+              <div class="invalid-feedback">Please select a lead source.</div>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :call_disposition, "Call Disposition", class: "form-label" %>
+              <%= form.select :call_disposition, options_for_select([
+                ['📞 Interested', 'interested'],
+                ['❌ Not Interested', 'not_interested'],
+                ['📞 Call Back Later', 'call_back'],
+                ['📝 Follow Up Required', 'follow_up'],
+                ['📵 Number Not Reachable', 'not_reachable'],
+                ['☎️ Wrong Number', 'wrong_number'],
+                ['🚫 Do Not Call', 'do_not_call']
+              ], @lead.call_disposition), { prompt: 'Select Disposition' }, { class: "form-select searchable-select", data: { placeholder: "Search and select call disposition..." } } %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :referral_amount, "Referral Amount", class: "form-label" %>
+              <%= form.number_field :referral_amount, class: "form-control", step: 0.01, placeholder: "0.00" %>
+            </div>
+
+            <div class="col-md-6">
+              <%= form.label :created_date, "Lead Date", class: "form-label" %>
+              <%= form.date_field :created_date, class: "form-control", min: "1900-01-01", max: "2099-12-31",
+                  value: @lead.created_date&.strftime("%Y-%m-%d") %>
+            </div>
+
+            <div class="col-md-12">
+              <%= form.label :notes, "Notes", class: "form-label" %>
+              <%= form.text_area :notes, class: "form-control", rows: 4, placeholder: "Additional notes about the lead..." %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="d-flex gap-2">
+        <%= form.submit "Update Lead", class: "btn btn-primary" %>
+        <%= link_to "Cancel", admin_lead_path(@lead), class: "btn btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Lead Information Sidebar -->
+  <div class="col-md-4">
+    <!-- Lead Status -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">
+          <i class="bi bi-info-circle me-2 text-info"></i>
+          Lead Status
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="status-item mb-3">
+          <div class="d-flex justify-content-between">
+            <span class="text-muted">Current Stage:</span>
+            <span class="badge bg-<%= @lead.current_stage == 'consultation_scheduled' ? 'info' :
+                                       @lead.current_stage == 'one_on_one' ? 'warning' :
+                                       @lead.current_stage == 'converted' ? 'success' : 'dark' %>">
+              <%= @lead.current_stage&.humanize %>
+            </span>
+          </div>
+        </div>
+
+        <div class="status-item mb-3">
+          <div class="d-flex justify-content-between">
+            <span class="text-muted">Created:</span>
+            <span><%= @lead.created_at&.strftime('%d %b %Y') %></span>
+          </div>
+        </div>
+
+        <div class="status-item mb-3">
+          <div class="d-flex justify-content-between">
+            <span class="text-muted">Last Updated:</span>
+            <span><%= @lead.updated_at&.strftime('%d %b %Y') %></span>
+          </div>
+        </div>
+
+        <% if @lead.stage_updated_at %>
+          <div class="status-item mb-0">
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Stage Updated:</span>
+              <span><%= @lead.stage_updated_at&.strftime('%d %b %Y') %></span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+
+    <!-- Lead Guide -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">
+          <i class="bi bi-map me-2 text-info"></i>
+          Lead Stages Guide
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="stage-item mb-2">
+          <div class="d-flex align-items-center">
+            <span class="badge <%= @lead.current_stage == 'lead_generated' ? 'bg-secondary' : 'bg-light text-dark' %> me-2">🟢</span>
+            <strong>Lead Generated</strong>
+          </div>
+          <p class="small text-muted mb-0">Initial stage - Lead entry into system</p>
+        </div>
+
+        <div class="stage-item mb-2">
+          <div class="d-flex align-items-center">
+            <span class="badge <%= @lead.current_stage == 'consultation_scheduled' ? 'bg-info' : 'bg-light text-dark' %> me-2">📅</span>
+            <strong>Consultation Scheduled</strong>
+          </div>
+          <p class="small text-muted mb-0">Meeting scheduled - Initial contact and requirement gathering</p>
+        </div>
+
+        <div class="stage-item mb-2">
+          <div class="d-flex align-items-center">
+            <span class="badge <%= @lead.current_stage == 'one_on_one' ? 'bg-warning' : 'bg-light text-dark' %> me-2">🤝</span>
+            <strong>One-on-One</strong>
+          </div>
+          <p class="small text-muted mb-0">Personal meeting - Detailed discussion and product presentation</p>
+        </div>
+
+        <div class="stage-item mb-2">
+          <div class="d-flex align-items-center">
+            <span class="badge <%= @lead.current_stage == 'follow_up' ? 'bg-primary' : 'bg-light text-dark' %> me-2">🔁</span>
+            <strong>Follow-Up</strong>
+          </div>
+          <p class="small text-muted mb-0">Following up - Regular contact to maintain engagement</p>
+        </div>
+
+        <div class="stage-item mb-2">
+          <div class="d-flex align-items-center">
+            <span class="badge <%= @lead.current_stage == 'follow_up_successful' ? 'bg-success' : 'bg-light text-dark' %> me-2">✅</span>
+            <strong>Follow-Up Successful</strong>
+          </div>
+          <p class="small text-muted mb-0">Successful follow-up - Positive response received</p>
+        </div>
+
+        <div class="stage-item mb-2">
+          <div class="d-flex align-items-center">
+            <span class="badge <%= @lead.current_stage == 'follow_up_unsuccessful' ? 'bg-danger' : 'bg-light text-dark' %> me-2">❌</span>
+            <strong>Follow-Up Unsuccessful</strong>
+          </div>
+          <p class="small text-muted mb-0">Unsuccessful follow-up - No positive response</p>
+        </div>
+
+        <div class="stage-item mb-2">
+          <div class="d-flex align-items-center">
+            <span class="badge <%= @lead.current_stage == 'not_interested' ? 'bg-secondary' : 'bg-light text-dark' %> me-2">🚫</span>
+            <strong>Not Interested</strong>
+          </div>
+          <p class="small text-muted mb-0">Lead not interested - Customer declined the offer</p>
+        </div>
+
+        <div class="stage-item mb-2">
+          <div class="d-flex align-items-center">
+            <span class="badge <%= @lead.current_stage == 're_follow_up' ? 'bg-info' : 'bg-light text-dark' %> me-2">🔄</span>
+            <strong>Re-Follow Up</strong>
+          </div>
+          <p class="small text-muted mb-0">Re-attempting follow-up - Second attempt to engage</p>
+        </div>
+
+        <div class="stage-item mb-2">
+          <div class="d-flex align-items-center">
+            <span class="badge <%= @lead.current_stage == 'converted' ? 'bg-success' : 'bg-light text-dark' %> me-2">📁</span>
+            <strong>Customer Converted</strong>
+          </div>
+          <p class="small text-muted mb-0">Customer converted - Ready for policy creation</p>
+        </div>
+
+        <div class="stage-item mb-0">
+          <div class="d-flex align-items-center">
+            <span class="badge <%= @lead.current_stage == 'lead_closed' ? 'bg-dark' : 'bg-light text-dark' %> me-2">🔒</span>
+            <strong>Lead Close - Follow-Up Unsuccessful</strong>
+          </div>
+          <p class="small text-muted mb-0">Lead close - Follow-up unsuccessful</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- jQuery and Select2 for searchable dropdowns -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Custom styling for date field -->
+<style>
+  .form-control[type="date"] {
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    background-color: #ffffff;
+  }
+
+  .form-control[type="date"]:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background-color: #ffffff;
+  }
+
+  .form-control[type="date"]::-webkit-calendar-picker-indicator {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23667eea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 16px 16px;
+    cursor: pointer;
+  }
+
+  .form-control[type="date"]::-webkit-calendar-picker-indicator:hover {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%235a67d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+  }
+</style>
+
+<!-- jQuery and Select2 for searchable dropdowns -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Custom Select2 styling -->
+<style>
+  .select2-container--bootstrap-5 .select2-selection--single {
+    height: 38px;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  .select2-container--bootstrap-5 .select2-selection--single:focus-within {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+  .select2-container--bootstrap-5 .select2-selection__rendered {
+    color: #495057;
+    padding-left: 12px;
+    padding-right: 20px;
+    line-height: 36px;
+  }
+  .select2-container--bootstrap-5 .select2-results__option {
+    padding: 8px 12px;
+  }
+  .select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: #0d6efd;
+    color: white;
+  }
+  .select2-dropdown {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  .select2-results__options {
+    max-height: 400px !important;
+    min-height: 200px;
+    overflow-y: auto;
+  }
+  .select2-search__field {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 6px 12px;
+  }
+</style>
+
+<!-- Include Location Data -->
+<script>
+<%= File.read(Rails.root.join('app/assets/javascripts/location_data.js')).html_safe %>
+</script>
+
+<!-- Form Validation Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form');
+  const nameField = form.querySelector('[name="lead[name]"]');
+  const phoneField = form.querySelector('[name="lead[contact_number]"]');
+  const customerTypeField = document.getElementById('customer_type');
+  const productCategoryField = document.getElementById('product_category');
+  const productSubcategoryField = document.getElementById('product_subcategory');
+
+  // Customer type conditional fields
+  const individualFields = document.getElementById('individual_fields');
+  const corporateFields = document.getElementById('corporate_fields');
+  const generalFields = document.getElementById('general_fields');
+
+  // Contact number validation — accepts +91 format, validates without overwriting user input
+  function validateContactNumber(input) {
+    const mobilePattern = /^[6-9]\d{9}$/;
+    let rawValue = input.value.trim();
+    let digits = rawValue.replace(/\D/g, '');
+
+    // Strip country code prefix if present
+    if (digits.length === 13 && digits.startsWith('91')) digits = digits.slice(2);
+    else if (digits.length === 12 && digits.startsWith('91')) digits = digits.slice(2);
+    else if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
+
+    // Remove previous custom feedback (preserve user's formatted input — do NOT change input.value)
+    input.classList.remove('is-valid', 'is-invalid');
+    const prev = input.parentNode.querySelector('.contact-feedback');
+    if (prev) prev.remove();
+
+    if (rawValue.length === 0) return;
+
+    if (digits.length !== 10) {
+      input.classList.add('is-invalid');
+      const err = document.createElement('div');
+      err.className = 'invalid-feedback contact-feedback';
+      err.textContent = 'Mobile number must be exactly 10 digits';
+      input.parentNode.appendChild(err);
+    } else if (!mobilePattern.test(digits)) {
+      input.classList.add('is-invalid');
+      const err = document.createElement('div');
+      err.className = 'invalid-feedback contact-feedback';
+      err.textContent = 'Mobile number must start with 6, 7, 8, or 9';
+      input.parentNode.appendChild(err);
+    } else {
+      input.classList.add('is-valid');
+    }
+  }
+
+  phoneField.addEventListener('input', function() { validateContactNumber(this); });
+  phoneField.addEventListener('blur', function() { validateContactNumber(this); });
+  if (phoneField.value) validateContactNumber(phoneField);
+
+  // Handle direct lead checkbox
+  const directLeadCheckbox = document.getElementById('direct_lead_checkbox');
+  const referredByField = document.getElementById('referred_by_field');
+  const affiliateSelection = document.getElementById('affiliate_selection');
+
+  if (directLeadCheckbox && referredByField && affiliateSelection) {
+    directLeadCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        // Direct lead - hide both affiliate and referred by fields
+        affiliateSelection.style.display = 'none';
+        referredByField.style.display = 'none';
+
+        // Clear values
+        const affiliateDropdown = document.getElementById('affiliate_dropdown_edit');
+        const referredByInput = referredByField.querySelector('input');
+        if (affiliateDropdown) affiliateDropdown.value = '';
+        if (referredByInput) referredByInput.value = '';
+      } else {
+        // Referred lead - show both affiliate and referred by fields
+        affiliateSelection.style.display = 'block';
+        referredByField.style.display = 'block';
+      }
+    });
+  }
+
+  // Handle customer type change
+  if (customerTypeField) {
+    customerTypeField.addEventListener('change', function() {
+      const selectedType = this.value;
+
+      // Hide all customer type specific fields
+      if (individualFields) individualFields.style.display = 'none';
+      if (corporateFields) corporateFields.style.display = 'none';
+      if (generalFields) generalFields.style.display = 'none';
+
+      // Clear required attributes from all fields
+      const allInputs = form.querySelectorAll('#individual_fields input, #individual_fields select, #corporate_fields input, #corporate_fields select');
+      allInputs.forEach(input => {
+        input.removeAttribute('required');
+      });
+
+      if (selectedType === 'individual') {
+        if (individualFields) individualFields.style.display = 'block';
+        if (generalFields) generalFields.style.display = 'block';
+
+        // Set required fields for individual
+        const firstNameField = form.querySelector('[name="lead[first_name]"]');
+        const lastNameField = form.querySelector('[name="lead[last_name]"]');
+        if (firstNameField) firstNameField.setAttribute('required', 'required');
+        if (lastNameField) lastNameField.setAttribute('required', 'required');
+      } else if (selectedType === 'corporate') {
+        if (corporateFields) corporateFields.style.display = 'block';
+        if (generalFields) generalFields.style.display = 'block';
+
+        // Set required fields for corporate
+        const companyNameField = form.querySelector('[name="lead[company_name]"]');
+        const emailField = form.querySelector('#corporate_fields [name="lead[email]"]');
+        if (companyNameField) companyNameField.setAttribute('required', 'required');
+        if (emailField) emailField.setAttribute('required', 'required');
+      }
+    });
+  }
+
+  // Product category handling
+  const subcategoryOptions = {
+    'insurance': [
+      ['Life Insurance', 'life'],
+      ['Health Insurance', 'health'],
+      ['Motor Insurance', 'motor'],
+      ['General Insurance', 'general'],
+      ['Travel Insurance', 'travel'],
+      ['General Insurance', 'other']
+    ],
+    'investments': [
+      ['Mutual Fund', 'mutual_fund'],
+      ['Gold', 'gold'],
+      ['NPS', 'nps'],
+      ['Bonds', 'bonds'],
+      ['Other', 'other']
+    ],
+    'loans': [
+      ['Personal Loan', 'personal'],
+      ['Home Loan', 'home'],
+      ['Business Loan', 'business'],
+      ['Other', 'other']
+    ],
+    'taxation': [
+      ['ITR', 'itr'],
+      ['Other', 'other']
+    ]
+  };
+
+  if (productCategoryField && productSubcategoryField) {
+    // Load subcategories on page load if category is already selected
+    const currentCategory = productCategoryField.value;
+    if (currentCategory && subcategoryOptions[currentCategory]) {
+      productSubcategoryField.innerHTML = '<option value="">Select Product Type</option>';
+      subcategoryOptions[currentCategory].forEach(function(option) {
+        const optionElement = document.createElement('option');
+        optionElement.value = option[1];
+        optionElement.textContent = option[0];
+        if (optionElement.value === productSubcategoryField.dataset.selected) {
+          optionElement.selected = true;
+        }
+        productSubcategoryField.appendChild(optionElement);
+      });
+      productSubcategoryField.disabled = false;
+    }
+
+    // Handle both native change and Select2 change events
+    productCategoryField.addEventListener('change', function() {
+      const selectedCategory = this.value;
+      handleCategoryChange(selectedCategory);
+    });
+
+    // Also handle Select2 change event
+    $('#product_category').on('select2:select', function (e) {
+      const selectedValue = e.params.data.id;
+      handleCategoryChange(selectedValue);
+    });
+
+    function handleCategoryChange(selectedCategory) {
+      // First destroy Select2 on subcategory if it exists
+      const $subcategorySelect = $(productSubcategoryField);
+      if ($subcategorySelect.hasClass('select2-hidden-accessible')) {
+        $subcategorySelect.select2('destroy');
+      }
+
+      productSubcategoryField.innerHTML = '<option value="">Select Product Type</option>';
+
+      if (selectedCategory && subcategoryOptions[selectedCategory]) {
+        productSubcategoryField.disabled = false;
+        subcategoryOptions[selectedCategory].forEach(function(option) {
+          const optionElement = document.createElement('option');
+          optionElement.value = option[1];
+          optionElement.textContent = option[0];
+          productSubcategoryField.appendChild(optionElement);
+        });
+
+        // Reinitialize Select2 for the subcategory dropdown
+        setTimeout(() => {
+          $subcategorySelect.select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Search and select product type...',
+            allowClear: true,
+            width: '100%',
+            minimumResultsForSearch: 0,
+            dropdownParent: $('body')
+          });
+        }, 50);
+      } else {
+        productSubcategoryField.disabled = true;
+      }
+    }
+  }
+
+  // Native HTML5 date picker is now used - no additional formatting needed
+
+  // Form validation
+  form.addEventListener('submit', function(e) {
+    // Ensure Select2 values are properly synced to underlying select elements
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+      // Sync city value from Select2
+      const $citySelect = $('#lead_city');
+      if ($citySelect.hasClass('select2-hidden-accessible')) {
+        const cityValue = $citySelect.val();
+        if (cityValue) {
+          leadCitySelect.value = cityValue;
+          console.log('City value synced:', cityValue);
+        }
+      }
+
+      // Sync state value from Select2
+      const $stateSelect = $('#lead_state');
+      if ($stateSelect.hasClass('select2-hidden-accessible')) {
+        const stateValue = $stateSelect.val();
+        if (stateValue) {
+          leadStateSelect.value = stateValue;
+          console.log('State value synced:', stateValue);
+        }
+      }
+    }
+
+    let isValid = true;
+    const errors = [];
+
+    // Validate name
+    if (nameField.value.trim().length < 2) {
+      errors.push('Lead name must be at least 2 characters long');
+      isValid = false;
+    }
+
+    // Validate phone — strip +91/91/0 prefix before validating and submitting
+    let cleanPhone = phoneField.value.replace(/\D/g, '');
+    if (cleanPhone.length === 12 && cleanPhone.startsWith('91')) cleanPhone = cleanPhone.slice(2);
+    else if (cleanPhone.length === 13 && cleanPhone.startsWith('91')) cleanPhone = cleanPhone.slice(2);
+    else if (cleanPhone.length === 11 && cleanPhone.startsWith('0')) cleanPhone = cleanPhone.slice(1);
+    phoneField.value = cleanPhone; // update field so server receives clean 10-digit number
+
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(cleanPhone)) {
+      errors.push('Please enter a valid Indian mobile number (10 digits starting with 6-9)');
+      isValid = false;
+    }
+
+    // Validate product category and subcategory selection
+    if (!productCategoryField || !productCategoryField.value) {
+      errors.push('Please select a product category');
+      isValid = false;
+    }
+
+    if (!productSubcategoryField || !productSubcategoryField.value) {
+      errors.push('Please select a product type');
+      isValid = false;
+    }
+
+    // Debug logging for city and state values
+    console.log('Final form submission (edit) - City value:', leadCitySelect ? leadCitySelect.value : 'N/A');
+    console.log('Final form submission (edit) - State value:', leadStateSelect ? leadStateSelect.value : 'N/A');
+
+    // HTML5 date field handles date validation automatically
+
+    if (!isValid) {
+      e.preventDefault();
+      alert('Please fix the following errors:\n' + errors.join('\n'));
+    }
+  });
+
+  // Simple State-City Dropdown for Lead Edit Form
+  const leadStateSelect = document.getElementById('lead_state');
+  const leadCitySelect = document.getElementById('lead_city');
+
+  // Use global location data or API fallback
+  let leadCitiesData = {};
+
+  if (window.LocationData && window.LocationData.states) {
+    leadCitiesData = Object.keys(window.LocationData.states).reduce((acc, key) => {
+      acc[key] = window.LocationData.states[key].cities;
+      return acc;
+    }, {});
+  }
+
+  function loadLeadCitiesForState(stateValue, selectedCityValue = null) {
+    console.log('Loading cities for lead edit form:', stateValue);
+    console.log('Selected city to set:', selectedCityValue);
+
+    if (!stateValue) {
+      leadCitySelect.innerHTML = '<option value="">Select State First</option>';
+      leadCitySelect.disabled = true;
+      return;
+    }
+
+    let cities = [];
+
+    // Try to get cities from location data using multiple methods
+    if (window.LocationData && window.LocationData.states) {
+      // Method 1: Direct key match
+      cities = leadCitiesData[stateValue] || [];
+      console.log('Direct key match cities:', cities.length);
+
+      // Method 2: Match by state name if direct key fails
+      if (cities.length === 0) {
+        Object.keys(window.LocationData.states).forEach(key => {
+          const stateData = window.LocationData.states[key];
+          if (stateData.name === stateValue || key === stateValue) {
+            cities = stateData.cities || [];
+            console.log('Found by state name match:', cities.length);
+          }
+        });
+      }
+
+      // Method 3: Case-insensitive search
+      if (cities.length === 0) {
+        const stateLower = stateValue.toLowerCase();
+        Object.keys(window.LocationData.states).forEach(key => {
+          const stateData = window.LocationData.states[key];
+          if (stateData.name.toLowerCase() === stateLower || key.toLowerCase() === stateLower) {
+            cities = stateData.cities || [];
+            console.log('Found by case-insensitive match:', cities.length);
+          }
+        });
+      }
+    }
+
+    if (cities.length > 0) {
+      populateCityDropdownWithSelection(cities, selectedCityValue);
+    } else {
+      console.warn('No cities found for state:', stateValue, 'using fallback');
+      // Fallback: populate with empty and try to preserve selected city
+      populateCityDropdownWithSelection([], selectedCityValue);
+    }
+  }
+
+  function populateCityDropdown(cities, selectedCityValue = null) {
+    // First destroy Select2 if it exists
+    const $leadCitySelect = $(leadCitySelect);
+    if ($leadCitySelect.hasClass('select2-hidden-accessible')) {
+      $leadCitySelect.select2('destroy');
+    }
+
+    // Get the saved city from either parameter or data attribute
+    const savedCity = selectedCityValue || leadCitySelect.dataset.savedCity || '<%= @lead&.city || "" %>';
+
+    // Clear dropdown and add cities
+    leadCitySelect.innerHTML = '<option value="">Select City</option>';
+
+    // Track if saved city is found in the list
+    let savedCityFound = false;
+
+    // If cities are available, populate them
+    if (cities && cities.length > 0) {
+      cities.forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        option.textContent = city;
+        if (savedCity && city === savedCity) {
+          option.selected = true;
+          savedCityFound = true;
+        }
+        leadCitySelect.appendChild(option);
+      });
+      leadCitySelect.disabled = false;
+    }
+
+    // If saved city wasn't in the list but exists, add it as an option
+    if (savedCity && !savedCityFound) {
+      const option = document.createElement('option');
+      option.value = savedCity;
+      option.textContent = savedCity;
+      option.selected = true;
+      leadCitySelect.appendChild(option);
+      leadCitySelect.disabled = false;
+      console.log('Added saved city as additional option:', savedCity);
+    }
+
+    // Ensure city is disabled only if no state is selected and no saved city
+    if (!cities.length && !savedCity) {
+      leadCitySelect.disabled = true;
+    }
+
+    console.log(`Loaded ${cities.length} cities for leads edit form, selected: ${savedCity}`);
+
+    // Reinitialize Select2
+    setTimeout(() => {
+      $leadCitySelect.select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select city...',
+        allowClear: false, // Changed to prevent clearing
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+
+      // Add change event handler to ensure value is properly set
+      $leadCitySelect.on('select2:select', function(e) {
+        const selectedCity = e.params.data.id;
+        leadCitySelect.value = selectedCity;
+        console.log('City selected via Select2:', selectedCity);
+      });
+
+      // Ensure the saved city is selected in Select2
+      if (savedCity && leadCitySelect.value === savedCity) {
+        $leadCitySelect.val(savedCity).trigger('change.select2');
+      }
+    }, 50);
+  }
+
+  function populateCityDropdownWithSelection(cities, selectedCityValue = null) {
+    // First destroy Select2 if it exists
+    const $leadCitySelect = $(leadCitySelect);
+    if ($leadCitySelect.hasClass('select2-hidden-accessible')) {
+      $leadCitySelect.select2('destroy');
+    }
+
+    // Get the saved city from parameter or lead data
+    const savedCity = selectedCityValue || '<%= @lead&.city || "" %>';
+    console.log('Populating cities with selection:', savedCity);
+
+    // Clear dropdown and add cities
+    leadCitySelect.innerHTML = '<option value="">Select City</option>';
+
+    // Track if saved city is found in the list
+    let savedCityFound = false;
+
+    // If cities are available, populate them
+    if (cities && cities.length > 0) {
+      cities.forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        option.textContent = city;
+        if (savedCity && city === savedCity) {
+          option.selected = true;
+          savedCityFound = true;
+          console.log('Found and selected saved city:', city);
+        }
+        leadCitySelect.appendChild(option);
+      });
+      leadCitySelect.disabled = false;
+    }
+
+    // If saved city wasn't in the list but exists, add it as an option
+    if (savedCity && !savedCityFound) {
+      const option = document.createElement('option');
+      option.value = savedCity;
+      option.textContent = savedCity;
+      option.selected = true;
+      leadCitySelect.appendChild(option);
+      leadCitySelect.disabled = false;
+      console.log('Added saved city as additional option:', savedCity);
+      savedCityFound = true;
+    }
+
+    // Ensure city is disabled only if no state is selected and no saved city
+    if (!cities.length && !savedCity) {
+      leadCitySelect.disabled = true;
+    }
+
+    console.log(`Loaded ${cities.length} cities for leads edit form, selected: ${savedCity}, found: ${savedCityFound}`);
+
+    // Reinitialize Select2
+    setTimeout(() => {
+      $leadCitySelect.select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select city...',
+        allowClear: false,
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+
+      // Add change event handler to ensure value is properly set
+      $leadCitySelect.on('select2:select', function(e) {
+        const selectedCity = e.params.data.id;
+        leadCitySelect.value = selectedCity;
+        console.log('City selected via Select2:', selectedCity);
+      });
+
+      // Force set the saved city value in Select2
+      if (savedCity && savedCityFound) {
+        $leadCitySelect.val(savedCity);
+        $leadCitySelect.trigger('change.select2');
+        console.log('Forced Select2 to show saved city:', savedCity);
+      }
+    }, 100);
+  }
+
+  // Setup lead edit form state-city functionality
+  if (leadStateSelect && leadCitySelect) {
+    // Initialize state dropdown with Select2
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+      $(leadStateSelect).select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select state...',
+        allowClear: false, // Changed to prevent clearing
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+
+      $(leadCitySelect).select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select city...',
+        allowClear: false, // Changed to prevent clearing
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+
+      // Add change event handler to ensure state value is properly set
+      $(leadStateSelect).on('select2:select', function(e) {
+        const selectedState = e.params.data.id;
+        leadStateSelect.value = selectedState;
+        console.log('State selected via Select2:', selectedState);
+        loadLeadCitiesForState(selectedState);
+      });
+
+      // Add change event handler for city to ensure value is properly set
+      $(leadCitySelect).on('select2:select', function(e) {
+        const selectedCity = e.params.data.id;
+        leadCitySelect.value = selectedCity;
+        console.log('City selected via Select2:', selectedCity);
+      });
+    }
+
+    leadStateSelect.addEventListener('change', function() {
+      loadLeadCitiesForState(this.value);
+    });
+
+    // Load cities if state is pre-selected (improved initialization)
+    const savedState = '<%= @lead&.state || "" %>';
+    const savedCity = '<%= @lead&.city || "" %>';
+
+    console.log('Initializing lead edit form with saved state:', savedState, 'and city:', savedCity);
+
+    // Initialize Select2 first, then check state value
+    setTimeout(() => {
+      console.log('Starting edit form initialization...');
+      console.log('Saved state:', savedState);
+      console.log('Saved city:', savedCity);
+      console.log('Lead state select value:', leadStateSelect.value);
+
+      // Check if state is present (either from saved value or dropdown)
+      const currentState = savedState || leadStateSelect.value;
+
+      if (currentState && currentState !== '') {
+        console.log('Processing state:', currentState);
+
+        // Try to find the state in dropdown options
+        const stateOption = Array.from(leadStateSelect.options).find(option =>
+          option.value === currentState || option.text === currentState
+        );
+
+        if (stateOption) {
+          // Set the state value
+          leadStateSelect.value = stateOption.value;
+          $('#lead_state').val(stateOption.value).trigger('change.select2');
+          console.log('Set state dropdown to:', stateOption.value);
+
+          // Load cities for this state after a small delay to ensure Select2 is ready
+          setTimeout(() => {
+            loadLeadCitiesForState(stateOption.value, savedCity);
+          }, 100);
+        } else {
+          // State not in dropdown, but still try to load cities
+          loadLeadCitiesForState(currentState, savedCity);
+        }
+      } else {
+        console.log('No state found, checking if city exists');
+        // If there's a saved city but no state, still show it
+        if (savedCity && savedCity !== '') {
+          console.log('Saved city exists without state, adding it manually');
+          const $leadCitySelect = $(leadCitySelect);
+          leadCitySelect.disabled = false;
+
+          // Clear and add the saved city option
+          leadCitySelect.innerHTML = '<option value="">Select City</option>';
+          const option = document.createElement('option');
+          option.value = savedCity;
+          option.textContent = savedCity;
+          option.selected = true;
+          leadCitySelect.appendChild(option);
+          console.log('Added saved city option:', savedCity);
+
+          // Initialize Select2 and set the value
+          setTimeout(() => {
+            if (!$leadCitySelect.hasClass('select2-hidden-accessible')) {
+              $leadCitySelect.select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Search and select city...',
+                allowClear: false,
+                width: '100%',
+                minimumResultsForSearch: 0
+              });
+            }
+            $leadCitySelect.val(savedCity).trigger('change.select2');
+            console.log('Forced city selection:', savedCity);
+          }, 150);
+        }
+      }
+    }, 500); // Increased delay to ensure all scripts are loaded
+  }
+
+  // Initialize affiliate dropdown with Select2 for edit form
+  const affiliateDropdownEdit = document.getElementById('affiliate_dropdown_edit');
+  if (affiliateDropdownEdit && typeof $ !== 'undefined' && $.fn.select2) {
+    $(affiliateDropdownEdit).select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select affiliate...',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('body'),
+      minimumInputLength: 0, // Allow opening without typing
+      ajax: {
+        url: '/admin/leads/search_sub_agents',
+        dataType: 'json',
+        delay: 250,
+        data: function (params) {
+          return {
+            q: params.term || '', // Send empty query to get default results
+            limit: params.term ? 20 : 10 // Show fewer results when no search term
+          };
+        },
+        processResults: function (data) {
+          return {
+            results: data.results || []
+          };
+        },
+        cache: true
+      },
+      templateResult: function(option) {
+        if (option.loading) return option.text;
+        if (!option.id || option.id === '') {
+          return option.text;
+        }
+
+        // Enhanced template with avatar
+        var initials = option.text.split(' ').map(function(name) {
+          return name.charAt(0).toUpperCase();
+        }).join('').substring(0, 2);
+
+        var $option = $(
+          '<div class="affiliate-option d-flex align-items-center">' +
+            '<div class="affiliate-avatar bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 12px; font-weight: bold;">' +
+              initials +
+            '</div>' +
+            '<div class="affiliate-details">' +
+              '<div class="affiliate-name" style="font-weight: 500;">' + option.text + '</div>' +
+              '<small class="text-muted">ID: #' + option.id + '</small>' +
+            '</div>' +
+          '</div>'
+        );
+        return $option;
+      },
+      templateSelection: function(option) {
+        return option.text || 'Search and select affiliate...';
+      },
+      escapeMarkup: function(markup) {
+        return markup;
+      }
+    });
+  }
+
+  // Initialize all searchable dropdowns with Select2
+  function initializeSearchableDropdowns() {
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+      // Initialize all dropdowns with searchable-select class
+      $('.searchable-select').each(function() {
+        const $element = $(this);
+        const placeholder = $element.data('placeholder') || 'Search and select...';
+
+        // Skip if already initialized
+        if ($element.hasClass('select2-hidden-accessible')) {
+          return;
+        }
+
+        $element.select2({
+          theme: 'bootstrap-5',
+          placeholder: placeholder,
+          allowClear: true,
+          width: '100%',
+          minimumResultsForSearch: 0,
+          dropdownParent: $('body')
+        });
+      });
+    }
+  }
+
+  // Initialize searchable dropdowns after DOM is ready
+  setTimeout(() => {
+    initializeSearchableDropdowns();
+
+    // Explicitly initialize Product Category with Select2 if not already initialized
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+      const $productCategory = $('#product_category');
+      if (!$productCategory.hasClass('select2-hidden-accessible')) {
+        $productCategory.select2({
+          theme: 'bootstrap-5',
+          placeholder: 'Search and select category...',
+          allowClear: true,
+          width: '100%',
+          minimumResultsForSearch: 0,
+          dropdownParent: $('body')
+        });
+      }
+    }
+  }, 100);
+
+  // Reinitialize product subcategory when options are updated
+  if (productCategoryField && productSubcategoryField) {
+    const originalProductCategoryHandler = productCategoryField.onchange;
+    productCategoryField.addEventListener('change', function() {
+      // Call original handler first
+      if (originalProductCategoryHandler) {
+        originalProductCategoryHandler.call(this);
+      }
+
+      // Destroy and reinitialize Select2 for product subcategory
+      const $subcategorySelect = $(productSubcategoryField);
+      if ($subcategorySelect.hasClass('select2-hidden-accessible')) {
+        $subcategorySelect.select2('destroy');
+      }
+
+      setTimeout(() => {
+        $subcategorySelect.select2({
+          theme: 'bootstrap-5',
+          placeholder: 'Search and select product type...',
+          allowClear: true,
+          width: '100%',
+          minimumResultsForSearch: 0,
+          dropdownParent: $('body')
+        });
+      }, 50);
+    });
+  }
+
+});
+</script>

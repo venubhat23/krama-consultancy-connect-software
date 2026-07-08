@@ -1,0 +1,492 @@
+/* CRITICAL LAYOUT FIX - Drwise Layout System */
+/* Override all sidebar and layout issues with highest priority */
+
+/* Force sidebar width to 260px with highest priority - BUT allow collapse */
+.sidebar:not(.collapsed),
+#sidebar:not(.collapsed),
+nav.sidebar:not(.collapsed) {
+  width: 260px !important;
+  min-width: 260px !important;
+  max-width: 260px !important;
+  position: fixed !important;
+  top: 70px !important;
+  left: 0 !important;
+  height: calc(100vh - 70px) !important;
+  z-index: 1040 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  transition: width 0.3s ease !important;
+}
+
+/* When sidebar is collapsed - STRICT 52px width for icons only */
+.sidebar.collapsed,
+#sidebar.collapsed,
+nav.sidebar.collapsed,
+.modern-sidebar.collapsed {
+  width: 52px !important; /* STRICT narrow width */
+  min-width: 52px !important;
+  max-width: 52px !important;
+  position: fixed !important;
+  top: 70px !important;
+  left: 0 !important;
+  height: calc(100vh - 70px) !important;
+  z-index: 1040 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-right: 1px solid #e2e8f0 !important;
+  overflow: hidden !important;
+  padding: 0 !important; /* NO padding */
+  transition: width 0.3s ease !important; /* Width transition only */
+}
+
+/* Force main content margin and positioning - normal sidebar */
+body:not(.sidebar-collapsed) .main-content,
+body:not(.sidebar-collapsed) main.main-content,
+body:not(.sidebar-collapsed) div.main-content,
+body:not(.sidebar-collapsed) .content-wrapper,
+body:not(.sidebar-collapsed) #main-content {
+  position: static !important;
+  margin-top: 70px !important;
+  margin-left: 260px !important;
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
+  width: calc(100% - 260px) !important;
+  height: auto !important;
+  min-height: calc(100vh - 70px) !important;
+  max-width: none !important;
+  overflow-y: visible !important;
+  overflow-x: visible !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  background: #f7fafc !important;
+  transition: margin-left 0.3s ease, width 0.3s ease !important;
+}
+
+/* Main content when sidebar is collapsed - expands to use freed space */
+body.sidebar-collapsed .main-content,
+body.sidebar-collapsed main.main-content,
+body.sidebar-collapsed div.main-content,
+body.sidebar-collapsed .content-wrapper,
+body.sidebar-collapsed #main-content {
+  position: static !important;
+  margin-top: 70px !important;
+  margin-left: 52px !important;
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
+  width: calc(100% - 52px) !important;
+  height: auto !important;
+  min-height: calc(100vh - 70px) !important;
+  max-width: none !important;
+  overflow-y: visible !important;
+  overflow-x: visible !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  background: #f7fafc !important;
+  transition: margin-left 0.3s ease, width 0.3s ease !important;
+}
+
+/* Ensure proper container behavior */
+.main-content .container-fluid {
+  width: 100% !important;
+  max-width: none !important;
+  /* overflow-x was hidden here — removed so dropdowns and popovers aren't clipped */
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  padding: 2rem !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  height: auto !important;
+  min-height: auto !important;
+}
+
+/* Specific fix for motor insurance forms and long content */
+.main-content .card,
+.main-content form,
+.main-content .form-group {
+  position: static !important;
+  overflow: visible !important;
+}
+
+/* Ensure body and html can scroll properly */
+body,
+html {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  height: auto !important;
+  min-height: 100% !important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar,
+  #sidebar,
+  nav.sidebar {
+    top: 60px !important;
+    height: calc(100vh - 60px) !important;
+    transform: translateX(-100%) !important;
+    width: 280px !important;
+  }
+
+  .sidebar.show,
+  #sidebar.show,
+  nav.sidebar.show {
+    transform: translateX(0) !important;
+  }
+
+  .main-content,
+  main.main-content,
+  div.main-content,
+  .content-wrapper,
+  #main-content {
+    margin-top: 60px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    position: static !important;
+  }
+
+  .main-content .container-fluid {
+    padding: 1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar,
+  #sidebar,
+  nav.sidebar {
+    width: 100% !important;
+  }
+
+  .main-content .container-fluid {
+    padding: 1rem !important;
+  }
+}
+
+/* Ensure tables and content fit properly */
+.main-content .table-responsive {
+  width: 100% !important;
+  overflow-x: auto !important;
+  margin: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+.main-content table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: auto !important;
+  background: white !important;
+  border-radius: 12px !important;
+  /* overflow:hidden removed — it clips action dropdowns inside table rows */
+}
+
+.main-content .row {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.main-content .col,
+.main-content [class*="col-"] {
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+  box-sizing: border-box !important;
+}
+
+/* Enhanced Header Design */
+.header {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 70px !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  z-index: 1050 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #43e97b 100%);
+}
+
+/* Ensure stats cards and content fit within boundaries */
+.main-content .stats-card,
+.main-content .card,
+.main-content .page-header {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  background: white !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid #e2e8f0 !important;
+  overflow: hidden !important;
+}
+
+/* Enhanced Card Design */
+.main-content .card {
+  transition: all 0.3s ease !important;
+  position: relative !important;
+}
+
+.main-content .card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12) !important;
+}
+
+.main-content .card-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 1.5rem !important;
+  font-weight: 600 !important;
+}
+
+.main-content .card-body {
+  padding: 1.5rem !important;
+}
+
+/* Button Enhancements */
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 0.75rem 1.5rem !important;
+  font-weight: 500 !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4) !important;
+}
+
+/* Form Enhancements */
+.form-control {
+  border-radius: 10px !important;
+  border: 2px solid #e2e8f0 !important;
+  padding: 0.75rem 1rem !important;
+  transition: all 0.3s ease !important;
+  background: white !important;
+}
+
+.form-control:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15) !important;
+  outline: none !important;
+}
+
+/* Insurance-themed Page Header */
+.page-header {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  margin-bottom: 2rem !important;
+  position: relative !important;
+}
+
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px 2px 0 0;
+}
+
+.page-title {
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+  color: #2d3748 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.page-subtitle {
+  color: #718096 !important;
+  font-size: 1rem !important;
+  margin-bottom: 0 !important;
+}
+
+/* Stats Cards Enhancement */
+.stats-card {
+  background: white !important;
+  border-radius: 16px !important;
+  padding: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stats-value {
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  color: #2d3748 !important;
+  line-height: 1 !important;
+}
+
+.stats-label {
+  color: #718096 !important;
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Table Enhancements */
+.main-content .table {
+  margin-bottom: 0 !important;
+}
+
+.main-content .table th {
+  background: #f8fafc !important;
+  color: #2d3748 !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+  padding: 1rem !important;
+  font-size: 0.9rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.main-content .table td {
+  padding: 1rem !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  vertical-align: middle !important;
+}
+
+.main-content .table tbody tr:hover {
+  background: rgba(102, 126, 234, 0.05) !important;
+}
+
+/* Navigation Breadcrumb */
+.breadcrumb {
+  background: transparent !important;
+  padding: 0 !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.breadcrumb-item {
+  color: #718096 !important;
+  font-size: 0.9rem !important;
+}
+
+.breadcrumb-item.active {
+  color: #2d3748 !important;
+  font-weight: 500 !important;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  color: #a0aec0 !important;
+  content: "/" !important;
+}
+
+/* Notification/Alert Enhancements */
+.alert {
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 1rem 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  border-left: 4px solid !important;
+}
+
+.alert-info {
+  background: rgba(102, 126, 234, 0.1) !important;
+  border-left-color: #667eea !important;
+  color: #2d3748 !important;
+}
+
+.alert-success {
+  background: rgba(67, 233, 123, 0.1) !important;
+  border-left-color: #43e97b !important;
+  color: #2d3748 !important;
+}
+
+.alert-warning {
+  background: rgba(255, 193, 7, 0.1) !important;
+  border-left-color: #ffc107 !important;
+  color: #2d3748 !important;
+}
+
+.alert-danger {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border-left-color: #ef4444 !important;
+  color: #2d3748 !important;
+}
+
+/* Professional Animation Classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out !important;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out !important;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Insurance-themed Loading States */
+.loading {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.2), transparent);
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}

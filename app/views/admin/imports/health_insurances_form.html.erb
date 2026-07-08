@@ -1,0 +1,1155 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1 fw-bold text-dark">
+      <i class="bi bi-cloud-upload me-2 text-primary"></i>
+      Health Insurance Import
+    </h2>
+    <p class="text-muted mb-0">Import health insurance policies with client data from Excel spreadsheet</p>
+  </div>
+  <div>
+    <%= link_to admin_imports_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Imports
+    <% end %>
+  </div>
+</div>
+
+<!-- Progress Steps -->
+<div class="row mb-5">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body py-3">
+        <div class="d-flex justify-content-center">
+          <div class="step-progress d-flex align-items-center">
+            <div class="step active" id="step1">
+              <div class="step-number">
+                <i class="bi bi-gear"></i>
+              </div>
+              <div class="step-label">Setup & Template</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" id="step2">
+              <div class="step-number">
+                <i class="bi bi-cloud-upload"></i>
+              </div>
+              <div class="step-label">Upload File</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" id="step3">
+              <div class="step-number">
+                <i class="bi bi-eye"></i>
+              </div>
+              <div class="step-label">Preview & Validate</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" id="step4">
+              <div class="step-number">
+                <i class="bi bi-check-circle"></i>
+              </div>
+              <div class="step-label">Complete</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 1: Setup & Download Template -->
+<div class="card border-0 shadow-sm mb-4" id="step1Content">
+  <div class="card-header bg-transparent border-0 d-flex align-items-center">
+    <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+      <i class="bi bi-gear text-primary fs-5"></i>
+    </div>
+    <div>
+      <h5 class="mb-0 fw-bold">Setup Health Insurance Import</h5>
+      <p class="text-muted mb-0 small">Download the health insurance import template and review field requirements</p>
+    </div>
+  </div>
+  <div class="card-body">
+    <!-- Single Type Selection for Health Insurance -->
+    <div class="row g-3 mb-4">
+      <div class="col-12">
+        <div class="health-type-card selected" data-type="health_insurance">
+          <div class="card h-100 border-2 border-success cursor-pointer" style="background: rgba(25, 135, 84, 0.05);">
+            <div class="card-body text-center">
+              <div class="mb-3">
+                <i class="bi bi-heart-pulse-fill text-success" style="font-size: 2.5rem;"></i>
+              </div>
+              <h6 class="fw-bold mb-2">Health Insurance Policies</h6>
+              <p class="text-muted small mb-0">Health insurance policies with client data and commission structure</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Important Notice -->
+    <div class="alert alert-warning border-0 bg-warning bg-opacity-10 mb-4">
+      <div class="d-flex">
+        <div class="bg-warning bg-opacity-20 rounded p-2 me-3 align-self-start">
+          <i class="bi bi-exclamation-triangle text-warning"></i>
+        </div>
+        <div>
+          <h6 class="text-warning fw-bold mb-2">Important Notice</h6>
+          <p class="mb-0">This import creates both clients and their health insurance policies. Existing clients will be linked by name matching.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Download Template Section -->
+    <div class="row">
+      <div class="col-md-8">
+        <div class="d-flex align-items-center">
+          <div class="bg-success bg-opacity-10 rounded p-2 me-3">
+            <i class="bi bi-download text-success"></i>
+          </div>
+          <div>
+            <h6 class="mb-1">Download Template</h6>
+            <p class="text-muted small mb-0">Get the Excel template with correct column structure for health insurance policies</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 text-end">
+        <button type="button" class="btn btn-success btn-lg" id="downloadTemplateBtn">
+          <i class="bi bi-download me-2"></i>Download Template
+        </button>
+      </div>
+    </div>
+
+    <!-- Template Information -->
+    <div class="mt-4" id="templateInfo">
+      <div class="alert alert-info border-0 bg-info bg-opacity-10">
+        <div class="d-flex">
+          <div class="bg-info bg-opacity-20 rounded p-2 me-3 align-self-start">
+            <i class="bi bi-info-circle text-info"></i>
+          </div>
+          <div>
+            <h6 class="text-info fw-bold mb-2">Template Information</h6>
+            <p class="mb-0" id="templateDescription">The Excel template includes the correct column structure for health insurance policies including customer details, policy information, and commission data.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Field Requirements -->
+    <div class="row mt-4 g-3" id="fieldRequirements">
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-success bg-opacity-10 border-0">
+            <h6 class="text-success mb-0 fw-bold">
+              <i class="bi bi-check-circle me-2"></i>Required Fields
+            </h6>
+          </div>
+          <div class="card-body">
+            <ul class="list-unstyled mb-0" id="requiredFieldsList">
+              <li>customer_email (Customer email — used to match or create customer)</li>
+              <li>customer_first_name (Customer first name)</li>
+              <li>policy_holder (Policy holder name)</li>
+              <li>insurance_company_name (Insurance company)</li>
+              <li>policy_number (Policy number)</li>
+              <li>policy_type (New/Renewal/Porting/Migration)</li>
+              <li>insurance_type (Individual/Family Floater/Group)</li>
+              <li>policy_booking_date, policy_start_date, policy_end_date</li>
+              <li>payment_mode (Payment frequency)</li>
+              <li>sum_insured, net_premium, total_premium (> 0)</li>
+              <li>gst_percentage (>= 0)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-info bg-opacity-10 border-0">
+            <h6 class="text-info mb-0 fw-bold">
+              <i class="bi bi-info-circle me-2"></i>Optional Fields
+            </h6>
+          </div>
+          <div class="card-body">
+            <ul class="list-unstyled mb-0" id="optionalFieldsList">
+              <li>customer_last_name (Customer last name)</li>
+              <li>customer_mobile (Customer mobile number)</li>
+              <li>plan_name (Insurance plan name)</li>
+              <li>sub_agent_name (Affiliate name for matching)</li>
+              <li>distributor_name (Distributor name for matching)</li>
+              <li>investor_name (Investor name for matching)</li>
+              <li>agency_code_name (Agency code for matching)</li>
+              <li>broker_name (Broker name for matching)</li>
+              <li>Commission percentages and amounts</li>
+              <li>Additional policy details</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-end mt-4">
+      <button type="button" class="btn btn-primary btn-lg px-4" id="proceedToUpload">
+        Next: Upload File
+        <i class="bi bi-arrow-right ms-2"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Step 2: Upload Completed Excel -->
+<div class="card border-0 shadow-sm mb-4" id="step2Content" style="display: none;">
+  <div class="card-header bg-transparent border-0 d-flex align-items-center">
+    <div class="bg-info bg-opacity-10 rounded-circle p-2 me-3">
+      <i class="bi bi-cloud-upload text-info fs-5"></i>
+    </div>
+    <div>
+      <h5 class="mb-0 fw-bold">Upload Excel File</h5>
+      <p class="text-muted mb-0 small">Upload your completed Excel file with health insurance data</p>
+    </div>
+  </div>
+  <div class="card-body">
+    <form id="uploadForm" enctype="multipart/form-data">
+      <!-- File Upload Area -->
+      <div class="upload-area-container mb-4">
+        <div class="upload-area border-2 border-dashed rounded-3 p-5 text-center position-relative" id="uploadArea">
+          <div class="upload-icon mb-3">
+            <div class="bg-info bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+              <i class="bi bi-cloud-upload text-info" style="font-size: 2rem;"></i>
+            </div>
+          </div>
+          <h5 class="mb-2 fw-bold text-dark">Drop your file here or click to browse</h5>
+          <p class="text-muted mb-3">Supported formats: Excel (.xlsx, .xls) or CSV (.csv)</p>
+          <p class="text-muted small mb-4">Maximum file size: 10MB</p>
+          <input type="file" class="form-control d-none" id="fileInput" name="file" accept=".csv,.xlsx,.xls">
+          <button type="button" class="btn btn-outline-info btn-lg" id="chooseFileBtn">
+            <i class="bi bi-folder2-open me-2"></i>Choose File
+          </button>
+        </div>
+      </div>
+
+      <!-- Selected File Display -->
+      <div class="selected-file mt-4" id="selectedFile" style="display: none;">
+        <div class="card border-success">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center">
+                <div class="bg-success bg-opacity-10 rounded p-3 me-3">
+                  <i class="bi bi-file-earmark-spreadsheet text-success fs-4"></i>
+                </div>
+                <div>
+                  <h6 class="mb-1 fw-bold" id="fileName"></h6>
+                  <p class="text-muted small mb-0" id="fileSize"></p>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline-danger btn-sm" id="removeFile">
+                <i class="bi bi-trash me-1"></i>Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <button type="button" class="btn btn-outline-secondary" id="backToStep1">
+          <i class="bi bi-arrow-left me-2"></i>Previous Step
+        </button>
+        <button type="button" class="btn btn-info btn-lg px-4" id="showPreviewBtn" disabled>
+          <i class="bi bi-eye me-2"></i>Preview & Validate
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Step 3: Preview & Validation Results -->
+<div class="card border-0 shadow-sm mb-4" id="step3Content" style="display: none;">
+  <div class="card-header bg-transparent border-0 d-flex align-items-center">
+    <div class="bg-warning bg-opacity-10 rounded-circle p-2 me-3">
+      <i class="bi bi-eye text-warning fs-5"></i>
+    </div>
+    <div>
+      <h5 class="mb-0 fw-bold">Data Validation & Preview</h5>
+      <p class="text-muted mb-0 small">Review your health insurance data before importing</p>
+    </div>
+  </div>
+  <div class="card-body">
+    <!-- Validation Summary Cards -->
+    <div class="row mb-4 g-3" id="validationSummary" style="display: none;">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body text-center">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <h6 class="text-muted mb-1">Total Records</h6>
+                <h3 class="text-info mb-0 fw-bold" id="totalRows">0</h3>
+              </div>
+              <div class="bg-info bg-opacity-10 rounded p-2">
+                <i class="bi bi-file-earmark-text text-info"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body text-center">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <h6 class="text-muted mb-1">Valid Records</h6>
+                <h3 class="text-success mb-0 fw-bold" id="validRows">0</h3>
+              </div>
+              <div class="bg-success bg-opacity-10 rounded p-2">
+                <i class="bi bi-check-circle text-success"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body text-center">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <h6 class="text-muted mb-1">Invalid Records</h6>
+                <h3 class="text-danger mb-0 fw-bold" id="invalidRows">0</h3>
+              </div>
+              <div class="bg-danger bg-opacity-10 rounded p-2">
+                <i class="bi bi-exclamation-triangle text-danger"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Content Area -->
+    <div class="preview-container">
+      <div id="previewContent">
+        <div class="card border-0 bg-light" id="previewPlaceholder">
+          <div class="card-body text-center py-5">
+            <div class="bg-secondary bg-opacity-10 rounded-circle mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+              <i class="bi bi-table text-secondary fs-4"></i>
+            </div>
+            <h6 class="text-muted mb-1">Data Preview</h6>
+            <p class="text-muted small mb-0">Upload a file and click "Preview & Validate" to see your health insurance data</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-between align-items-center mt-4" id="step3Actions" style="display: none;">
+      <button type="button" class="btn btn-outline-secondary" id="backToStep2">
+        <i class="bi bi-arrow-left me-2"></i>Previous Step
+      </button>
+      <button type="button" class="btn btn-success btn-lg px-4" id="importHealthInsuranceBtn" disabled>
+        <i class="bi bi-upload me-2"></i>Start Import
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Step 4: Import Complete -->
+<div class="card border-0 shadow-sm mb-4" id="step4Content" style="display: none;">
+  <div class="card-header bg-transparent border-0 d-flex align-items-center">
+    <div class="bg-success bg-opacity-10 rounded-circle p-2 me-3">
+      <i class="bi bi-check-circle text-success fs-5"></i>
+    </div>
+    <div>
+      <h5 class="mb-0 fw-bold text-success">Import Completed Successfully!</h5>
+      <p class="text-muted mb-0 small">Your health insurance data has been processed and imported</p>
+    </div>
+  </div>
+  <div class="card-body">
+    <!-- Success Message -->
+    <div class="alert alert-success border-0 bg-success bg-opacity-10 mb-4" id="successMessage">
+      <div class="d-flex">
+        <div class="bg-success bg-opacity-20 rounded p-2 me-3 align-self-start">
+          <i class="bi bi-check-circle-fill text-success"></i>
+        </div>
+        <div>
+          <h6 class="text-success fw-bold mb-2">Import Successful!</h6>
+          <p class="mb-0" id="successDetails">Your health insurance policies have been successfully imported and are now available in the system.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Import Statistics -->
+    <div class="row g-3 mb-4" id="importStats">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body text-center">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <h6 class="text-muted mb-1">Successfully Imported</h6>
+                <h3 class="text-success mb-0 fw-bold" id="importedCount">0</h3>
+              </div>
+              <div class="bg-success bg-opacity-10 rounded p-2">
+                <i class="bi bi-check-circle text-success"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body text-center">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <h6 class="text-muted mb-1">Skipped/Duplicate</h6>
+                <h3 class="text-warning mb-0 fw-bold" id="skippedCount">0</h3>
+              </div>
+              <div class="bg-warning bg-opacity-10 rounded p-2">
+                <i class="bi bi-exclamation-triangle text-warning"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body text-center">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <h6 class="text-muted mb-1">Total Processed</h6>
+                <h3 class="text-primary mb-0 fw-bold" id="totalProcessed">0</h3>
+              </div>
+              <div class="bg-primary bg-opacity-10 rounded p-2">
+                <i class="bi bi-file-earmark-text text-primary"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Skipped Row Errors (shown only when there are errors) -->
+    <div id="importErrors" style="display: none;" class="mb-4">
+      <div class="alert alert-warning border-0 bg-warning bg-opacity-10">
+        <div class="d-flex align-items-center">
+          <div class="bg-warning bg-opacity-20 rounded p-2 me-3">
+            <i class="bi bi-exclamation-triangle text-warning"></i>
+          </div>
+          <div>
+            <h6 class="text-warning fw-bold mb-1">Some records were skipped</h6>
+            <p class="mb-0 small text-muted">The following rows could not be imported. Fix the errors in your file and re-import those rows.</p>
+          </div>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm">
+          <thead class="table-danger">
+            <tr>
+              <th style="width: 80px;">Row #</th>
+              <th>Validation Error</th>
+            </tr>
+          </thead>
+          <tbody id="errorTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Next Steps -->
+    <div class="row g-3">
+      <div class="col-md-6">
+        <a href="<%= admin_health_insurances_path %>" class="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center">
+          <i class="bi bi-heart-pulse-fill me-2"></i>View All Health Policies
+        </a>
+      </div>
+      <div class="col-md-6">
+        <button type="button" class="btn btn-outline-primary btn-lg w-100 d-flex align-items-center justify-content-center" id="importMoreBtn">
+          <i class="bi bi-plus-circle me-2"></i>Import More Policies
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Progress Steps Styling */
+.step-progress {
+  gap: 30px;
+}
+
+.step {
+  text-align: center;
+  opacity: 0.5;
+  transition: all 0.3s ease-in-out;
+  position: relative;
+}
+
+.step.active {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.step.completed {
+  opacity: 1;
+}
+
+.step-number {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #e9ecef;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin: 0 auto 12px auto;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.step.active .step-number {
+  background: linear-gradient(135deg, #0d6efd 0%, #0056d3 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+}
+
+.step.completed .step-number {
+  background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.4);
+}
+
+.step-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6c757d;
+  transition: all 0.3s ease;
+}
+
+.step.active .step-label {
+  color: #0d6efd;
+  font-weight: 700;
+}
+
+.step.completed .step-label {
+  color: #198754;
+  font-weight: 600;
+}
+
+.step-line {
+  width: 80px;
+  height: 3px;
+  background: #e9ecef;
+  margin-top: 25px;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.step.completed + .step-line {
+  background: linear-gradient(90deg, #198754 0%, #0d6efd 100%);
+}
+
+/* Health Type Selection Cards */
+.health-type-card {
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.health-type-card .card {
+  transition: all 0.3s ease-in-out;
+  border: 2px solid transparent !important;
+}
+
+.health-type-card:hover .card {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.health-type-card.selected .card {
+  border-color: #198754 !important;
+  background: rgba(25, 135, 84, 0.05);
+}
+
+/* Upload Area Styling */
+.upload-area {
+  border-color: #dee2e6 !important;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  background: rgba(248, 249, 250, 0.5);
+}
+
+.upload-area:hover {
+  border-color: #17a2b8 !important;
+  background: rgba(23, 162, 184, 0.05);
+  transform: scale(1.01);
+}
+
+.upload-area.drag-over {
+  border-color: #17a2b8 !important;
+  background: rgba(23, 162, 184, 0.1);
+  box-shadow: inset 0 0 20px rgba(23, 162, 184, 0.2);
+}
+
+/* File List Styling */
+.list-unstyled li {
+  padding: 6px 0;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+}
+
+.list-unstyled li:before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #198754;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+/* Table Styling */
+.preview-table {
+  font-size: 0.8rem;
+}
+
+.preview-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  border-color: #dee2e6;
+  color: #495057;
+}
+
+.error-cell {
+  background-color: rgba(248, 215, 218, 0.7) !important;
+  color: #721c24;
+}
+
+.valid-row {
+  background-color: rgba(209, 237, 255, 0.3);
+}
+
+.invalid-row {
+  background-color: rgba(248, 215, 218, 0.3);
+}
+
+/* Enhanced Card Styling */
+.card {
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+/* Cursor Pointer for Clickable Elements */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Enhanced Button Styling */
+.btn {
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-lg {
+  padding: 12px 24px;
+  font-size: 1rem;
+}
+
+/* Alert Enhancements */
+.alert {
+  border-radius: 12px;
+  border: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .step-progress {
+    gap: 15px;
+  }
+
+  .step-number {
+    width: 40px;
+    height: 40px;
+  }
+
+  .step-line {
+    width: 40px;
+  }
+
+  .step-label {
+    font-size: 0.75rem;
+  }
+
+  .upload-area {
+    padding: 3rem 1.5rem !important;
+  }
+}
+
+/* Animation for completed steps */
+.step.completed .step-number {
+  animation: pulse-success 2s infinite;
+}
+
+@keyframes pulse-success {
+  0% {
+    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(25, 135, 84, 0.6);
+  }
+  100% {
+    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.4);
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+  const proceedToUpload = document.getElementById('proceedToUpload');
+  const fileInput = document.getElementById('fileInput');
+  const chooseFileBtn = document.getElementById('chooseFileBtn');
+  const uploadArea = document.getElementById('uploadArea');
+  const selectedFile = document.getElementById('selectedFile');
+  const fileName = document.getElementById('fileName');
+  const fileSize = document.getElementById('fileSize');
+  const removeFile = document.getElementById('removeFile');
+  const showPreviewBtn = document.getElementById('showPreviewBtn');
+  const importHealthInsuranceBtn = document.getElementById('importHealthInsuranceBtn');
+
+  let currentFile = null;
+  let previewData = null;
+
+  // Download template
+  if (downloadTemplateBtn) {
+    downloadTemplateBtn.addEventListener('click', function() {
+      const url = `<%= download_template_admin_imports_path %>?template_type=health_insurances`;
+      window.open(url, '_blank');
+
+      // Add download feedback
+      const originalText = this.innerHTML;
+      this.innerHTML = '<i class="bi bi-check-circle me-2"></i>Downloaded!';
+      this.classList.remove('btn-success');
+      this.classList.add('btn-outline-success');
+
+      setTimeout(() => {
+        this.innerHTML = originalText;
+        this.classList.remove('btn-outline-success');
+        this.classList.add('btn-success');
+      }, 2000);
+    });
+  }
+
+  // Step navigation
+  if (proceedToUpload) {
+    proceedToUpload.addEventListener('click', function() {
+      showStep(2);
+    });
+  }
+
+  const backToStep1 = document.getElementById('backToStep1');
+  if (backToStep1) {
+    backToStep1.addEventListener('click', function() {
+      showStep(1);
+    });
+  }
+
+  const backToStep2 = document.getElementById('backToStep2');
+  if (backToStep2) {
+    backToStep2.addEventListener('click', function() {
+      showStep(2);
+    });
+  }
+
+  function showStep(stepNumber) {
+    // Hide all step contents
+    const step1Content = document.getElementById('step1Content');
+    const step2Content = document.getElementById('step2Content');
+    const step3Content = document.getElementById('step3Content');
+    const step4Content = document.getElementById('step4Content');
+
+    if (step1Content) step1Content.style.display = 'none';
+    if (step2Content) step2Content.style.display = 'none';
+    if (step3Content) step3Content.style.display = 'none';
+    if (step4Content) step4Content.style.display = 'none';
+
+    // Reset and update step indicators
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const step3 = document.getElementById('step3');
+    const step4 = document.getElementById('step4');
+
+    [step1, step2, step3, step4].forEach(step => {
+      if (step) step.className = 'step';
+    });
+
+    // Show current step and mark appropriate steps as completed
+    switch(stepNumber) {
+      case 1:
+        if (step1Content) step1Content.style.display = 'block';
+        if (step1) step1.className = 'step active';
+        break;
+      case 2:
+        if (step2Content) step2Content.style.display = 'block';
+        if (step1) step1.className = 'step completed';
+        if (step2) step2.className = 'step active';
+        break;
+      case 3:
+        if (step3Content) step3Content.style.display = 'block';
+        if (step1) step1.className = 'step completed';
+        if (step2) step2.className = 'step completed';
+        if (step3) step3.className = 'step active';
+        break;
+      case 4:
+        if (step4Content) step4Content.style.display = 'block';
+        if (step1) step1.className = 'step completed';
+        if (step2) step2.className = 'step completed';
+        if (step3) step3.className = 'step completed';
+        if (step4) step4.className = 'step active';
+        break;
+    }
+  }
+
+  // File upload handling
+  if (chooseFileBtn) {
+    chooseFileBtn.addEventListener('click', function() {
+      if (fileInput) fileInput.click();
+    });
+  }
+
+  if (uploadArea) {
+    uploadArea.addEventListener('click', function() {
+      if (fileInput) fileInput.click();
+    });
+  }
+
+  // Drag and drop
+  if (uploadArea) {
+    uploadArea.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.classList.add('drag-over');
+    });
+
+    uploadArea.addEventListener('dragleave', function() {
+      this.classList.remove('drag-over');
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        handleFile(files[0]);
+      }
+    });
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener('change', function() {
+      if (this.files.length > 0) {
+        handleFile(this.files[0]);
+      }
+    });
+  }
+
+  function handleFile(file) {
+    const allowedTypes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'text/csv'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please select a valid Excel or CSV file.');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB.');
+      return;
+    }
+
+    currentFile = file;
+    if (fileName) fileName.textContent = file.name;
+    if (fileSize) fileSize.textContent = formatFileSize(file.size);
+    if (selectedFile) selectedFile.style.display = 'block';
+    if (showPreviewBtn) showPreviewBtn.disabled = false;
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  if (removeFile) {
+    removeFile.addEventListener('click', function() {
+      currentFile = null;
+      if (fileInput) fileInput.value = '';
+      if (selectedFile) selectedFile.style.display = 'none';
+      if (showPreviewBtn) showPreviewBtn.disabled = true;
+      previewData = null;
+      const step3ActionsEl = document.getElementById('step3Actions');
+      if (step3ActionsEl) step3ActionsEl.style.display = 'none';
+      if (importHealthInsuranceBtn) importHealthInsuranceBtn.disabled = true;
+    });
+  }
+
+  // Show preview
+  if (showPreviewBtn) {
+    showPreviewBtn.addEventListener('click', function() {
+    if (!currentFile) return;
+
+    const formData = new FormData();
+    formData.append('file', currentFile);
+
+    showPreviewBtn.disabled = true;
+    showPreviewBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing...';
+
+    console.log('Sending file for preview:', currentFile.name, currentFile.size);
+
+    fetch('<%= health_insurances_preview_admin_imports_path %>', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]') ? document.querySelector('[name="csrf-token"]').content : ''
+      }
+    })
+    .then(response => {
+      console.log('Response status:', response.status);
+      return response.json();
+    })
+    .then(data => {
+      console.log('Response data:', data);
+
+      showPreviewBtn.disabled = false;
+      showPreviewBtn.innerHTML = '<i class="bi bi-eye me-2"></i>Show Preview';
+
+      if (data.success) {
+        console.log('Preview successful, rows:', data.total_rows);
+        previewData = data;
+        displayPreview(data);
+        showStep(3);
+      } else {
+        console.error('Preview failed:', data.error);
+        alert('Error: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Fetch error:', error);
+      showPreviewBtn.disabled = false;
+      showPreviewBtn.innerHTML = '<i class="bi bi-eye me-2"></i>Show Preview';
+      alert('Error processing file: ' + error.message);
+    });
+    });
+  }
+
+  function displayPreview(data) {
+    // Update summary
+    const totalRowsEl = document.getElementById('totalRows');
+    const validRowsEl = document.getElementById('validRows');
+    const invalidRowsEl = document.getElementById('invalidRows');
+    const validationSummaryEl = document.getElementById('validationSummary');
+
+    if (totalRowsEl) totalRowsEl.textContent = data.total_rows;
+    if (validRowsEl) validRowsEl.textContent = data.valid_rows;
+    if (invalidRowsEl) invalidRowsEl.textContent = data.invalid_rows;
+    if (validationSummaryEl) validationSummaryEl.style.display = 'flex';
+
+    // Create preview table
+    let html = '<div class="table-responsive"><table class="table table-bordered preview-table">';
+
+    if (data.preview.length > 0) {
+      // Header
+      const headers = Object.keys(data.preview[0].data);
+      html += '<thead class="table-dark"><tr>';
+      html += '<th style="width: 50px;">#</th>';
+      html += '<th style="width: 80px;">Status</th>';
+      headers.forEach(header => {
+        html += `<th>${header}</th>`;
+      });
+      html += '<th>Errors</th></tr></thead><tbody>';
+
+      // Rows (show first 50)
+      const previewRows = data.preview.slice(0, 50);
+      previewRows.forEach(row => {
+        const rowClass = row.valid ? 'valid-row' : 'invalid-row';
+        html += `<tr class="${rowClass}">`;
+        html += `<td>${row.row}</td>`;
+        html += `<td>${row.valid ? '<span class="badge bg-success">Valid</span>' : '<span class="badge bg-danger">Invalid</span>'}</td>`;
+
+        headers.forEach(header => {
+          const cellValue = row.data[header] || '';
+          html += `<td>${cellValue}</td>`;
+        });
+
+        html += `<td>${row.errors.length > 0 ? row.errors.join('; ') : '-'}</td>`;
+        html += '</tr>';
+      });
+
+      if (data.preview.length > 50) {
+        html += `<tr><td colspan="${headers.length + 3}" class="text-center text-muted">... and ${data.preview.length - 50} more rows</td></tr>`;
+      }
+
+      html += '</tbody></table></div>';
+
+      // Enable import if all rows are valid
+      if (data.invalid_rows === 0) {
+        importHealthInsuranceBtn.disabled = false;
+        html += '<div class="alert alert-success mt-3"><i class="bi bi-check-circle me-2"></i><strong>All records are valid!</strong> You can proceed with the import.</div>';
+      } else {
+        importHealthInsuranceBtn.disabled = true;
+        html += `<div class="alert alert-warning mt-3"><i class="bi bi-exclamation-triangle me-2"></i><strong>${data.invalid_rows} records have errors.</strong> Please fix the errors in your Excel file and re-upload.</div>`;
+      }
+    } else {
+      html += '<tr><td colspan="100%" class="text-center text-muted">No data found in the file.</td></tr></tbody></table></div>';
+    }
+
+    const previewContentEl = document.getElementById('previewContent');
+    const previewPlaceholderEl = document.getElementById('previewPlaceholder');
+    const step3ActionsEl = document.getElementById('step3Actions');
+
+    if (previewContentEl) previewContentEl.innerHTML = html;
+    if (previewPlaceholderEl) previewPlaceholderEl.style.display = 'none';
+    if (step3ActionsEl) step3ActionsEl.style.display = 'block';
+  }
+
+  // Import health insurance
+  if (importHealthInsuranceBtn) {
+    importHealthInsuranceBtn.addEventListener('click', function() {
+    if (!currentFile || !previewData || previewData.invalid_rows > 0) return;
+
+    const formData = new FormData();
+    formData.append('file', currentFile);
+
+    importHealthInsuranceBtn.disabled = true;
+    importHealthInsuranceBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Importing...';
+
+    fetch('<%= admin_import_health_insurances_path %>', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]') ? document.querySelector('[name="csrf-token"]').content : '',
+        'Accept': 'application/json'
+      }
+    })
+    .then(response => {
+      console.log('Import response status:', response.status);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return response.text().then(text => {
+        console.log('Raw response text:', text);
+        try {
+          return JSON.parse(text);
+        } catch (e) {
+          console.error('Failed to parse JSON:', e);
+          console.error('Response text:', text);
+          throw new Error('Invalid JSON response');
+        }
+      });
+    })
+    .then(data => {
+      console.log('Import response data:', data);
+
+      importHealthInsuranceBtn.disabled = false;
+      importHealthInsuranceBtn.innerHTML = '<i class="bi bi-upload me-2"></i>Import Health Insurance';
+
+      if (data.success) {
+        console.log('Import successful, showing step 4');
+        // Show success step
+        showImportSuccess(data);
+        showStep(4);
+      } else {
+        console.error('Import failed:', data.error);
+        alert('Import failed: ' + (data.error || 'Unknown error occurred'));
+      }
+    })
+    .catch(error => {
+      console.error('Import error:', error);
+      importHealthInsuranceBtn.disabled = false;
+      importHealthInsuranceBtn.innerHTML = '<i class="bi bi-upload me-2"></i>Import Health Insurance';
+      alert('Error importing health insurance: ' + error.message);
+    });
+    });
+  }
+
+  // Function to show import success
+  function showImportSuccess(data) {
+    const successDetails = document.getElementById('successDetails');
+    if (successDetails) {
+      successDetails.textContent = data.message;
+    }
+
+    const importedCount = document.getElementById('importedCount');
+    const skippedCount = document.getElementById('skippedCount');
+    const totalProcessed = document.getElementById('totalProcessed');
+
+    if (importedCount) importedCount.textContent = data.imported_count || 0;
+    if (skippedCount) skippedCount.textContent = data.skipped_count || 0;
+    if (totalProcessed) totalProcessed.textContent = data.total_count || 0;
+
+    // Show per-row error details for skipped records
+    const errors = data.errors || [];
+    const importErrors = document.getElementById('importErrors');
+    const errorTableBody = document.getElementById('errorTableBody');
+
+    if (errors.length > 0 && importErrors && errorTableBody) {
+      importErrors.style.display = 'block';
+      errorTableBody.innerHTML = '';
+      errors.forEach(function(error) {
+        const match = error.match(/^Row (\d+): (.+)$/);
+        const rowNum = match ? match[1] : '—';
+        const errorMsg = match ? match[2] : error;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td><strong>Row ${rowNum}</strong></td><td class="text-danger">${errorMsg}</td>`;
+        errorTableBody.appendChild(tr);
+      });
+    }
+  }
+
+  // Handle "Import More Health Insurance" button
+  const importMoreBtn = document.getElementById('importMoreBtn');
+  if (importMoreBtn) {
+    importMoreBtn.addEventListener('click', function() {
+      // Reset form and go back to step 1
+      currentFile = null;
+      previewData = null;
+
+      // Reset file input
+      const fileInput = document.getElementById('fileInput');
+      if (fileInput) fileInput.value = '';
+
+      // Reset step buttons
+      const showPreviewBtn = document.getElementById('showPreviewBtn');
+      const importHealthInsuranceBtn = document.getElementById('importHealthInsuranceBtn');
+
+      if (showPreviewBtn) showPreviewBtn.disabled = true;
+      if (importHealthInsuranceBtn) importHealthInsuranceBtn.disabled = true;
+
+      // Hide file selection display
+      const selectedFile = document.getElementById('selectedFile');
+      if (selectedFile) selectedFile.style.display = 'none';
+
+      // Clear preview content
+      const previewContent = document.getElementById('previewContent');
+      const previewPlaceholder = document.getElementById('previewPlaceholder');
+      if (previewContent && previewPlaceholder) {
+        previewContent.innerHTML = '';
+        previewContent.appendChild(previewPlaceholder);
+        previewPlaceholder.style.display = 'block';
+      }
+
+      // Go back to step 1
+      showStep(1);
+    });
+  }
+});
+</script>

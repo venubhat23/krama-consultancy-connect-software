@@ -1,0 +1,289 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Agents & Users</h2>
+    <p class="text-muted mb-0">Manage administrators, agents, and system users</p>
+  </div>
+  <div class="d-flex gap-2">
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-download me-1"></i>
+        Export
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-text me-2"></i>Export as CSV</a></li>
+        <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-excel me-2"></i>Export as Excel</a></li>
+      </ul>
+    </div>
+    <%= link_to new_admin_user_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg me-1"></i>
+      Add New User
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Users</h6>
+            <h3 class="mb-0 text-primary"><%= number_with_delimiter(@total_users) %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-people text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Active Users</h6>
+            <h3 class="mb-0 text-success"><%= number_with_delimiter(@active_users) %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-person-check text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Agents</h6>
+            <h3 class="mb-0 text-info"><%= number_with_delimiter(@agent_users) %></h3>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-person-badge text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Administrators</h6>
+            <h3 class="mb-0 text-warning"><%= number_with_delimiter(@admin_users) %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-shield-check text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <%= form_with url: admin_users_path, method: :get, local: true, class: "row g-3" do |form| %>
+      <div class="col-md-4">
+        <%= form.text_field :search, placeholder: "Search users by name, email, mobile...", value: params[:search], class: "form-control" %>
+      </div>
+      <div class="col-md-3">
+        <%= form.select :user_type, options_for_select([
+          ['All Types', ''],
+          ['Administrator', 'admin'],
+          ['Agent', 'agent'],
+          ['Affiliate', 'sub_agent']
+        ], params[:user_type]), {}, { class: "form-select" } %>
+      </div>
+      <div class="col-md-3">
+        <%= form.select :status, options_for_select([
+          ['All Status', ''],
+          ['Active', 'active'],
+          ['Inactive', 'inactive']
+        ], params[:status]), {}, { class: "form-select" } %>
+      </div>
+      <div class="col-md-2">
+        <%= form.submit "Filter", class: "btn btn-outline-primary w-100" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Users List -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">Users & Agents List</h5>
+  </div>
+  <div class="card-body p-0">
+    <% if @users.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">User</th>
+              <th class="border-0">Type & Role</th>
+              <th class="border-0">Contact</th>
+              <th class="border-0">Email & Login</th>
+              <th class="border-0">Location</th>
+              <th class="border-0">PAN/GST</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Joined</th>
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @users.each do |user| %>
+              <tr>
+                <td>
+                  <div>
+                    <h6 class="mb-1">
+                      <%= [user.first_name, user.last_name].compact.join(' ') %>
+                    </h6>
+                    <small class="text-muted">+91 <%= user.mobile %></small>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <span class="badge bg-<%=
+                      case user.user_type
+                      when 'admin' then 'danger'
+                      when 'agent' then 'primary'
+                      when 'sub_agent' then 'info'
+                      else 'secondary'
+                      end
+                    %>">
+                      <%= user.user_type&.humanize || 'User' %>
+                    </span>
+                    <% role_label = user.role&.name || user.read_attribute(:role) %>
+                    <% if role_label.present? %>
+                      <div><small class="text-muted"><%= role_label.humanize %></small></div>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <% if user.respond_to?(:company_name) && user.company_name.present? %>
+                      <div class="mb-1"><%= user.company_name %></div>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <div class="mb-1"><strong>Username:</strong> <%= user.email %></div>
+                    <div class="small text-success">
+                      <strong>Password:</strong>
+                      <%= case user.user_type
+                          when 'customer'
+                            'Ganesha@123'
+                          when 'admin', 'agent', 'sub_agent'
+                            'password123'
+                          else
+                            'Contact Admin'
+                          end %>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <% if user.city.present? %>
+                      <div><%= user.city %></div>
+                    <% end %>
+                    <% if user.state.present? %>
+                      <small class="text-muted"><%= user.state %></small>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <% if user.pan_number.present? %>
+                      <div class="small">PAN: <%= user.pan_number %></div>
+                    <% end %>
+                    <% if user.gst_number.present? %>
+                      <div class="small text-muted">GST: <%= user.gst_number %></div>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-<%= user.status? ? 'success' : 'secondary' %>">
+                    <%= user.status? ? 'Active' : 'Inactive' %>
+                  </span>
+                </td>
+                <td>
+                  <div>
+                    <div class="fw-semibold"><%= user.created_at.strftime("%d %b %Y") %></div>
+                    <small class="text-muted">
+                      <% days_ago = (Date.current - user.created_at.to_date).to_i %>
+                      <%= pluralize(days_ago, 'day') %> ago
+                    </small>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <%= link_to admin_user_path(user), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                      <i class="bi bi-eye"></i>
+                    <% end %>
+                    <%= link_to edit_admin_user_path(user), class: "btn btn-sm btn-outline-warning", title: "Edit" do %>
+                      <i class="bi bi-pencil"></i>
+                    <% end %>
+                    <% if user.email.present? %>
+                      <%= link_to "mailto:#{user.email}", class: "btn btn-sm btn-outline-success", title: "Send Email" do %>
+                        <i class="bi bi-envelope"></i>
+                      <% end %>
+                    <% end %>
+                    <% if user.mobile.present? %>
+                      <%= link_to "tel:#{user.mobile}", class: "btn btn-sm btn-outline-info", title: "Call" do %>
+                        <i class="bi bi-telephone"></i>
+                      <% end %>
+                    <% end %>
+                    <%= link_to admin_user_path(user), method: :delete,
+                        class: "btn btn-sm btn-outline-danger",
+                        title: "Delete",
+                        data: {
+                          confirm: "Are you sure you want to delete this user?",
+                          turbo_method: :delete
+                        } do %>
+                      <i class="bi bi-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <% if @users.respond_to?(:total_pages) %>
+        <div class="card-footer bg-transparent border-0">
+          <%= paginate @users %>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-people fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No users found</h5>
+        <p class="text-muted mb-3">
+          <% if params[:search].present? || params[:user_type].present? || params[:status].present? %>
+            Try adjusting your search criteria or
+            <%= link_to "view all users", admin_users_path, class: "text-decoration-none" %>.
+          <% else %>
+            Start by adding your first user to the system.
+          <% end %>
+        </p>
+        <%= link_to new_admin_user_path, class: "btn btn-primary" do %>
+          <i class="bi bi-plus-lg me-1"></i>
+          Add First User
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

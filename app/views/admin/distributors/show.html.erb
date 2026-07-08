@@ -1,0 +1,777 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><%= @distributor.display_name %></h2>
+    <p class="text-muted mb-0">
+      <span class="badge <%= @distributor.active? ? 'bg-success' : 'bg-secondary' %>">
+        <%= @distributor.status.humanize %>
+      </span>
+      <small class="ms-2">Ambassador ID: <%= @distributor.id %></small>
+    </p>
+  </div>
+  <div>
+    <%= link_to edit_admin_distributor_path(@distributor), class: "btn btn-primary me-2" do %>
+      <i class="bi bi-pencil me-1"></i>
+      Edit
+    <% end %>
+    <%= link_to admin_distributors_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Ambassadors
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Personal Information -->
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">
+          <i class="bi bi-person-circle me-2 text-primary"></i>
+          Personal Information
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Full Name</label>
+            <p class="mb-0 fw-medium"><%= @distributor.full_name %></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Contact</label>
+            <p class="mb-0"><%= @distributor.mobile %></p>
+          </div>
+          <% if @distributor.address.present? %>
+            <div class="col-md-12 mb-3">
+              <label class="form-label text-muted">Address</label>
+              <p class="mb-0"><%= @distributor.address %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Associated Investor -->
+    <% if @distributor.investor.present? %>
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-person-badge me-2 text-warning"></i>
+            Associated Investor
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <div class="d-flex align-items-center">
+                <div class="avatar-circle bg-warning bg-opacity-10 me-3 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                  <i class="bi bi-person-fill text-warning fs-5"></i>
+                </div>
+                <div>
+                  <h6 class="mb-0">
+                    <%= link_to @distributor.investor.full_name,
+                        admin_investor_path(@distributor.investor),
+                        class: "text-decoration-none fw-bold text-dark" %>
+                  </h6>
+                  <small class="text-muted">
+                    <i class="bi bi-telephone me-1"></i><%= @distributor.investor.mobile %>
+                    <span class="mx-2">•</span>
+                    <i class="bi bi-envelope me-1"></i><%= @distributor.investor.email %>
+                  </small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 text-end">
+              <%= link_to admin_investor_path(@distributor.investor),
+                  class: "btn btn-outline-warning btn-sm" do %>
+                <i class="bi bi-eye me-1"></i>
+                View Investor
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Bank Details -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">
+          <i class="bi bi-bank me-2 text-success"></i>
+          Bank Details
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Bank Name</label>
+            <p class="mb-0"><%= @distributor.bank_name || 'Not provided' %></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Account Number</label>
+            <p class="mb-0"><%= @distributor.account_no || 'Not provided' %></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">IFSC Code</label>
+            <p class="mb-0"><%= @distributor.ifsc_code || 'Not provided' %></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Account Holder Name</label>
+            <p class="mb-0"><%= @distributor.account_holder_name || 'Not provided' %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assigned Affiliates -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="bi bi-people me-2 text-info"></i>
+          Assigned Affiliates
+          <span class="badge bg-info ms-2"><%= @distributor.assigned_sub_agents.count %></span>
+        </h5>
+        <%= link_to edit_admin_distributor_path(@distributor), class: "btn btn-sm btn-outline-primary" do %>
+          <i class="bi bi-pencil me-1"></i>
+          Manage Assignments
+        <% end %>
+      </div>
+      <div class="card-body">
+        <% if @assigned_affiliates.any? %>
+          <div class="row">
+            <% @assigned_affiliates.each do |affiliate| %>
+              <% stats = @affiliate_stats[affiliate.id] %>
+              <div class="col-12 mb-4">
+                <div class="card border border-2 border-light">
+                  <div class="card-header bg-light">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div class="d-flex align-items-center">
+                        <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3">
+                          <i class="bi bi-person text-primary fs-5"></i>
+                        </div>
+                        <div>
+                          <h6 class="mb-1"><%= affiliate.display_name %></h6>
+                          <small class="text-muted">
+                            <i class="bi bi-telephone me-1"></i><%= affiliate.mobile %>
+                          </small>
+                        </div>
+                      </div>
+                      <div class="text-end">
+                        <span class="badge bg-<%= affiliate.active? ? 'success' : 'secondary' %> fs-6">
+                          <%= affiliate.status.humanize %>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="card-body">
+                    <!-- Performance Stats -->
+                    <div class="row mb-3">
+                      <div class="col-3 text-center">
+                        <h6 class="text-primary mb-1"><%= stats[:total_policies] %></h6>
+                        <small class="text-muted">Total Policies</small>
+                      </div>
+                      <div class="col-3 text-center">
+                        <h6 class="text-success mb-1"><%= indian_currency(stats[:total_premium].to_i) %></h6>
+                        <small class="text-muted">Total Premium</small>
+                      </div>
+                      <div class="col-3 text-center">
+                        <h6 class="text-info mb-1"><%= stats[:customers_count] %></h6>
+                        <small class="text-muted">Customers</small>
+                      </div>
+                      <div class="col-3 text-center">
+                        <h6 class="text-secondary mb-1"><%= indian_currency(stats[:total_commission].to_i) %></h6>
+                        <small class="text-muted">Commission</small>
+                      </div>
+                    </div>
+
+                    <!-- Policy Breakdown -->
+                    <div class="row mb-3">
+                      <div class="col-3 text-center">
+                        <span class="badge bg-success rounded-pill">Health: <%= stats[:health_policies] %></span>
+                      </div>
+                      <div class="col-3 text-center">
+                        <span class="badge bg-primary rounded-pill">Life: <%= stats[:life_policies] %></span>
+                      </div>
+                      <div class="col-3 text-center">
+                        <span class="badge bg-warning rounded-pill">Motor: <%= stats[:motor_policies] %></span>
+                      </div>
+                      <div class="col-3 text-center">
+                        <span class="badge bg-info rounded-pill">Other: <%= stats[:other_policies] %></span>
+                      </div>
+                    </div>
+
+                    <!-- Recent Policies -->
+                    <% if stats[:recent_policies].any? %>
+                      <div class="border-top pt-3">
+                        <h6 class="text-muted mb-2">Recent Policies:</h6>
+                        <div class="row">
+                          <% stats[:recent_policies].each do |policy| %>
+                            <div class="col-md-6 mb-2">
+                              <small class="d-block">
+                                <span class="badge bg-<%= policy[:type].downcase == 'health' ? 'success' : policy[:type].downcase == 'life' ? 'primary' : policy[:type].downcase == 'motor' ? 'warning' : 'info' %>">
+                                  <%= policy[:type] %>
+                                </span>
+                                <%
+                                  if policy[:id].present?
+                                    policy_path = case policy[:type].downcase
+                                    when 'health'
+                                      admin_health_insurance_path(policy[:id])
+                                    when 'life'
+                                      admin_life_insurance_path(policy[:id])
+                                    when 'motor'
+                                      admin_motor_insurance_path(policy[:id])
+                                    when 'other'
+                                      admin_other_insurance_path(policy[:id])
+                                    else
+                                      '#'
+                                    end
+                                  else
+                                    policy_path = '#'
+                                  end
+                                %>
+                                <% if policy[:id].present? %>
+                                  <%= link_to policy[:policy_number], policy_path, class: "ms-2 text-decoration-none fw-bold", target: "_blank" %>
+                                <% else %>
+                                  <span class="ms-2 text-muted fw-bold"><%= policy[:policy_number] || 'N/A' %></span>
+                                <% end %>
+                              </small>
+                              <small class="text-muted d-block">
+                                <%= policy[:customer] %> - <%= indian_currency(policy[:premium].to_i) %>
+                              </small>
+                              <small class="text-muted">
+                                <%= time_ago_in_words(policy[:created_at]) %> ago
+                              </small>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+
+                    <!-- Assignment Info -->
+                    <% assignment = affiliate.distributor_assignment %>
+                    <% if assignment && assignment.assigned_at.present? %>
+                      <div class="border-top pt-2 mt-3">
+                        <small class="text-success">
+                          <i class="bi bi-calendar-check me-1"></i>
+                          Assigned <%= time_ago_in_words(assignment.assigned_at) %> ago
+                          (<%= assignment.assigned_at.strftime('%d %b %Y') %>)
+                        </small>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="text-center py-4">
+            <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+            <h6 class="text-muted mt-3">No Affiliates Assigned</h6>
+            <p class="text-muted mb-3">This ambassador doesn't have any affiliates assigned yet.</p>
+            <%= link_to edit_admin_distributor_path(@distributor), class: "btn btn-primary" do %>
+              <i class="bi bi-plus me-1"></i>
+              Assign Affiliates
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+
+    <!-- Assigned Investor -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">
+          <i class="bi bi-person-badge me-2 text-warning"></i>
+          Assigned Investor
+        </h6>
+        <%= link_to edit_admin_distributor_path(@distributor), class: "btn btn-sm btn-outline-secondary", title: "Change Investor" do %>
+          <i class="bi bi-pencil"></i>
+        <% end %>
+      </div>
+      <div class="card-body">
+        <% if @distributor.investor.present? %>
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+                 style="width:48px;height:48px;">
+              <i class="bi bi-person-fill text-warning fs-5"></i>
+            </div>
+            <div class="flex-grow-1 min-width-0">
+              <%= link_to admin_investor_path(@distributor.investor),
+                  class: "fw-bold text-dark text-decoration-none d-block" do %>
+                <%= @distributor.investor.full_name %>
+              <% end %>
+              <small class="text-muted d-block">
+                <i class="bi bi-envelope me-1"></i><%= @distributor.investor.email %>
+              </small>
+              <small class="text-muted d-block">
+                <i class="bi bi-telephone me-1"></i><%= @distributor.investor.mobile %>
+              </small>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <span class="badge <%= @distributor.investor.active? ? 'bg-success' : 'bg-secondary' %>">
+              <%= @distributor.investor.status.humanize %>
+            </span>
+          </div>
+          <!-- Investor Bank Details -->
+          <% inv = @distributor.investor %>
+          <% if inv.bank_name.present? || inv.account_no.present? || inv.ifsc_code.present? %>
+            <hr class="my-3">
+            <div class="mb-1" style="font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#6c757d;">
+              <i class="bi bi-bank me-1"></i>Bank Details
+            </div>
+            <div class="small">
+              <% if inv.bank_name.present? %>
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                  <span class="text-muted">Bank</span>
+                  <span class="fw-semibold"><%= inv.bank_name %></span>
+                </div>
+              <% end %>
+              <% if inv.account_no.present? %>
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                  <span class="text-muted">Account No</span>
+                  <span class="fw-semibold"><%= inv.account_no %></span>
+                </div>
+              <% end %>
+              <% if inv.ifsc_code.present? %>
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                  <span class="text-muted">IFSC</span>
+                  <span class="fw-semibold"><%= inv.ifsc_code %></span>
+                </div>
+              <% end %>
+              <% if inv.account_holder_name.present? %>
+                <div class="d-flex justify-content-between py-1">
+                  <span class="text-muted">Holder</span>
+                  <span class="fw-semibold"><%= inv.account_holder_name %></span>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+
+          <div class="mt-3">
+            <%= link_to admin_investor_path(@distributor.investor),
+                class: "btn btn-sm btn-outline-warning w-100" do %>
+              <i class="bi bi-eye me-1"></i>View Investor Profile
+            <% end %>
+          </div>
+        <% else %>
+          <div class="text-center py-3">
+            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3"
+                 style="width:56px;height:56px;">
+              <i class="bi bi-person-x text-muted fs-4"></i>
+            </div>
+            <p class="text-muted small mb-3">No investor assigned to this ambassador.</p>
+            <%= link_to edit_admin_distributor_path(@distributor), class: "btn btn-sm btn-outline-warning" do %>
+              <i class="bi bi-plus me-1"></i>Assign Investor
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Profile Image -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">
+          <i class="bi bi-person-circle me-2 text-primary"></i>
+          Profile Picture
+        </h6>
+      </div>
+      <div class="card-body text-center">
+        <% if @distributor.has_r2_profile_image? %>
+          <div class="position-relative d-inline-block">
+            <%= image_tag @distributor.r2_profile_image_url,
+                class: "rounded-circle border",
+                style: "width: 150px; height: 150px; object-fit: cover;",
+                alt: "Profile Picture" %>
+            <div class="position-absolute" style="bottom: 10px; right: 10px;">
+              <span class="badge bg-success">
+                <i class="bi bi-cloud-check"></i> R2
+              </span>
+            </div>
+          </div>
+          <div class="mt-3">
+            <p class="mb-1"><strong>File:</strong> <%= @distributor.r2_profile_image.document_name %></p>
+            <p class="mb-1"><strong>Size:</strong> <%= @distributor.r2_profile_image.document_size %></p>
+          </div>
+        <% elsif @distributor.profile_image.attached? %>
+          <div class="position-relative d-inline-block">
+            <%= image_tag @distributor.profile_image_url,
+                class: "rounded-circle border",
+                style: "width: 150px; height: 150px; object-fit: cover;",
+                alt: "Profile Picture" %>
+            <div class="position-absolute" style="bottom: 10px; right: 10px;">
+              <span class="badge bg-info">
+                <i class="bi bi-cloud"></i> Storage
+              </span>
+            </div>
+          </div>
+          <div class="mt-3">
+            <p class="mb-1"><strong>File:</strong> <%= @distributor.profile_image.filename %></p>
+            <p class="mb-1"><strong>Size:</strong> <%= number_to_human_size(@distributor.profile_image.byte_size) %></p>
+            <p class="mb-1"><strong>Uploaded:</strong> <%= time_ago_in_words(@distributor.profile_image.created_at) %> ago</p>
+          </div>
+        <% else %>
+          <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center mx-auto"
+               style="width: 150px; height: 150px;">
+            <div class="text-center">
+              <i class="bi bi-person-circle text-muted" style="font-size: 3rem;"></i>
+              <p class="text-muted small mt-2">No profile picture</p>
+            </div>
+          </div>
+        <% end %>
+
+        <div class="mt-3">
+          <%= link_to edit_admin_distributor_path(@distributor), class: "btn btn-sm btn-outline-primary" do %>
+            <i class="bi bi-pencil me-1"></i>
+            Update Picture
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">
+          <i class="bi bi-graph-up me-2 text-primary"></i>
+          Performance Overview
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-6 mb-3">
+            <h5 class="text-info mb-1"><%= @distributor_stats[:total_affiliates] %></h5>
+            <small class="text-muted">Total Affiliates</small>
+          </div>
+          <div class="col-6 mb-3">
+            <h5 class="text-success mb-1"><%= @distributor_stats[:active_affiliates] %></h5>
+            <small class="text-muted">Active Affiliates</small>
+          </div>
+          <div class="col-6 mb-3">
+            <h5 class="text-primary mb-1"><%= @distributor_stats[:total_policies] %></h5>
+            <small class="text-muted">Total Policies</small>
+          </div>
+          <div class="col-6 mb-3">
+            <h5 class="text-warning mb-1"><%= @distributor_stats[:total_customers] %></h5>
+            <small class="text-muted">Total Customers</small>
+          </div>
+          <div class="col-12">
+            <h5 class="text-success mb-1"><%= indian_currency(@distributor_stats[:total_premium].to_i) %></h5>
+            <small class="text-muted">Total Premium Generated</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payout Summary -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">
+          <i class="bi bi-wallet2 me-2 text-success"></i>
+          Commission Payouts
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-12 mb-3">
+            <h5 class="text-success mb-1"><%= indian_currency(@distributor_payout_data[:total_amount].to_i) %></h5>
+            <small class="text-muted">Total Commission Earned</small>
+          </div>
+          <div class="col-6 mb-3">
+            <h6 class="text-primary mb-1"><%= indian_currency(@distributor_payout_data[:paid_amount].to_i) %></h6>
+            <small class="text-muted">Paid Amount</small>
+          </div>
+          <div class="col-6 mb-3">
+            <h6 class="text-warning mb-1"><%= indian_currency(@distributor_payout_data[:pending_amount].to_i) %></h6>
+            <small class="text-muted">Pending Amount</small>
+          </div>
+        </div>
+
+        <% if @distributor_payout_data[:leads].any? %>
+          <hr>
+          <div class="mb-2">
+            <small class="text-muted"><%= @distributor_payout_data[:lead_count] %> leads</small>
+          </div>
+          <div class="d-flex flex-wrap gap-1">
+            <% @distributor_payout_data[:leads].each do |lead_data| %>
+              <span class="badge <%= lead_data[:paid] ? 'bg-success' : 'bg-warning' %> text-dark small">
+                <%= lead_data[:lead].lead_id %>: <%= indian_currency(lead_data[:commission].to_i) %>
+                <% if lead_data[:paid] %>
+                  <i class="bi bi-check-circle ms-1"></i>
+                <% end %>
+              </span>
+            <% end %>
+          </div>
+          <div class="mt-2">
+            <small class="text-muted">
+              Paid: <%= indian_currency(@distributor_payout_data[:paid_amount].to_i) %> |
+              Pending: <%= indian_currency(@distributor_payout_data[:pending_amount].to_i) %>
+            </small>
+            <div class="mt-1">
+              <span class="badge bg-<%= @distributor_payout_data[:pending_amount] > 0 ? 'warning' : 'success' %> small">
+                <%= @distributor_payout_data[:pending_amount] > 0 ? 'Pending Payments' : 'All Paid' %>
+              </span>
+            </div>
+          </div>
+        <% else %>
+          <div class="text-center text-muted py-3">
+            <i class="bi bi-wallet2 fs-1 d-block mb-2"></i>
+            <small>No commission payouts yet</small>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Documents -->
+    <% if @distributor.distributor_documents.any? || @distributor.upload_main_document.attached? %>
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h6 class="mb-0">
+            <i class="bi bi-file-earmark me-2 text-warning"></i>
+            Documents
+          </h6>
+        </div>
+        <div class="card-body p-2">
+          <!-- Main Document (ActiveStorage) -->
+          <% if @distributor.upload_main_document.attached? %>
+            <div class="mb-3">
+              <h6 class="text-primary mb-3">
+                <i class="bi bi-file-earmark-check me-2"></i>
+                Main Document
+              </h6>
+              <div class="card border-light shadow-sm">
+                <div class="card-body p-3">
+                  <div class="row align-items-center">
+                    <!-- Document Preview -->
+                    <div class="col-auto">
+                      <div class="document-thumbnail">
+                        <% if @distributor.upload_main_document.content_type&.include?('image') %>
+                          <%= image_tag @distributor.upload_main_document,
+                              class: "rounded border",
+                              style: "width: 80px; height: 80px; object-fit: cover;",
+                              alt: "Main document preview",
+                              onerror: "this.style.display='none'; this.nextElementSibling.style.display='block';" %>
+                          <div class="file-icon-fallback d-none">
+                            <i class="bi bi-file-earmark-image text-info" style="font-size: 3rem;"></i>
+                          </div>
+                        <% else %>
+                          <div class="file-icon-display text-center">
+                            <% case @distributor.upload_main_document.content_type&.downcase %>
+                            <% when /pdf/ %>
+                              <i class="bi bi-file-earmark-pdf text-danger" style="font-size: 3rem;"></i>
+                            <% when /word|document/ %>
+                              <i class="bi bi-file-earmark-word text-primary" style="font-size: 3rem;"></i>
+                            <% else %>
+                              <i class="bi bi-file-earmark text-muted" style="font-size: 3rem;"></i>
+                            <% end %>
+                          </div>
+                        <% end %>
+                      </div>
+                    </div>
+
+                    <!-- Document Details -->
+                    <div class="col">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                          <h6 class="mb-1">
+                            <%= @distributor.upload_main_document.filename %>
+                            <span class="badge bg-primary ms-2">Main Document</span>
+                          </h6>
+
+                          <div class="document-meta small text-muted">
+                            <span class="me-3">
+                              <i class="bi bi-calendar3 me-1"></i>
+                              Uploaded: <%= @distributor.upload_main_document.created_at.strftime("%B %d, %Y") %>
+                            </span>
+                            <span class="me-3">
+                              <i class="bi bi-file-earmark me-1"></i>
+                              Size: <%= number_to_human_size(@distributor.upload_main_document.byte_size) %>
+                            </span>
+                            <span class="me-3">
+                              <i class="bi bi-file-earmark-text me-1"></i>
+                              Type: <%= @distributor.upload_main_document.content_type %>
+                            </span>
+                          </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="btn-group-vertical btn-group-sm">
+                          <%= link_to @distributor.upload_main_document,
+                              class: "btn btn-outline-primary btn-sm",
+                              target: "_blank",
+                              title: "View Document",
+                              data: { toggle: "tooltip" } do %>
+                            <i class="bi bi-eye"></i>
+                          <% end %>
+                          <%= link_to @distributor.upload_main_document,
+                              class: "btn btn-outline-success btn-sm",
+                              download: true,
+                              title: "Download Document",
+                              data: { toggle: "tooltip" } do %>
+                            <i class="bi bi-download"></i>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- Additional Documents (R2) -->
+          <% if @distributor.distributor_documents.any? %>
+            <%= render 'shared/existing_documents_display',
+                       documents: @distributor.distributor_documents,
+                       title: 'Additional Documents',
+                       show_actions: true,
+                       record_type: 'ambassador',
+                       container_class: '' %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Login Credentials -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">
+          <i class="bi bi-key me-2 text-danger"></i>
+          Ambassador Login Credentials
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label text-muted">Email</label>
+          <div class="input-group">
+            <input type="text" class="form-control" value="<%= @distributor.email || 'Not provided' %>" readonly>
+            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('<%= @distributor.email %>')">
+              <i class="bi bi-clipboard"></i>
+            </button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted">Password</label>
+          <%
+            user = User.find_by(email: @distributor.email)
+            display_password = user&.original_password || 'Not available'
+          %>
+          <div class="input-group">
+            <input type="text" class="form-control" value="<%= display_password %>" readonly>
+            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('<%= display_password %>')">
+              <i class="bi bi-clipboard"></i>
+            </button>
+          </div>
+        </div>
+        <% if @distributor.email.blank? || display_password == 'Not available' %>
+          <div class="alert alert-warning mb-0">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Login credentials not yet generated. They will be created when the ambassador account is saved.
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Account Details -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">
+          <i class="bi bi-info-circle me-2 text-secondary"></i>
+          Account Details
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-2">
+          <small class="text-muted">Created</small>
+          <br>
+          <small><%= @distributor.created_at.strftime('%d %B %Y at %I:%M %p') %></small>
+        </div>
+        <div class="mb-2">
+          <small class="text-muted">Last Updated</small>
+          <br>
+          <small><%= @distributor.updated_at.strftime('%d %B %Y at %I:%M %p') %></small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Commission Ledger -->
+<%= render 'shared/ledger_table',
+    ledger_entries: @ledger_entries,
+    closing_balance: @ledger_closing_balance,
+    entity_name: @distributor.display_name %>
+
+<style>
+.document-thumbnail {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.file-icon-display {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.existing-document-item {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.existing-document-item:hover {
+  transform: translateY(-2px);
+}
+
+.existing-document-item:hover .card {
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+}
+
+.btn-group-vertical .btn {
+  margin-bottom: 2px;
+}
+
+.btn-group-vertical .btn:last-child {
+  margin-bottom: 0;
+}
+</style>
+
+<script>
+function copyToClipboard(text) {
+  if (text && text !== 'Not provided' && text !== 'Not available') {
+    navigator.clipboard.writeText(text).then(function() {
+      // Show success message
+      const toast = document.createElement('div');
+      toast.className = 'position-fixed top-0 end-0 p-3';
+      toast.style.zIndex = '11';
+      toast.innerHTML = `
+        <div class="toast show align-items-center text-bg-success border-0" role="alert">
+          <div class="d-flex">
+            <div class="toast-body">
+              <i class="bi bi-check-circle me-2"></i>Copied to clipboard!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }).catch(function(err) {
+      alert('Failed to copy: ' + err);
+    });
+  }
+}
+</script>

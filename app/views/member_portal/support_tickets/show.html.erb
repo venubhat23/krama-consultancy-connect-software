@@ -1,0 +1,34 @@
+<div class="mb-4">
+  <h2 class="mb-1"><%= @ticket.subject %></h2>
+  <span class="badge bg-<%= { 'open' => 'warning', 'in_progress' => 'primary', 'resolved' => 'success', 'closed' => 'secondary' }[@ticket.status] %>"><%= @ticket.status.humanize %></span>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body"><%= simple_format @ticket.body %></div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-header bg-transparent border-0"><h6 class="mb-0">Replies</h6></div>
+  <div class="card-body">
+    <% if @replies.any? %>
+      <% @replies.each do |reply| %>
+        <div class="mb-3 pb-3 border-bottom">
+          <strong><%= reply.user.full_name %></strong>
+          <small class="text-muted">· <%= reply.created_at.strftime("%b %d, %I:%M %p") %></small>
+          <p class="mb-0 mt-1"><%= reply.body %></p>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="text-muted mb-0">No replies yet.</p>
+    <% end %>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <%= form_with url: reply_member_portal_support_ticket_path(@ticket), method: :post, local: true do %>
+      <%= text_area_tag :body, nil, class: "form-control mb-2", rows: 3, placeholder: "Write a reply...", required: true %>
+      <%= submit_tag "Post Reply", class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,376 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><%= @sub_agent.display_name %> - Documents</h2>
+    <p class="text-muted mb-0">
+      <span class="badge bg-<%= @sub_agent.active? ? 'success' : 'secondary' %> me-2">
+        <%= @sub_agent.status.capitalize %>
+      </span>
+      Manage all documents for this affiliate
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to edit_admin_sub_agent_path(@sub_agent), class: "btn btn-primary" do %>
+      <i class="bi bi-plus me-1"></i>
+      Add Documents
+    <% end %>
+    <%= link_to admin_sub_agent_path(@sub_agent), class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Profile
+    <% end %>
+    <%= link_to admin_sub_agents_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-list me-1"></i>
+      All Affiliates
+    <% end %>
+  </div>
+</div>
+
+<!-- Documents Summary -->
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm bg-primary text-white">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <i class="bi bi-file-earmark-check fs-2"></i>
+          </div>
+          <div>
+            <h5 class="card-title mb-1">Main Document</h5>
+            <p class="card-text mb-0">
+              <%= @sub_agent.upload_main_document.attached? ? 'Uploaded' : 'Not uploaded' %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm bg-info text-white">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <i class="bi bi-files fs-2"></i>
+          </div>
+          <div>
+            <h5 class="card-title mb-1">Additional Documents</h5>
+            <p class="card-text mb-0">
+              <%= pluralize(@documents.count, 'document') %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm bg-success text-white">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <i class="bi bi-cloud-upload fs-2"></i>
+          </div>
+          <div>
+            <h5 class="card-title mb-1">Uploaded Documents</h5>
+            <p class="card-text mb-0">
+              <%= pluralize(@uploaded_documents.count, 'document') %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Document Section -->
+<% if @sub_agent.upload_main_document.attached? %>
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-file-earmark-check me-2 text-primary"></i>
+      <h5 class="mb-0">Main Document</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-8">
+          <div class="d-flex align-items-center">
+            <div class="me-3">
+              <% if @sub_agent.upload_main_document.content_type.start_with?('image/') %>
+                <i class="bi bi-file-earmark-image fs-1 text-primary"></i>
+              <% else %>
+                <i class="bi bi-file-earmark-pdf fs-1 text-danger"></i>
+              <% end %>
+            </div>
+            <div class="flex-grow-1">
+              <h6 class="mb-1"><%= @sub_agent.upload_main_document.filename %></h6>
+              <small class="text-muted d-block">
+                Size: <%= number_to_human_size(@sub_agent.upload_main_document.byte_size) %>
+              </small>
+              <small class="text-muted">
+                Uploaded: <%= time_ago_in_words(@sub_agent.upload_main_document.created_at) %> ago
+              </small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 text-end">
+          <div class="btn-group" role="group">
+            <% if @sub_agent.upload_main_document.content_type.start_with?('image/') %>
+              <%= link_to rails_blob_path(@sub_agent.upload_main_document),
+                         target: '_blank',
+                         class: "btn btn-outline-primary" do %>
+                <i class="bi bi-eye me-1"></i>View
+              <% end %>
+            <% end %>
+            <%= link_to rails_blob_path(@sub_agent.upload_main_document, disposition: "attachment"),
+                       class: "btn btn-outline-secondary" do %>
+              <i class="bi bi-download me-1"></i>Download
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<!-- Additional Documents Section -->
+<% if @documents.any? %>
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-files me-2 text-info"></i>
+        <h5 class="mb-0">Additional Documents</h5>
+      </div>
+      <span class="badge bg-light text-dark"><%= pluralize(@documents.count, 'document') %></span>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <% @documents.each_with_index do |document, index| %>
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border">
+              <div class="card-body">
+                <div class="d-flex align-items-start mb-3">
+                  <div class="me-3">
+                    <i class="bi bi-file-earmark fs-4 text-primary"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <h6 class="card-title mb-1"><%= document.document_type %></h6>
+                    <p class="card-text mb-2">
+                      <small class="text-muted"><%= document.document_name %></small>
+                    </p>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <small class="text-muted d-block">
+                    <i class="bi bi-clock me-1"></i>
+                    Uploaded: <%= document.created_at ? time_ago_in_words(document.created_at) + ' ago' : 'Date not available' %>
+                  </small>
+                  <% if document.document_file.attached? %>
+                    <small class="text-muted d-block">
+                      <i class="bi bi-hdd me-1"></i>
+                      Size: <%= number_to_human_size(document.document_file.byte_size) %>
+                    </small>
+                  <% end %>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                  <% if document.document_file.attached? %>
+                    <%= link_to document.document_url, target: '_blank',
+                               class: "btn btn-sm btn-outline-primary flex-fill" do %>
+                      <i class="bi bi-eye me-1"></i>View
+                    <% end %>
+                    <%= link_to rails_blob_path(document.document_file, disposition: "attachment"),
+                               class: "btn btn-sm btn-outline-secondary flex-fill" do %>
+                      <i class="bi bi-download me-1"></i>Download
+                    <% end %>
+                  <% end %>
+                  <%= link_to admin_sub_agent_sub_agent_document_path(@sub_agent, document),
+                             class: "btn btn-sm btn-outline-danger flex-fill",
+                             data: {
+                               "turbo-method": :delete,
+                               "turbo-confirm": "Are you sure you want to delete this document? This action cannot be undone."
+                             } do %>
+                    <i class="bi bi-trash me-1"></i>Delete
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<!-- Uploaded Documents Section (New Document System) -->
+<% if @uploaded_documents.any? %>
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-cloud-upload me-2 text-success"></i>
+        <h5 class="mb-0">Uploaded Documents</h5>
+      </div>
+      <span class="badge bg-light text-dark"><%= pluralize(@uploaded_documents.count, 'document') %></span>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <% @uploaded_documents.each do |document| %>
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border">
+              <div class="card-body">
+                <div class="d-flex align-items-start mb-3">
+                  <div class="me-3">
+                    <i class="bi bi-file-earmark-plus fs-4 text-success"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <h6 class="card-title mb-1"><%= document.title %></h6>
+                    <p class="card-text mb-2">
+                      <small class="text-muted"><%= document.document_type.humanize %></small>
+                    </p>
+                    <% if document.description.present? %>
+                      <p class="card-text small text-muted">
+                        <%= truncate(document.description, length: 100) %>
+                      </p>
+                    <% end %>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <small class="text-muted d-block">
+                    <i class="bi bi-clock me-1"></i>
+                    Uploaded: <%= time_ago_in_words(document.created_at) %> ago
+                  </small>
+                  <small class="text-muted d-block">
+                    <i class="bi bi-person me-1"></i>
+                    By: <%= document.uploaded_by || 'Unknown' %>
+                  </small>
+                  <% if document.file.attached? %>
+                    <small class="text-muted d-block">
+                      <i class="bi bi-hdd me-1"></i>
+                      Size: <%= number_to_human_size(document.file.byte_size) %>
+                    </small>
+                  <% end %>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                  <% if document.file.attached? %>
+                    <%= link_to rails_blob_path(document.file), target: '_blank',
+                               class: "btn btn-sm btn-outline-primary flex-fill" do %>
+                      <i class="bi bi-eye me-1"></i>View
+                    <% end %>
+                    <%= link_to rails_blob_path(document.file, disposition: "attachment"),
+                               class: "btn btn-sm btn-outline-secondary flex-fill" do %>
+                      <i class="bi bi-download me-1"></i>Download
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<!-- Empty State -->
+<% if !@sub_agent.upload_main_document.attached? && @documents.empty? && @uploaded_documents.empty? %>
+  <div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+      <div class="mb-4">
+        <i class="bi bi-file-earmark display-1 text-muted"></i>
+      </div>
+      <h4 class="text-muted mb-3">No Documents Found</h4>
+      <p class="text-muted mb-4">This affiliate hasn't uploaded any documents yet.</p>
+      <div class="d-flex gap-2 justify-content-center">
+        <%= link_to edit_admin_sub_agent_path(@sub_agent), class: "btn btn-primary" do %>
+          <i class="bi bi-plus me-1"></i>Add First Document
+        <% end %>
+        <%= link_to admin_sub_agent_path(@sub_agent), class: "btn btn-outline-secondary" do %>
+          <i class="bi bi-arrow-left me-1"></i>Back to Profile
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<!-- Quick Actions -->
+<div class="fixed-bottom p-3">
+  <div class="container">
+    <div class="row justify-content-end">
+      <div class="col-auto">
+        <div class="btn-group-vertical shadow" role="group">
+          <%= link_to edit_admin_sub_agent_path(@sub_agent),
+                     class: "btn btn-primary",
+                     data: { "bs-toggle": "tooltip", "bs-placement": "left", "bs-title": "Add Documents" } do %>
+            <i class="bi bi-plus-lg"></i>
+          <% end %>
+          <%= link_to admin_sub_agent_path(@sub_agent),
+                     class: "btn btn-outline-secondary",
+                     data: { "bs-toggle": "tooltip", "bs-placement": "left", "bs-title": "Back to Profile" } do %>
+            <i class="bi bi-person-lines-fill"></i>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize tooltips
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+
+  // Add confirmation for delete actions
+  const deleteButtons = document.querySelectorAll('[data-turbo-method="delete"]');
+  deleteButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      if (!this.getAttribute('data-turbo-confirm')) {
+        e.preventDefault();
+        if (confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
+          this.click();
+        }
+      }
+    });
+  });
+
+  // Auto-hide flash messages after 5 seconds
+  setTimeout(function() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+      const bsAlert = new bootstrap.Alert(alert);
+      bsAlert.close();
+    });
+  }, 5000);
+});
+</script>
+
+<style>
+.fixed-bottom .btn-group-vertical {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.fixed-bottom .btn {
+  border-radius: 0;
+  border-width: 1px 1px 0 1px;
+}
+
+.fixed-bottom .btn:last-child {
+  border-width: 1px;
+}
+
+.card {
+  transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .fixed-bottom {
+    display: none;
+  }
+}
+</style>

@@ -1,0 +1,21 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><%= @event.title %></h2>
+    <p class="text-muted mb-0"><%= @event.starts_at.strftime("%b %d, %Y %I:%M %p") %> · <%= @event.venue %></p>
+  </div>
+  <div class="d-flex gap-2">
+    <% if @registration.nil? %>
+      <%= button_to "Register", register_member_portal_event_path(@event), method: :post, class: "btn btn-primary" %>
+    <% elsif !@registration.attended? %>
+      <%= button_to "Mark My Attendance", mark_attendance_member_portal_event_path(@event), method: :post, class: "btn btn-success" %>
+    <% else %>
+      <span class="badge bg-success fs-6">✓ Attended</span>
+    <% end %>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <p class="mb-0"><%= @event.description.presence || "No further details." %></p>
+  </div>
+</div>

@@ -1,0 +1,404 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Affiliate Management</h2>
+  </div>
+  <div class="d-flex gap-2 align-items-center">
+    <div class="dropdown download-dropdown">
+      <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-download me-1"></i> Download
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <a class="dropdown-item" data-turbo="false" href="<%= download_admin_sub_agents_path(request.query_parameters.merge(format_type: 'csv')) %>">
+            <i class="bi bi-filetype-csv text-success me-2"></i>CSV
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" data-turbo="false" href="<%= download_admin_sub_agents_path(request.query_parameters.merge(format_type: 'excel')) %>">
+            <i class="bi bi-file-earmark-excel text-success me-2"></i>Excel
+          </a>
+        </li>
+      </ul>
+    </div>
+    <% if can_create?('sub_agents') %>
+      <%= link_to new_admin_sub_agent_path, class: "btn btn-primary" do %>
+        <i class="bi bi-plus-lg me-1"></i>
+        Add New Affiliate
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Affiliates</h6>
+            <h3 class="mb-0 text-primary"><%= number_with_delimiter(@total_sub_agents) %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-people text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Active Affiliates</h6>
+            <h3 class="mb-0 text-success"><%= number_with_delimiter(@active_sub_agents) %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-person-check text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Inactive Affiliates</h6>
+            <h3 class="mb-0 text-warning"><%= number_with_delimiter(@inactive_sub_agents) %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-person-x text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Unassigned</h6>
+            <h3 class="mb-0 text-info">
+              <%= number_with_delimiter(@unassigned_sub_agents) %>
+            </h3>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-exclamation-triangle text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <%= form_with url: admin_sub_agents_path, method: :get, local: true, class: "d-flex flex-wrap gap-3 align-items-end", id: "search_form" do |form| %>
+      <!-- Search -->
+      <div class="flex-grow-1 min-width-250">
+        <%= form.text_field :search, placeholder: "Search by name, mobile, or email... (min 3 characters)",
+                           value: params[:search],
+                           class: "form-control",
+                           id: "search_input",
+                           data: { min_length: 3 } %>
+      </div>
+
+      <!-- Status Filter -->
+      <div>
+        <%= form.select :status,
+                       options_for_select([
+                         ['All Status', ''],
+                         ['Active', 'active'],
+                         ['Inactive', 'inactive']
+                       ], params[:status]),
+                       {},
+                       { class: "form-select", id: "status_filter" } %>
+      </div>
+
+      <!-- Actions -->
+      <div class="d-flex gap-2">
+        <%= link_to "Clear", admin_sub_agents_path, class: "btn btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Affiliates List -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">Affiliate List</h5>
+  </div>
+  <div class="card-body p-0">
+    <% if @sub_agents.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Affiliate</th>
+              <th class="border-0">Contact</th>
+              <th class="border-0">Ambassador</th>
+              <th class="border-0">Policies</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @sub_agents.each do |sub_agent| %>
+              <tr class="<%= sub_agent.deactivated? ? 'table-warning opacity-75' : '' %>">
+                <td>
+                  <div class="d-flex align-items-center">
+                    <!-- Profile Image Circle -->
+                    <div class="me-3">
+                      <% if sub_agent.profile_image.attached? %>
+                        <%= image_tag url_for(sub_agent.profile_image),
+                            class: "rounded-circle",
+                            style: "width: 40px; height: 40px; object-fit: cover;",
+                            alt: "Profile",
+                            onerror: "this.onerror=null; this.src='#{asset_path('placeholder-avatar.svg')}';" %>
+                      <% else %>
+                        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center"
+                             style="width: 40px; height: 40px;">
+                          <span class="text-primary fw-bold">
+                            <%= sub_agent.display_name.present? ? sub_agent.display_name[0].upcase : "?" %>
+                          </span>
+                        </div>
+                      <% end %>
+                    </div>
+                    <!-- Affiliate Details -->
+                    <div>
+                      <h6 class="mb-0">
+                        <%= sub_agent.display_name.present? ? sub_agent.display_name : "Unnamed Affiliate" %>
+                      </h6>
+                      <small class="text-muted d-block">
+                        <i class="bi bi-calendar me-1"></i>Created: <%= sub_agent.created_at.strftime('%d %b %Y') %>
+                      </small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <div class="mb-1">
+                      <%= sub_agent.formatted_mobile %>
+                    </div>
+                    <% if sub_agent.email.present? %>
+                      <small class="text-muted">
+                        <%= sub_agent.email %>
+                      </small>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <% if sub_agent.assigned_distributor.present? %>
+                      <small class="text-primary">
+                        <i class="bi bi-person me-1"></i><%= sub_agent.assigned_distributor.display_name %>
+                      </small>
+                    <% else %>
+                      <small class="text-muted">
+                        <i class="bi bi-dash me-1"></i>Not assigned
+                      </small>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <%= total_policy_count_for_sub_agent(sub_agent.id, @health_policy_counts, @life_policy_counts, @motor_policy_counts) %>
+                </td>
+                <td>
+                  <% if sub_agent.deactivated? %>
+                    Deactivated
+                  <% elsif sub_agent.active? %>
+                    Active
+                  <% else %>
+                    Inactive
+                  <% end %>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <% if can_view?('sub_agents') %>
+                      <%= link_to admin_sub_agent_path(sub_agent), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                        <i class="bi bi-eye"></i>
+                      <% end %>
+                    <% end %>
+
+                    <% if can_edit?('sub_agents') %>
+                      <%= link_to edit_admin_sub_agent_path(sub_agent), class: "btn btn-sm btn-outline-warning", title: "Edit" do %>
+                        <i class="bi bi-pencil"></i>
+                      <% end %>
+                    <% end %>
+
+                    <% if can_edit?('sub_agents') %>
+                      <% if sub_agent.deactivated? %>
+                        <button type="button"
+                            class="btn btn-sm btn-outline-success"
+                            title="Activate"
+                            onclick="handleDeactivationAction('<%= activate_admin_sub_agent_path(sub_agent) %>', 'PATCH', 'Are you sure you want to activate this affiliate?')">
+                          <i class="bi bi-check-circle"></i>
+                        </button>
+                      <% else %>
+                        <button type="button"
+                            class="btn btn-sm btn-outline-danger"
+                            title="Deactivate"
+                            onclick="handleDeactivationAction('<%= deactivate_admin_sub_agent_path(sub_agent) %>', 'PATCH', 'Are you sure you want to deactivate this affiliate?')">
+                          <i class="bi bi-x-circle"></i>
+                        </button>
+                      <% end %>
+                    <% end %>
+
+                    <% if can_delete?('sub_agents') %>
+                      <button type="button"
+                          class="btn btn-sm btn-outline-danger delete-sub-agent"
+                          data-url="<%= admin_sub_agent_path(sub_agent) %>"
+                          data-confirm="Are you sure you want to delete this affiliate?"
+                          data-name="<%= sub_agent.display_name %>"
+                          title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="card-footer bg-transparent border-0">
+        <%= render 'shared/pagination', records: @sub_agents %>
+      </div>
+    <% else %>
+      <!-- Empty State -->
+      <div class="text-center py-5">
+        <div class="mb-3">
+          <i class="bi bi-people display-1 text-muted"></i>
+        </div>
+        <h5 class="mb-3">No Affiliates Found</h5>
+        <p class="text-muted mb-4">
+          <% if params[:search].present? || params[:status].present? %>
+            No affiliates match your current filters. Try adjusting your search criteria.
+          <% else %>
+            Start building your affiliate network by adding your first affiliate.
+          <% end %>
+        </p>
+        <% unless params[:search].present? || params[:status].present? %>
+          <% if can_create?('sub_agents') %>
+            <%= link_to new_admin_sub_agent_path, class: "btn btn-primary" do %>
+              <i class="bi bi-plus-lg me-1"></i>
+              Create First Affiliate
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+.min-width-250 {
+  min-width: 250px;
+}
+</style>
+
+<script>
+// Global function to handle deactivation/activation
+function handleDeactivationAction(url, method, confirmMessage) {
+  if (confirm(confirmMessage)) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    form.style.display = 'none';
+
+    // Add CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfToken) {
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'authenticity_token';
+      csrfInput.value = csrfToken.getAttribute('content');
+      form.appendChild(csrfInput);
+    }
+
+    // Add method override
+    const methodInput = document.createElement('input');
+    methodInput.type = 'hidden';
+    methodInput.name = '_method';
+    methodInput.value = method;
+    form.appendChild(methodInput);
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('search_input');
+  const statusFilter = document.getElementById('status_filter');
+  const searchForm = document.getElementById('search_form');
+  let searchTimeout;
+
+  // Auto-search on typing after 3 characters
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const searchValue = this.value;
+
+    searchTimeout = setTimeout(() => {
+      if (searchValue.length >= 3 || searchValue.length === 0) {
+        searchForm.submit();
+      }
+    }, 500); // 500ms delay after typing stops
+  });
+
+  // Auto-submit on status filter change
+  statusFilter.addEventListener('change', function() {
+    searchForm.submit();
+  });
+
+  // Handle delete buttons
+  const deleteButtons = document.querySelectorAll('.delete-sub-agent');
+  deleteButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      const url = this.dataset.url;
+      const confirmMessage = this.dataset.confirm;
+      const name = this.dataset.name;
+
+      if (confirm(confirmMessage)) {
+        // Create and submit delete form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+
+        // Add CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+          const csrfInput = document.createElement('input');
+          csrfInput.type = 'hidden';
+          csrfInput.name = 'authenticity_token';
+          csrfInput.value = csrfToken.getAttribute('content');
+          form.appendChild(csrfInput);
+        }
+
+        // Add method override for DELETE
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'DELETE';
+        form.appendChild(methodInput);
+
+        document.body.appendChild(form);
+        form.submit();
+      }
+    });
+  });
+});
+</script>

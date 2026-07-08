@@ -1,0 +1,2460 @@
+
+<!-- Leads Management Header -->
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <div>
+    <h2 class="mb-1">Leads Management</h2>
+  </div>
+  <div class="d-flex gap-2 align-items-center">
+    <!-- View Toggle Button -->
+    <div class="btn-group" role="group" aria-label="View toggle">
+      <button type="button" class="btn btn-outline-secondary active" id="tableViewBtn" onclick="switchToTableView()">
+        <i class="bi bi-table me-1"></i>Table
+      </button>
+      <button type="button" class="btn btn-outline-secondary" id="cardViewBtn" onclick="switchToCardView()">
+        <i class="bi bi-grid-3x3-gap me-1"></i>Cards
+      </button>
+    </div>
+    <!-- Kanban Board Button -->
+    <%= link_to kanban_admin_leads_path, class: "btn btn-outline-primary" do %>
+      <i class="bi bi-kanban me-1"></i>Kanban Board
+    <% end %>
+    <div class="dropdown download-dropdown">
+      <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-download me-1"></i> Download
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <a class="dropdown-item" data-turbo="false" href="<%= download_admin_leads_path(request.query_parameters.merge(format_type: 'csv_individual')) %>">
+            <i class="bi bi-filetype-csv text-success me-2"></i>CSV Individual
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" data-turbo="false" href="<%= download_admin_leads_path(request.query_parameters.merge(format_type: 'excel_individual')) %>">
+            <i class="bi bi-file-earmark-excel text-success me-2"></i>Excel Individual
+          </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <a class="dropdown-item" data-turbo="false" href="<%= download_admin_leads_path(request.query_parameters.merge(format_type: 'csv_corporate')) %>">
+            <i class="bi bi-filetype-csv text-success me-2"></i>CSV Corporate
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" data-turbo="false" href="<%= download_admin_leads_path(request.query_parameters.merge(format_type: 'excel_corporate')) %>">
+            <i class="bi bi-file-earmark-excel text-success me-2"></i>Excel Corporate
+          </a>
+        </li>
+      </ul>
+    </div>
+    <%= link_to new_admin_lead_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg me-1"></i>
+      Add New Lead
+    <% end %>
+  </div>
+</div>
+
+<!-- Lead Statistics Dashboard -->
+<div class="row mb-3">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Leads</h6>
+            <h3 class="mb-0 text-primary"><%= @total_leads %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-funnel-fill text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">In Consultation</h6>
+            <h3 class="mb-0 text-info"><%= @consultation_leads %></h3>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-chat-dots text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Converted</h6>
+            <h3 class="mb-0 text-success"><%= @converted_leads %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-check-circle text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Conversion Rate</h6>
+            <h3 class="mb-0 text-warning"><%= @conversion_rate %>%</h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-graph-up text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lead Status Tabs -->
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-header bg-transparent border-0">
+    <ul class="nav nav-tabs border-0" id="leadTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link <%= params[:tab] != 'converted' ? 'active' : '' %>"
+                id="active-leads-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#active-leads"
+                type="button"
+                role="tab"
+                aria-controls="active-leads"
+                aria-selected="<%= params[:tab] != 'converted' ? 'true' : 'false' %>">
+          <i class="bi bi-funnel me-2"></i>
+          All Leads
+          <span class="badge bg-primary ms-2"><%= @total_leads %></span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link <%= params[:tab] == 'converted' ? 'active' : '' %>"
+                id="converted-leads-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#converted-leads"
+                type="button"
+                role="tab"
+                aria-controls="converted-leads"
+                aria-selected="<%= params[:tab] == 'converted' ? 'true' : 'false' %>">
+          <i class="bi bi-person-check me-2"></i>
+          Converted Leads
+          <span class="badge bg-success ms-2"><%= @converted_leads %></span>
+        </button>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- Loading Spinner for Tab Switching -->
+<div id="tabLoadingSpinner" class="text-center py-5" style="display: none;">
+  <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="mt-3">
+    <h5 class="text-muted">Loading leads...</h5>
+    <p class="text-muted small">Please wait while we fetch the data</p>
+  </div>
+</div>
+
+<div class="tab-content" id="leadTabsContent">
+  <!-- Active Leads Tab -->
+  <div class="tab-pane fade <%= params[:tab] != 'converted' ? 'show active' : '' %>" id="active-leads" role="tabpanel" aria-labelledby="active-leads-tab">
+    <!-- Search and Filters for Active Leads -->
+    <div class="card border-0 shadow-sm mb-2">
+      <div class="card-header bg-transparent border-0 pb-0 pt-1">
+        <h6 class="text-muted mb-0">
+          <i class="bi bi-funnel me-2"></i>
+          Search and Filter Active Leads
+        </h6>
+      </div>
+      <div class="card-body pt-1 pb-1">
+        <%= form_with url: admin_leads_path, method: :get, local: true, class: "filter-form" do |form| %>
+          <%= form.hidden_field :tab, value: 'active' %>
+          <!-- Single Row: All Filters -->
+          <div class="row g-2 align-items-end">
+            <div class="col-lg-2 col-md-6">
+              <label class="form-label small text-muted mb-1">Search Leads</label>
+              <%= form.text_field :search, placeholder: "Search by name, phone, email...", value: params[:search], class: "form-control" %>
+            </div>
+            <div class="col-lg-2 col-md-6">
+              <label class="form-label small text-muted mb-1">Stage</label>
+              <%= form.select :current_stage, options_for_select([
+                ['All Stages', ''],
+                ['Lead Generated', 'lead_generated'],
+                ['Consultation', 'consultation_scheduled'],
+                ['One-on-One', 'one_on_one'],
+                ['Follow-Up', 'follow_up'],
+                ['Successful', 'follow_up_successful'],
+                ['Unsuccessful', 'follow_up_unsuccessful'],
+                ['Not Interested', 'not_interested'],
+                ['Re-Follow Up', 're_follow_up'],
+                ['Lead Close - Follow-Up Unsuccessful', 'lead_closed']
+              ], params[:current_stage]), {}, { class: "form-select stage-filter-dropdown" } %>
+            </div>
+            <div class="col-lg-2 col-md-6">
+              <label class="form-label small text-muted mb-1">Category</label>
+              <%= form.select :product_category, options_for_select([
+                ['All Categories', ''],
+                ['Insurance', 'insurance'],
+                ['Investments', 'investments'],
+                ['Loans', 'loans'],
+                ['Taxation', 'taxation']
+              ], params[:product_category]), {}, { class: "form-select" } %>
+            </div>
+            <div class="col-lg-2 col-md-6">
+              <label class="form-label small text-muted mb-1">Source</label>
+              <%= form.select :lead_source, options_for_select([
+                ['All Sources', ''],
+                ['Online', 'online'],
+                ['Offline', 'offline'],
+                ['Agent Referral', 'agent_referral'],
+                ['Walk-in', 'walk_in'],
+                ['Tele-calling', 'tele_calling'],
+                ['Campaign', 'campaign']
+              ], params[:lead_source]), {}, { class: "form-select" } %>
+            </div>
+            <div class="col-lg-2 col-md-12">
+              <div class="d-flex gap-2">
+                <%= form.submit "Apply", class: "btn btn-primary" do %>
+                  <i class="bi bi-funnel me-1"></i>
+                  Apply
+                <% end %>
+                <%= link_to admin_leads_path(tab: 'active'), class: "btn btn-outline-secondary", title: "Clear all filters" do %>
+                  <i class="bi bi-arrow-clockwise"></i>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Active Leads Table -->
+    <div class="card border-0 shadow-sm" id="tableView-active">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">All Leads</h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="bg-light">
+              <tr>
+                <th class="border-0">Lead Details</th>
+                <th class="border-0">Contact Information</th>
+                <th class="border-0">Product & Affiliate</th>
+                <th class="border-0">Current Stage</th>
+                <th class="border-0">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if params[:tab] != 'converted' && @leads.any? %>
+                <% @leads.each do |lead| %>
+                  <tr class="lead-row <%= 'branch-out-lead' if lead.is_branch_out? %>" data-id="<%= lead.id %>">
+                    <td>
+                      <div>
+                        <span class="badge bg-primary mb-1"><%= lead.lead_id.presence || "LEAD-#{lead.id}" %></span>
+                        <% if lead.is_branch_out? %>
+                          <span class="badge bg-success mb-1">
+                            <i class="bi bi-diagram-3 me-1"></i>Branch Out
+                          </span>
+                        <% end %>
+                        <h6 class="mb-1"><%= lead.name %></h6>
+                        <small class="text-muted">
+                          <%= lead.created_date&.strftime('%d/%m/%Y') || lead.created_at&.strftime('%d/%m/%Y') %>
+                          (<%= time_ago_in_words(lead.created_at) %> ago)
+                        </small>
+                      </div>
+                    </td>
+                    <td>
+                      <div>
+                        <div class="mb-1"><%= lead.contact_number&.gsub(/^\+?91|^0/, '')&.strip %></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex flex-column gap-1">
+                        <div class="d-flex flex-wrap gap-1">
+                          <span class="badge bg-info text-white"><%= lead.product_category&.humanize || 'N/A' %></span>
+                          <% if lead.product_subcategory.present? %>
+                            <span class="badge bg-light text-dark border"><%= lead.product_subcategory %></span>
+                          <% end %>
+                        </div>
+                        <div class="small">
+                          <% if lead.is_direct %>
+                            <span class="badge bg-warning text-dark">
+                              <i class="bi bi-building me-1"></i>Direct
+                            </span>
+                          <% else %>
+                            <span class="text-muted">
+                              <i class="bi bi-person me-1"></i><%= truncate(lead.affiliate&.full_name || 'N/A', length: 20) %>
+                            </span>
+                          <% end %>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <%= lead.current_stage&.humanize || 'Unknown' %>
+                    </td>
+                    <td>
+                      <div>
+                        <%= link_to admin_lead_path(lead), class: "text-primary me-2", title: "View Details" do %>
+                          <i class="bi bi-eye fs-5"></i>
+                        <% end %>
+
+
+
+                        <!-- Lead Stage Conversion Dropdown -->
+                        <div class="dropdown d-inline-block">
+                          <button class="text-success dropdown-toggle border-0 bg-transparent stage-dropdown-btn"
+                                  type="button"
+                                  data-bs-toggle="dropdown"
+                                  aria-expanded="false"
+                                  title="Change Lead Stage"
+                                  style="font-size: 1.2rem;">
+                            <i class="bi bi-arrow-repeat"></i>
+                          </button>
+                          <ul class="dropdown-menu dropdown-menu-end shadow border-0 stage-dropdown-menu" style="min-width: 280px; max-height: 400px; overflow-y: auto;">
+                            <li class="dropdown-header bg-success text-white fw-bold">
+                              <i class="bi bi-diagram-3 me-2"></i>Change Lead Stage
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Current Stage Display -->
+                            <li class="px-3 py-2 bg-light">
+                              <small class="text-muted d-block mb-1">Current:</small>
+                              <span class="badge bg-primary"><%= lead.current_stage&.humanize || 'Unknown' %></span>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <!-- All Available Stages -->
+                            <% stage_options = [
+                                 { key: 'lead_generated', name: 'Lead Generated', icon: '🟢', desc: 'New lead created' },
+                                 { key: 'consultation_scheduled', name: 'Consultation Scheduled', icon: '📅', desc: 'Meeting scheduled' },
+                                 { key: 'one_on_one', name: 'One-on-One Meeting', icon: '🤝', desc: 'Personal meeting' },
+                                 { key: 'follow_up', name: 'Follow-Up Successful', icon: '📞', desc: 'Following up with lead' },
+                                 { key: 'follow_up_successful', name: 'Follow-Up Successful', icon: '✅', desc: 'Successful follow-up' },
+                                 { key: 'follow_up_unsuccessful', name: 'Follow-Up Unsuccessful', icon: '❌', desc: 'Unsuccessful follow-up' },
+                                 { key: 'converted', name: 'Converted (Client)', icon: '🎉', desc: 'Successfully converted' },
+                                 { key: 'not_interested', name: 'Not Interested', icon: '🚫', desc: 'Lead not interested' },
+                                 { key: 're_follow_up', name: 'Re-Follow Up', icon: '🔄', desc: 'Re-attempting follow-up' },
+                                 { key: 'lead_closed', name: 'Lead Close - Follow-Up Unsuccessful', icon: '📁', desc: 'Lead closed - follow-up unsuccessful' }
+                               ] %>
+
+                            <% stage_options.each do |stage| %>
+                              <% if stage[:key] == lead.current_stage %>
+                                <!-- Current stage - disabled with checkmark -->
+                                <li>
+                                  <span class="dropdown-item disabled bg-light border-0 d-flex align-items-center">
+                                    <span class="me-3" style="font-size: 1.1rem;"><%= stage[:icon] %></span>
+                                    <div class="flex-grow-1">
+                                      <div class="fw-semibold d-flex align-items-center">
+                                        <%= stage[:name] %>
+                                        <i class="bi bi-check-circle-fill text-success ms-auto"></i>
+                                      </div>
+                                      <small class="text-muted"><%= stage[:desc] %></small>
+                                    </div>
+                                  </span>
+                                </li>
+                              <% else %>
+                                <!-- Other stages - clickable -->
+                                <li>
+                                  <%= form_with url: convert_stage_admin_lead_path(lead, stage: stage[:key]),
+                                      method: :patch,
+                                      local: true,
+                                      style: "margin: 0;",
+                                      onsubmit: "return confirm('Move lead to #{stage[:name]} stage?')" do |f| %>
+                                    <button type="submit"
+                                            class="dropdown-item border-0 d-flex align-items-center py-2 stage-option"
+                                            style="background: none;">
+                                      <span class="me-3" style="font-size: 1.1rem;"><%= stage[:icon] %></span>
+                                      <div class="flex-grow-1 text-start">
+                                        <div class="fw-medium"><%= stage[:name] %></div>
+                                        <small class="text-muted d-block"><%= stage[:desc] %></small>
+                                      </div>
+                                      <i class="bi bi-arrow-right text-muted"></i>
+                                    </button>
+                                  <% end %>
+                                </li>
+                              <% end %>
+                            <% end %>
+
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="px-3 py-2">
+                              <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Click any stage to move this lead
+                              </small>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              <% else %>
+                <% if params[:tab] != 'converted' %>
+                  <tr>
+                    <td colspan="7" class="text-center py-5">
+                      <div class="text-muted">
+                        <i class="bi bi-funnel fs-1 mb-3 d-block"></i>
+                        <h5>No active leads found</h5>
+                        <p>Start by creating your first lead or adjust your search filters.</p>
+                        <%= link_to "Add New Lead", new_admin_lead_path, class: "btn btn-primary" %>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination for Active Leads -->
+        <% if params[:tab] != 'converted' %>
+          <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+              <% if @leads.respond_to?(:total_count) %>
+                <small class="text-muted">
+                  Showing <strong><%= @leads.offset_value + 1 %></strong>–<strong><%= [@leads.offset_value + @leads.limit_value, @leads.total_count].min %></strong> of <strong><%= number_with_delimiter(@leads.total_count) %></strong>
+                </small>
+              <% end %>
+              <%= render 'shared/per_page_selector' %>
+            </div>
+            <% if @leads.respond_to?(:total_pages) && @leads.total_pages > 1 %>
+              <div class="pagination-wrapper">
+                <%= paginate @leads %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Converted Leads Tab -->
+  <div class="tab-pane fade <%= params[:tab] == 'converted' ? 'show active' : '' %>" id="converted-leads" role="tabpanel" aria-labelledby="converted-leads-tab">
+    <!-- Search and Filters for Converted Leads -->
+    <div class="card border-0 shadow-sm mb-2">
+      <div class="card-header bg-transparent border-0 pb-0 pt-1">
+        <h6 class="text-muted mb-0">
+          <i class="bi bi-funnel me-2"></i>
+          Search and Filter Converted Leads (Clients)
+        </h6>
+      </div>
+      <div class="card-body pt-1 pb-1">
+        <%= form_with url: admin_leads_path, method: :get, local: true, class: "filter-form" do |form| %>
+          <%= form.hidden_field :tab, value: 'converted' %>
+          <!-- Single Row: All Filters -->
+          <div class="row g-2 align-items-end">
+            <div class="col-lg-3 col-md-6">
+              <label class="form-label small text-muted mb-1">Search Clients</label>
+              <%= form.text_field :search, placeholder: "Search by name, phone, email...", value: params[:search], class: "form-control" %>
+            </div>
+            <div class="col-lg-3 col-md-6">
+              <label class="form-label small text-muted mb-1">Category</label>
+              <%= form.select :product_category, options_for_select([
+                ['All Categories', ''],
+                ['Insurance', 'insurance'],
+                ['Investments', 'investments'],
+                ['Loans', 'loans'],
+                ['Taxation', 'taxation']
+              ], params[:product_category]), {}, { class: "form-select" } %>
+            </div>
+            <div class="col-lg-3 col-md-6">
+              <label class="form-label small text-muted mb-1">Source</label>
+              <%= form.select :lead_source, options_for_select([
+                ['All Sources', ''],
+                ['Online', 'online'],
+                ['Offline', 'offline'],
+                ['Agent Referral', 'agent_referral'],
+                ['Walk-in', 'walk_in'],
+                ['Tele-calling', 'tele_calling'],
+                ['Campaign', 'campaign']
+              ], params[:lead_source]), {}, { class: "form-select" } %>
+            </div>
+            <div class="col-lg-3 col-md-12">
+              <div class="d-flex gap-2">
+                <%= form.submit "Apply", class: "btn btn-primary" do %>
+                  <i class="bi bi-funnel me-1"></i>
+                  Apply
+                <% end %>
+                <%= link_to admin_leads_path(tab: 'converted'), class: "btn btn-outline-secondary", title: "Clear all filters" do %>
+                  <i class="bi bi-arrow-clockwise"></i>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Converted Leads Table -->
+    <div class="card border-0 shadow-sm" id="tableView-converted">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">Converted Leads</h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="bg-light">
+              <tr>
+                <th class="border-0">Client Details</th>
+                <th class="border-0">Contact Information</th>
+                <th class="border-0">Product & Affiliate</th>
+                <th class="border-0">Last Updated</th>
+                <th class="border-0">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if params[:tab] == 'converted' && @leads.any? %>
+                <% @leads.each do |lead| %>
+                  <%
+                    # Calculate how recently this lead was updated
+                    updated_time = lead.stage_updated_at || lead.updated_at
+                    time_since_update = Time.current - updated_time
+
+                    # Add visual classes based on how recent the update was
+                    recently_updated_class = if time_since_update < 1.hour
+                      'recently-updated-hour'
+                    elsif time_since_update < 1.day
+                      'recently-updated-day'
+                    else
+                      ''
+                    end
+
+                    row_classes = ['lead-row']
+                    row_classes << 'branch-out-lead' if lead.is_branch_out?
+                    row_classes << recently_updated_class if recently_updated_class.present?
+                  %>
+                  <tr class="<%= row_classes.join(' ') %>" data-id="<%= lead.id %>">
+                    <td>
+                      <div>
+                        <span class="badge bg-success mb-1"><%= lead.lead_id.presence || "CLIENT-#{lead.id}" %></span>
+                        <% if lead.is_branch_out? %>
+                          <span class="badge bg-primary mb-1">
+                            <i class="bi bi-diagram-3 me-1"></i>Branch Out
+                          </span>
+                        <% end %>
+                        <h6 class="mb-1"><%= lead.name %></h6>
+                        <small class="text-muted">
+                          Lead created: <%= lead.created_date&.strftime('%d/%m/%Y') || lead.created_at&.strftime('%d/%m/%Y') %>
+                        </small>
+                      </div>
+                    </td>
+                    <td>
+                      <div>
+                        <div class="mb-1"><%= lead.contact_number&.gsub(/^\+?91|^0/, '')&.strip %></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex flex-column gap-1">
+                        <div class="d-flex flex-wrap gap-1">
+                          <span class="badge bg-info text-white"><%= lead.product_category&.humanize || 'N/A' %></span>
+                          <% if lead.product_subcategory.present? %>
+                            <span class="badge bg-light text-dark border"><%= lead.product_subcategory %></span>
+                          <% end %>
+                        </div>
+                        <div class="small">
+                          <% if lead.is_direct %>
+                            <span class="badge bg-warning text-dark">
+                              <i class="bi bi-building me-1"></i>Direct
+                            </span>
+                          <% else %>
+                            <span class="text-muted">
+                              <i class="bi bi-person me-1"></i><%= truncate(lead.affiliate&.full_name || 'N/A', length: 20) %>
+                            </span>
+                          <% end %>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <% if lead.converted_customer.present? %>
+                        <div>
+                          <div class="fw-medium text-success">
+                            Converted
+                            <% if time_since_update < 1.hour %>
+                              <span class="badge bg-danger ms-1 pulse-animation" title="Updated within the last hour">
+                                <i class="bi bi-clock-fill"></i> NEW
+                              </span>
+                            <% elsif time_since_update < 1.day %>
+                              <span class="badge bg-warning text-dark ms-1" title="Updated within the last 24 hours">
+                                <i class="bi bi-clock"></i> Recent
+                              </span>
+                            <% end %>
+                          </div>
+                          <small class="text-muted">
+                            <%= time_ago_in_words(lead.stage_updated_at || lead.updated_at) %> ago
+                          </small>
+                        </div>
+                      <% else %>
+                        <div>
+                          <div class="fw-medium text-warning">
+                            Converting...
+                            <% if time_since_update < 1.hour %>
+                              <span class="badge bg-danger ms-1 pulse-animation" title="Updated within the last hour">
+                                <i class="bi bi-clock-fill"></i> NEW
+                              </span>
+                            <% elsif time_since_update < 1.day %>
+                              <span class="badge bg-warning text-dark ms-1" title="Updated within the last 24 hours">
+                                <i class="bi bi-clock"></i> Recent
+                              </span>
+                            <% end %>
+                          </div>
+                          <small class="text-muted">
+                            <%= time_ago_in_words(lead.updated_at) %> ago
+                          </small>
+                        </div>
+                      <% end %>
+                    </td>
+                    <td>
+                      <div>
+                        <%= link_to admin_lead_path(lead), class: "text-primary me-2", title: "View Details" do %>
+                          <i class="bi bi-eye fs-5"></i>
+                        <% end %>
+
+                        <% if lead.converted_customer.present? %>
+                          <%= link_to admin_customer_path(lead.converted_customer), class: "text-info me-2",
+                              title: "View Customer: #{lead.converted_customer.display_name}",
+                              data: { bs_toggle: "tooltip", bs_placement: "top" } do %>
+                            <i class="bi bi-person-check fs-5"></i>
+                          <% end %>
+                        <% end %>
+
+                        <%= link_to "#",
+                            class: "text-danger delete-lead-btn",
+                            data: {
+                              "lead-id": lead.id,
+                              "lead-name": lead.name,
+                              "delete-url": admin_lead_path(lead)
+                            },
+                            title: "Delete Client Record" do %>
+                          <i class="bi bi-trash fs-5"></i>
+                        <% end %>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              <% else %>
+                <% if params[:tab] == 'converted' %>
+                  <tr>
+                    <td colspan="7" class="text-center py-5">
+                      <div class="text-muted">
+                        <i class="bi bi-person-check fs-1 mb-3 d-block"></i>
+                        <h5>No converted clients found</h5>
+                        <p>Converted leads will appear here once you start converting leads to customers.</p>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination for Converted Leads -->
+        <% if params[:tab] == 'converted' %>
+          <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+              <% if @leads.respond_to?(:total_count) %>
+                <small class="text-muted">
+                  Showing <strong><%= @leads.offset_value + 1 %></strong>–<strong><%= [@leads.offset_value + @leads.limit_value, @leads.total_count].min %></strong> of <strong><%= number_with_delimiter(@leads.total_count) %></strong>
+                </small>
+              <% end %>
+              <%= render 'shared/per_page_selector' %>
+            </div>
+            <% if @leads.respond_to?(:total_pages) && @leads.total_pages > 1 %>
+              <div class="pagination-wrapper">
+                <%= paginate @leads %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Leads Card View -->
+<div id="cardView" style="display: none;">
+  <% if @leads.any? %>
+    <div class="row">
+      <% @leads.each do |lead| %>
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+          <div class="card h-100 border-0 shadow-sm lead-card <%= 'branch-out-lead-card' if lead.is_branch_out? %>">
+            <div class="card-header bg-transparent border-0 pb-2">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <span class="badge bg-primary mb-1"><%= lead.lead_id.presence || "LEAD-#{lead.id}" %></span>
+                  <% if lead.is_branch_out? %>
+                    <span class="badge bg-success mb-1">
+                      <i class="bi bi-diagram-3 me-1"></i>Branch Out
+                    </span>
+                  <% end %>
+                </div>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><%= link_to admin_lead_path(lead), class: "dropdown-item" do %>
+                      <i class="bi bi-eye me-2"></i>View Details
+                    <% end %></li>
+                    <li><%= link_to edit_admin_lead_path(lead), class: "dropdown-item" do %>
+                      <i class="bi bi-pencil me-2"></i>Edit Lead
+                    <% end %></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="showDeleteConfirmation('<%= lead.name %>', '<%= admin_lead_path(lead) %>')">
+                      <i class="bi bi-trash me-2"></i>Delete Lead
+                    </a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="card-body pt-0">
+              <h6 class="card-title mb-2"><%= lead.name %></h6>
+              <div class="text-muted small mb-3">
+                <div class="mb-1">
+                  <i class="bi bi-telephone me-1"></i>
+                  <%= lead.contact_number&.gsub(/^\+?91|^0/, '')&.strip %>
+                </div>
+                <% if lead.email.present? %>
+                  <div class="mb-1">
+                    <i class="bi bi-envelope me-1"></i>
+                    <%= truncate(lead.email, length: 25) %>
+                  </div>
+                <% end %>
+                <div class="mb-1">
+                  <i class="bi bi-calendar me-1"></i>
+                  <%= lead.created_date&.strftime('%d/%m/%Y') || lead.created_at&.strftime('%d/%m/%Y') %>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                  <span class="badge bg-info"><%= lead.product_category&.humanize || 'N/A' %></span>
+                  <% if lead.product_subcategory.present? %>
+                    <span class="badge bg-outline-info text-info"><%= truncate(lead.product_subcategory, length: 15) %></span>
+                  <% end %>
+                </div>
+                <div class="small text-muted">
+                  <strong>Stage:</strong> <%= lead.current_stage&.humanize || 'Unknown' %>
+                </div>
+                <div class="small text-muted">
+                  <strong>Affiliate:</strong>
+                  <% if lead.is_direct %>
+                    <span class="badge bg-warning text-dark">Direct</span>
+                  <% else %>
+                    <%= lead.affiliate&.full_name || 'N/A' %>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 pt-0">
+              <div class="d-flex gap-1">
+                <% if lead.can_convert_to_customer? %>
+                  <% if lead.is_branch_out && lead.parent_lead_id.present? %>
+                    <button type="button"
+                            class="btn btn-sm btn-success convert-btn branch-out-convert flex-fill"
+                            title="Convert Branch Out Lead to Customer"
+                            data-lead-id="<%= lead.id %>"
+                            data-parent-lead-id="<%= lead.parent_lead_id %>">
+                      <i class="bi bi-person-plus-fill me-1"></i>Convert
+                    </button>
+                  <% else %>
+                    <%= link_to convert_to_customer_admin_lead_path(lead), method: :patch,
+                        class: "btn btn-sm btn-success convert-btn flex-fill",
+                        title: "Convert to Customer" do %>
+                      <i class="bi bi-person-plus-fill me-1"></i>Convert
+                    <% end %>
+                  <% end %>
+                <% elsif lead.converted_customer.present? %>
+                  <%= link_to admin_customer_path(lead.converted_customer),
+                      class: "btn btn-sm btn-info customer-link flex-fill",
+                      title: "View Customer: #{lead.converted_customer.display_name}" do %>
+                    <i class="bi bi-person-check-fill me-1"></i>Customer
+                  <% end %>
+                <% else %>
+                  <button class="btn btn-sm btn-outline-secondary flex-fill disabled" disabled>
+                    <i class="bi bi-person-dash me-1"></i>N/A
+                  </button>
+                <% end %>
+
+                <!-- Stage Convert Button -->
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-warning dropdown-toggle" data-bs-toggle="dropdown" title="Convert Stage">
+                    <i class="bi bi-arrow-repeat"></i>
+                  </button>
+                  <ul class="dropdown-menu stage-conversion-menu">
+                    <li class="dropdown-header">
+                      <i class="bi bi-funnel me-1"></i>Stage Conversion
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="dropdown-item-text current-stage-display bg-light px-3 py-2">
+                      <small class="text-muted d-block">Current Stage:</small>
+                      <span class="badge bg-primary mt-1"><%= lead.current_stage&.humanize || 'Unknown' %></span>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+
+                    <% all_stages = [
+                         { key: 'lead_generated', name: 'Lead Generated', icon: '🟢', color: 'secondary' },
+                         { key: 'consultation_scheduled', name: 'Consultation', icon: '📅', color: 'info' },
+                         { key: 'one_on_one', name: 'One-on-One', icon: '🤝', color: 'warning' },
+                         { key: 'follow_up', name: 'Follow-Up', icon: '🔁', color: 'primary' },
+                         { key: 'follow_up_successful', name: 'Follow-Up Success', icon: '✅', color: 'success' },
+                         { key: 'follow_up_unsuccessful', name: 'Follow-Up Failed', icon: '❌', color: 'danger' },
+                         { key: 'not_interested', name: 'Not Interested', icon: '🚫', color: 'dark' },
+                         { key: 're_follow_up', name: 'Re-Follow Up', icon: '🔄', color: 'warning' },
+                         { key: 'lead_closed', name: 'Lead Closed', icon: '📁', color: 'secondary' }
+                       ] %>
+
+                    <% all_stages.each do |stage| %>
+                      <% if stage[:key] != lead.current_stage %>
+                        <li>
+                          <%= form_with url: convert_stage_admin_lead_path(lead, stage: stage[:key]),
+                              method: :patch, local: true, style: "margin: 0; padding: 0; display: contents;",
+                              onsubmit: "return confirm('Convert lead to \"#{stage[:name]}\" stage?')" do |f| %>
+                            <button type="submit" class="dropdown-item border-0 bg-transparent w-100 text-start">
+                              <span style="font-size: 1rem; width: 25px; display: inline-block;"><%= stage[:icon] %></span>
+                              <span style="font-size: 0.85rem;"><%= stage[:name] %></span>
+                            </button>
+                          <% end %>
+                        </li>
+                      <% end %>
+                    <% end %>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Pagination for Card View -->
+    <% if @leads.respond_to?(:total_pages) && @leads.total_pages > 1 %>
+      <div class="d-flex justify-content-center mt-4">
+        <%= paginate @leads %>
+      </div>
+    <% end %>
+  <% else %>
+    <!-- Empty State for Card View -->
+    <div class="text-center py-5">
+      <div class="mb-4">
+        <i class="bi bi-grid-3x3-gap text-muted" style="font-size: 4rem;"></i>
+      </div>
+      <h5 class="text-muted mb-3">No leads found</h5>
+      <p class="text-muted mb-4">Start by creating your first lead or adjust your search filters.</p>
+      <%= link_to "Add New Lead", new_admin_lead_path, class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>
+
+</div> <!-- End of tab-content -->
+
+<!-- Lead Details Modal -->
+<div class="modal fade" id="leadModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Lead Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="leadModalContent">
+        <!-- Content loaded dynamically -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+/* Tab Styles */
+.nav-tabs {
+  border: none !important;
+  margin-bottom: 0;
+}
+
+.nav-tabs .nav-link {
+  border: none;
+  background: transparent;
+  color: #6c757d;
+  border-radius: 8px 8px 0 0;
+  padding: 12px 20px;
+  margin-right: 5px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: transparent;
+  color: #495057;
+  background: rgba(13, 110, 253, 0.1);
+}
+
+.nav-tabs .nav-link.active {
+  color: #0d6efd !important;
+  background: rgba(13, 110, 253, 0.1) !important;
+  border-color: transparent !important;
+  position: relative;
+}
+
+.nav-tabs .nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #0d6efd;
+  border-radius: 2px 2px 0 0;
+}
+
+.nav-tabs .nav-item {
+  margin-bottom: 0;
+}
+
+.tab-content {
+  border: none;
+  padding: 0;
+}
+
+.tab-pane {
+  border: none;
+}
+
+/* Badge styling in tabs */
+.nav-tabs .badge {
+  font-size: 0.75rem;
+  padding: 0.25em 0.5em;
+}
+
+/* Stage conversion dropdown styling */
+.stage-option:hover {
+  background-color: #f8f9fa !important;
+  transform: translateX(2px);
+  transition: all 0.2s ease;
+}
+
+.stage-option .bi-arrow-right {
+  transition: transform 0.2s ease;
+}
+
+.stage-option:hover .bi-arrow-right {
+  transform: translateX(3px);
+}
+
+/* Loading spinner styling */
+#tabLoadingSpinner {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: 20px auto;
+  max-width: 300px;
+  padding: 30px;
+}
+
+#tabLoadingSpinner .spinner-border {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Recently Updated Styles */
+.recently-updated-hour {
+  background: linear-gradient(90deg, rgba(220, 53, 69, 0.1), transparent) !important;
+  border-left: 4px solid #dc3545 !important;
+  animation: subtle-glow 2s ease-in-out infinite alternate;
+}
+
+.recently-updated-day {
+  background: linear-gradient(90deg, rgba(255, 193, 7, 0.1), transparent) !important;
+  border-left: 4px solid #ffc107 !important;
+}
+
+/* Pulse animation for NEW badges */
+.pulse-animation {
+  animation: badge-pulse 2s infinite;
+}
+
+@keyframes badge-pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+    box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.3);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+  }
+}
+
+@keyframes subtle-glow {
+  0% { box-shadow: 0 0 5px rgba(220, 53, 69, 0.3); }
+  100% { box-shadow: 0 0 15px rgba(220, 53, 69, 0.6); }
+}
+</style>
+
+<style>
+/* View Toggle Button Styling */
+.btn-group .btn.active {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+}
+
+.btn-group .btn:not(.active) {
+  background-color: white;
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+.btn-group .btn:not(.active):hover {
+  background-color: #f8f9fa;
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
+
+/* Card View Styling */
+.lead-card {
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef !important;
+}
+
+.lead-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+  border-color: #0d6efd !important;
+}
+
+.branch-out-lead-card {
+  border-left: 4px solid #28a745 !important;
+  background-color: rgba(40, 167, 69, 0.02);
+}
+
+.branch-out-lead-card:hover {
+  background-color: rgba(40, 167, 69, 0.05);
+}
+
+.lead-card .card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 0.75rem;
+}
+
+.lead-card .card-body {
+  padding: 1rem;
+}
+
+.lead-card .card-footer {
+  padding: 0.75rem 1rem;
+  background-color: #f8f9fa;
+}
+
+.lead-card .badge {
+  font-size: 0.75rem;
+  padding: 0.35em 0.65em;
+}
+
+.lead-card .convert-btn {
+  font-size: 0.8rem;
+  padding: 0.375rem 0.5rem;
+}
+
+.lead-card .dropdown-toggle {
+  font-size: 0.8rem;
+  padding: 0.375rem 0.5rem;
+}
+
+/* Card View Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lead-card {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* Responsive Card Layout */
+@media (max-width: 1200px) {
+  .col-xl-3 {
+    flex: 0 0 auto;
+    width: 33.333333%;
+  }
+}
+
+@media (max-width: 992px) {
+  .col-lg-4 {
+    flex: 0 0 auto;
+    width: 50%;
+  }
+}
+
+@media (max-width: 768px) {
+  .col-md-6 {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+}
+
+/* Badge styling for card view */
+.badge.bg-outline-info {
+  color: #0dcaf0;
+  border: 1px solid #0dcaf0;
+  background-color: rgba(13, 202, 240, 0.1);
+}
+/* Compact Layout Optimization */
+.card.shadow-sm {
+  margin-bottom: 1rem;
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+.card-header {
+  padding: 0.75rem 1rem;
+}
+
+.mb-3 {
+  margin-bottom: 0.5rem !important;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem !important;
+}
+
+.row.mb-3 {
+  margin-bottom: 0.75rem !important;
+}
+
+/* Statistics cards optimization */
+.card h-100 {
+  min-height: auto;
+}
+
+.card h-100 .card-body {
+  padding: 1rem;
+}
+
+.lead-row:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Branch out lead styling */
+.branch-out-lead {
+  background-color: rgba(144, 238, 144, 0.15) !important; /* Light green background */
+  border-left: 4px solid #90EE90; /* Light green left border */
+}
+
+.branch-out-lead:hover {
+  background-color: rgba(144, 238, 144, 0.25) !important; /* Slightly darker on hover */
+}
+
+.badge.bg-purple {
+  background-color: #6f42c1 !important;
+}
+
+.table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.lead-row {
+  transition: all 0.3s ease;
+}
+
+.card {
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+/* Convert to Customer Button Styling */
+.convert-btn {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+  border: none !important;
+  color: white !important;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3) !important;
+}
+
+.convert-btn:hover {
+  background: linear-gradient(135deg, #218838 0%, #1a9f7f 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4) !important;
+  color: white !important;
+}
+
+/* Stage Conversion Dropdown Styling */
+.stage-conversion-menu {
+  width: 280px !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  z-index: 9999 !important;
+}
+
+.stage-option:hover {
+  background-color: rgba(13, 110, 253, 0.05) !important;
+  border-left: 3px solid #0d6efd;
+  transform: translateX(2px);
+  transition: all 0.2s ease;
+}
+
+.stage-option:active {
+  background-color: rgba(13, 110, 253, 0.1) !important;
+}
+
+.stage-convert-btn {
+  border-color: #ffc107 !important;
+  color: #856404 !important;
+  font-weight: 500;
+}
+
+.stage-convert-btn:hover {
+  background-color: #ffc107 !important;
+  border-color: #ffc107 !important;
+  color: white !important;
+}
+
+.convert-btn:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3) !important;
+}
+
+.convert-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.convert-btn:hover::before {
+  left: 100%;
+}
+
+/* Icon animation */
+.convert-btn i {
+  transition: transform 0.3s ease;
+}
+
+.convert-btn:hover i {
+  transform: scale(1.1) rotate(5deg);
+}
+</style>
+
+<!-- JavaScript for Lead Management -->
+<script>
+// View switching functions
+function switchToTableView() {
+  const tableViewActive = document.getElementById('tableView-active');
+  const tableViewConverted = document.getElementById('tableView-converted');
+  const cardView = document.getElementById('cardView');
+  const tableBtn = document.getElementById('tableViewBtn');
+  const cardBtn = document.getElementById('cardViewBtn');
+
+  // Show table views, hide card view
+  if (tableViewActive) tableViewActive.style.display = 'block';
+  if (tableViewConverted) tableViewConverted.style.display = 'block';
+  if (cardView) cardView.style.display = 'none';
+
+  // Update button states
+  if (tableBtn) tableBtn.classList.add('active');
+  if (cardBtn) cardBtn.classList.remove('active');
+
+  // Store preference in localStorage
+  localStorage.setItem('leadsViewPreference', 'table');
+}
+
+function switchToCardView() {
+  const tableViewActive = document.getElementById('tableView-active');
+  const tableViewConverted = document.getElementById('tableView-converted');
+  const cardView = document.getElementById('cardView');
+  const tableBtn = document.getElementById('tableViewBtn');
+  const cardBtn = document.getElementById('cardViewBtn');
+
+  // Hide table views, show card view
+  if (tableViewActive) tableViewActive.style.display = 'none';
+  if (tableViewConverted) tableViewConverted.style.display = 'none';
+  if (cardView) cardView.style.display = 'block';
+
+  // Update button states
+  if (cardBtn) cardBtn.classList.add('active');
+  if (tableBtn) tableBtn.classList.remove('active');
+
+  // Store preference in localStorage
+  localStorage.setItem('leadsViewPreference', 'card');
+}
+
+// Load saved view preference on page load
+function loadViewPreference() {
+  const savedView = localStorage.getItem('leadsViewPreference');
+  if (savedView === 'card') {
+    switchToCardView();
+  } else {
+    switchToTableView(); // Default to table view
+  }
+}
+
+function toggleSelectAll() {
+  const selectAll = document.getElementById('selectAllCheckbox');
+  const checkboxes = document.querySelectorAll('.lead-checkbox');
+
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = selectAll.checked;
+  });
+
+  updateBulkActionsButton();
+}
+
+function selectAll() {
+  const selectAll = document.getElementById('selectAllCheckbox');
+  selectAll.checked = true;
+  toggleSelectAll();
+}
+
+function updateBulkActionsButton() {
+  const checkboxes = document.querySelectorAll('.lead-checkbox:checked');
+  const bulkActionsBtn = document.getElementById('bulkActionsBtn');
+  const selectedCount = document.getElementById('selectedCount');
+
+  selectedCount.textContent = checkboxes.length;
+  bulkActionsBtn.disabled = checkboxes.length === 0;
+}
+
+function getSelectedLeadIds() {
+  const checkboxes = document.querySelectorAll('.lead-checkbox:checked');
+  return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function bulkUpdateStage(stage) {
+  const selectedIds = getSelectedLeadIds();
+
+  if (selectedIds.length === 0) {
+    alert('Please select at least one lead');
+    return;
+  }
+
+  const stageNames = {
+    'consultation': 'Consultation',
+    'one_on_one': 'One-on-One',
+    'converted': 'Converted',
+    'referral_settled': 'Referral Settled'
+  };
+
+  if (confirm(`Move ${selectedIds.length} leads to ${stageNames[stage]} stage?`)) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '<%= bulk_update_stage_admin_leads_path %>';
+
+    // Add CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'authenticity_token';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+
+    // Add method override
+    const methodInput = document.createElement('input');
+    methodInput.type = 'hidden';
+    methodInput.name = '_method';
+    methodInput.value = 'PATCH';
+    form.appendChild(methodInput);
+
+    // Add stage
+    const stageInput = document.createElement('input');
+    stageInput.type = 'hidden';
+    stageInput.name = 'stage';
+    stageInput.value = stage;
+    form.appendChild(stageInput);
+
+    // Add lead IDs
+    selectedIds.forEach(id => {
+      const idInput = document.createElement('input');
+      idInput.type = 'hidden';
+      idInput.name = 'lead_ids[]';
+      idInput.value = id;
+      form.appendChild(idInput);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+
+function bulkAdvanceStage() {
+  const selectedIds = getSelectedLeadIds();
+
+  if (selectedIds.length === 0) {
+    alert('Please select at least one lead');
+    return;
+  }
+
+  if (confirm(`Advance ${selectedIds.length} leads to their next stage? This will move each lead forward in their pipeline.`)) {
+    // For now, we'll advance each individually since different leads may be at different stages
+    alert('Bulk advance feature will process each lead individually based on their current stage.');
+
+    // You could implement this by calling individual advance_stage actions
+    // or modify the controller to handle bulk advancement logic
+  }
+}
+
+function bulkExport() {
+  const selectedIds = getSelectedLeadIds();
+
+  if (selectedIds.length === 0) {
+    alert('Please select at least one lead');
+    return;
+  }
+
+  // Create export URL with selected IDs
+  const exportUrl = '/admin/leads/export?lead_ids=' + selectedIds.join(',');
+  window.open(exportUrl, '_blank');
+}
+
+function bulkDelete() {
+  const selectedIds = getSelectedLeadIds();
+
+  if (selectedIds.length === 0) {
+    alert('Please select at least one lead');
+    return;
+  }
+
+  if (confirm(`Are you sure you want to delete ${selectedIds.length} leads? This action cannot be undone.`)) {
+    alert('Bulk delete functionality would be implemented here');
+    // Implementation would involve multiple delete requests or a new bulk_delete action
+  }
+}
+
+// Add event listeners to checkboxes
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Leads page loaded successfully');
+
+  // Hide loading spinner and show content on page load
+  hideTabLoadingSpinner();
+
+  // Load view preference on page load
+  loadViewPreference();
+
+  // Create global function for delete confirmation (used by card view)
+  window.showDeleteConfirmation = function(leadName, deleteUrl) {
+    // Create modal HTML
+    const modalHtml = `
+      <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header border-bottom-0">
+              <h5 class="modal-title text-danger" id="deleteConfirmationModalLabel">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Delete Lead
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+              <div class="mb-4">
+                <i class="bi bi-trash text-danger" style="font-size: 3rem;"></i>
+              </div>
+              <h6 class="mb-3">Are you sure you want to delete this lead?</h6>
+              <p class="text-muted mb-0">
+                <strong>${leadName}</strong> will be permanently removed from the system.
+              </p>
+              <p class="text-danger small mt-2 mb-0">
+                <i class="bi bi-exclamation-circle me-1"></i>
+                This action cannot be undone.
+              </p>
+            </div>
+            <div class="modal-footer border-top-0 justify-content-center">
+              <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">
+                <i class="bi bi-x-lg me-1"></i>Cancel
+              </button>
+              <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                <i class="bi bi-trash me-1"></i>Delete Lead
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Remove any existing modal
+    const existingModal = document.getElementById('deleteConfirmationModal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+    modal.show();
+
+    // Handle confirmation
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+      // Show loading state
+      const deleteBtn = this;
+      const originalText = deleteBtn.innerHTML;
+      deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Deleting...';
+      deleteBtn.disabled = true;
+
+      // Make AJAX request to delete lead
+      fetch(deleteUrl, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Hide modal
+        modal.hide();
+
+        if (data.success) {
+          // Show success message and refresh page
+          showSuccessAlert(data.message || 'Lead successfully deleted');
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } else {
+          // Show error alert
+          showErrorAlert(data.message || 'Failed to delete lead');
+        }
+      })
+      .catch(error => {
+        console.error('Delete error:', error);
+        modal.hide();
+        showErrorAlert('An error occurred while deleting the lead. Please try again.');
+      })
+      .finally(() => {
+        // Restore button state
+        deleteBtn.innerHTML = originalText;
+        deleteBtn.disabled = false;
+      });
+    });
+
+    // Clean up modal when hidden
+    document.getElementById('deleteConfirmationModal').addEventListener('hidden.bs.modal', function () {
+      this.remove();
+    });
+  };
+
+  try {
+    const checkboxes = document.querySelectorAll('.lead-checkbox');
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', updateBulkActionsButton);
+    });
+
+    console.log(`Found ${checkboxes.length} lead checkboxes`);
+  } catch (error) {
+    console.error('Error setting up lead checkboxes:', error);
+  }
+
+  // Auto-submit form when stage filter changes
+  const stageFilter = document.querySelector('.stage-filter-dropdown');
+  if (stageFilter) {
+    stageFilter.addEventListener('change', function() {
+      console.log('Stage filter changed to:', this.value);
+      // Find the form and submit it
+      const form = this.closest('form');
+      if (form) {
+        form.submit();
+      }
+    });
+  }
+
+  // Show converted filter has been removed - tabs handle this automatically
+
+  // Delete confirmation functionality
+  const deleteButtons = document.querySelectorAll('.delete-lead-btn');
+  deleteButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      const leadId = this.dataset.leadId;
+      const leadName = this.dataset.leadName;
+      const deleteUrl = this.dataset.deleteUrl;
+
+      showDeleteConfirmation(leadName, deleteUrl);
+    });
+  });
+
+  function showDeleteConfirmation(leadName, deleteUrl) {
+    // Create modal HTML
+    const modalHtml = `
+      <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header border-bottom-0">
+              <h5 class="modal-title text-danger" id="deleteConfirmationModalLabel">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Delete Lead
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+              <div class="mb-4">
+                <i class="bi bi-trash text-danger" style="font-size: 3rem;"></i>
+              </div>
+              <h6 class="mb-3">Are you sure you want to delete this lead?</h6>
+              <p class="text-muted mb-0">
+                <strong>${leadName}</strong> will be permanently removed from the system.
+              </p>
+              <p class="text-danger small mt-2 mb-0">
+                <i class="bi bi-exclamation-circle me-1"></i>
+                This action cannot be undone.
+              </p>
+            </div>
+            <div class="modal-footer border-top-0 justify-content-center">
+              <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">
+                <i class="bi bi-x-lg me-1"></i>Cancel
+              </button>
+              <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                <i class="bi bi-trash me-1"></i>Delete Lead
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Remove any existing modal
+    const existingModal = document.getElementById('deleteConfirmationModal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+    modal.show();
+
+    // Handle confirmation
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+      // Show loading state
+      const deleteBtn = this;
+      const originalText = deleteBtn.innerHTML;
+      deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Deleting...';
+      deleteBtn.disabled = true;
+
+      // Make AJAX request to check if lead can be deleted
+      fetch(deleteUrl, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Hide modal
+        modal.hide();
+
+        if (data.success) {
+          // Show success message and refresh page
+          showSuccessAlert(data.message || 'Lead successfully deleted');
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } else {
+          // Show error alert
+          showErrorAlert(data.message || 'Failed to delete lead');
+        }
+      })
+      .catch(error => {
+        console.error('Delete error:', error);
+        modal.hide();
+        showErrorAlert('An error occurred while deleting the lead. Please try again.');
+      })
+      .finally(() => {
+        // Restore button state
+        deleteBtn.innerHTML = originalText;
+        deleteBtn.disabled = false;
+      });
+    });
+
+    // Clean up modal when hidden
+    document.getElementById('deleteConfirmationModal').addEventListener('hidden.bs.modal', function () {
+      this.remove();
+    });
+  }
+});
+
+function showLeadModal(leadId) {
+  try {
+    const modalElement = document.getElementById('leadModal');
+    if (!modalElement) {
+      console.error('Lead modal element not found');
+      return;
+    }
+
+    const modal = new bootstrap.Modal(modalElement);
+    const content = document.getElementById('leadModalContent');
+
+    if (!content) {
+      console.error('Lead modal content element not found');
+      return;
+    }
+
+  // Sample lead data
+  const leads = {
+    1: {
+      id: 'LEAD-001',
+      name: 'Rajesh Kumar',
+      email: 'rajesh.kumar@email.com',
+      phone: '+91 98765 43210',
+      address: 'Mumbai, Maharashtra',
+      referredBy: 'Agent - Amit Shah',
+      productInterest: 'Health Insurance',
+      currentStage: 'One-on-One',
+      notes: 'Interested in family health insurance. Has existing life insurance policy.',
+      createdDate: 'Dec 08, 2024'
+    },
+    2: {
+      id: 'LEAD-002',
+      name: 'Priya Sharma',
+      email: 'priya.sharma@email.com',
+      phone: '+91 87654 32109',
+      address: 'Delhi, Delhi',
+      referredBy: 'Online Campaign',
+      productInterest: 'Life Insurance',
+      currentStage: 'Consultation',
+      notes: 'Young professional looking for term life insurance.',
+      createdDate: 'Dec 07, 2024'
+    }
+  };
+
+  const lead = leads[leadId] || leads[1];
+
+  content.innerHTML = `
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card border-0">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">Lead Information</h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label text-muted">Lead ID</label>
+                <div class="fw-bold">${lead.id}</div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label text-muted">Lead Name</label>
+                <div class="fw-bold">${lead.name}</div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label text-muted">Email</label>
+                <div>${lead.email}</div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label text-muted">Phone</label>
+                <div>${lead.phone}</div>
+              </div>
+              <div class="col-md-12 mb-3">
+                <label class="form-label text-muted">Address</label>
+                <div>${lead.address}</div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label text-muted">Referred By</label>
+                <div><span class="badge bg-success">${lead.referredBy}</span></div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label text-muted">Product Interest</label>
+                <div><span class="badge bg-info">${lead.productInterest}</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 mt-3">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">Notes & Attachments</h6>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label text-muted">Notes</label>
+              <div>${lead.notes}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card border-0">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">Lead Status</h6>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label text-muted">Current Stage</label>
+              <select class="form-select">
+                <option ${lead.currentStage === 'Consultation' ? 'selected' : ''}>Consultation</option>
+                <option ${lead.currentStage === 'One-on-One' ? 'selected' : ''}>One-on-One</option>
+                <option ${lead.currentStage === 'Converted' ? 'selected' : ''}>Converted</option>
+                <option ${lead.currentStage === 'Policy Created' ? 'selected' : ''}>Policy Created</option>
+                <option ${lead.currentStage === 'Referral Settled' ? 'selected' : ''}>Referral Settled</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-muted">Created Date</label>
+              <div>${lead.createdDate}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 mt-3">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">Actions Panel</h6>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              <button class="btn btn-success">
+                <i class="bi bi-person-plus me-2"></i>
+                Convert to Customer
+              </button>
+              <button class="btn btn-primary">
+                <i class="bi bi-file-earmark-plus me-2"></i>
+                Create Policy
+              </button>
+              <button class="btn btn-info">
+                <i class="bi bi-cash-coin me-2"></i>
+                Transfer Referral Amount
+              </button>
+              <button class="btn btn-outline-warning">
+                <i class="bi bi-pencil me-2"></i>
+                Edit Lead
+              </button>
+              <button class="btn btn-outline-danger">
+                <i class="bi bi-trash me-2"></i>
+                Delete Lead
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+    modal.show();
+  } catch (error) {
+    console.error('Error showing lead modal:', error);
+  }
+}
+
+// Initialize tooltips for convert/customer buttons
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize Bootstrap tooltips
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+
+  // Add custom styling for customer links
+  const customerLinks = document.querySelectorAll('.customer-link');
+  customerLinks.forEach(link => {
+    link.addEventListener('mouseenter', function() {
+      this.style.transform = 'scale(1.05)';
+      this.style.transition = 'all 0.2s ease';
+    });
+
+    link.addEventListener('mouseleave', function() {
+      this.style.transform = 'scale(1)';
+    });
+  });
+
+  // Add hover effect for convert buttons
+  const convertButtons = document.querySelectorAll('.convert-btn');
+  convertButtons.forEach(button => {
+    button.addEventListener('mouseenter', function() {
+      this.style.transform = 'scale(1.05)';
+      this.style.transition = 'all 0.2s ease';
+    });
+
+    button.addEventListener('mouseleave', function() {
+      this.style.transform = 'scale(1)';
+    });
+  });
+
+  // Handle branch out convert to customer
+  const branchOutConvertButtons = document.querySelectorAll('.branch-out-convert');
+  branchOutConvertButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      const leadId = this.dataset.leadId;
+      const parentLeadId = this.dataset.parentLeadId;
+
+      // Show confirmation alert for branch out lead
+      if (confirm('This is a branch out lead. Do you want to proceed with conversion?')) {
+        // Create a form and submit it as PATCH request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/leads/${leadId}/convert_to_customer`;
+
+        // Add CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'authenticity_token';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+
+        // Add method override for PATCH
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'PATCH';
+        form.appendChild(methodInput);
+
+        document.body.appendChild(form);
+        form.submit();
+      }
+    });
+  });
+
+  // Function to handle branch out conversion
+  function handleBranchOutConversion(leadId, parentLeadId) {
+    // Create form to call conversion endpoint
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/admin/leads/${leadId}/convert_to_customer_branch_out`;
+    form.style.display = 'none';
+
+    // Add CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfToken) {
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'authenticity_token';
+      csrfInput.value = csrfToken.content;
+      form.appendChild(csrfInput);
+    }
+
+    // Add method override for PATCH
+    const methodInput = document.createElement('input');
+    methodInput.type = 'hidden';
+    methodInput.name = '_method';
+    methodInput.value = 'PATCH';
+    form.appendChild(methodInput);
+
+    // Add parent lead id
+    const parentLeadInput = document.createElement('input');
+    parentLeadInput.type = 'hidden';
+    parentLeadInput.name = 'parent_lead_id';
+    parentLeadInput.value = parentLeadId;
+    form.appendChild(parentLeadInput);
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+});
+</script>
+
+<!-- Custom CSS for improved action buttons -->
+<style>
+.convert-btn {
+  animation: subtle-pulse 3s infinite;
+}
+
+@keyframes subtle-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(25, 135, 84, 0.1);
+  }
+}
+
+.customer-link {
+  background: linear-gradient(45deg, #0dcaf0, #17a2b8);
+  border: none;
+  color: white;
+  font-weight: 500;
+}
+
+.customer-link:hover {
+  background: linear-gradient(45deg, #17a2b8, #0dcaf0);
+  color: white;
+  box-shadow: 0 4px 12px rgba(13, 202, 240, 0.3);
+}
+
+.btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Tooltip styling */
+.tooltip .tooltip-inner {
+  background-color: #212529;
+  color: #fff;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  max-width: 250px;
+}
+
+.tooltip.bs-tooltip-top .tooltip-arrow::before {
+  border-top-color: #212529;
+}
+
+/* Stage Conversion Button Styling */
+.stage-convert-btn {
+  background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%) !important;
+  border: none !important;
+  color: white !important;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 2px 8px rgba(253, 126, 20, 0.3) !important;
+}
+
+.stage-convert-btn:hover {
+  background: linear-gradient(135deg, #e06605 0%, #e6ac00 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(253, 126, 20, 0.4) !important;
+  color: white !important;
+}
+
+.stage-convert-btn:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 6px rgba(253, 126, 20, 0.3) !important;
+}
+
+/* Filter Form Styling */
+.filter-form {
+  margin: 0;
+}
+
+.filter-form .form-label {
+  font-weight: 500;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.filter-form .form-control,
+.filter-form .form-select {
+  font-size: 0.9rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.filter-form .form-control:focus,
+.filter-form .form-select:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Stage Filter Dropdown Styling */
+.stage-filter-dropdown {
+  min-width: 100%;
+  font-size: 0.85rem;
+}
+
+.stage-filter-dropdown option {
+  padding: 8px 12px;
+  line-height: 1.4;
+}
+
+/* Responsive filter adjustments */
+@media (max-width: 768px) {
+  .filter-form .d-flex {
+    flex-direction: column;
+    gap: 0.5rem !important;
+  }
+
+  .filter-form .btn {
+    width: 100%;
+  }
+}
+
+/* Stage Conversion Menu Styling */
+.stage-conversion-menu,
+.stage-dropdown-menu {
+  min-width: 280px;
+  max-height: 400px;
+  overflow-y: auto;
+  border: none !important;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;
+  border-radius: 12px !important;
+  z-index: 9999 !important;
+}
+
+.stage-conversion-menu .dropdown-header {
+  background: linear-gradient(135deg, #fd7e14, #ffc107);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  border-radius: 12px 12px 0 0;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.stage-conversion-menu .current-stage-display {
+  background: rgba(13, 110, 253, 0.1);
+  padding: 0.75rem 1rem;
+  margin: 0;
+  text-align: center;
+}
+
+.stage-conversion-menu .stage-option {
+  transition: all 0.2s ease;
+  margin: 0.1rem 0.5rem;
+  border-radius: 8px;
+}
+
+.stage-conversion-menu .stage-option:hover {
+  background: linear-gradient(135deg, rgba(253, 126, 20, 0.1), rgba(255, 193, 7, 0.1)) !important;
+  transform: translateX(5px);
+  border-radius: 8px;
+}
+
+.stage-conversion-menu .stage-option .badge {
+  transition: transform 0.2s ease;
+}
+
+.stage-conversion-menu .stage-option:hover .badge {
+  transform: scale(1.1);
+}
+
+/* Stage option animations */
+.stage-option[data-stage="converted"] {
+  background: linear-gradient(90deg, rgba(25, 135, 84, 0.1), transparent);
+}
+
+.stage-option[data-stage="not_interested"] {
+  background: linear-gradient(90deg, rgba(108, 117, 125, 0.1), transparent);
+}
+
+.stage-option[data-stage="lead_closed"] {
+  background: linear-gradient(90deg, rgba(108, 117, 125, 0.1), transparent);
+}
+
+/* Pagination Styling */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.pagination {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 4px;
+}
+
+.pagination .page-item {
+  display: inline-block;
+}
+
+.pagination .page-item .page-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #dee2e6;
+  background: white;
+  color: #495057;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.pagination .page-item .page-link:hover {
+  background: #f8f9fa;
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
+
+.pagination .page-item.active .page-link {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  background: #f8f9fa;
+  border-color: #dee2e6;
+  opacity: 0.6;
+}
+
+.pagination .page-item:first-child .page-link {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.pagination .page-item:last-child .page-link {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+</style>
+
+<!-- Edit Lead Modal -->
+<div class="modal fade" id="editLeadModal" tabindex="-1" aria-labelledby="editLeadModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editLeadModalLabel">
+          <i class="bi bi-pencil-square me-2"></i>Edit Lead
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <%= form_with id: "editLeadForm", method: :patch, local: true, class: "needs-validation", novalidate: true do |form| %>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <%= form.label :name, "Name", class: "form-label" %>
+              <%= form.text_field :name, class: "form-control", placeholder: "Enter lead name", required: true %>
+              <div class="invalid-feedback">Please provide a valid name.</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <%= form.label :contact_number, "Contact Number", class: "form-label" %>
+              <%= form.text_field :contact_number, class: "form-control", placeholder: "Enter contact number", required: true %>
+              <div class="invalid-feedback">Please provide a valid contact number.</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <%= form.label :email, "Email", class: "form-label" %>
+              <%= form.email_field :email, class: "form-control", placeholder: "Enter email address" %>
+            </div>
+            <div class="col-md-6 mb-3">
+              <%= form.label :address, "Address", class: "form-label" %>
+              <%= form.text_area :address, class: "form-control", rows: 2, placeholder: "Enter address" %>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <%= form.label :city, "City", class: "form-label" %>
+              <%= form.text_field :city, class: "form-control", placeholder: "Enter city" %>
+            </div>
+            <div class="col-md-6 mb-3">
+              <%= form.label :state, "State", class: "form-label" %>
+              <%= form.text_field :state, class: "form-control", placeholder: "Enter state" %>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update Lead</button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script>
+function openEditModal(leadId, name, contactNumber, email, address, city, state) {
+  // Set form action URL
+  const form = document.getElementById('editLeadForm');
+  form.action = `/admin/leads/${leadId}`;
+
+  // Populate form fields
+  form.elements['name'].value = name || '';
+  form.elements['contact_number'].value = contactNumber || '';
+  form.elements['email'].value = email || '';
+  form.elements['address'].value = address || '';
+  form.elements['city'].value = city || '';
+  form.elements['state'].value = state || '';
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('editLeadModal'));
+  modal.show();
+}
+
+// Form validation for modal
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('editLeadForm');
+  if (form) {
+    form.addEventListener('submit', function(event) {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  }
+});
+
+// Alert functions for delete operations
+function showSuccessAlert(message) {
+  const alertHtml = `
+    <div class="alert alert-success alert-dismissible fade show position-fixed"
+         style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
+      <i class="bi bi-check-circle me-2"></i>
+      <strong>Success!</strong> ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', alertHtml);
+
+  // Auto dismiss after 3 seconds
+  setTimeout(() => {
+    const alert = document.querySelector('.alert-success');
+    if (alert) {
+      const bsAlert = new bootstrap.Alert(alert);
+      bsAlert.close();
+    }
+  }, 3000);
+}
+
+function showErrorAlert(message) {
+  const alertHtml = `
+    <div class="alert alert-danger alert-dismissible fade show position-fixed"
+         style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      <strong>Error!</strong> ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', alertHtml);
+
+  // Auto dismiss after 5 seconds for error messages
+  setTimeout(() => {
+    const alert = document.querySelector('.alert-danger');
+    if (alert) {
+      const bsAlert = new bootstrap.Alert(alert);
+      bsAlert.close();
+    }
+  }, 5000);
+}
+
+// Tab switching functionality
+function switchToTab(tab) {
+  // Show loading spinner immediately
+  showTabLoadingSpinner();
+
+  const currentUrl = new URL(window.location);
+  currentUrl.searchParams.set('tab', tab);
+
+  // Clear search and filters when switching tabs
+  currentUrl.searchParams.delete('search');
+  currentUrl.searchParams.delete('current_stage');
+  currentUrl.searchParams.delete('product_category');
+  currentUrl.searchParams.delete('lead_source');
+
+  // No need to set show_converted parameter anymore - tabs handle this automatically
+
+  window.location.href = currentUrl.toString();
+}
+
+// Show loading spinner and hide content
+function showTabLoadingSpinner() {
+  const spinner = document.getElementById('tabLoadingSpinner');
+  const content = document.getElementById('leadTabsContent');
+
+  if (spinner && content) {
+    spinner.style.display = 'block';
+    content.style.display = 'none';
+  }
+}
+
+// Hide loading spinner and show content
+function hideTabLoadingSpinner() {
+  const spinner = document.getElementById('tabLoadingSpinner');
+  const content = document.getElementById('leadTabsContent');
+
+  if (spinner && content) {
+    spinner.style.display = 'none';
+    content.style.display = 'block';
+  }
+}
+
+// Handle tab clicks
+document.addEventListener('DOMContentLoaded', function() {
+  const tabButtons = document.querySelectorAll('#leadTabs button[data-bs-toggle="tab"]');
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      const targetTab = this.getAttribute('data-bs-target').replace('#', '');
+      let tabParam;
+
+      switch(targetTab) {
+        case 'active-leads':
+          tabParam = 'active';
+          break;
+        case 'converted-leads':
+          tabParam = 'converted';
+          break;
+        default:
+          tabParam = 'active';
+      }
+
+      switchToTab(tabParam);
+    });
+  });
+
+  // Fix stage dropdowns clipped by table-responsive overflow
+  // Use Popper strategy:'fixed' so the menu renders relative to the viewport,
+  // bypassing any overflow:hidden/auto ancestor.
+  function initStageDropdowns() {
+    document.querySelectorAll('.stage-dropdown-btn').forEach(function(btn) {
+      // Destroy any existing Bootstrap Dropdown instance first
+      const existing = bootstrap.Dropdown.getInstance(btn);
+      if (existing) existing.dispose();
+
+      new bootstrap.Dropdown(btn, {
+        popperConfig: {
+          strategy: 'fixed',
+          modifiers: [{ name: 'flip', enabled: true }]
+        }
+      });
+    });
+  }
+
+  initStageDropdowns();
+});
+</script>

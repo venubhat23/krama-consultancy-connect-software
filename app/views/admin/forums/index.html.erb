@@ -1,0 +1,64 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Forums</h2>
+    <p class="text-muted mb-0">All tenants on the platform</p>
+  </div>
+  <%= link_to new_admin_forum_path, class: "btn btn-primary" do %>
+    <i class="bi bi-plus-lg me-1"></i> Onboard Forum
+  <% end %>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <% if @forums.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Forum</th>
+              <th class="border-0">Plan</th>
+              <th class="border-0">Admin</th>
+              <th class="border-0">Chapters</th>
+              <th class="border-0">Members</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @forums.each do |forum| %>
+              <tr>
+                <td>
+                  <h6 class="mb-0 fw-medium"><%= link_to forum.name, admin_forum_path(forum), class: "text-decoration-none" %></h6>
+                  <small class="text-muted"><%= forum.slug %></small>
+                </td>
+                <td><span class="badge bg-primary-subtle text-primary"><%= forum.business_plan.name %></span></td>
+                <td><%= @admin_by_forum[forum.id]&.email || "—" %></td>
+                <td><%= @chapter_counts[forum.id] || 0 %></td>
+                <td><%= @member_counts[forum.id] || 0 %></td>
+                <td>
+                  <span class="badge bg-<%= forum.active? ? 'success' : 'warning' %>">
+                    <i class="bi bi-<%= forum.active? ? 'check-circle' : 'pause-circle' %> me-1"></i><%= forum.status.humanize %>
+                  </span>
+                </td>
+                <td>
+                  <%= link_to admin_forum_path(forum), class: "btn btn-sm btn-outline-secondary", title: "View" do %>
+                    <i class="bi bi-eye"></i>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer bg-transparent border-0">
+        <%= render "shared/pagination", records: @forums %>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-diagram-3 fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No forums yet</h5>
+        <%= link_to "Onboard the first forum", new_admin_forum_path, class: "btn btn-primary mt-2" %>
+      </div>
+    <% end %>
+  </div>
+</div>

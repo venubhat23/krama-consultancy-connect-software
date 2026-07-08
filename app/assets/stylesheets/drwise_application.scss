@@ -1,0 +1,372 @@
+// Drwise - Enhanced Application Styles
+// Main stylesheet that imports all our custom stylesheets
+
+// Import Bootstrap first (from the gem)
+@import "bootstrap/scss/bootstrap";
+
+// Import our custom CSS files in order of precedence
+@import "shared_index_styles";
+@import "sidebar_fallback";
+@import "layout_fix";
+@import "login";
+@import "auth";
+
+// Import the enhanced application styles
+@import "enhanced_application";
+
+// Insurance-themed Global Overrides
+:root {
+  --insurance-primary: #667eea;
+  --insurance-secondary: #764ba2;
+  --insurance-success: #43e97b;
+  --insurance-warning: #ffc107;
+  --insurance-danger: #ef4444;
+  --insurance-info: #00f2fe;
+
+  --insurance-bg-primary: #ffffff;
+  --insurance-bg-secondary: #f7fafc;
+  --insurance-bg-tertiary: #edf2f7;
+
+  --insurance-text-primary: #2d3748;
+  --insurance-text-secondary: #4a5568;
+  --insurance-text-muted: #718096;
+
+  --insurance-border: #e2e8f0;
+  --insurance-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --insurance-radius: 12px;
+  --insurance-transition: 0.3s ease;
+}
+
+// Global Font Loading
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+// Global Reset with Insurance Theme
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  height: 100%;
+}
+
+body {
+  font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  background: var(--insurance-bg-secondary) !important;
+  color: var(--insurance-text-primary) !important;
+  line-height: 1.6 !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  height: 100% !important;
+  overflow-x: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+// Enhanced Bootstrap Component Overrides
+.btn {
+  border-radius: var(--insurance-radius) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.025em !important;
+  transition: var(--insurance-transition) !important;
+  padding: 0.625rem 1.25rem !important;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--insurance-primary) 0%, var(--insurance-secondary) 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4) !important;
+}
+
+.card {
+  border-radius: var(--insurance-radius) !important;
+  border: 1px solid var(--insurance-border) !important;
+  box-shadow: var(--insurance-shadow) !important;
+  transition: var(--insurance-transition) !important;
+}
+
+.card:hover {
+  // transform removed — it creates a new containing block that traps position:fixed dropdowns
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.14) !important;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%) !important;
+  border-bottom: 1px solid var(--insurance-border) !important;
+  font-weight: 600 !important;
+}
+
+.form-control {
+  border-radius: var(--insurance-radius) !important;
+  border: 2px solid var(--insurance-border) !important;
+  transition: var(--insurance-transition) !important;
+}
+
+.form-control:focus {
+  border-color: var(--insurance-primary) !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15) !important;
+}
+
+.table {
+  border-radius: var(--insurance-radius) !important;
+  // overflow: hidden removed — it clips absolute-positioned dropdowns inside tables
+}
+
+// Rounded corners on the table wrapper instead
+.table-responsive, .card > .table:first-child {
+  border-radius: var(--insurance-radius) !important;
+  overflow: hidden !important;
+}
+
+.table th {
+  background: #f8fafc !important;
+  border-bottom: 2px solid var(--insurance-border) !important;
+  font-weight: 600 !important;
+  color: var(--insurance-text-primary) !important;
+  font-size: 0.85rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.table tbody tr:hover {
+  background: rgba(102, 126, 234, 0.05) !important;
+}
+
+// Insurance-themed Alert Overrides
+.alert {
+  border-radius: var(--insurance-radius) !important;
+  border: none !important;
+  border-left: 4px solid !important;
+}
+
+.alert-primary {
+  background: rgba(102, 126, 234, 0.1) !important;
+  border-left-color: var(--insurance-primary) !important;
+  color: var(--insurance-text-primary) !important;
+}
+
+.alert-success {
+  background: rgba(67, 233, 123, 0.1) !important;
+  border-left-color: var(--insurance-success) !important;
+  color: var(--insurance-text-primary) !important;
+}
+
+.alert-warning {
+  background: rgba(255, 193, 7, 0.1) !important;
+  border-left-color: var(--insurance-warning) !important;
+  color: var(--insurance-text-primary) !important;
+}
+
+.alert-danger {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border-left-color: var(--insurance-danger) !important;
+  color: var(--insurance-text-primary) !important;
+}
+
+// Navigation Enhancements
+.navbar {
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid var(--insurance-border) !important;
+}
+
+.navbar-brand {
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, var(--insurance-primary) 0%, var(--insurance-secondary) 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+// Dropdown Enhancements
+.dropdown-menu {
+  border-radius: var(--insurance-radius) !important;
+  border: 1px solid var(--insurance-border) !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+.dropdown-item {
+  transition: var(--insurance-transition) !important;
+}
+
+.dropdown-item:hover {
+  background: rgba(102, 126, 234, 0.08) !important;
+  color: var(--insurance-primary) !important;
+}
+
+// Badge Enhancements
+.badge {
+  border-radius: 20px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.5px !important;
+}
+
+// Modal Enhancements
+.modal-content {
+  border-radius: var(--insurance-radius) !important;
+  border: none !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--insurance-border) !important;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%) !important;
+}
+
+// Utility Classes
+.insurance-gradient {
+  background: linear-gradient(135deg, var(--insurance-primary) 0%, var(--insurance-secondary) 100%) !important;
+}
+
+.insurance-gradient-text {
+  background: linear-gradient(135deg, var(--insurance-primary) 0%, var(--insurance-secondary) 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+.insurance-shadow {
+  box-shadow: var(--insurance-shadow) !important;
+}
+
+.insurance-shadow-hover:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12) !important;
+  transform: translateY(-2px) !important;
+}
+
+.insurance-border {
+  border: 1px solid var(--insurance-border) !important;
+}
+
+.insurance-border-radius {
+  border-radius: var(--insurance-radius) !important;
+}
+
+// Animation Classes
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out !important;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.3s ease-out !important;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.scale-in {
+  animation: scaleIn 0.3s ease-out !important;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Professional Loading States
+.loading {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.2), transparent);
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+// Print Styles
+@media print {
+  .sidebar,
+  .header,
+  .btn,
+  .pagination,
+  .mobile-toggle {
+    display: none !important;
+  }
+
+  .main-content {
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+}
+
+// High Contrast Mode Support
+@media (prefers-contrast: high) {
+  :root {
+    --insurance-border: #000000;
+    --insurance-text-muted: #000000;
+  }
+
+  .sidebar .nav-link {
+    border: 2px solid transparent;
+  }
+
+  .sidebar .nav-link:hover,
+  .sidebar .nav-link:focus {
+    border-color: #000000;
+  }
+}
+
+// Reduced Motion Support
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,37 @@
+<div class="mb-4"><h2 class="mb-1">Events</h2></div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <% if @events.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light"><tr><th class="border-0">Event</th><th class="border-0">Date</th><th class="border-0">Venue</th><th class="border-0">Status</th></tr></thead>
+          <tbody>
+            <% @events.each do |event| %>
+              <tr>
+                <td><%= link_to event.title, member_portal_event_path(event), class: "text-decoration-none fw-medium" %></td>
+                <td><%= event.starts_at.strftime("%b %d, %Y %I:%M %p") %></td>
+                <td><%= event.venue %></td>
+                <td>
+                  <% if @registered_event_ids.include?(event.id) %>
+                    <span class="badge bg-success">Registered</span>
+                  <% else %>
+                    <span class="badge bg-secondary">Not registered</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer bg-transparent border-0">
+        <%= render "shared/pagination", records: @events %>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-calendar-event fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No events yet</h5>
+      </div>
+    <% end %>
+  </div>
+</div>

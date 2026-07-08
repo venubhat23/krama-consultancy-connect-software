@@ -1,0 +1,149 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+
+<style>
+  .chart-card { background: var(--bs-body-bg, white); border-radius: 14px; border: 1px solid rgba(0,0,0,0.08); padding: 1.25rem; margin-bottom: 1.5rem; }
+  [data-theme="dark"] .chart-card { background: rgba(30, 33, 48, 0.6); border-color: rgba(255,255,255,0.08); }
+  .stat-pill { display: inline-flex; align-items: center; gap: .5rem; padding: .5rem 1rem; border-radius: 999px; background: rgba(59,130,246,0.1); color: #3b82f6; font-weight: 600; }
+</style>
+
+<div class="mb-4">
+  <h2 class="mb-1">Platform Analytics</h2>
+  <p class="text-muted mb-0">Deeper breakdowns across forums, plans, tickets and events</p>
+</div>
+
+<div class="row">
+  <div class="col-lg-6">
+    <div class="chart-card">
+      <h6 class="mb-3">Members per Forum</h6>
+      <canvas id="membersPerForumChart" height="130"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="chart-card">
+      <h6 class="mb-3">Signups (last 12 months)</h6>
+      <canvas id="signupsChart" height="130"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-4">
+    <div class="chart-card">
+      <h6 class="mb-3">Forum Status</h6>
+      <canvas id="forumStatusChart" height="180"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="chart-card">
+      <h6 class="mb-3">Ticket Status</h6>
+      <canvas id="ticketStatusChart" height="180"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="chart-card">
+      <h6 class="mb-3">Ticket Priority</h6>
+      <canvas id="ticketPriorityChart" height="180"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-6">
+    <div class="chart-card">
+      <h6 class="mb-3">Revenue by Plan (MRR)</h6>
+      <canvas id="revenueByPlanChart" height="140"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="chart-card d-flex flex-column justify-content-center align-items-center text-center">
+      <h6 class="mb-3">Event Attendance Rate</h6>
+      <div class="display-4 fw-bold text-success"><%= @attendance_rate %>%</div>
+      <p class="text-muted mb-0"><%= @total_attended %> attended out of <%= @total_registrations %> registrations</p>
+      <div class="progress w-100 mt-3" style="height: 10px;">
+        <div class="progress-bar bg-success" style="width: <%= @attendance_rate %>%"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+    const textColor = isDark ? 'rgba(255,255,255,0.75)' : '#495057';
+    const legendOpts = { position: 'bottom', labels: { color: textColor } };
+
+    new Chart(document.getElementById('membersPerForumChart'), {
+      type: 'bar',
+      data: {
+        labels: <%= raw @members_per_forum.keys.to_json %>,
+        datasets: [{ label: 'Members', data: <%= raw @members_per_forum.values.to_json %>, backgroundColor: '#10b981', borderRadius: 6 }]
+      },
+      options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: textColor, precision: 0 }, grid: { color: gridColor }, beginAtZero: true },
+          y: { ticks: { color: textColor }, grid: { display: false } }
+        }
+      }
+    });
+
+    new Chart(document.getElementById('signupsChart'), {
+      type: 'line',
+      data: {
+        labels: <%= raw @signups_by_month.keys.map { |d| d.strftime("%b %y") }.to_json %>,
+        datasets: [{ label: 'Signups', data: <%= raw @signups_by_month.values.to_json %>, borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.15)', tension: 0.35, fill: true }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: textColor }, grid: { color: gridColor } },
+          y: { ticks: { color: textColor, precision: 0 }, grid: { color: gridColor }, beginAtZero: true }
+        }
+      }
+    });
+
+    new Chart(document.getElementById('forumStatusChart'), {
+      type: 'pie',
+      data: {
+        labels: <%= raw @forum_status_distribution.keys.map(&:humanize).to_json %>,
+        datasets: [{ data: <%= raw @forum_status_distribution.values.to_json %>, backgroundColor: ['#10b981', '#f59e0b', '#ef4444'] }]
+      },
+      options: { plugins: { legend: legendOpts } }
+    });
+
+    new Chart(document.getElementById('ticketStatusChart'), {
+      type: 'pie',
+      data: {
+        labels: <%= raw @ticket_status_distribution.keys.map(&:humanize).to_json %>,
+        datasets: [{ data: <%= raw @ticket_status_distribution.values.to_json %>, backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#94a3b8'] }]
+      },
+      options: { plugins: { legend: legendOpts } }
+    });
+
+    new Chart(document.getElementById('ticketPriorityChart'), {
+      type: 'doughnut',
+      data: {
+        labels: <%= raw @ticket_priority_distribution.keys.map(&:humanize).to_json %>,
+        datasets: [{ data: <%= raw @ticket_priority_distribution.values.to_json %>, backgroundColor: ['#94a3b8', '#3b82f6', '#ef4444'] }]
+      },
+      options: { plugins: { legend: legendOpts } }
+    });
+
+    new Chart(document.getElementById('revenueByPlanChart'), {
+      type: 'bar',
+      data: {
+        labels: <%= raw @revenue_by_plan.keys.to_json %>,
+        datasets: [{ label: 'MRR (₹)', data: <%= raw @revenue_by_plan.values.to_json %>, backgroundColor: '#f59e0b', borderRadius: 6 }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: textColor }, grid: { display: false } },
+          y: { ticks: { color: textColor }, grid: { color: gridColor }, beginAtZero: true }
+        }
+      }
+    });
+  });
+</script>

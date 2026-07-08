@@ -1,0 +1,2019 @@
+<% content_for :page_title, "Add General Insurance" %>
+<% content_for :page_subtitle, "Easily create and manage general insurance details" %>
+
+<!-- Action Buttons -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <%= link_to admin_other_insurances_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-2"></i>
+      Back to List
+    <% end %>
+  </div>
+
+  <div class="trust-seal">
+    <i class="bi bi-shield-check seal-icon"></i>
+    <span>Save Policy</span>
+  </div>
+</div>
+
+<%= form_with model: [:admin, @other_insurance], local: true, class: "needs-validation", novalidate: true do |form| %>
+
+  <!-- Client & Agent Details Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-person me-2 text-primary"></i>
+        Client & Agent Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <% if @other_insurance.errors.any? %>
+        <div class="alert alert-danger alert-dismissible fade show">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <strong>Please correct the following errors:</strong>
+          <ul class="mb-0 mt-2">
+            <% @other_insurance.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% end %>
+
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <%= form.label :customer_id, "Client Name*", class: "form-label" %>
+          <%= form.select :customer_id,
+              options_for_select(@customers.map { |c| [c.display_name, c.id] }, @selected_customer&.id || @other_insurance.customer_id),
+              { prompt: 'Search and select client...' },
+              { class: "form-control #{'is-invalid' if @other_insurance.errors[:customer_id].any?}", required: true, id: "customer_select", data: { placeholder: "Type to search clients..." } } %>
+          <% if @other_insurance.errors[:customer_id].any? %>
+            <div class="invalid-feedback"><%= @other_insurance.errors[:customer_id].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_holder, "Policy Holder", class: "form-label" %>
+          <%
+            policy_holder_options = [['Self', 'Self']]
+            if @customer_family_members&.any?
+              @customer_family_members.each do |member|
+                policy_holder_options << ["#{member.name} (#{member.relationship.humanize})", "#{member.name}"]
+              end
+            end
+          %>
+          <%= form.select :policy_holder,
+              options_for_select(policy_holder_options, @other_insurance.policy_holder),
+              {},
+              { class: "form-control", id: "policy_holder_select", data: { placeholder: "Type to search policy holders..." } } %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :sub_agent_id, "Affiliate", class: "form-label" %>
+          <%= form.select :sub_agent_id,
+              options_for_select([['Self', '']] + @sub_agents.map { |a| [a.display_name, a.id] }, (@auto_select_affiliate == 'self' ? '' : @auto_select_affiliate)),
+              { prompt: 'Search and select affiliate...' },
+              { class: "form-control", id: "affiliate_select", data: { placeholder: "Type to search affiliates..." } } %>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Policy Details Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-file-text me-2 text-primary"></i>
+        Policy Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <!-- 1st: Broker Code dropdown with Direct/Broking options -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :broker_code_type, "Broker Code", class: "form-label" %>
+          <%= form.select :broker_code_type,
+              options_for_select([
+                ['Direct', 'direct'],
+                ['Broking', 'broking']
+              ], @other_insurance.broker_code_type),
+              { prompt: 'Select Broker Code' },
+              { class: "form-control", id: "other_insurance_broker_code_type", data: { placeholder: "Select Broker Code..." } } %>
+        </div>
+
+        <!-- 2nd: Agency Code (shows Agents when Direct selected, Brokers when Broking selected) -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :agency_code_id, "Agency Code", class: "form-label" %>
+          <span class="dynamic-label" id="agency_code_label_text"></span>
+          <%= form.select :agency_code_id,
+              options_for_select(@agency_codes.map { |a| ["#{a.agent_name} - #{a.code}", a.id] }, @other_insurance.agency_code_id),
+              { prompt: 'Search and select agency code...' },
+              { class: "form-control", id: "other_insurance_agency_code_id", data: { placeholder: "Type to search agency codes..." } } %>
+        </div>
+
+        <!-- Hidden field for broker_id when needed -->
+        <%= form.hidden_field :broker_id, id: "broker_id_hidden" %>
+
+        <!-- 3rd: Insurance Company Name (Dynamic based on Agent/Broker selection) -->
+        <div class="col-md-4 mb-3">
+          <%= form.label :insurance_company_name, "Insurance Company Name*", class: "form-label" %>
+          <%= form.select :insurance_company_name,
+              options_for_select(@insurance_companies.map { |c| [c, c] }, @other_insurance.insurance_company_name),
+              { prompt: 'Search and select company...' },
+              { class: "form-control #{'is-invalid' if @other_insurance.errors[:insurance_company_name].any?}", required: true, id: "other_insurance_insurance_company_name", data: { placeholder: "Type to search companies..." }, disabled: @other_insurance.new_record? } %>
+          <% if @other_insurance.errors[:insurance_company_name].any? %>
+            <div class="invalid-feedback"><%= @other_insurance.errors[:insurance_company_name].first %></div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_type, "Policy Type*", class: "form-label" %>
+          <%= form.select :policy_type,
+              options_for_select([
+                ['New', 'New'],
+                ['Renewal', 'Renewal']
+              ], @other_insurance.policy_type),
+              { prompt: 'Select Policy Type' },
+              { class: "form-control #{'is-invalid' if @other_insurance.errors[:policy_type].any?}", required: true, id: "policy_type_select" } %>
+          <% if @other_insurance.errors[:policy_type].any? %>
+            <div class="invalid-feedback"><%= @other_insurance.errors[:policy_type].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :insurance_type, "Insurance Type*", class: "form-label" %>
+          <%= form.select :insurance_type,
+              options_for_select([
+                ['Travel Insurance', 'Travel Insurance'],
+                ['Home Insurance', 'Home Insurance'],
+                ['Personal Accident Insurance', 'Personal Accident Insurance'],
+                ['Property Insurance', 'Property Insurance'],
+                ['Cyber Insurance', 'Cyber Insurance'],
+                ['Professional Indemnity', 'Professional Indemnity'],
+                ['Marine Insurance', 'Marine Insurance'],
+                ['Other', 'Other']
+              ], @other_insurance.insurance_type),
+              { prompt: 'Select Insurance Type' },
+              { class: "form-control #{'is-invalid' if @other_insurance.errors[:insurance_type].any?}", required: true, id: "insurance_type_select" } %>
+          <% if @other_insurance.errors[:insurance_type].any? %>
+            <div class="invalid-feedback"><%= @other_insurance.errors[:insurance_type].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :payment_mode, "Payment Mode*", class: "form-label" %>
+          <%= form.select :payment_mode,
+              options_for_select([
+                ['Monthly', 'Monthly'],
+                ['Quarterly', 'Quarterly'],
+                ['Half Yearly', 'Half Yearly'],
+                ['Yearly', 'Yearly']
+              ], @other_insurance.payment_mode),
+              { prompt: 'Select Payment Mode' },
+              { class: "form-control #{'is-invalid' if @other_insurance.errors[:payment_mode].any?}", required: true, id: "payment_mode_select" } %>
+          <% if @other_insurance.errors[:payment_mode].any? %>
+            <div class="invalid-feedback"><%= @other_insurance.errors[:payment_mode].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_number, "Policy Number*", class: "form-label" %>
+          <%= form.text_field :policy_number,
+              class: "form-control #{'is-invalid' if @other_insurance.errors[:policy_number].any?}",
+              placeholder: "Enter unique policy number", required: true %>
+          <% if @other_insurance.errors[:policy_number].any? %>
+            <div class="invalid-feedback"><%= @other_insurance.errors[:policy_number].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_booking_date, "Policy Booking Date", class: "form-label" %>
+          <%= form.date_field :policy_booking_date,
+              class: "form-control",
+              value: @other_insurance.policy_booking_date || Date.current %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_start_date, "Policy Start Date*", class: "form-label" %>
+          <%= form.date_field :policy_start_date,
+              class: "form-control #{'is-invalid' if @other_insurance.errors[:policy_start_date].any?}",
+              required: true, id: "start_date" %>
+          <% if @other_insurance.errors[:policy_start_date].any? %>
+            <div class="invalid-feedback"><%= @other_insurance.errors[:policy_start_date].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_end_date, "Policy End Date*", class: "form-label" %>
+          <%= form.date_field :policy_end_date,
+              class: "form-control #{'is-invalid' if @other_insurance.errors[:policy_end_date].any?}",
+              required: true, id: "end_date" %>
+          <% if @other_insurance.errors[:policy_end_date].any? %>
+            <div class="invalid-feedback"><%= @other_insurance.errors[:policy_end_date].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :plan_name, "Plan Name", class: "form-label" %>
+          <%= form.text_field :plan_name,
+              class: "form-control",
+              placeholder: "Enter plan name" %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :sum_insured, "Sum Insured*", class: "form-label" %>
+          <div class="input-group">
+            <%= form.text_field :sum_insured,
+                class: "form-control #{'is-invalid' if @other_insurance.errors[:sum_insured].any?}",
+                placeholder: "e.g., 90 lakhs, 5 crores, 1.5 crore",
+                required: true %>
+          </div>
+          <div class="form-text">Enter amount like: 90 lakhs, 5 crores, 1.5 crore, etc.</div>
+          <% if @other_insurance.errors[:sum_insured].any? %>
+            <div class="invalid-feedback"><%= @other_insurance.errors[:sum_insured].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :net_premium, "Net Premium*", class: "form-label" %>
+          <div class="input-group">
+            <span class="input-group-text">Rs. </span>
+            <%= form.number_field :net_premium,
+                class: "form-control #{'is-invalid' if @other_insurance.errors[:net_premium].any?}",
+                value: @other_insurance.net_premium || 0,
+                step: 0.01,
+                min: 0,
+                required: true,
+                id: "net_premium_field" %>
+            <% if @other_insurance.errors[:net_premium].any? %>
+              <div class="invalid-feedback"><%= @other_insurance.errors[:net_premium].first %></div>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :gst_percentage, "GST %*", class: "form-label" %>
+          <div class="input-group">
+            <%= form.number_field :gst_percentage,
+                class: "form-control #{'is-invalid' if @other_insurance.errors[:gst_percentage].any?}",
+                value: @other_insurance.gst_percentage || 18.0,
+                step: 0.01,
+                min: 0,
+                max: 100,
+                id: "gst_percentage_field" %>
+            <span class="input-group-text">%</span>
+            <% if @other_insurance.errors[:gst_percentage].any? %>
+              <div class="invalid-feedback"><%= @other_insurance.errors[:gst_percentage].first %></div>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :total_premium, "Total Premium*", class: "form-label" %>
+          <div class="input-group">
+            <span class="input-group-text">Rs. </span>
+            <%= form.number_field :total_premium,
+                class: "form-control #{'is-invalid' if @other_insurance.errors[:total_premium].any?}",
+                value: @other_insurance.total_premium || 0,
+                step: 0.01,
+                min: 0,
+                required: true,
+                readonly: true,
+                id: "total_premium_field" %>
+            <% if @other_insurance.errors[:total_premium].any? %>
+              <div class="invalid-feedback"><%= @other_insurance.errors[:total_premium].first %></div>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :policy_term, "Policy Term (Years)", class: "form-label" %>
+          <%= form.text_field :policy_term,
+              class: "form-control",
+              placeholder: "e.g., 1, 2, 3" %>
+          <div class="form-text">Enter policy term in years (e.g., 1, 2, 3)</div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :claim_process, "Claim Process", class: "form-label" %>
+          <%= form.select :claim_process,
+              options_for_select([
+                ['Cashless', 'Cashless'],
+                ['Reimbursement', 'Reimbursement'],
+                ['Both', 'Both']
+              ], @other_insurance.claim_process),
+              { prompt: 'Select Claim Process' },
+              { class: "form-control", id: "claim_process_select" } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nominee Details Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-person-check me-2 text-primary"></i>
+        Nominee Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">Nominees</h6>
+        <div>
+          <button type="button" id="load_customer_nominees_btn" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-download me-1"></i>Load from Client
+          </button>
+          <button type="button" id="add_nominee" class="btn btn-primary">
+            <i class="bi bi-plus me-1"></i>Add Nominee
+          </button>
+        </div>
+      </div>
+
+      <div id="nominees">
+        <div class="text-center py-4 text-muted" id="no_nominees_message">
+          <i class="bi bi-person-check display-4 mb-3"></i>
+          <p class="mb-0">No nominees added yet.</p>
+        </div>
+
+        <%= form.fields_for :other_insurance_nominees do |nominee_form| %>
+          <div class="nominee-row border rounded p-3 mb-3 bg-light">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <%= nominee_form.label :nominee_name, "Nominee Name", class: "form-label required" %>
+                <%= nominee_form.text_field :nominee_name, class: "form-control", placeholder: "Full Name", required: true %>
+              </div>
+              <div class="col-md-3 mb-3">
+                <%= nominee_form.label :relationship, "Relationship", class: "form-label required" %>
+                <%= nominee_form.select :relationship,
+                    options_for_select(OtherInsuranceNominee::RELATIONSHIPS.map { |rel| [rel.humanize, rel] }),
+                    { prompt: 'Select Relationship' },
+                    { class: "form-select", required: true } %>
+              </div>
+              <div class="col-md-2 mb-3">
+                <%= nominee_form.label :age, "Age", class: "form-label required" %>
+                <%= nominee_form.number_field :age, class: "form-control", min: 1, max: 120, required: true %>
+              </div>
+              <div class="col-md-2 mb-3">
+                <%= nominee_form.label :share_percentage, "Share %", class: "form-label" %>
+                <%= nominee_form.number_field :share_percentage, class: "form-control", min: 0, max: 100, step: 0.01, placeholder: "100" %>
+              </div>
+              <div class="col-md-1 d-flex align-items-end mb-3">
+                <button type="button" class="btn btn-outline-danger remove-nominee-btn">
+                  <i class="bi bi-trash"></i>
+                </button>
+                <%= nominee_form.check_box :_destroy, style: "display: none;" %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Commission Calculation Table -->
+  <div class="card mb-4 shadow-sm commission-table">
+    <div class="card-header" style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="mb-0 text-dark fw-bold">
+            <i class="bi bi-calculator me-2 text-primary"></i>
+            Commission Calculation
+          </h5>
+        </div>
+        <div class="text-end">
+          <small class="text-muted fw-bold">Profit Formula:</small>
+          <div class="badge bg-light text-dark border" style="font-size: 0.8rem;">
+            Main Agent Commission - Total Distribution - Company Expenses
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <!-- Commission Table -->
+      <div class="table-responsive">
+        <table class="table mb-0" style="font-size: 0.95rem;">
+          <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+            <tr>
+              <th class="py-3 px-4 fw-bold text-dark border-0" style="width: 20%;">COMMISSION DETAILS</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 12%;">(%)</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 18%;">COMMISSION</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 12%;">TDS (%)</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 15%;">TDS AMOUNT</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 23%; background: #f8f9fa;">ACTUAL AMOUNT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Main Agent -->
+            <tr style="border-bottom: 1px solid #e9ecef;">
+              <td class="py-3 px-4 fw-bold text-dark bg-light">Main Agent</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :main_agent_commission_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm",
+                    value: @other_insurance.main_agent_commission_percentage || 10.0,
+                    step: 0.01, id: "commission_percentage",
+                    style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :commission_amount,
+                    class: "form-control border-1 text-center",
+                    value: @other_insurance.commission_amount || 0,
+                    step: 0.01, readonly: true, id: "commission_amount",
+                    style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :tds_percentage,
+                    class: "form-control border-1 text-center",
+                    value: @other_insurance.tds_percentage || 0,
+                    step: 0.01, id: "tds_percentage",
+                    style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :tds_amount,
+                    class: "form-control border-1 text-center",
+                    value: @other_insurance.tds_amount || 0,
+                    step: 0.01, readonly: true, id: "tds_amount",
+                    style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <%= form.number_field :after_tds_value,
+                    class: "form-control border-1 text-center fw-bold fs-6",
+                    value: @other_insurance.after_tds_value || 0,
+                    step: 0.01, readonly: true, id: "after_tds_value",
+                    style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+            </tr>
+            <!-- Affiliate -->
+            <tr style="border-bottom: 1px solid #e9ecef;">
+              <td class="py-3 px-4 fw-bold text-dark">Affiliate</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_commission_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm sub-agent-commission-percentage",
+                    value: @other_insurance.sub_agent_commission_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_commission_amount,
+                    class: "form-control border-1 text-center sub-agent-commission-amount",
+                    value: @other_insurance.sub_agent_commission_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_tds_percentage,
+                    class: "form-control border-1 text-center sub-agent-tds-percentage",
+                    value: @other_insurance.sub_agent_tds_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_tds_amount,
+                    class: "form-control border-1 text-center sub-agent-tds-amount",
+                    value: @other_insurance.sub_agent_tds_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <%= form.number_field :sub_agent_after_tds_value,
+                    class: "form-control border-1 text-center fw-bold fs-6 sub-agent-after-tds-value",
+                    value: @other_insurance.sub_agent_after_tds_value || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+            </tr>
+            <!-- Ambassador -->
+            <tr style="border-bottom: 1px solid #e9ecef;">
+              <td class="py-3 px-4 fw-bold text-dark">Ambassador</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :ambassador_commission_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm ambassador-commission-percentage",
+                    value: @other_insurance.ambassador_commission_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :ambassador_commission_amount,
+                    class: "form-control border-1 text-center ambassador-commission-amount",
+                    value: @other_insurance.ambassador_commission_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :ambassador_tds_percentage,
+                    class: "form-control border-1 text-center ambassador-tds-percentage",
+                    value: @other_insurance.ambassador_tds_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :ambassador_tds_amount,
+                    class: "form-control border-1 text-center ambassador-tds-amount",
+                    value: @other_insurance.ambassador_tds_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <%= form.number_field :ambassador_after_tds_value,
+                    class: "form-control border-1 text-center fw-bold fs-6 ambassador-after-tds-value",
+                    value: @other_insurance.ambassador_after_tds_value || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+            </tr>
+            <!-- Investor -->
+            <tr style="border-bottom: 1px solid #e9ecef;">
+              <td class="py-3 px-4 fw-bold text-dark">Investor</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :investor_commission_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm investor-commission-percentage",
+                    value: @other_insurance.investor_commission_percentage || 0,
+                    step: 0.01, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :investor_commission_amount,
+                    class: "form-control border-1 text-center investor-commission-amount",
+                    value: @other_insurance.investor_commission_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <%= form.number_field :investor_commission_amount,
+                    class: "form-control border-1 text-center fw-bold fs-6 investor-commission-amount-display",
+                    value: @other_insurance.investor_commission_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+            </tr>
+            <%= form.hidden_field :investor_tds_percentage, value: 0, class: "investor-tds-percentage" %>
+            <!-- Company Expenses -->
+            <tr style="border-bottom: 1px solid #e9ecef;">
+              <td class="py-3 px-4 fw-bold text-dark">Company Expenses</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :company_expenses_percentage,
+                    class: "form-control border-1 text-center fw-bold shadow-sm company-expenses-percentage",
+                    value: @other_insurance.company_expenses_percentage || 5.0,
+                    step: 0.01, min: 0, max: 100, style: "background: #fff; border-color: #dee2e6;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :company_expenses_amount,
+                    class: "form-control border-1 text-center company-expenses-amount",
+                    value: ((@other_insurance.net_premium || 0) * ((@other_insurance.company_expenses_percentage || 5) / 100)).round(2),
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-1 text-center" style="background: #f8f9fa;">
+                <%= form.number_field :company_expenses_amount,
+                    class: "form-control border-1 text-center fw-bold fs-6 company-expenses-amount-display",
+                    value: ((@other_insurance.net_premium || 0) * ((@other_insurance.company_expenses_percentage || 5) / 100)).round(2),
+                    step: 0.01, readonly: true, style: "background: #f8f9fa; border-color: #dee2e6; color: #495057;" %>
+              </td>
+            </tr>
+            <!-- Profit Row -->
+            <tr style="border-bottom: 2px solid #198754; background: linear-gradient(135deg, #f0fff0 0%, #e8f5e8 100%);">
+              <td class="py-3 px-4 fw-bold text-dark" style="background: #e8f5e8;">
+                <i class="bi bi-currency-rupee me-1 text-success"></i>
+                Profit
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :profit_percentage,
+                    class: "form-control border-1 text-center fw-bold profit-percentage-display",
+                    value: @other_insurance.profit_percentage || 0,
+                    step: 0.01, readonly: true, style: "background: #f0fff0; border-color: #198754; color: #198754;" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :profit_amount,
+                    class: "form-control border-1 text-center fw-bold profit-amount-display",
+                    value: @other_insurance.profit_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f0fff0; border-color: #198754; color: #198754;" %>
+              </td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-3 text-center fw-bold text-muted">—</td>
+              <td class="py-2 px-1 text-center" style="background: #f0fff0;">
+                <%= form.number_field :profit_amount,
+                    class: "form-control border-1 text-center fw-bold profit-amount-display-final",
+                    value: @other_insurance.profit_amount || 0,
+                    step: 0.01, readonly: true, style: "background: #f0fff0; border-color: #198754; color: #198754;" %>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Hidden fields for calculations -->
+      <%= form.hidden_field :total_distribution_percentage, class: "total-distribution-percentage", value: @other_insurance.total_distribution_percentage || 0 %>
+    </div>
+  </div>
+
+
+  <!-- Autopay Installment Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-calendar-check me-2 text-primary"></i>
+        Autopay Installment
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <%= form.label :installment_autopay_start_date, "Installment Autopay Start Date", class: "form-label" %>
+          <%= form.date_field :installment_autopay_start_date,
+              class: "form-control",
+              id: "autopay_start_date",
+              value: @other_insurance.installment_autopay_start_date || Date.current %>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <%= form.label :installment_autopay_end_date, "Installment Autopay End Date", class: "form-label" %>
+          <%= form.date_field :installment_autopay_end_date,
+              class: "form-control",
+              id: "autopay_end_date",
+              value: @other_insurance.installment_autopay_end_date || Date.current %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Policy Documents Manager Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-cloud-upload me-2 text-primary"></i>
+        Policy Documents Manager
+      </h5>
+      <small class="text-muted">Upload, organize and manage all policy-related documents with secure storage</small>
+    </div>
+    <div class="card-body p-4">
+      <!-- R2 Main Policy Document Upload -->
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <div class="border border-success border-2 rounded p-4" style="background-color: #f0fff0;">
+            <%= form.label :main_policy_document, class: "form-label fw-bold" do %>
+              <i class="bi bi-cloud-upload me-2 text-success"></i>
+              Main Policy Document (R2 Storage)
+            <% end %>
+
+            <!-- Current R2 Document Display -->
+            <% if @other_insurance.respond_to?(:has_main_policy_r2_document?) && @other_insurance.has_main_policy_r2_document? %>
+              <div class="current-document mb-3 p-3 border rounded bg-white">
+                <div class="row align-items-center">
+                  <div class="col-auto">
+                    <% if @other_insurance.main_policy_document_content_type&.start_with?('image/') %>
+                      <%= image_tag @other_insurance.main_policy_r2_document_url, class: "img-thumbnail",
+                          style: "width: 60px; height: 60px; object-fit: cover;" %>
+                    <% elsif @other_insurance.main_policy_document_content_type == 'application/pdf' %>
+                      <div class="bg-danger text-white rounded d-flex align-items-center justify-content-center"
+                           style="width: 60px; height: 60px;">
+                        <i class="bi bi-file-earmark-pdf fs-4"></i>
+                      </div>
+                    <% else %>
+                      <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center"
+                           style="width: 60px; height: 60px;">
+                        <i class="bi bi-file-earmark fs-4"></i>
+                      </div>
+                    <% end %>
+                  </div>
+                  <div class="col">
+                    <div class="fw-medium"><%= @other_insurance.main_policy_document_filename %></div>
+                    <small class="text-muted">
+                      <%= (@other_insurance.main_policy_document_size / 1024.0 / 1024.0).round(2) %> MB •
+                      <%= @other_insurance.main_policy_document_content_type %>
+                    </small>
+                    <div>
+                      <small class="text-success">
+                        <i class="bi bi-cloud-check me-1"></i>
+                        Stored in Cloudflare R2
+                      </small>
+                    </div>
+                  </div>
+                  <div class="col-auto">
+                    <div class="d-flex gap-1">
+                      <%= link_to @other_insurance.main_policy_r2_url, class: "btn btn-sm btn-outline-primary",
+                          target: "_blank", title: "View" do %>
+                        <i class="bi bi-eye"></i>
+                      <% end %>
+                      <button type="button" class="btn btn-sm btn-outline-danger"
+                              onclick="deleteMainPolicyDocument()" title="Delete Document">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-2">
+                <small class="text-muted">
+                  <strong>Replace document:</strong> Upload a new file to replace the current document
+                </small>
+              </div>
+            <% end %>
+
+            <%= form.file_field :main_policy_document,
+                class: "form-control",
+                accept: "application/pdf,image/jpeg,image/jpg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" %>
+            <div class="form-text mt-2">
+              <i class="bi bi-info-circle me-1"></i>
+              <strong>Secure R2 Storage:</strong> Supports PDF, JPEG, PNG, Word files (Max: 10MB) -
+              <% if @other_insurance.respond_to?(:has_main_policy_r2_document?) && @other_insurance.has_main_policy_r2_document? %>
+                upload new file to replace existing document
+              <% else %>
+                files stored securely in Cloudflare R2
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12 mb-4">
+          <div class="border border-secondary border-2 rounded p-4" style="background-color: #f8f9fa;">
+            <%= form.label :documents, class: "form-label fw-bold" do %>
+              <i class="bi bi-file-earmark-plus me-2 text-secondary"></i>
+              Additional Documents
+              <span class="badge bg-secondary ms-2">Optional</span>
+            <% end %>
+            <%= form.file_field :documents,
+                class: "form-control",
+                multiple: true,
+                id: "additional_documents_upload",
+                accept: "application/pdf,image/jpeg,image/jpg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" %>
+            <div class="form-text mt-2">
+              <i class="bi bi-info-circle me-1"></i>
+              Supports PDF, Images, Word files - Identity proofs, Medical reports, etc.
+            </div>
+          </div>
+
+          <!-- Additional Documents Preview -->
+          <%= render 'shared/file_upload_preview',
+                     field_id: 'additional_documents_upload',
+                     preview_id: 'additional_documents_preview',
+                     accept: 'application/pdf,image/jpeg,image/jpg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                     show_file_info: true,
+                     max_file_size: '10MB' %>
+        </div>
+      </div>
+
+      <!-- New Document System -->
+      <div class="border-top pt-4 mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0">
+            <% if @other_insurance.persisted? %>
+              Add More Documents
+            <% else %>
+              Document Management System
+            <% end %>
+          </h6>
+          <button type="button" class="btn btn-sm btn-primary" id="add_policy_document">
+            <i class="bi bi-plus-lg me-1"></i>
+            Add Document
+          </button>
+        </div>
+
+        <div id="policy_documents_container">
+          <!-- New document system will be added here -->
+        </div>
+
+        <p class="text-muted mb-0 mt-2">
+          <small>Use this system to add organized documents with titles and types</small>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex justify-content-between">
+        <%= link_to admin_other_insurances_path, class: "btn btn-outline-secondary" do %>
+          <i class="bi bi-x-lg me-1"></i>Cancel
+        <% end %>
+        <%= form.submit "Create General Insurance", class: "btn btn-primary btn-lg" %>
+      </div>
+    </div>
+  </div>
+
+<% end %>
+
+<!-- jQuery (required for Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Select2 CSS & JS for searchable dropdown -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Custom styling for enhanced Select2 dropdown -->
+<style>
+  .select2-container--bootstrap-5 .select2-selection--single {
+    height: 38px;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+
+  .select2-container--bootstrap-5 .select2-selection--single:focus-within {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+
+  .select2-container--bootstrap-5 .select2-selection__rendered {
+    color: #212529;
+    line-height: 36px;
+    padding-left: 12px;
+    font-size: 1rem;
+  }
+
+  .select2-container--bootstrap-5 .select2-selection__arrow {
+    height: 36px;
+    right: 12px;
+  }
+
+  .select2-dropdown {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    margin-top: -1px;
+  }
+
+  .select2-container--bootstrap-5 .select2-results__option--highlighted[aria-selected] {
+    background-color: #0d6efd;
+    color: white;
+  }
+
+  .select2-dropdown-large {
+    font-size: 1rem;
+  }
+
+  .select2-dropdown-large .select2-results__option {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f8f9fa;
+  }
+
+  .select2-dropdown-large .select2-results__option:last-child {
+    border-bottom: none;
+  }
+
+  /* Required asterisk styling */
+  .form-label[for="customer_select"]::after {
+    content: " *";
+    color: red;
+  }
+
+  .dynamic-label {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 0.875rem;
+    color: #6c757d;
+  }
+
+  /* Affiliate option styling */
+  .affiliate-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    min-height: 45px;
+  }
+
+  .affiliate-option-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 10px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .affiliate-option-details {
+    flex: 1;
+  }
+
+  .affiliate-option-name {
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 2px;
+  }
+
+  .affiliate-option-id {
+    font-size: 11px;
+    color: #6c757d;
+  }
+
+  /* Commission Table Styling */
+  .commission-table {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .commission-table .table td,
+  .commission-table .table th {
+    vertical-align: middle;
+    border-color: #e9ecef;
+  }
+  .commission-table .form-control {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+  .commission-table .form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    border-color: #667eea;
+  }
+  .commission-table .form-control:read-only {
+    background-color: #f8f9fa !important;
+    color: #6c757d !important;
+  }
+  .commission-table tr:hover {
+    background-color: rgba(102, 126, 234, 0.03);
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize Select2 for searchable dropdowns
+  $('#customer_select').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Search and select client...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    dropdownCssClass: 'select2-dropdown-large',
+    minimumResultsForSearch: 0,
+    closeOnSelect: true,
+    templateResult: function(option) {
+      if (!option.id || option.id === '') {
+        return $('<span style="color: #6c757d; font-style: italic;">' + option.text + '</span>');
+      }
+      return $('<span>' + option.text + '</span>');
+    }
+  });
+
+  // Initialize Select2 for Broker Code dropdown
+  $('#other_insurance_broker_code_type').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Select Broker Code...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    minimumResultsForSearch: -1 // Disable search for small lists
+  });
+
+  $('#policy_holder_select').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Select policy holder...',
+    allowClear: false,
+    width: '100%',
+    dropdownParent: $('body'),
+    minimumResultsForSearch: 0
+  });
+
+  $('#affiliate_select').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Search and select affiliate...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    minimumResultsForSearch: 0,
+    ajax: {
+      url: '/api/v1/public/search_sub_agents',
+      dataType: 'json',
+      delay: 250,
+      data: function (params) {
+        var selectedCustomerId = $('#customer_select').val();
+
+        return {
+          q: params.term || '',
+          customer_id: selectedCustomerId,
+          limit: params.term ? 20 : 10
+        };
+      },
+      processResults: function (data) {
+        return {
+          results: data.results || []
+        };
+      },
+      cache: true
+    },
+    templateResult: function(affiliate) {
+      if (affiliate.loading) return affiliate.text;
+      if (!affiliate.id || affiliate.id === '') {
+        return $('<span style="color: #6c757d; font-style: italic;">' + affiliate.text + '</span>');
+      }
+
+      var initials = affiliate.text.split(' ').map(n => n[0]).join('').toUpperCase();
+      var $container = $(`
+        <div class="affiliate-option">
+          <div class="affiliate-option-avatar">${initials}</div>
+          <div class="affiliate-option-details">
+            <div class="affiliate-option-name">${affiliate.text}</div>
+            <div class="affiliate-option-id">ID: ${affiliate.id}</div>
+          </div>
+        </div>
+      `);
+
+      return $container;
+    },
+    templateSelection: function(affiliate) {
+      return affiliate.text || affiliate.id;
+    }
+  });
+
+  $('#other_insurance_agency_code_id').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Search and select agency code...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    minimumResultsForSearch: 0
+  });
+
+  $('#other_insurance_insurance_company_name').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Search and select company...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('body'),
+    minimumResultsForSearch: 0
+  });
+
+  // Handle customer selection change using Select2 events
+  $('#customer_select').on('select2:select', function(e) {
+    const customerId = $(this).val();
+    console.log('Customer selected:', customerId);
+
+    if (customerId) {
+      // Fetch customer family members and update policy holder options
+      fetch('/admin/customers/' + customerId + '/family_members')
+        .then(response => response.json())
+        .then(data => {
+          const policyHolderSelect = $('#policy_holder_select');
+
+          // Destroy existing Select2 instance
+          if (policyHolderSelect.data('select2')) {
+            policyHolderSelect.select2('destroy');
+          }
+
+          // Clear and rebuild options
+          policyHolderSelect.empty();
+          policyHolderSelect.append('<option value="Self" selected>Self</option>');
+
+          if (data.family_members && data.family_members.length > 0) {
+            data.family_members.forEach(member => {
+              policyHolderSelect.append(`<option value="${member.name}">${member.name} (${member.relationship})</option>`);
+            });
+          }
+
+          // Reinitialize Select2 with new options
+          policyHolderSelect.select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select policy holder...',
+            allowClear: false,
+            width: '100%',
+            dropdownParent: $('body'),
+            minimumResultsForSearch: 0
+          });
+
+          // Set value to Self
+          policyHolderSelect.val('Self').trigger('change');
+        })
+        .catch(error => {
+          console.error('Error fetching family members:', error);
+          const policyHolderSelect = $('#policy_holder_select');
+
+          // Reset to Self only on error
+          if (policyHolderSelect.data('select2')) {
+            policyHolderSelect.select2('destroy');
+          }
+
+          policyHolderSelect.empty();
+          policyHolderSelect.append('<option value="Self" selected>Self</option>');
+
+          policyHolderSelect.select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select policy holder...',
+            allowClear: false,
+            width: '100%',
+            dropdownParent: $('body'),
+            minimumResultsForSearch: 0
+          });
+        });
+
+      // Refresh affiliate dropdown to filter by customer
+      $('#affiliate_select').val(null).trigger('change');
+      console.log('Customer selected, affiliate dropdown will now filter for customer ID:', customerId);
+
+      // Auto-load customer nominees (like Motor Insurance)
+      loadCustomerNominees(customerId);
+    }
+  });
+
+  // Handle customer clearing
+  $('#customer_select').on('select2:clear', function(e) {
+    console.log('Customer cleared');
+
+    // Reset policy holder to Self only
+    const policyHolderSelect = $('#policy_holder_select');
+
+    if (policyHolderSelect.data('select2')) {
+      policyHolderSelect.select2('destroy');
+    }
+
+    policyHolderSelect.empty();
+    policyHolderSelect.append('<option value="Self" selected>Self</option>');
+
+    policyHolderSelect.select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Select policy holder...',
+      allowClear: false,
+      width: '100%',
+      dropdownParent: $('body'),
+      minimumResultsForSearch: 0
+    });
+
+    // Clear affiliate selection and refresh dropdown
+    $('#affiliate_select').val(null).trigger('change');
+    console.log('Customer cleared, affiliate dropdown will now show all affiliates');
+
+    // Clear nominees when customer is cleared (like Motor Insurance)
+    clearNominees();
+  });
+
+  // Handle broker code type change - matches Health Insurance functionality
+  $('#other_insurance_broker_code_type').on('click', function() {
+    const insuranceCompanySelect = $('#other_insurance_insurance_company_name');
+    if (insuranceCompanySelect.length && insuranceCompanySelect.prop('disabled')) {
+      insuranceCompanySelect.prop('disabled', false);
+      console.log('✅ Other Insurance Company Name dropdown enabled');
+
+      // Also enable it for native element if needed
+      const nativeSelect = document.getElementById('other_insurance_insurance_company_name');
+      if (nativeSelect && nativeSelect.disabled) {
+        nativeSelect.disabled = false;
+      }
+    }
+  });
+
+  $('#other_insurance_broker_code_type').on('change', function() {
+    const brokerType = $(this).val();
+    const agencyCodeSelect = $('#other_insurance_agency_code_id');
+    const insuranceCompanySelect = $('#other_insurance_insurance_company_name');
+    const labelText = $('#agency_code_label_text');
+
+    console.log('🔥 BROKER CODE CHANGED! Value:', brokerType);
+
+    // Enable Insurance Company dropdown when any option is selected
+    if (insuranceCompanySelect.length && insuranceCompanySelect.prop('disabled')) {
+      insuranceCompanySelect.prop('disabled', false);
+      console.log('✅ Other Insurance Company Name dropdown enabled on selection');
+
+      // Also enable it for native element if needed
+      const nativeSelect = document.getElementById('other_insurance_insurance_company_name');
+      if (nativeSelect && nativeSelect.disabled) {
+        nativeSelect.disabled = false;
+      }
+    }
+
+    // Clear dependent dropdowns
+    if (agencyCodeSelect.data('select2')) {
+      agencyCodeSelect.select2('destroy');
+    }
+    agencyCodeSelect.empty().append('<option value="">Loading...</option>');
+
+    // Reset insurance company dropdown
+    if (insuranceCompanySelect.data('select2')) {
+      insuranceCompanySelect.select2('destroy');
+    }
+    insuranceCompanySelect.empty().append('<option value="">Loading...</option>');
+
+    if (brokerType === 'direct') {
+      labelText.text('(Shows Agents)');
+      console.log('📋 Calling Direct Mode API for Other Insurance...');
+
+      // Fetch agents (direct mode) - use General Insurance type
+      fetch('/admin/insurance/other/all_agency_codes')
+        .then(response => response.json())
+        .then(data => {
+          agencyCodeSelect.empty();
+          agencyCodeSelect.append('<option value="">Search and select agency code...</option>');
+
+          if (data.agency_codes) {
+            data.agency_codes.forEach(code => {
+              agencyCodeSelect.append(`<option value="${code.id}">${code.name}</option>`);
+            });
+          }
+
+          // Reinitialize Select2 for agency codes
+          agencyCodeSelect.select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Search and select agency code...',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('body'),
+            minimumResultsForSearch: 0
+          });
+        })
+        .catch(error => {
+          console.error('Error loading agency codes:', error);
+          agencyCodeSelect.empty().append('<option value="">Error loading codes</option>');
+          agencyCodeSelect.select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Error loading codes',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('body'),
+            minimumResultsForSearch: 0
+          });
+        });
+
+      // Reset insurance company for selection after agent is chosen
+      insuranceCompanySelect.empty().append('<option value="">Select Agent First...</option>');
+
+    } else if (brokerType === 'broking') {
+      labelText.text('(Shows Brokers)');
+      console.log('🏢 Calling Broking Mode API for Other Insurance...');
+
+      // Fetch brokers (broking mode)
+      fetch('/admin/insurance/other/all_brokers')
+        .then(response => response.json())
+        .then(data => {
+          agencyCodeSelect.empty();
+          agencyCodeSelect.append('<option value="">Search and select broker...</option>');
+
+          if (data.brokers) {
+            data.brokers.forEach(broker => {
+              agencyCodeSelect.append(`<option value="${broker.id}">${broker.name}</option>`);
+            });
+          }
+
+          // Reinitialize Select2 for brokers
+          agencyCodeSelect.select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Search and select broker...',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('body'),
+            minimumResultsForSearch: 0
+          });
+        })
+        .catch(error => {
+          console.error('Error loading brokers:', error);
+          agencyCodeSelect.empty().append('<option value="">Error loading brokers</option>');
+          agencyCodeSelect.select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Error loading brokers',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('body'),
+            minimumResultsForSearch: 0
+          });
+        });
+
+      // Load all insurance companies for broking mode
+      insuranceCompanySelect.empty().append('<option value="">Loading companies...</option>');
+      fetch('/admin/insurance/other/insurance_companies_for_type?insurance_type=General Insurance')
+        .then(response => response.json())
+        .then(data => {
+          insuranceCompanySelect.empty();
+          insuranceCompanySelect.append('<option value="">Search and select company...</option>');
+
+          if (data.data) {
+            data.data.forEach(company => {
+              insuranceCompanySelect.append(`<option value="${company.text}">${company.text}</option>`);
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error loading insurance companies:', error);
+          insuranceCompanySelect.empty().append('<option value="">Error loading companies</option>');
+        });
+    } else {
+      // Clear label when no selection
+      labelText.text('');
+      agencyCodeSelect.empty().append('<option value="">Select Broker Code First</option>');
+      insuranceCompanySelect.empty().append('<option value="">Select Broker Code First</option>');
+    }
+
+    // Reinitialize Select2 for insurance company
+    setTimeout(() => {
+      insuranceCompanySelect.select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select company...',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('body'),
+        minimumResultsForSearch: 0
+      });
+    }, 100);
+  });
+
+  // Handle agency code selection change using Select2 events
+  $('#other_insurance_agency_code_id').on('select2:select', function(e) {
+    const agencyCodeId = e.params.data.id;
+    const brokerType = $('#other_insurance_broker_code_type').val();
+
+    console.log('🔥 AGENCY CODE SELECTED! ID:', agencyCodeId, 'Broker Type:', brokerType);
+
+    if (agencyCodeId && brokerType === 'direct') {
+      // For direct mode, auto-fill insurance companies based on selected agent
+      fetch('/admin/insurance/other/insurance_companies_by_agency?broker_code=direct&agency_code_id=' + agencyCodeId)
+        .then(response => response.json())
+        .then(data => {
+          const companySelect = $('#other_insurance_insurance_company_name');
+
+          // Destroy existing Select2
+          if (companySelect.data('select2')) {
+            companySelect.select2('destroy');
+          }
+
+          companySelect.empty();
+          companySelect.append('<option value="">Search and select company...</option>');
+
+          if (data.data && data.data.length > 0) {
+            data.data.forEach(company => {
+              companySelect.append(`<option value="${company.text}">${company.text}</option>`);
+            });
+          }
+
+          // Reinitialize Select2
+          companySelect.select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Search and select company...',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('body'),
+            minimumResultsForSearch: 0
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching companies for agency code:', error);
+        });
+    }
+  });
+
+  // Handle agency code clearing
+  $('#other_insurance_agency_code_id').on('select2:clear', function(e) {
+    const brokerType = $('#other_insurance_broker_code_type').val();
+
+    console.log('🔥 AGENCY CODE CLEARED! Broker Type:', brokerType);
+
+    if (brokerType === 'direct') {
+      // Clear company dropdown in direct mode when no agent selected
+      const companySelect = $('#other_insurance_insurance_company_name');
+
+      if (companySelect.data('select2')) {
+        companySelect.select2('destroy');
+      }
+
+      companySelect.empty().append('<option value="">Select Agent First...</option>');
+
+      companySelect.select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Select Agent First...',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('body'),
+        minimumResultsForSearch: 0
+      });
+    }
+  });
+
+  // Auto-calculate functions
+  function calculateTotalPremium() {
+    const netPremium = parseFloat(document.getElementById('net_premium_field').value) || 0;
+    const gstPercentage = parseFloat(document.getElementById('gst_percentage_field').value) || 0;
+
+    const gstAmount = (netPremium * gstPercentage) / 100;
+    const totalPremium = netPremium + gstAmount;
+
+    document.getElementById('total_premium_field').value = totalPremium.toFixed(2);
+  }
+
+  function calculateCommissions() {
+    const netPremium = parseFloat(document.getElementById('net_premium_field').value) || 0;
+
+    // Main Agent Commission
+    const mainCommissionPct = parseFloat(document.getElementById('commission_percentage').value) || 0;
+    const mainCommissionAmt = (netPremium * mainCommissionPct) / 100;
+    document.getElementById('commission_amount').value = mainCommissionAmt.toFixed(2);
+
+    const mainTdsPct = parseFloat(document.getElementById('tds_percentage').value) || 0;
+    const mainTdsAmt = (mainCommissionAmt * mainTdsPct) / 100;
+    document.getElementById('tds_amount').value = mainTdsAmt.toFixed(2);
+    document.getElementById('after_tds_value').value = (mainCommissionAmt - mainTdsAmt).toFixed(2);
+
+    // Affiliate Commission
+    const subAgentPct = parseFloat(document.querySelector('.sub-agent-commission-percentage').value) || 0;
+    const subAgentAmt = (netPremium * subAgentPct) / 100;
+    document.querySelector('.sub-agent-commission-amount').value = subAgentAmt.toFixed(2);
+
+    const subAgentTdsPct = parseFloat(document.querySelector('.sub-agent-tds-percentage').value) || 0;
+    const subAgentTdsAmt = (subAgentAmt * subAgentTdsPct) / 100;
+    document.querySelector('.sub-agent-tds-amount').value = subAgentTdsAmt.toFixed(2);
+    document.querySelector('.sub-agent-after-tds-value').value = (subAgentAmt - subAgentTdsAmt).toFixed(2);
+
+    // Investor Commission (no TDS for investors)
+    const investorPct = parseFloat(document.querySelector('.investor-commission-percentage').value) || 0;
+    const investorAmt = (netPremium * investorPct) / 100;
+    document.querySelector('.investor-commission-amount').value = investorAmt.toFixed(2);
+    // Update investor display field (since they don't have TDS)
+    document.querySelector('.investor-commission-amount-display').value = investorAmt.toFixed(2);
+
+    // Ambassador Commission
+    const ambassadorPct = parseFloat(document.querySelector('.ambassador-commission-percentage').value) || 0;
+    const ambassadorAmt = (netPremium * ambassadorPct) / 100;
+    document.querySelector('.ambassador-commission-amount').value = ambassadorAmt.toFixed(2);
+
+    const ambassadorTdsPct = parseFloat(document.querySelector('.ambassador-tds-percentage').value) || 0;
+    const ambassadorTdsAmt = (ambassadorAmt * ambassadorTdsPct) / 100;
+    document.querySelector('.ambassador-tds-amount').value = ambassadorTdsAmt.toFixed(2);
+    document.querySelector('.ambassador-after-tds-value').value = (ambassadorAmt - ambassadorTdsAmt).toFixed(2);
+
+    // Company Expenses
+    const companyExpensesPct = parseFloat(document.querySelector('.company-expenses-percentage').value) || 0;
+    const companyExpensesAmt = (netPremium * companyExpensesPct) / 100;
+    document.querySelector('.company-expenses-amount').value = companyExpensesAmt.toFixed(2);
+    document.querySelector('.company-expenses-amount-display').value = companyExpensesAmt.toFixed(2);
+
+    // Calculate total distribution and profit
+    const totalDistribution = subAgentPct + investorPct + ambassadorPct;
+    document.querySelector('.total-distribution-percentage').value = totalDistribution.toFixed(2);
+
+    const profitPct = mainCommissionPct - totalDistribution - companyExpensesPct;
+    document.querySelector('.profit-percentage-display').value = profitPct.toFixed(2);
+
+    const profitAmt = (netPremium * profitPct) / 100;
+    document.querySelector('.profit-amount-display').value = profitAmt.toFixed(2);
+    document.querySelector('.profit-amount-display-final').value = profitAmt.toFixed(2);
+  }
+
+  // Enhanced Policy End Date calculation based on start date and payment mode
+  function calculatePolicyEndDate() {
+    const startDateField = document.getElementById('start_date');
+    const endDateField = document.getElementById('end_date');
+    const paymentModeField = document.getElementById('payment_mode_select');
+
+    if (!startDateField || !endDateField || !paymentModeField) {
+      return;
+    }
+
+    const startDate = new Date(startDateField.value);
+    const paymentMode = paymentModeField.value;
+
+    if (!startDateField.value || !paymentMode) {
+      return;
+    }
+
+    let endDate = new Date(startDate);
+
+    switch(paymentMode) {
+      case 'Yearly':
+        endDate.setFullYear(endDate.getFullYear() + 1);
+        endDate.setDate(endDate.getDate() - 1); // End date is one day before renewal
+        break;
+      case 'Half Yearly':
+        endDate.setMonth(endDate.getMonth() + 6);
+        endDate.setDate(endDate.getDate() - 1);
+        break;
+      case 'Quarterly':
+        endDate.setMonth(endDate.getMonth() + 3);
+        endDate.setDate(endDate.getDate() - 1);
+        break;
+      case 'Monthly':
+        endDate.setMonth(endDate.getMonth() + 1);
+        endDate.setDate(endDate.getDate() - 1);
+        break;
+      default:
+        endDate.setFullYear(endDate.getFullYear() + 1);
+        endDate.setDate(endDate.getDate() - 1);
+    }
+
+    endDateField.value = endDate.toISOString().split('T')[0];
+    console.log('📅 Policy End Date calculated:', endDate.toISOString().split('T')[0]);
+  }
+
+  // Auto-calculate Installment Autopay End Date
+  function calculateAutopayEndDate() {
+    const paymentMode = document.getElementById('payment_mode_select').value;
+    const startDate = document.getElementById('autopay_start_date').value;
+
+    if (startDate && paymentMode) {
+      const start = new Date(startDate);
+      let end = new Date(start);
+
+      switch (paymentMode) {
+        case 'Yearly':
+          end.setFullYear(end.getFullYear() + 1);
+          end.setDate(end.getDate() - 1); // Subtract 1 day for proper end date
+          break;
+        case 'Half Yearly':
+          end.setMonth(end.getMonth() + 6);
+          end.setDate(end.getDate() - 1);
+          break;
+        case 'Quarterly':
+          end.setMonth(end.getMonth() + 3);
+          end.setDate(end.getDate() - 1);
+          break;
+        case 'Monthly':
+          end.setMonth(end.getMonth() + 1);
+          end.setDate(end.getDate() - 1);
+          break;
+        default:
+          // Default to yearly if unknown payment mode
+          end.setFullYear(end.getFullYear() + 1);
+          end.setDate(end.getDate() - 1);
+          break;
+      }
+
+      document.getElementById('autopay_end_date').value = end.toISOString().split('T')[0];
+      console.log('💳 Autopay End Date calculated:', end.toISOString().split('T')[0]);
+    }
+  }
+
+  // Event listeners for date calculations
+  document.getElementById('start_date')?.addEventListener('change', function() {
+    calculatePolicyEndDate();
+  });
+
+  // Initialize Select2 for Payment Mode dropdown
+  $('#payment_mode_select').select2({
+    theme: 'bootstrap-5',
+    placeholder: 'Select Payment Mode...',
+    allowClear: false,
+    width: '100%',
+    dropdownParent: $('body'),
+    minimumResultsForSearch: -1, // Disable search for small lists
+    closeOnSelect: true
+  });
+
+  // Payment mode event listeners (both native and Select2)
+  if (document.getElementById('payment_mode_select')) {
+    // Native change listener (backup)
+    document.getElementById('payment_mode_select').addEventListener('change', function() {
+      calculatePolicyEndDate();
+      calculateAutopayEndDate();
+    });
+
+    // Select2 change listener (primary)
+    $('#payment_mode_select').on('select2:select', function(e) {
+      calculatePolicyEndDate();
+      calculateAutopayEndDate();
+    });
+
+    // Calculate on page load if payment mode is already selected
+    if (document.getElementById('payment_mode_select').value) {
+      calculatePolicyEndDate();
+      calculateAutopayEndDate();
+    }
+  }
+
+  document.getElementById('autopay_start_date')?.addEventListener('change', function() {
+    calculateAutopayEndDate();
+  });
+
+  // Add event listeners for premium and commission calculations
+  document.getElementById('net_premium_field')?.addEventListener('input', function() {
+    calculateTotalPremium();
+    calculateCommissions();
+  });
+
+  document.getElementById('gst_percentage_field')?.addEventListener('input', calculateTotalPremium);
+
+  // Commission percentage changes
+  document.getElementById('commission_percentage')?.addEventListener('input', calculateCommissions);
+  document.getElementById('tds_percentage')?.addEventListener('input', calculateCommissions);
+  document.querySelector('.sub-agent-commission-percentage')?.addEventListener('input', calculateCommissions);
+  document.querySelector('.sub-agent-tds-percentage')?.addEventListener('input', calculateCommissions);
+  document.querySelector('.investor-commission-percentage')?.addEventListener('input', calculateCommissions);
+  document.querySelector('.ambassador-commission-percentage')?.addEventListener('input', calculateCommissions);
+  document.querySelector('.ambassador-tds-percentage')?.addEventListener('input', calculateCommissions);
+  document.querySelector('.company-expenses-percentage')?.addEventListener('input', calculateCommissions);
+
+  // Dynamic nominee management
+  let nomineeIndex = <%= @other_insurance.other_insurance_nominees.length %>;
+
+  function toggleNoNomineesMessage() {
+    const nomineeRows = document.querySelectorAll('.nominee-row');
+    const noNomineesMsg = document.getElementById('no_nominees_message');
+    if (nomineeRows.length === 0 || Array.from(nomineeRows).every(row => row.style.display === 'none')) {
+      noNomineesMsg.style.display = 'block';
+    } else {
+      noNomineesMsg.style.display = 'none';
+    }
+  }
+
+  document.getElementById('add_nominee')?.addEventListener('click', function() {
+    const nomineeTemplate = `
+      <div class="nominee-row border rounded p-3 mb-3 bg-light">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label required">Nominee Name</label>
+            <input type="text" name="other_insurance[other_insurance_nominees_attributes][${nomineeIndex}][nominee_name]" class="form-control" placeholder="Full Name" required>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="form-label required">Relationship</label>
+            <select name="other_insurance[other_insurance_nominees_attributes][${nomineeIndex}][relationship]" class="form-select" required>
+              <option value="">Select Relationship</option>
+              <option value="father">Father</option>
+              <option value="mother">Mother</option>
+              <option value="spouse">Spouse</option>
+              <option value="son">Son</option>
+              <option value="daughter">Daughter</option>
+              <option value="brother">Brother</option>
+              <option value="sister">Sister</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label required">Age</label>
+            <input type="number" name="other_insurance[other_insurance_nominees_attributes][${nomineeIndex}][age]" class="form-control" min="1" max="120" required>
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label">Share %</label>
+            <input type="number" name="other_insurance[other_insurance_nominees_attributes][${nomineeIndex}][share_percentage]" class="form-control" min="0" max="100" step="0.01" placeholder="100">
+          </div>
+          <div class="col-md-1 d-flex align-items-end mb-3">
+            <button type="button" class="btn btn-outline-danger remove-nominee-btn">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('nominees').insertAdjacentHTML('beforeend', nomineeTemplate);
+    nomineeIndex++;
+    toggleNoNomineesMessage();
+  });
+
+  // Remove nominee
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-nominee-btn')) {
+      const nomineeRow = e.target.closest('.nominee-row');
+      const destroyInput = nomineeRow.querySelector('input[name*="_destroy"]');
+      if (destroyInput) {
+        destroyInput.value = '1';
+        nomineeRow.style.display = 'none';
+      } else {
+        nomineeRow.remove();
+      }
+      toggleNoNomineesMessage();
+    }
+  });
+
+  // Load customer nominees functionality
+  document.getElementById('load_customer_nominees_btn')?.addEventListener('click', function() {
+    const customerSelect = document.getElementById('customer_select');
+    const customerId = customerSelect ? customerSelect.value : null;
+
+    if (!customerId) {
+      alert('Please select a client first');
+      return;
+    }
+
+    // Show loading state
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-spinner bi-spin me-1"></i>Loading...';
+    btn.disabled = true;
+
+    // Make AJAX request to load nominees
+    fetch(`/admin/insurance/other/load_customer_nominees?customer_id=${customerId}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.nominees && data.nominees.length > 0) {
+          // Clear existing nominees
+          const existingNominees = document.querySelectorAll('.nominee-row');
+          existingNominees.forEach(row => row.remove());
+
+          // Add loaded nominees
+          data.nominees.forEach((nominee, index) => {
+            const nomineeTemplate = `
+              <div class="nominee-row border rounded p-3 mb-3 bg-light">
+                <div class="row">
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label required">Nominee Name</label>
+                    <input type="text" name="other_insurance[other_insurance_nominees_attributes][${nomineeIndex}][nominee_name]" class="form-control" value="${nominee.nominee_name}" required>
+                  </div>
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label required">Relationship</label>
+                    <select name="other_insurance[other_insurance_nominees_attributes][${nomineeIndex}][relationship]" class="form-select" required>
+                      <option value="">Select Relationship</option>
+                      <option value="father" ${nominee.relationship === 'father' ? 'selected' : ''}>Father</option>
+                      <option value="mother" ${nominee.relationship === 'mother' ? 'selected' : ''}>Mother</option>
+                      <option value="spouse" ${nominee.relationship === 'spouse' ? 'selected' : ''}>Spouse</option>
+                      <option value="son" ${nominee.relationship === 'son' ? 'selected' : ''}>Son</option>
+                      <option value="daughter" ${nominee.relationship === 'daughter' ? 'selected' : ''}>Daughter</option>
+                      <option value="brother" ${nominee.relationship === 'brother' ? 'selected' : ''}>Brother</option>
+                      <option value="sister" ${nominee.relationship === 'sister' ? 'selected' : ''}>Sister</option>
+                      <option value="other" ${nominee.relationship === 'other' ? 'selected' : ''}>Other</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2 mb-3">
+                    <label class="form-label required">Age</label>
+                    <input type="number" name="other_insurance[other_insurance_nominees_attributes][${nomineeIndex}][age]" class="form-control" value="${nominee.age}" min="1" max="120" required>
+                  </div>
+                  <div class="col-md-2 mb-3">
+                    <label class="form-label">Share %</label>
+                    <input type="number" name="other_insurance[other_insurance_nominees_attributes][${nomineeIndex}][share_percentage]" class="form-control" min="0" max="100" step="0.01" placeholder="100">
+                  </div>
+                  <div class="col-md-1 d-flex align-items-end mb-3">
+                    <button type="button" class="btn btn-outline-danger remove-nominee-btn">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `;
+            document.getElementById('nominees').insertAdjacentHTML('beforeend', nomineeTemplate);
+            nomineeIndex++;
+          });
+
+          toggleNoNomineesMessage();
+          alert(`Loaded ${data.nominees.length} nominee(s) from ${data.customer_name}`);
+        } else {
+          alert(data.message || 'No nominees found for this client');
+        }
+      })
+      .catch(error => {
+        console.error('Error loading nominees:', error);
+        alert('Error loading nominees. Please try again.');
+      })
+      .finally(() => {
+        // Reset button state
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      });
+  });
+
+  // Initialize nominee display
+  toggleNoNomineesMessage();
+
+  // Document Management System
+  let documentIndex = 0;
+  document.getElementById('add-document-btn')?.addEventListener('click', function() {
+    const container = document.getElementById('documents-container');
+    const documentRow = document.createElement('div');
+    documentRow.className = 'row mb-3 document-row';
+    documentRow.innerHTML = `
+      <div class="col-md-3">
+        <input type="text" name="other_insurance[documents][${documentIndex}][title]"
+               class="form-control" placeholder="Document Title">
+      </div>
+      <div class="col-md-3">
+        <select name="other_insurance[documents][${documentIndex}][type]" class="form-control">
+          <option value="">Select Type</option>
+          <option value="Policy Document">Policy Document</option>
+          <option value="ID Proof">ID Proof</option>
+          <option value="Address Proof">Address Proof</option>
+          <option value="Medical Report">Medical Report</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <input type="file" name="other_insurance[documents][${documentIndex}][file]"
+               class="form-control" accept="application/pdf,image/*">
+      </div>
+      <div class="col-md-2">
+        <button type="button" class="btn btn-danger btn-sm remove-document-btn">
+          <i class="bi bi-trash"></i> Remove
+        </button>
+      </div>
+    `;
+    container.appendChild(documentRow);
+    documentIndex++;
+
+    // Add remove functionality
+    documentRow.querySelector('.remove-document-btn').addEventListener('click', function() {
+      documentRow.remove();
+    });
+  });
+
+  // Global function to load customer nominees (like Motor Insurance)
+  window.loadCustomerNominees = function(customerId) {
+    if (!customerId) return;
+
+    $.ajax({
+      url: '/admin/insurance/other/load_customer_nominees',
+      method: 'GET',
+      data: { customer_id: customerId },
+      success: function(response) {
+        if (response.success && response.nominees && response.nominees.length > 0) {
+          $('.nominee-row').remove();
+
+          const count = response.nominees.length;
+          const equalShare = parseFloat((100 / count).toFixed(2));
+          response.nominees.forEach(function(nominee, index) {
+            const share = (index === count - 1) ? (100 - equalShare * (count - 1)).toFixed(2) : equalShare;
+            addNomineeFromFamilyMember(Object.assign({}, nominee, { share_percentage: share }));
+          });
+
+          toggleNoNomineesMessage();
+          console.log(`Auto-loaded ${response.nominees.length} nominee(s) from ${response.customer_name}`);
+        } else {
+          console.log('No nominee data found for auto-loading');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Error auto-loading customer nominees:', error);
+      }
+    });
+  };
+
+  // Clear nominees when customer changes
+  window.clearNominees = function() {
+    $('.nominee-row').remove();
+    toggleNoNomineesMessage();
+  };
+
+  // Function to add nominee from family member data (like Motor Insurance)
+  window.addNomineeFromFamilyMember = function(nominee) {
+    const nomineeHtml = `
+      <div class="nominee-row border rounded p-3 mb-3 bg-light">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label required">Nominee Name</label>
+            <input type="text" name="other_insurance[other_insurance_nominees_attributes][${nomineeIndex}][nominee_name]"
+                   class="form-control" value="${nominee.nominee_name}" required>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="form-label required">Relationship</label>
+            <select name="other_insurance[other_insurance_nominees_attributes][${nomineeIndex}][relationship]"
+                    class="form-select" required>
+              <option value="">Select Relationship</option>
+              <option value="father" ${nominee.relationship === 'father' ? 'selected' : ''}>Father</option>
+              <option value="mother" ${nominee.relationship === 'mother' ? 'selected' : ''}>Mother</option>
+              <option value="spouse" ${nominee.relationship === 'spouse' ? 'selected' : ''}>Spouse</option>
+              <option value="son" ${nominee.relationship === 'son' ? 'selected' : ''}>Son</option>
+              <option value="daughter" ${nominee.relationship === 'daughter' ? 'selected' : ''}>Daughter</option>
+              <option value="brother" ${nominee.relationship === 'brother' ? 'selected' : ''}>Brother</option>
+              <option value="sister" ${nominee.relationship === 'sister' ? 'selected' : ''}>Sister</option>
+              <option value="other" ${nominee.relationship === 'other' ? 'selected' : ''}>Other</option>
+            </select>
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label required">Age</label>
+            <input type="number" name="other_insurance[other_insurance_nominees_attributes][${nomineeIndex}][age]"
+                   class="form-control" value="${nominee.age}" min="1" max="120" required>
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label">Share %</label>
+            <input type="number" name="other_insurance[other_insurance_nominees_attributes][${nomineeIndex}][share_percentage]"
+                   class="form-control" min="0" max="100" step="0.01" placeholder="100"
+                   value="${nominee.share_percentage !== undefined ? nominee.share_percentage : ''}">
+          </div>
+          <div class="col-md-1 d-flex align-items-end mb-3">
+            <button type="button" class="btn btn-outline-danger remove-nominee-btn">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('nominees').insertAdjacentHTML('beforeend', nomineeHtml);
+    nomineeIndex++;
+  };
+});
+
+// Global nominee management functions (outside DOMContentLoaded)
+function addNewNominee() {
+  const index = document.querySelectorAll('.nominee-row').length;
+
+  const nomineeHtml = `
+    <div class="nominee-row border rounded p-3 mb-3" style="background-color: #f8f9fa;">
+      <input type="hidden" name="other_insurance[other_insurance_nominees_attributes][${index}][id]" id="other_insurance_other_insurance_nominees_attributes_${index}_id">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Nominee Name <span class="text-danger">*</span></label>
+          <input class="form-control" placeholder="Enter nominee name" required="required" type="text" name="other_insurance[other_insurance_nominees_attributes][${index}][nominee_name]" id="other_insurance_other_insurance_nominees_attributes_${index}_nominee_name">
+        </div>
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Relationship <span class="text-danger">*</span></label>
+          <select class="form-control" required="required" name="other_insurance[other_insurance_nominees_attributes][${index}][relationship]" id="other_insurance_other_insurance_nominees_attributes_${index}_relationship">
+            <option value="">Select Relationship</option>
+            <option value="spouse">Spouse</option>
+            <option value="son">Son</option>
+            <option value="daughter">Daughter</option>
+            <option value="father">Father</option>
+            <option value="mother">Mother</option>
+            <option value="brother">Brother</option>
+            <option value="sister">Sister</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="col-md-2 mb-3">
+          <label class="form-label">Age <span class="text-danger">*</span></label>
+          <input class="form-control" placeholder="Age" required="required" min="0" max="120" type="number" name="other_insurance[other_insurance_nominees_attributes][${index}][age]" id="other_insurance_other_insurance_nominees_attributes_${index}_age">
+        </div>
+        <div class="col-md-2 mb-3">
+          <label class="form-label">Share (%)</label>
+          <input class="form-control" placeholder="100" min="0" max="100" step="0.01" type="number" name="other_insurance[other_insurance_nominees_attributes][${index}][share_percentage]" id="other_insurance_other_insurance_nominees_attributes_${index}_share_percentage">
+        </div>
+        <div class="col-md-1 mb-3 d-flex align-items-end">
+          <button type="button" class="btn btn-danger btn-sm" onclick="removeNominee(this)" title="Remove nominee">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+      <input value="false" class="destroy-flag" type="hidden" name="other_insurance[other_insurance_nominees_attributes][${index}][_destroy]" id="other_insurance_other_insurance_nominees_attributes_${index}__destroy">
+    </div>
+  `;
+
+  document.getElementById('nominees').insertAdjacentHTML('beforeend', nomineeHtml);
+  toggleNoNomineesMessage();
+}
+
+function removeNominee(button) {
+  const nomineeRow = button.closest('.nominee-row');
+  const destroyField = nomineeRow.querySelector('.destroy-flag');
+
+  if (destroyField.value === 'false') {
+    destroyField.value = 'true';
+    nomineeRow.style.display = 'none';
+  } else {
+    nomineeRow.remove();
+  }
+
+  toggleNoNomineesMessage();
+}
+
+function toggleNoNomineesMessage() {
+  const nomineeRows = document.querySelectorAll('.nominee-row');
+  const noNomineesMsg = document.getElementById('no_nominees_message');
+
+  const visibleRows = Array.from(nomineeRows).filter(row => row.style.display !== 'none');
+
+  if (visibleRows.length === 0) {
+    noNomineesMsg.style.display = 'block';
+  } else {
+    noNomineesMsg.style.display = 'none';
+  }
+}
+
+// Document Management System
+let policyDocumentIndex = 0;
+
+const addPolicyDocumentBtn = document.getElementById('add_policy_document');
+const policyDocumentsContainer = document.getElementById('policy_documents_container');
+
+addPolicyDocumentBtn?.addEventListener('click', function() {
+  const documentHtml = `
+    <div class="document-entry p-3 mb-3 border rounded position-relative" data-index="${policyDocumentIndex}" style="background: #f8f9fa;">
+      <button type="button" class="btn btn-sm btn-outline-danger position-absolute" style="top: 10px; right: 10px;" onclick="this.closest('.document-entry').remove()">
+        <i class="bi bi-trash"></i>
+      </button>
+      <div class="row">
+        <div class="col-md-4">
+          <label class="form-label">Document Title <span class="text-danger">*</span></label>
+          <input type="text" name="other_insurance[uploaded_documents_attributes][${policyDocumentIndex}][title]" class="form-control" placeholder="Enter document title" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Document Type <span class="text-danger">*</span></label>
+          <select name="other_insurance[uploaded_documents_attributes][${policyDocumentIndex}][document_type]" class="form-select" required>
+            <option value="">Select Document Type</option>
+            <option value="aadhar">Aadhar</option>
+            <option value="pan_card">PAN Card</option>
+            <option value="driving_license">Driving License</option>
+            <option value="passport">Passport</option>
+            <option value="voter_id">Voter ID</option>
+            <option value="birth_certificate">Birth Certificate</option>
+            <option value="income_certificate">Income Certificate</option>
+            <option value="salary_slip">Salary Slip</option>
+            <option value="bank_statement">Bank Statement</option>
+            <option value="marriage_certificate">Marriage Certificate</option>
+            <option value="gst_certificate">GST Certificate</option>
+            <option value="travel_insurance_claim">Travel Insurance Claim</option>
+            <option value="property_insurance_claim">Property Insurance Claim</option>
+            <option value="cyber_insurance_claim">Cyber Insurance Claim</option>
+            <option value="policy_document">Policy Document</option>
+            <option value="claim_form">Claim Form</option>
+            <option value="medical_certificate">Medical Certificate</option>
+            <option value="financial_statement">Financial Statement</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Document File <span class="text-danger">*</span></label>
+          <input type="file" name="other_insurance[uploaded_documents_attributes][${policyDocumentIndex}][file]" class="form-control" accept="application/pdf,image/jpeg,image/jpg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required id="doc_file_${policyDocumentIndex}">
+        </div>
+      </div>
+      <div class="row mt-2">
+        <div class="col-md-12">
+          <label class="form-label">Description (Optional)</label>
+          <textarea name="other_insurance[uploaded_documents_attributes][${policyDocumentIndex}][description]" class="form-control" rows="2" placeholder="Optional description"></textarea>
+        </div>
+      </div>
+
+      <div class="mt-2">
+        <small class="text-muted">
+          <i class="bi bi-info-circle me-1"></i>
+          Supported formats: PDF, JPG, PNG, Word documents (Max: 10MB per file)
+        </small>
+      </div>
+    </div>
+  `;
+
+  policyDocumentsContainer.insertAdjacentHTML('beforeend', documentHtml);
+  policyDocumentIndex++;
+});
+</script>
+

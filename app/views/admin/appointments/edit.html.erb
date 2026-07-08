@@ -1,0 +1,68 @@
+<% content_for :title, "Edit Appointment" %>
+
+<div class="appointments-page">
+  <div class="d-flex align-items-center mb-4 gap-3">
+    <%= link_to admin_appointments_path, class: "btn btn-sm btn-outline-secondary rounded-pill" do %>
+      <i class="bi bi-arrow-left me-1"></i>Back
+    <% end %>
+    <h4 class="fw-bold mb-0">Edit Appointment</h4>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+      <div style="background:white;border-radius:20px;padding:2rem;box-shadow:0 2px 16px rgba(0,0,0,0.08);">
+        <%= form_with model: [:admin, @appointment], local: true do |f| %>
+          <% if @appointment.errors.any? %>
+            <div class="alert alert-danger rounded-3 mb-4">
+              <% @appointment.errors.full_messages.each do |msg| %>
+                <div><%= msg %></div>
+              <% end %>
+            </div>
+          <% end %>
+
+          <div class="row g-3 mb-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Customer Name <span class="text-danger">*</span></label>
+              <%= f.text_field :customer_name, class: 'form-control', placeholder: 'Customer Name', style: 'border-radius:12px;' %>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Email</label>
+              <%= f.email_field :customer_email, class: 'form-control', placeholder: 'Email', style: 'border-radius:12px;' %>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Phone</label>
+              <%= f.phone_field :customer_phone, class: 'form-control', placeholder: 'Phone', style: 'border-radius:12px;' %>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Appointment Date <span class="text-danger">*</span></label>
+              <%= f.date_field :appointment_date, class: 'form-control', style: 'border-radius:12px;' %>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Time Slot <span class="text-danger">*</span></label>
+              <%= f.select :time_slot, options_for_select(Appointment::TIME_SLOTS.map { |s| [s, s] }, @appointment.time_slot),
+                  {}, class: 'form-select', style: 'border-radius:12px;' %>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Status</label>
+              <%= f.select :status, options_for_select(Appointment::STATUSES.map { |s| [s.capitalize, s] }, @appointment.status),
+                  {}, class: 'form-select', style: 'border-radius:12px;' %>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Meeting Agenda</label>
+              <%= f.text_field :meeting_agenda, class: 'form-control', placeholder: 'Meeting Agenda', style: 'border-radius:12px;' %>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Notes</label>
+              <%= f.text_area :notes, class: 'form-control', placeholder: 'Notes', style: 'border-radius:12px;min-height:120px;' %>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <%= f.submit 'Update Appointment', class: 'btn text-white fw-semibold px-4', style: 'background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;border:none;' %>
+            <%= link_to 'Cancel', admin_appointments_path, class: 'btn btn-outline-secondary', style: 'border-radius:12px;' %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

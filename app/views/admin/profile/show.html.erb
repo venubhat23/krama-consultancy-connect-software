@@ -1,0 +1,244 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">
+      <i class="fas fa-user-circle me-2 text-primary"></i>
+      My Profile
+    </h2>
+    <p class="text-muted mb-0">View and manage your account information</p>
+  </div>
+  <div>
+    <%= link_to admin_edit_profile_path, class: "btn btn-primary" do %>
+      <i class="fas fa-edit me-1"></i>
+      Edit Profile
+    <% end %>
+  </div>
+</div>
+
+<!-- Profile Information Card -->
+<div class="row">
+  <div class="col-lg-8">
+    <!-- Basic Information -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">
+          <i class="fas fa-user me-2 text-primary"></i>
+          Basic Information
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">First Name</label>
+            <div class="fw-bold"><%= @current_user.first_name.presence || 'Not provided' %></div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Last Name</label>
+            <div class="fw-bold"><%= @current_user.last_name.presence || 'Not provided' %></div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Email Address</label>
+            <div>
+              <% if @current_user.email.present? %>
+                <a href="mailto:<%= @current_user.email %>" class="text-decoration-none">
+                  <i class="fas fa-envelope me-2 text-muted"></i>
+                  <%= @current_user.email %>
+                </a>
+              <% else %>
+                <span class="text-muted">Not provided</span>
+              <% end %>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Mobile Number</label>
+            <div>
+              <% if @current_user.mobile.present? %>
+                <a href="tel:<%= @current_user.mobile %>" class="text-decoration-none">
+                  <i class="fas fa-phone me-2 text-muted"></i>
+                  <%= @current_user.mobile %>
+                </a>
+              <% else %>
+                <span class="text-muted">Not provided</span>
+              <% end %>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">User Type</label>
+            <div>
+              <span class="badge bg-primary fs-6">
+                <%= @current_user.user_type.presence&.humanize || 'Admin' %>
+              </span>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Role</label>
+            <div>
+              <span class="badge bg-info fs-6">
+                <%= @current_user.role.presence || 'Administrator' %>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Details -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">
+          <i class="fas fa-shield-alt me-2 text-success"></i>
+          Account Details
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Account Created</label>
+            <div>
+              <%= @current_user.created_at.strftime('%B %d, %Y at %I:%M %p') %>
+              <small class="text-muted d-block">(<%= time_ago_in_words(@current_user.created_at) %> ago)</small>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Last Updated</label>
+            <div>
+              <%= @current_user.updated_at.strftime('%B %d, %Y at %I:%M %p') %>
+              <small class="text-muted d-block">(<%= time_ago_in_words(@current_user.updated_at) %> ago)</small>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Account Status</label>
+            <div>
+              <% if @current_user.respond_to?(:status) && @current_user.status %>
+                <span class="badge bg-success fs-6">
+                  <i class="fas fa-check-circle me-1"></i>Active
+                </span>
+              <% else %>
+                <span class="badge bg-success fs-6">
+                  <i class="fas fa-check-circle me-1"></i>Active
+                </span>
+              <% end %>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">User ID</label>
+            <div class="font-monospace text-muted">#<%= @current_user.id %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Actions Sidebar -->
+  <div class="col-lg-4">
+    <!-- Quick Actions -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">
+          <i class="fas fa-bolt me-2 text-warning"></i>
+          Quick Actions
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <%= link_to admin_edit_profile_path, class: "btn btn-outline-primary btn-sm" do %>
+            <i class="fas fa-edit me-2"></i>Edit Profile Information
+          <% end %>
+
+          <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+            <i class="fas fa-key me-2"></i>Change Password
+          </button>
+
+          <a href="#" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-bell me-2"></i>Notification Settings
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Statistics -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">
+          <i class="fas fa-chart-line me-2 text-info"></i>
+          Profile Statistics
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="text-center">
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="border rounded p-2">
+                <div class="h5 mb-0 text-primary">
+                  <%= (@current_user.created_at.to_date...Date.current).count %>
+                </div>
+                <small class="text-muted">Days Active</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="border rounded p-2">
+                <div class="h5 mb-0 text-success">
+                  <i class="fas fa-shield-check"></i>
+                </div>
+                <small class="text-muted">Verified</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-key me-2"></i>Change Password
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <%= form_with model: @current_user, url: admin_profile_path, method: :patch, local: true do |form| %>
+        <div class="modal-body">
+          <div class="mb-3">
+            <%= form.label :password, "New Password", class: "form-label" %>
+            <%= form.password_field :password, class: "form-control", placeholder: "Enter new password" %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :password_confirmation, "Confirm New Password", class: "form-label" %>
+            <%= form.password_field :password_confirmation, class: "form-control", placeholder: "Confirm new password" %>
+          </div>
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <small>Password should be at least 6 characters long for security.</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <%= form.submit "Update Password", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+.card {
+  transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.badge {
+  font-weight: 500;
+}
+
+.font-monospace {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+</style>

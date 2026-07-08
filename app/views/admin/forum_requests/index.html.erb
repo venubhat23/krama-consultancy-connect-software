@@ -1,0 +1,46 @@
+<div class="mb-4">
+  <h2 class="mb-1">Forum Requests</h2>
+  <p class="text-muted mb-0">Applications to onboard a new forum</p>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <% if @forum_requests.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Company</th>
+              <th class="border-0">Contact</th>
+              <th class="border-0">Requested Plan</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @forum_requests.each do |req| %>
+              <tr>
+                <td><h6 class="mb-0 fw-medium"><%= req.company_name %></h6></td>
+                <td><%= req.name %><br><small class="text-muted"><%= req.email %></small></td>
+                <td><%= req.business_plan&.name || "—" %></td>
+                <td>
+                  <% badge = { "pending" => "warning", "approved" => "success", "rejected" => "secondary" }[req.status] %>
+                  <span class="badge bg-<%= badge %>"><%= req.status.humanize %></span>
+                </td>
+                <td><%= link_to "Review", admin_forum_request_path(req), class: "btn btn-sm btn-outline-primary" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer bg-transparent border-0">
+        <%= render "shared/pagination", records: @forum_requests %>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No forum requests yet</h5>
+      </div>
+    <% end %>
+  </div>
+</div>

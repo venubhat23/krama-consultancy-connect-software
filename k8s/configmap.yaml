@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rails-config
+  namespace: insurebook
+  labels:
+    app: insurebook
+    component: rails-app
+data:
+  RAILS_ENV: "production"
+  RAILS_LOG_LEVEL: "info"
+  RAILS_LOG_TO_STDOUT: "true"
+  RAILS_SERVE_STATIC_FILES: "true"
+  DATABASE_POOL: "25"
+  WEB_CONCURRENCY: "3"
+  RAILS_MAX_THREADS: "5"
+  RAILS_MIN_THREADS: "1"
+  BOOTSNAP_CACHE_DIR: "/tmp/cache/bootsnap"
+
+  # Sidekiq configuration
+  SIDEKIQ_CONCURRENCY: "10"
+  SIDEKIQ_TIMEOUT: "25"
+
+  # Performance settings
+  MALLOC_ARENA_MAX: "2"
+  RUBY_GC_HEAP_INIT_SLOTS: "10000"
+  RUBY_GC_HEAP_FREE_SLOTS: "10000"
+  RUBY_GC_HEAP_GROWTH_FACTOR: "1.1"
+  RUBY_GC_HEAP_GROWTH_MAX_SLOTS: "10000"
+
+  # Application specific
+  DEFAULT_URL_HOST: "insurebook.yourdomain.com"
+  FORCE_SSL: "true"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: insurebook
+  labels:
+    app: insurebook
+    component: postgres
+data:
+  POSTGRES_DB: "insurebook_production"
+  POSTGRES_USER: "postgres"
+  # Production tuning
+  shared_buffers: "256MB"
+  effective_cache_size: "1GB"
+  maintenance_work_mem: "64MB"
+  checkpoint_completion_target: "0.9"
+  wal_buffers: "16MB"
+  default_statistics_target: "100"
+  random_page_cost: "1.1"
+  effective_io_concurrency: "200"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: insurebook
+  labels:
+    app: insurebook
+    component: redis
+data:
+  redis.conf: |
+    # Redis configuration for production
+    maxmemory 512mb
+    maxmemory-policy allkeys-lru
+    save 900 1
+    save 300 10
+    save 60 10000
+    stop-writes-on-bgsave-error yes
+    rdbcompression yes
+    rdbchecksum yes
+    dbfilename dump.rdb
+    appendonly yes
+    appendfilename "appendonly.aof"
+    appendfsync everysec
+    no-appendfsync-on-rewrite no
+    auto-aof-rewrite-percentage 100
+    auto-aof-rewrite-min-size 64mb
+    aof-load-truncated yes
+    timeout 300
+    tcp-keepalive 300

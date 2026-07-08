@@ -1,0 +1,373 @@
+# Sidekiq background job processor
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sidekiq
+  namespace: insurebook
+  labels:
+    app: insurebook
+    component: sidekiq
+    version: v1.0.0
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: insurebook
+      component: sidekiq
+  template:
+    metadata:
+      labels:
+        app: insurebook
+        component: sidekiq
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9394"
+        prometheus.io/path: "/metrics"
+    spec:
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      # Image pull secrets
+      imagePullSecrets:
+      - name: docker-registry-secret
+
+      # Init container to wait for dependencies
+      initContainers:
+      - name: wait-for-redis
+        image: redis:7-alpine
+        command:
+        - sh
+        - -c
+        - |
+          until redis-cli -h redis-service -p 6379 ping | grep -q PONG; do
+            echo "Waiting for Redis..."
+            sleep 2
+          done
+          echo "Redis is ready!"
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "25m"
+          limits:
+            memory: "64Mi"
+            cpu: "50m"
+
+      containers:
+      - name: sidekiq
+        image: your-registry.com/insurebook:latest  # Replace with your image
+
+        envFrom:
+        - configMapRef:
+            name: rails-config
+
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: rails-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: rails-secrets
+              key: redis-url
+        - name: RAILS_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              name: rails-secrets
+              key: rails-master-key
+
+        # Sidekiq specific environment
+        - name: SIDEKIQ_CONCURRENCY
+          value: "10"
+        - name: SIDEKIQ_TIMEOUT
+          value: "25"
+        - name: SIDEKIQ_RETRY
+          value: "3"
+
+        command: ["bundle", "exec", "sidekiq"]
+        args: ["-C", "config/sidekiq.yml", "-v"]
+
+        # Resource allocation
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "125m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+
+        # Health checks
+        livenessProbe:
+          exec:
+            command:
+            - pgrep
+            - -f
+            - sidekiq
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+
+        readinessProbe:
+          exec:
+            command:
+            - pgrep
+            - -f
+            - sidekiq
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 2
+
+        # Graceful shutdown
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - |
+                echo "Gracefully shutting down Sidekiq..."
+                kill -TSTP 1  # Send SIGTSTP to stop accepting new jobs
+                sleep 30      # Wait for current jobs to finish
+                kill -TERM 1  # Send SIGTERM to terminate
+
+        # Volume mounts
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+        - name: sidekiq-logs
+          mountPath: /app/log
+
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+
+      # Log collection sidecar for Sidekiq
+      - name: log-collector
+        image: fluent/fluent-bit:latest
+        volumeMounts:
+        - name: sidekiq-logs
+          mountPath: /var/log/sidekiq
+        - name: fluent-bit-config
+          mountPath: /fluent-bit/etc/fluent-bit.conf
+          subPath: fluent-bit.conf
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "25m"
+          limits:
+            memory: "64Mi"
+            cpu: "50m"
+
+      volumes:
+      - name: tmp-volume
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: sidekiq-logs
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: fluent-bit-config
+        configMap:
+          name: fluent-bit-config
+
+      # Node selection
+      nodeSelector:
+        kubernetes.io/os: linux
+
+      # Anti-affinity to spread sidekiq pods
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - sidekiq
+              topologyKey: kubernetes.io/hostname
+
+---
+# HPA for Sidekiq based on queue length
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: sidekiq-hpa
+  namespace: insurebook
+  labels:
+    app: insurebook
+    component: sidekiq
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sidekiq
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  # Custom metric for queue length (requires custom metrics API)
+  - type: Pods
+    pods:
+      metric:
+        name: sidekiq_queue_length
+      target:
+        type: AverageValue
+        averageValue: "50"
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 30
+
+---
+# Service for Sidekiq monitoring
+apiVersion: v1
+kind: Service
+metadata:
+  name: sidekiq-service
+  namespace: insurebook
+  labels:
+    app: insurebook
+    component: sidekiq
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9394"
+    prometheus.io/path: "/metrics"
+spec:
+  selector:
+    app: insurebook
+    component: sidekiq
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: 9394
+      targetPort: 9394
+  type: ClusterIP
+
+---
+# ConfigMap for Sidekiq configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sidekiq-config
+  namespace: insurebook
+  labels:
+    app: insurebook
+    component: sidekiq
+data:
+  sidekiq.yml: |
+    ---
+    # Sidekiq configuration for Kubernetes
+    :concurrency: 10
+    :timeout: 25
+    :retry: 3
+    :max_retries: 5
+
+    :queues:
+      - [critical, 10]
+      - [high, 5]
+      - [default, 2]
+      - [low, 1]
+      - [mailers, 3]
+      - [reports, 1]
+
+    # Lifecycle events
+    :lifecycle_events:
+      :startup:
+        - MyApp::StartupHook
+      :quiet:
+        - MyApp::QuietHook
+      :shutdown:
+        - MyApp::ShutdownHook
+
+    # Configure periodic jobs (if using sidekiq-bulk)
+    :bulk:
+      :interval: 5  # seconds
+      :batch_size: 1000
+
+    # Configure dead job retention
+    :dead_set_max_jobs: 10000
+    :dead_set_timeout: 180  # days
+
+---
+# NetworkPolicy for Sidekiq
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sidekiq-network-policy
+  namespace: insurebook
+  labels:
+    app: insurebook
+    component: sidekiq
+spec:
+  podSelector:
+    matchLabels:
+      app: insurebook
+      component: sidekiq
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 9394
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          component: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - podSelector:
+        matchLabels:
+          component: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443

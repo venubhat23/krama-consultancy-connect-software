@@ -1,0 +1,168 @@
+<% show_amb = defined?(show_ambassador) ? show_ambassador : false
+   show_inv = defined?(show_investor)   ? show_investor   : false
+
+   total_premium  = rows.sum { |r| r[:premium] }
+   total_gross    = rows.sum { |r| r[:gross_commission] }
+   total_tds      = rows.sum { |r| r[:tds_amount] }
+   total_after    = rows.sum { |r| r[:after_tds] }
+   total_amb_aft  = show_amb ? rows.sum { |r| r.fetch(:amb_after_tds, 0).to_f } : 0
+   total_inv_aft  = show_inv ? rows.sum { |r| r.fetch(:inv_after_tds, 0).to_f } : 0
+   avg_comm_pct   = rows.size > 0 ? (rows.sum { |r| r[:comm_percentage] } / rows.size).round(2) : 0
+%>
+
+<div class="table-responsive mt-2 mb-1">
+  <table class="table data-table mb-0" style="font-size:.79rem;">
+    <thead>
+      <tr>
+        <th rowspan="2" style="min-width:110px; vertical-align:middle;">Policy No.</th>
+        <th rowspan="2" style="vertical-align:middle;">Customer</th>
+        <th rowspan="2" style="vertical-align:middle;">Type</th>
+        <th rowspan="2" class="text-end" style="vertical-align:middle;">Premium (₹)</th>
+        <th colspan="5" class="text-center" style="background:#f0f4ff; border-left:2px solid #c5ceff; color:#2c3e7a; font-weight:700;">
+          <%= defined?(section_label) ? section_label : 'Commission' %>
+        </th>
+        <% if show_amb %>
+          <th colspan="4" class="text-center" style="background:#fff8ec; border-left:2px solid #fcd68a; color:#b7650c; font-weight:700;">Ambassador Commission</th>
+        <% end %>
+        <% if show_inv %>
+          <th colspan="4" class="text-center" style="background:#f0fdf6; border-left:2px solid #6dd89b; color:#1a7a45; font-weight:700;">Investor Commission</th>
+        <% end %>
+        <th rowspan="2" class="text-center" style="vertical-align:middle;">Status</th>
+        <th rowspan="2" style="vertical-align:middle; white-space:nowrap;">Date</th>
+      </tr>
+      <tr>
+        <!-- Own commission sub-headers -->
+        <th class="text-end" style="background:#f5f7ff; border-left:2px solid #c5ceff;">Comm%</th>
+        <th class="text-end" style="background:#f5f7ff;">Gross (₹)</th>
+        <th class="text-end" style="background:#f5f7ff;">TDS%</th>
+        <th class="text-end" style="background:#f5f7ff;">TDS (₹)</th>
+        <th class="text-end" style="background:#f5f7ff;">After TDS (₹)</th>
+        <!-- Ambassador sub-headers -->
+        <% if show_amb %>
+          <th class="text-end" style="background:#fffbf0; border-left:2px solid #fcd68a;">Gross (₹)</th>
+          <th class="text-end" style="background:#fffbf0;">TDS (₹)</th>
+          <th class="text-end" style="background:#fffbf0;">After TDS (₹)</th>
+          <th class="text-center" style="background:#fffbf0;">Status</th>
+        <% end %>
+        <!-- Investor sub-headers -->
+        <% if show_inv %>
+          <th class="text-end" style="background:#f5fdf8; border-left:2px solid #6dd89b;">Comm%</th>
+          <th class="text-end" style="background:#f5fdf8;">Gross (₹)</th>
+          <th class="text-end" style="background:#f5fdf8;">TDS (₹)</th>
+          <th class="text-end" style="background:#f5fdf8;">After TDS (₹)</th>
+        <% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <% rows.each do |pr|
+           own_color  = pr[:status] == 'paid' ? '#27ae60' : (pr[:status] == 'pending' ? '#e67e22' : '#adb5bd')
+           amb_color  = pr.fetch(:amb_status, 'no_payout') == 'paid' ? '#27ae60' : (pr.fetch(:amb_status, 'no_payout') == 'pending' ? '#e67e22' : '#adb5bd')
+           inv_color  = pr.fetch(:inv_status, 'no_payout') == 'paid' ? '#27ae60' : (pr.fetch(:inv_status, 'no_payout') == 'pending' ? '#e67e22' : '#adb5bd')
+      %>
+        <tr>
+          <td style="font-weight:600; color:#2c3e7a; font-family:monospace; font-size:.77rem;"><%= pr[:policy_number] %></td>
+          <td style="font-size:.8rem;"><%= pr[:customer_name] %></td>
+          <td>
+            <span class="badge" style="background:#eaf4fb; color:#2980b9; border:1px solid #aed6f1; font-size:.7rem;">
+              <%= pr[:type] %>
+            </span>
+          </td>
+          <td class="text-end amount-cell" style="color:#16a085;"><%= number_with_delimiter(pr[:premium].round(2)) %></td>
+
+          <!-- Own commission -->
+          <td class="text-end" style="color:#8e44ad; font-weight:600; border-left:2px solid #c5ceff;">
+            <%= pr[:comm_percentage] > 0 ? "#{pr[:comm_percentage]}%" : '—' %>
+          </td>
+          <td class="text-end amount-cell" style="color:#8e44ad;">
+            <%= pr[:gross_commission] > 0 ? number_with_delimiter(pr[:gross_commission].round(2)) : '—' %>
+          </td>
+          <td class="text-end" style="color:#e74c3c; font-size:.77rem;">
+            <%= pr[:tds_percentage] > 0 ? "#{pr[:tds_percentage]}%" : '—' %>
+          </td>
+          <td class="text-end" style="color:#e74c3c;">
+            <%= pr[:tds_amount] > 0 ? number_with_delimiter(pr[:tds_amount].round(2)) : '—' %>
+          </td>
+          <td class="text-end amount-cell <%= pr[:after_tds] > 0 ? (pr[:status] == 'paid' ? 'paid-amt' : 'pending-amt') : 'zero-amt' %>">
+            <%= pr[:after_tds] > 0 ? number_with_delimiter(pr[:after_tds].round(2)) : '—' %>
+          </td>
+
+          <!-- Ambassador commission columns -->
+          <% if show_amb %>
+            <% amb_aft = pr.fetch(:amb_after_tds, 0).to_f %>
+            <td class="text-end" style="color:#b7650c; border-left:2px solid #fcd68a;">
+              <%= pr.fetch(:amb_gross, 0).to_f > 0 ? number_with_delimiter(pr[:amb_gross].round(2)) : '—' %>
+            </td>
+            <td class="text-end" style="color:#e74c3c;">
+              <%= pr.fetch(:amb_tds, 0).to_f > 0 ? number_with_delimiter(pr[:amb_tds].round(2)) : '—' %>
+            </td>
+            <td class="text-end" style="color:#b7650c; font-weight:600;">
+              <%= amb_aft > 0 ? number_with_delimiter(amb_aft.round(2)) : '—' %>
+            </td>
+            <td class="text-center">
+              <% if pr.fetch(:amb_status, 'no_payout') != 'no_payout' %>
+                <span class="badge" style="background:<%= amb_color %>15; color:<%= amb_color %>; border:1px solid <%= amb_color %>50; font-size:.67rem;">
+                  <%= pr[:amb_status].to_s.titleize %>
+                </span>
+              <% else %>
+                <span style="color:#adb5bd; font-size:.75rem;">—</span>
+              <% end %>
+            </td>
+          <% end %>
+
+          <!-- Investor commission columns -->
+          <% if show_inv %>
+            <% inv_aft = pr.fetch(:inv_after_tds, 0).to_f %>
+            <td class="text-end" style="color:#1a7a45; border-left:2px solid #6dd89b;">
+              <%= pr.fetch(:inv_comm_pct, 0).to_f > 0 ? "#{pr[:inv_comm_pct]}%" : '—' %>
+            </td>
+            <td class="text-end" style="color:#1a7a45;">
+              <%= pr.fetch(:inv_gross, 0).to_f > 0 ? number_with_delimiter(pr[:inv_gross].round(2)) : '—' %>
+            </td>
+            <td class="text-end" style="color:#e74c3c;">
+              <%= pr.fetch(:inv_tds, 0).to_f > 0 ? number_with_delimiter(pr[:inv_tds].round(2)) : '—' %>
+            </td>
+            <td class="text-end" style="color:#1a7a45; font-weight:600;">
+              <%= inv_aft > 0 ? number_with_delimiter(inv_aft.round(2)) : '—' %>
+            </td>
+          <% end %>
+
+          <!-- Status -->
+          <td class="text-center">
+            <span class="badge" style="background:<%= own_color %>15; color:<%= own_color %>; border:1px solid <%= own_color %>50; font-size:.68rem; letter-spacing:.3px;">
+              <%= pr[:status].to_s.titleize %>
+            </span>
+          </td>
+          <td style="color:#6c757d; font-size:.77rem; white-space:nowrap;"><%= pr[:payout_date] || '—' %></td>
+        </tr>
+      <% end %>
+    </tbody>
+    <tfoot style="background:#e8eeff; font-size:.8rem;">
+      <tr>
+        <td colspan="3" style="font-weight:700; color:#2c3e7a;">
+          TOTAL (<%= rows.size %> <%= rows.size == 1 ? 'policy' : 'policies' %>)
+        </td>
+        <td class="text-end fw-bold" style="color:#16a085;"><%= number_with_delimiter(total_premium.round(2)) %></td>
+        <td class="text-end" style="color:#8e44ad; font-weight:600; border-left:2px solid #c5ceff;">
+          <%= avg_comm_pct > 0 ? "#{avg_comm_pct}% avg" : '—' %>
+        </td>
+        <td class="text-end fw-bold" style="color:#8e44ad;"><%= number_with_delimiter(total_gross.round(2)) %></td>
+        <td class="text-end" style="color:#e74c3c; font-weight:600;">—</td>
+        <td class="text-end fw-bold" style="color:#e74c3c;"><%= number_with_delimiter(total_tds.round(2)) %></td>
+        <td class="text-end fw-bold paid-amt"><%= number_with_delimiter(total_after.round(2)) %></td>
+        <% if show_amb %>
+          <td style="border-left:2px solid #fcd68a;"></td>
+          <td></td>
+          <td class="text-end fw-bold" style="color:#b7650c;"><%= total_amb_aft > 0 ? number_with_delimiter(total_amb_aft.round(2)) : '—' %></td>
+          <td></td>
+        <% end %>
+        <% if show_inv %>
+          <td style="border-left:2px solid #6dd89b;"></td>
+          <td></td>
+          <td></td>
+          <td class="text-end fw-bold" style="color:#1a7a45;"><%= total_inv_aft > 0 ? number_with_delimiter(total_inv_aft.round(2)) : '—' %></td>
+        <% end %>
+        <td colspan="2"></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>

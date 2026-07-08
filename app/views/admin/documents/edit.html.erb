@@ -1,0 +1,128 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Edit Document</h2>
+    <p class="text-muted mb-0">Update document information (file cannot be changed)</p>
+  </div>
+  <div>
+    <%= link_to admin_document_path(@document), class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Document
+    <% end %>
+  </div>
+</div>
+
+<!-- Edit Form -->
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">
+          <i class="bi bi-pencil me-2"></i>
+          Document Information
+        </h5>
+      </div>
+      <div class="card-body">
+        <%= form_with model: [:admin, @document], local: true, class: "needs-validation", novalidate: true do |form| %>
+          <% if @document.errors.any? %>
+            <div class="alert alert-danger">
+              <h6>Please fix the following errors:</h6>
+              <ul class="mb-0">
+                <% @document.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <!-- Current File Info -->
+          <div class="alert alert-info">
+            <h6><i class="bi bi-info-circle me-2"></i>Current File:</h6>
+            <p class="mb-0">
+              <strong><%= @document.file_name %></strong>
+              (<%= @document.human_file_type %>, <%= @document.file_size_mb %> MB)
+            </p>
+            <small class="text-muted">Note: You cannot change the file. To upload a different file, create a new document.</small>
+          </div>
+
+          <!-- Document Title -->
+          <div class="mb-3">
+            <%= form.label :title, class: "form-label" %>
+            <%= form.text_field :title, class: "form-control", placeholder: "Enter document title", required: true %>
+            <div class="invalid-feedback">
+              Please provide a document title.
+            </div>
+          </div>
+
+          <!-- Document Type -->
+          <div class="mb-3">
+            <%= form.label :document_type, class: "form-label" %>
+            <%= form.select :document_type,
+                           options_for_select([
+                             ['Select document type', ''],
+                             *Document::DOCUMENT_TYPES.map { |type| [type.humanize, type] }
+                           ], @document.document_type),
+                           {},
+                           { class: "form-select", required: true } %>
+            <div class="invalid-feedback">
+              Please select a document type.
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-3">
+            <%= form.label :description, class: "form-label" %>
+            <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Optional: Add a description for this document" %>
+          </div>
+
+          <!-- Linked Record Display -->
+          <% if @document.documentable %>
+            <div class="alert alert-success">
+              <h6><i class="bi bi-link me-2"></i>Currently linked to:</h6>
+              <p class="mb-0">
+                <strong><%= @document.documentable.class.name %></strong>:
+                <% if @document.documentable.respond_to?(:display_name) %>
+                  <%= @document.documentable.display_name %>
+                <% elsif @document.documentable.respond_to?(:name) %>
+                  <%= @document.documentable.name %>
+                <% else %>
+                  ID #<%= @document.documentable.id %>
+                <% end %>
+              </p>
+              <small class="text-muted">Note: Document linking cannot be changed after upload.</small>
+            </div>
+          <% else %>
+            <div class="alert alert-warning">
+              <p class="mb-0">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                This document is not linked to any record.
+              </p>
+            </div>
+          <% end %>
+
+          <!-- Submit Buttons -->
+          <div class="d-flex justify-content-end gap-2">
+            <%= link_to "Cancel", admin_document_path(@document), class: "btn btn-secondary" %>
+            <%= form.submit "Update Document", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Bootstrap form validation
+  const forms = document.querySelectorAll('.needs-validation');
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  });
+});
+</script>

@@ -1,0 +1,312 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Create New Role</h2>
+    <p class="text-muted mb-0">Define a new role with specific permissions for your users</p>
+  </div>
+  <div>
+    <%= link_to admin_roles_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Roles
+    <% end %>
+  </div>
+</div>
+
+<%= form_with model: [:admin, @role], local: true, class: "needs-validation", novalidate: true, data: { turbo: false } do |form| %>
+  <% if @role.errors.any? %>
+    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+      <h6>Please correct the following errors:</h6>
+      <ul class="mb-0">
+        <% @role.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% end %>
+
+  <!-- Role Basic Information -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-person-badge me-2 text-primary"></i>
+      <h5 class="mb-0">Role Information</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <%= form.label :name, class: "form-label" do %>
+            Role Name <span class="text-danger">*</span>
+          <% end %>
+          <%= form.text_field :name,
+              class: "form-control",
+              placeholder: "Enter role name (e.g., Customer Support, Sales Agent)",
+              required: true,
+              data: {
+                bs_toggle: "tooltip",
+                bs_placement: "top",
+                bs_title: "Enter a unique name for this role"
+              } %>
+          <small class="form-text text-muted">
+            Enter a descriptive name for this role. It will be automatically formatted.
+            <br>
+            <strong>Existing roles:</strong> <%= Role.pluck(:name).join(', ') %>
+          </small>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :status, class: "form-label" do %>
+            Status <span class="text-danger">*</span>
+          <% end %>
+          <%= form.select :status,
+              options_for_select([
+                ['Active', true],
+                ['Inactive', false]
+              ], true),
+              {},
+              { class: "form-select", required: true } %>
+          <small class="form-text text-muted">Only active roles can be assigned to users</small>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-12">
+          <%= form.label :description, class: "form-label" %>
+          <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Describe the role's purpose and responsibilities..." %>
+          <small class="form-text text-muted">Provide a clear description of what this role entails</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar Module Permissions -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-shield-check me-2 text-success"></i>
+        <h5 class="mb-0">Module Access Permissions</h5>
+      </div>
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="select_all_modules">
+        <label class="form-check-label fw-bold" for="select_all_modules">
+          Select All Modules
+        </label>
+      </div>
+    </div>
+    <div class="card-body">
+      <% sidebar_modules = ['dashboard', 'customers', 'policies', 'agents', 'sub_agents', 'brokers', 'agency_codes', 'leads', 'life_insurance', 'health_insurance', 'motor_insurance', 'other_insurance', 'reports', 'management', 'settings'] %>
+      <% sidebar_permissions = Permission.where(module_name: sidebar_modules, action_type: 'read') %>
+
+      <div class="row">
+        <% sidebar_permissions.each_with_index do |permission, index| %>
+          <div class="col-md-6 col-lg-4 mb-3">
+            <div class="form-check form-check-modern">
+              <input class="form-check-input module-permission-checkbox"
+                     type="checkbox"
+                     name="permission_ids[]"
+                     value="<%= permission.id %>"
+                     id="module_<%= permission.id %>">
+              <label class="form-check-label module-permission-label" for="module_<%= permission.id %>">
+                <div class="module-permission-card">
+                  <div class="module-icon">
+                    <%= get_module_icon(permission.module_name) %>
+                  </div>
+                  <div class="module-info">
+                    <h6 class="module-name"><%= permission.module_name.humanize %></h6>
+                    <small class="text-muted">Access to <%= permission.module_name.humanize.downcase %></small>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <% if sidebar_permissions.empty? %>
+        <div class="text-center py-5">
+          <i class="bi bi-shield-x fs-1 text-muted d-block mb-3"></i>
+          <h5 class="text-muted">No Module Permissions Available</h5>
+          <p class="text-muted">Module permissions need to be created first.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Permissions Preview -->
+  <div id="permissions_preview_card" class="card border-0 shadow-sm mb-4" style="display: none;">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-eye me-2 text-info"></i>
+      <h5 class="mb-0">Selected Permissions Preview</h5>
+    </div>
+    <div class="card-body" id="permissions_preview_content">
+      <!-- Preview content will be loaded here -->
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-between">
+        <div>
+          <small class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            Ensure you assign appropriate permissions based on the role's responsibilities
+          </small>
+        </div>
+        <div class="d-flex gap-2">
+          <%= link_to "Cancel", admin_roles_path, class: "btn btn-outline-secondary" %>
+          <%= form.submit "Create Role", class: "btn btn-primary" %>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<style>
+/* Module Permission Cards */
+.form-check-modern {
+  margin-bottom: 0;
+}
+
+.module-permission-card {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  height: 80px;
+}
+
+.module-permission-card:hover {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.1);
+}
+
+.module-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  margin-right: 12px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s ease;
+}
+
+.module-info {
+  flex: 1;
+}
+
+.module-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.module-permission-checkbox {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.module-permission-checkbox:checked + .module-permission-label .module-permission-card {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.2);
+}
+
+.module-permission-checkbox:checked + .module-permission-label .module-icon {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  transform: scale(1.05);
+}
+
+.module-permission-checkbox:checked + .module-permission-label .module-name {
+  color: #065f46;
+}
+
+/* Select All Switch */
+#select_all_modules {
+  width: 48px;
+  height: 24px;
+  border-radius: 12px;
+}
+
+#select_all_modules:checked {
+  background-color: #10b981;
+  border-color: #10b981;
+}
+
+/* Different gradient colors for modules */
+.module-icon.dashboard { background: linear-gradient(135deg, #3b82f6, #8b5cf6); }
+.module-icon.customers { background: linear-gradient(135deg, #10b981, #34d399); }
+.module-icon.policies { background: linear-gradient(135deg, #8b5cf6, #a855f7); }
+.module-icon.agents { background: linear-gradient(135deg, #f97316, #fb923c); }
+.module-icon.reports { background: linear-gradient(135deg, #ef4444, #f87171); }
+.module-icon.management { background: linear-gradient(135deg, #06b6d4, #22d3ee); }
+.module-icon.settings { background: linear-gradient(135deg, #6b7280, #9ca3af); }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const selectAllModules = document.getElementById('select_all_modules');
+  const moduleCheckboxes = document.querySelectorAll('.module-permission-checkbox');
+
+  // Select All modules functionality
+  selectAllModules?.addEventListener('change', function() {
+    const checked = this.checked;
+
+    moduleCheckboxes.forEach((checkbox, index) => {
+      setTimeout(() => {
+        checkbox.checked = checked;
+        animateCard(checkbox.nextElementSibling.querySelector('.module-permission-card'), checked);
+      }, index * 50);
+    });
+  });
+
+  // Individual module checkbox functionality
+  moduleCheckboxes.forEach(moduleCheckbox => {
+    moduleCheckbox.addEventListener('change', function() {
+      const card = this.nextElementSibling.querySelector('.module-permission-card');
+      animateCard(card, this.checked);
+      updateSelectAllState();
+    });
+  });
+
+  // Animate card when module is checked/unchecked
+  function animateCard(card, isChecked) {
+    if (!card) return;
+
+    card.style.transition = 'all 0.3s ease';
+
+    if (isChecked) {
+      card.style.transform = 'translateY(-2px) scale(1.02)';
+    } else {
+      setTimeout(() => {
+        card.style.transform = '';
+      }, 100);
+    }
+  }
+
+  // Update select all checkbox state
+  function updateSelectAllState() {
+    const allChecked = Array.from(moduleCheckboxes).every(cb => cb.checked);
+    const someChecked = Array.from(moduleCheckboxes).some(cb => cb.checked);
+
+    if (selectAllModules) {
+      selectAllModules.checked = allChecked;
+      selectAllModules.indeterminate = !allChecked && someChecked;
+    }
+  }
+
+  // Initialize state
+  updateSelectAllState();
+});
+</script>

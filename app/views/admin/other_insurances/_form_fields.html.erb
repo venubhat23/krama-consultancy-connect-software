@@ -1,0 +1,733 @@
+<!-- Client & Agent Details Section -->
+<div class="card mb-4">
+  <div class="card-header bg-light">
+    <h5 class="mb-0">
+      <i class="bi bi-person me-2 text-primary"></i>
+      Client & Agent Details
+    </h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <%= form.label :customer_id, "Client Name*", class: "form-label fw-semibold" %>
+        <%= form.select :customer_id,
+            options_for_select(@customers.map { |c| [c.display_name, c.id] }, @other_insurance.customer_id),
+            { prompt: 'Search and select client...' },
+            { class: "form-control #{'is-invalid' if @other_insurance.errors[:customer_id].any?}",
+              required: true,
+              id: "customer_select",
+              data: { placeholder: "Type to search clients..." } } %>
+        <% if @other_insurance.errors[:customer_id].any? %>
+          <div class="invalid-feedback"><%= @other_insurance.errors[:customer_id].first %></div>
+        <% end %>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <%= form.label :policy_holder, "Policy Holder", class: "form-label fw-semibold" %>
+        <%
+          policy_holder_options = [['Self', 'Self']]
+          selected_policy_holder = @other_insurance.policy_holder || 'Self'
+
+          # Add family members to options if available
+          if @customer_family_members&.any?
+            @customer_family_members.each do |member|
+              if member.name.present? && member.name.strip.length > 0
+                display_name = "#{member.name} (#{member.relationship.humanize})"
+                policy_holder_options << [display_name, member.name]
+
+                if @other_insurance.policy_holder == member.id.to_s
+                  selected_policy_holder = member.name
+                end
+              end
+            end
+          end
+
+          # Add current policy holder if not in options
+          if selected_policy_holder.present? &&
+             selected_policy_holder != 'Self' &&
+             !policy_holder_options.any? { |opt| opt[1] == selected_policy_holder }
+            policy_holder_options << ["#{selected_policy_holder} (Custom)", selected_policy_holder]
+          end
+        %>
+        <%= form.select :policy_holder,
+            options_for_select(policy_holder_options, selected_policy_holder),
+            {},
+            { class: "form-control",
+              id: "policy_holder_select",
+              data: { placeholder: "Select policy holder..." } } %>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <%= form.label :sub_agent_id, "Affiliate", class: "form-label fw-semibold" %>
+        <%= form.select :sub_agent_id,
+            options_for_select([['Self', '']] + @sub_agents.map { |a| [a.display_name, a.id] }, @other_insurance.sub_agent_id),
+            {},
+            { class: "form-control",
+              id: "affiliate_select",
+              data: { placeholder: "Select affiliate..." } } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Policy Details Section -->
+  <div class="card mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">
+        <i class="bi bi-file-text me-2 text-primary"></i>
+        Policy Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <!-- Broker and Agency Details -->
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <%= form.label :broker_code_type, "Broker Code", class: "form-label fw-semibold" %>
+          <%= form.select :broker_code_type,
+              options_for_select([
+                ['Direct', 'direct'],
+                ['Broking', 'broking']
+              ], @other_insurance.broker_code_type || 'direct'),
+              {},
+              { class: "form-control", id: "broker_code_type" } %>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :agency_code_id, "Agency Code", class: "form-label fw-semibold" %>
+          <%= form.select :agency_code_id,
+              options_for_select(@agency_codes.map { |a| ["#{a.agent_name} - #{a.code}", a.id] }, @other_insurance.agency_code_id),
+              { prompt: 'Select agency code' },
+              { class: "form-control", id: "agency_code_select" } %>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :broker_id, "Broker", class: "form-label fw-semibold" %>
+          <%= form.select :broker_id,
+              options_for_select(@brokers&.map { |b| [b.name, b.id] } || [], @other_insurance.broker_id),
+              { prompt: 'Select broker' },
+              { class: "form-control", id: "broker_select" } %>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :insurance_company_name, "Insurance Company*", class: "form-label fw-semibold" %>
+          <%= form.text_field :insurance_company_name,
+              class: "form-control #{'is-invalid' if @other_insurance.errors[:insurance_company_name].any?}",
+              required: true,
+              placeholder: "E.g., TATA AIA General Insurance" %>
+          <% if @other_insurance.errors[:insurance_company_name].any? %>
+            <div class="invalid-feedback"><%= @other_insurance.errors[:insurance_company_name].first %></div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Insurance Type and Policy Type -->
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <%= form.label :insurance_type, "Insurance Type*", class: "form-label fw-semibold" %>
+          <%= form.select :insurance_type,
+              options_for_select([
+                ['Travel Insurance', 'Travel Insurance'],
+                ['Property Insurance', 'Property Insurance'],
+                ['Fire Insurance', 'Fire Insurance'],
+                ['Marine Insurance', 'Marine Insurance'],
+                ['Cyber Insurance', 'Cyber Insurance'],
+                ['Professional Indemnity', 'Professional Indemnity'],
+                ['General Liability', 'General Liability'],
+                ['Product Liability', 'Product Liability'],
+                ['Directors & Officers', 'Directors & Officers'],
+                ['Workmen Compensation', 'Workmen Compensation'],
+                ['Other', 'Other']
+              ], @other_insurance.insurance_type),
+              { prompt: 'Select insurance type' },
+              { class: "form-control", required: true } %>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :policy_type, "Policy Type*", class: "form-label fw-semibold" %>
+          <%= form.select :policy_type,
+              options_for_select([
+                ['New', 'New'],
+                ['Renewal', 'Renewal'],
+                ['Port', 'Port'],
+                ['Rollover', 'Rollover']
+              ], @other_insurance.policy_type || 'Renewal'),
+              {},
+              { class: "form-control", required: true } %>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :policy_number, "Policy Number*", class: "form-label fw-semibold" %>
+          <%= form.text_field :policy_number,
+              class: "form-control #{'is-invalid' if @other_insurance.errors[:policy_number].any?}",
+              required: true,
+              placeholder: "Enter policy number" %>
+          <% if @other_insurance.errors[:policy_number].any? %>
+            <div class="invalid-feedback"><%= @other_insurance.errors[:policy_number].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :plan_name, "Plan Name", class: "form-label fw-semibold" %>
+          <%= form.text_field :plan_name,
+              class: "form-control",
+              placeholder: "Enter plan name (optional)" %>
+        </div>
+      </div>
+
+      <!-- Policy Dates -->
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <%= form.label :policy_booking_date, "Policy Booking Date", class: "form-label fw-semibold" %>
+          <%= form.date_field :policy_booking_date,
+              class: "form-control",
+              value: @other_insurance.policy_booking_date || Date.current %>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :policy_start_date, "Policy Start Date*", class: "form-label fw-semibold" %>
+          <%= form.date_field :policy_start_date,
+              class: "form-control #{'is-invalid' if @other_insurance.errors[:policy_start_date].any?}",
+              required: true %>
+          <% if @other_insurance.errors[:policy_start_date].any? %>
+            <div class="invalid-feedback"><%= @other_insurance.errors[:policy_start_date].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :policy_end_date, "Policy End Date*", class: "form-label fw-semibold" %>
+          <%= form.date_field :policy_end_date,
+              class: "form-control #{'is-invalid' if @other_insurance.errors[:policy_end_date].any?}",
+              required: true %>
+          <% if @other_insurance.errors[:policy_end_date].any? %>
+            <div class="invalid-feedback"><%= @other_insurance.errors[:policy_end_date].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :policy_term, "Policy Term (Years)", class: "form-label fw-semibold" %>
+          <%= form.number_field :policy_term,
+              class: "form-control",
+              min: 1,
+              max: 99,
+              placeholder: "Enter term in years" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Premium Details Section -->
+  <div class="card mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">
+        <i class="bi bi-currency-rupee me-2 text-primary"></i>
+        Premium Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <%= form.label :net_premium, "Net Premium*", class: "form-label fw-semibold" %>
+          <%= form.number_field :net_premium,
+              class: "form-control",
+              step: 0.01,
+              required: true,
+              placeholder: "Enter net premium",
+              id: "net_premium" %>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :gst_percentage, "GST %*", class: "form-label fw-semibold" %>
+          <%= form.number_field :gst_percentage,
+              class: "form-control",
+              step: 0.01,
+              value: @other_insurance.gst_percentage || 18,
+              required: true,
+              id: "gst_percentage" %>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :total_premium, "Total Premium (Auto-calculated)*", class: "form-label fw-semibold" %>
+          <%= form.number_field :total_premium,
+              class: "form-control",
+              step: 0.01,
+              readonly: true,
+              id: "total_premium" %>
+          <small class="text-muted">Auto-calculated from Net Premium + GST</small>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <%= form.label :payment_mode, "Payment Mode", class: "form-label fw-semibold" %>
+          <%= form.select :payment_mode,
+              options_for_select([
+                ['Yearly', 'Yearly'],
+                ['Half Yearly', 'Half Yearly'],
+                ['Quarterly', 'Quarterly'],
+                ['Monthly', 'Monthly'],
+                ['Single', 'Single']
+              ], @other_insurance.payment_mode || 'Yearly'),
+              {},
+              { class: "form-control" } %>
+        </div>
+      </div>
+
+      <!-- Coverage Details -->
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <%= form.label :sum_insured, "Sum Insured / IDV", class: "form-label fw-semibold" %>
+          <%= form.number_field :sum_insured,
+              class: "form-control",
+              step: 0.01,
+              placeholder: "Enter sum insured amount" %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :installment_autopay_start_date, "Autopay Start Date", class: "form-label fw-semibold" %>
+          <%= form.date_field :installment_autopay_start_date,
+              class: "form-control" %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :installment_autopay_end_date, "Autopay End Date", class: "form-label fw-semibold" %>
+          <%= form.date_field :installment_autopay_end_date,
+              class: "form-control" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Additional Details Section -->
+  <div class="card mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">
+        <i class="bi bi-info-circle me-2 text-primary"></i>
+        Additional Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <%= form.label :claim_process, "Claim Process", class: "form-label fw-semibold" %>
+          <%= form.text_area :claim_process,
+              class: "form-control",
+              rows: 3,
+              placeholder: "Enter claim process details..." %>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <%= form.label "extra_note", "Extra Note", class: "form-label fw-semibold" %>
+          <%= form.text_area :claim_process,
+              class: "form-control",
+              rows: 3,
+              placeholder: "Enter additional notes or comments..." %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <%= form.label "reference_by", "Reference By", class: "form-label fw-semibold" %>
+          <%= form.text_field :plan_name,
+              class: "form-control",
+              placeholder: "Enter reference name" %>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <%= form.label :status, "Policy Status", class: "form-label fw-semibold" %>
+          <%= form.select :status,
+              options_for_select([
+                ['Active', 'active'],
+                ['Expired', 'expired'],
+                ['Cancelled', 'cancelled'],
+                ['Pending', 'pending']
+              ], @other_insurance.try(:status) || 'active'),
+              {},
+              { class: "form-control" } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% if @other_insurance&.drwise_policy? %>
+  <!-- Commission Details Section (Read-Only for Renewals) -->
+  <div class="card mb-4">
+    <div class="card-header bg-warning bg-opacity-10">
+      <h5 class="mb-0">
+        <i class="bi bi-percent me-2 text-warning"></i>
+        Commission Details <span class="badge bg-warning text-dark ms-2">Read-Only</span>
+      </h5>
+      <small class="text-muted mt-1 d-block">
+        <i class="bi bi-info-circle me-1"></i>
+        Note: Commission details cannot be modified for existing policies. These fields are locked to maintain data integrity.
+      </small>
+    </div>
+    <div class="card-body">
+      <!-- Main Agent Commission -->
+      <h6 class="mb-3 text-primary">Main Agent Commission</h6>
+      <div class="row mb-3">
+        <div class="col-md-2">
+          <%= form.label :main_agent_commission_percentage, "1st year (%)", class: "form-label" %>
+          <%= form.number_field :main_agent_commission_percentage,
+              class: "form-control",
+              step: 0.01,
+              readonly: @other_insurance.persisted?,
+              placeholder: "%" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.label :commission_amount, "Commission Amount", class: "form-label" %>
+          <%= form.number_field :commission_amount,
+              class: "form-control",
+              step: 0.01,
+              readonly: true,
+              placeholder: "Auto-calculated" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.label :tds_percentage, "TDS %", class: "form-label" %>
+          <%= form.number_field :tds_percentage,
+              class: "form-control",
+              step: 0.01,
+              readonly: @other_insurance.persisted?,
+              placeholder: "%" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.label :tds_amount, "TDS Amount", class: "form-label" %>
+          <%= form.number_field :tds_amount,
+              class: "form-control",
+              step: 0.01,
+              readonly: true,
+              placeholder: "Auto-calculated" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.label :after_tds_value, "After TDS Value", class: "form-label" %>
+          <%= form.number_field :after_tds_value,
+              class: "form-control",
+              step: 0.01,
+              readonly: true,
+              placeholder: "Auto-calculated" %>
+        </div>
+      </div>
+
+      <!-- Affiliate Commission -->
+      <h6 class="mb-3 text-success">Affiliate Commission</h6>
+      <div class="row mb-3">
+        <div class="col-md-2">
+          <%= form.label :sub_agent_commission_percentage, "1st year (%)", class: "form-label" %>
+          <%= form.number_field :sub_agent_commission_percentage,
+              class: "form-control",
+              step: 0.01,
+              readonly: @other_insurance.persisted?,
+              placeholder: "%" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.label :sub_agent_commission_amount, "Commission Amount", class: "form-label" %>
+          <%= form.number_field :sub_agent_commission_amount,
+              class: "form-control",
+              step: 0.01,
+              readonly: true,
+              placeholder: "Auto-calculated" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.label :sub_agent_tds_percentage, "TDS %", class: "form-label" %>
+          <%= form.number_field :sub_agent_tds_percentage,
+              class: "form-control",
+              step: 0.01,
+              readonly: @other_insurance.persisted?,
+              placeholder: "%" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.label :sub_agent_tds_amount, "TDS Amount", class: "form-label" %>
+          <%= form.number_field :sub_agent_tds_amount,
+              class: "form-control",
+              step: 0.01,
+              readonly: true,
+              placeholder: "Auto-calculated" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.label :sub_agent_after_tds_value, "After TDS Value", class: "form-label" %>
+          <%= form.number_field :sub_agent_after_tds_value,
+              class: "form-control",
+              step: 0.01,
+              readonly: true,
+              placeholder: "Auto-calculated" %>
+        </div>
+      </div>
+
+      <!-- Ambassador Commission -->
+      <h6 class="mb-3 text-info">Ambassador Commission</h6>
+      <div class="row mb-3">
+        <div class="col-md-2">
+          <%= form.label :ambassador_commission_percentage, "1st year (%)", class: "form-label" %>
+          <%= form.number_field :ambassador_commission_percentage,
+              class: "form-control",
+              step: 0.01,
+              readonly: @other_insurance.persisted?,
+              placeholder: "%" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.label :ambassador_commission_amount, "Commission Amount", class: "form-label" %>
+          <%= form.number_field :ambassador_commission_amount,
+              class: "form-control",
+              step: 0.01,
+              readonly: true,
+              placeholder: "Auto-calculated" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.label :ambassador_tds_percentage, "TDS %", class: "form-label" %>
+          <%= form.number_field :ambassador_tds_percentage,
+              class: "form-control",
+              step: 0.01,
+              readonly: @other_insurance.persisted?,
+              value: 0,
+              placeholder: "%" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.label :ambassador_tds_amount, "TDS Amount", class: "form-label" %>
+          <%= form.number_field :ambassador_tds_amount,
+              class: "form-control",
+              step: 0.01,
+              readonly: true,
+              placeholder: "Auto-calculated" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.label :ambassador_after_tds_value, "After TDS Value", class: "form-label" %>
+          <%= form.number_field :ambassador_after_tds_value,
+              class: "form-control",
+              step: 0.01,
+              readonly: true,
+              placeholder: "Auto-calculated" %>
+        </div>
+      </div>
+
+      <!-- Investor Portion -->
+      <h6 class="mb-3 text-purple">Investor Portion</h6>
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <%= form.label :investor_commission_percentage, "1st year (%)", class: "form-label" %>
+          <%= form.number_field :investor_commission_percentage,
+              class: "form-control",
+              step: 0.01,
+              readonly: @other_insurance.persisted?,
+              placeholder: "%" %>
+        </div>
+        <div class="col-md-3">
+          <%= form.label :investor_commission_amount, "Amount", class: "form-label" %>
+          <%= form.number_field :investor_commission_amount,
+              class: "form-control",
+              step: 0.01,
+              readonly: true,
+              placeholder: "Auto-calculated" %>
+        </div>
+      </div>
+
+      <!-- Company Expenses & Profit Calculation -->
+      <h6 class="mb-3 text-dark">Company Expenses & Profit Calculation</h6>
+      <div class="row">
+        <div class="col-md-3">
+          <%= form.label :company_expenses_percentage, "Company Expenses (%)", class: "form-label" %>
+          <%= form.number_field :company_expenses_percentage,
+              class: "form-control",
+              step: 0.01,
+              readonly: @other_insurance.persisted?,
+              placeholder: "%" %>
+        </div>
+        <div class="col-md-3">
+          <%= form.label :total_distribution_percentage, "Total Distribution (%)", class: "form-label" %>
+          <%= form.number_field :total_distribution_percentage,
+              class: "form-control",
+              step: 0.01,
+              readonly: true,
+              placeholder: "Auto-calculated" %>
+          <small class="text-muted">Affiliate + Ambassador + Investor</small>
+        </div>
+        <div class="col-md-3">
+          <%= form.label :profit_percentage, "Profit (%)", class: "form-label" %>
+          <%= form.number_field :profit_percentage,
+              class: "form-control",
+              step: 0.01,
+              readonly: true,
+              placeholder: "Auto-calculated" %>
+        </div>
+        <div class="col-md-3">
+          <%= form.label :profit_amount, "Profit Amount (Rs.)", class: "form-label" %>
+          <%= form.number_field :profit_amount,
+              class: "form-control",
+              step: 0.01,
+              readonly: true,
+              placeholder: "Auto-calculated" %>
+        </div>
+      </div>
+
+      <!-- Commission Calculation Summary -->
+      <div class="alert alert-info mt-3">
+        <h6 class="alert-heading">Commission Calculation Summary:</h6>
+        <ul class="mb-0 small">
+          <li><strong>Main Agent Commission:</strong> <span id="main_agent_summary">0%</span> of Net Premium</li>
+          <li><strong>Total Distribution:</strong> <span id="total_dist_summary">0%</span> (Affiliate + Ambassador + Investor)</li>
+          <li><strong>Company Expenses:</strong> <span id="company_exp_summary">0%</span> of Net Premium</li>
+          <li><strong>Profit:</strong> Net Premium - All Commissions - Company Expenses</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <% end %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-calculate Total Premium
+  function calculateTotalPremium() {
+    const netPremium = parseFloat(document.getElementById('net_premium').value) || 0;
+    const gstPercentage = parseFloat(document.getElementById('gst_percentage').value) || 0;
+    const gstAmount = (netPremium * gstPercentage) / 100;
+    const totalPremium = netPremium + gstAmount;
+    document.getElementById('total_premium').value = totalPremium.toFixed(2);
+
+    // Trigger commission calculations
+    calculateCommissions();
+  }
+
+  // Calculate all commissions
+  function calculateCommissions() {
+    const netPremium = parseFloat(document.getElementById('net_premium').value) || 0;
+
+    // Main Agent Commission
+    const mainAgentPerc = parseFloat(document.getElementById('other_insurance_main_agent_commission_percentage').value) || 0;
+    const mainAgentComm = (netPremium * mainAgentPerc) / 100;
+    const mainAgentTdsPerc = parseFloat(document.getElementById('other_insurance_tds_percentage').value) || 0;
+    const mainAgentTds = (mainAgentComm * mainAgentTdsPerc) / 100;
+
+    document.getElementById('other_insurance_commission_amount').value = mainAgentComm.toFixed(2);
+    document.getElementById('other_insurance_tds_amount').value = mainAgentTds.toFixed(2);
+    document.getElementById('other_insurance_after_tds_value').value = (mainAgentComm - mainAgentTds).toFixed(2);
+
+    // Affiliate Commission
+    const subAgentPerc = parseFloat(document.getElementById('other_insurance_sub_agent_commission_percentage').value) || 0;
+    const subAgentComm = (netPremium * subAgentPerc) / 100;
+    const subAgentTdsPerc = parseFloat(document.getElementById('other_insurance_sub_agent_tds_percentage').value) || 0;
+    const subAgentTds = (subAgentComm * subAgentTdsPerc) / 100;
+
+    document.getElementById('other_insurance_sub_agent_commission_amount').value = subAgentComm.toFixed(2);
+    document.getElementById('other_insurance_sub_agent_tds_amount').value = subAgentTds.toFixed(2);
+    document.getElementById('other_insurance_sub_agent_after_tds_value').value = (subAgentComm - subAgentTds).toFixed(2);
+
+    // Ambassador Commission
+    const ambassadorPerc = parseFloat(document.getElementById('other_insurance_ambassador_commission_percentage').value) || 0;
+    const ambassadorComm = (netPremium * ambassadorPerc) / 100;
+    const ambassadorTdsPerc = parseFloat(document.getElementById('other_insurance_ambassador_tds_percentage').value) || 0;
+    const ambassadorTds = (ambassadorComm * ambassadorTdsPerc) / 100;
+
+    document.getElementById('other_insurance_ambassador_commission_amount').value = ambassadorComm.toFixed(2);
+    document.getElementById('other_insurance_ambassador_tds_amount').value = ambassadorTds.toFixed(2);
+    document.getElementById('other_insurance_ambassador_after_tds_value').value = (ambassadorComm - ambassadorTds).toFixed(2);
+
+    // Investor Commission
+    const investorPerc = parseFloat(document.getElementById('other_insurance_investor_commission_percentage').value) || 0;
+    const investorComm = (netPremium * investorPerc) / 100;
+    document.getElementById('other_insurance_investor_commission_amount').value = investorComm.toFixed(2);
+
+    // Total Distribution
+    const totalDist = subAgentPerc + ambassadorPerc + investorPerc;
+    document.getElementById('other_insurance_total_distribution_percentage').value = totalDist.toFixed(2);
+
+    // Company Expenses
+    const companyExpPerc = parseFloat(document.getElementById('other_insurance_company_expenses_percentage').value) || 0;
+
+    // Profit Calculation
+    const totalCommissionPerc = mainAgentPerc + totalDist + companyExpPerc;
+    const profitPerc = 100 - totalCommissionPerc;
+    const profitAmount = (netPremium * profitPerc) / 100;
+
+    document.getElementById('other_insurance_profit_percentage').value = profitPerc.toFixed(2);
+    document.getElementById('other_insurance_profit_amount').value = profitAmount.toFixed(2);
+
+    // Update summary
+    document.getElementById('main_agent_summary').textContent = mainAgentPerc + '%';
+    document.getElementById('total_dist_summary').textContent = totalDist.toFixed(2) + '%';
+    document.getElementById('company_exp_summary').textContent = companyExpPerc + '%';
+  }
+
+  // Add event listeners
+  document.getElementById('net_premium').addEventListener('input', calculateTotalPremium);
+  document.getElementById('gst_percentage').addEventListener('input', calculateTotalPremium);
+
+  // Commission percentage listeners
+  const commissionFields = [
+    'other_insurance_main_agent_commission_percentage',
+    'other_insurance_tds_percentage',
+    'other_insurance_sub_agent_commission_percentage',
+    'other_insurance_sub_agent_tds_percentage',
+    'other_insurance_ambassador_commission_percentage',
+    'other_insurance_ambassador_tds_percentage',
+    'other_insurance_investor_commission_percentage',
+    'other_insurance_company_expenses_percentage'
+  ];
+
+  commissionFields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field && !field.readOnly) {
+      field.addEventListener('input', calculateCommissions);
+    }
+  });
+
+  // Initialize Select2 for dropdowns
+  if (typeof $ !== 'undefined' && $.fn.select2) {
+    $('#customer_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select client...',
+      allowClear: true
+    });
+
+    $('#policy_holder_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Select policy holder...',
+      allowClear: true
+    });
+
+    $('#affiliate_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Select affiliate...',
+      allowClear: true
+    });
+
+    $('#agency_code_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Select agency code...',
+      allowClear: true
+    });
+
+    $('#broker_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Select broker...',
+      allowClear: true
+    });
+  }
+
+  // Initial calculation
+  calculateTotalPremium();
+});
+</script>
+
+<style>
+.text-purple {
+  color: #6f42c1;
+}
+
+.form-label {
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.form-label.fw-semibold {
+  font-weight: 600;
+}
+
+.card-header h5 {
+  font-size: 1.1rem;
+}
+
+.alert-info {
+  background-color: #e7f3ff;
+  border-color: #b8daff;
+}
+
+.bg-warning.bg-opacity-10 {
+  background-color: rgba(255, 193, 7, 0.1) !important;
+}
+</style>

@@ -1,0 +1,404 @@
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+  .select2-container--bootstrap-5 .select2-selection--single {
+    height: calc(1.5em + 0.75rem + 2px);
+    padding: 0.375rem 0.75rem;
+    font-size: 0.9rem;
+    border-radius: 0.375rem;
+  }
+  .select2-container--bootstrap-5 .select2-selection__rendered {
+    padding-left: 0;
+    line-height: 1.5;
+  }
+  .select2-container--bootstrap-5 .select2-results__option {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  .select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: #0d6efd;
+  }
+  .select2-dropdown { border-radius: 0.375rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+</style>
+
+<%= form_with model: [:admin, @client_service], local: true, class: "needs-validation", novalidate: true, id: "cs-form" do |form| %>
+
+  <!-- Client & Agent Details -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-person me-2 text-primary"></i>
+        Client & Agent Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <% if @client_service.errors.any? %>
+        <div class="alert alert-danger alert-dismissible fade show">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <strong>Please correct the following errors:</strong>
+          <ul class="mb-0 mt-2">
+            <% @client_service.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
+          </ul>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% end %>
+
+      <%= form.hidden_field :service_type %>
+      <%= form.hidden_field :service_category %>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <%= form.label :customer_id, "Client Name *", class: "form-label" %>
+          <%= form.select :customer_id,
+              options_for_select(@customers.map { |c| [c.display_name, c.id] }, @selected_customer&.id || @client_service.customer_id),
+              { prompt: 'Search and select client...' },
+              { class: "form-control select2-customer #{'is-invalid' if @client_service.errors[:customer_id].any?}",
+                required: true, id: "cs_customer_select" } %>
+          <% if @client_service.errors[:customer_id].any? %>
+            <div class="invalid-feedback"><%= @client_service.errors[:customer_id].first %></div>
+          <% end %>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <%= form.label :sub_agent_id, "Affiliate Name", class: "form-label" %>
+          <%= form.select :sub_agent_id,
+              options_for_select([['Self', '']] + @sub_agents.map { |a| [a.display_name, a.id] }, (@auto_select_affiliate == 'self' ? '' : @auto_select_affiliate)),
+              { prompt: 'Search and select affiliate...' },
+              { class: "form-control select2-affiliate", id: "cs_affiliate_select" } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Service Details -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="bi bi-briefcase me-2 text-success"></i>
+        Service Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <%= form.label :amount, "Amount", class: "form-label" %>
+          <%= form.number_field :amount, class: "form-control", placeholder: "0.00",
+              step: 0.01, min: 0, id: "cs_amount",
+              value: @client_service.amount || 0 %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :status, "Status", class: "form-label" %>
+          <%= form.select :status,
+              options_for_select([['Pending', 'pending'], ['In Progress', 'in_progress'], ['Completed', 'completed'], ['Cancelled', 'cancelled']], @client_service.status || 'pending'),
+              {},
+              { class: "form-select" } %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :start_date, "Start Date", class: "form-label" %>
+          <%= form.date_field :start_date, class: "form-control" %>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <%= form.label :reference_number, "Reference Number", class: "form-label" %>
+          <%= form.text_field :reference_number, class: "form-control", placeholder: "Optional reference" %>
+        </div>
+
+        <div class="col-md-8 mb-3">
+          <%= form.label :notes, "Notes", class: "form-label" %>
+          <%= form.text_area :notes, class: "form-control", rows: 3, placeholder: "Additional notes or instructions..." %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Commission Calculation -->
+  <div class="card mb-4 shadow-sm commission-table">
+    <div class="card-header" style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-dark fw-bold">
+          <i class="bi bi-calculator me-2 text-primary"></i>Commission Calculation
+        </h5>
+        <div class="text-end">
+          <small class="text-muted fw-bold">Profit Formula:</small>
+          <div class="badge bg-light text-dark border" style="font-size: 0.8rem;">
+            Main Agent Commission - Total Distribution - Company Expenses
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table mb-0" style="font-size: 0.95rem;">
+          <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+            <tr>
+              <th class="py-3 px-4 fw-bold text-dark border-0" style="width: 20%;">COMMISSION DETAILS</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 12%;">(%)</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 18%;">COMMISSION</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 12%;">TDS (%)</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 15%;">TDS AMOUNT</th>
+              <th class="py-3 px-3 fw-bold text-dark border-0 text-center" style="width: 23%;">ACTUAL AMOUNT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Main Agent -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark bg-light">Main Agent</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :main_agent_commission_percentage,
+                    class: "form-control border-1 text-center fw-bold",
+                    value: @client_service.main_agent_commission_percentage || 0,
+                    step: 0.01, id: "cs_commission_pct" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :commission_amount, class: "form-control border-1 text-center",
+                    value: @client_service.commission_amount || 0, step: 0.01, readonly: true, id: "cs_commission_amt" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :tds_percentage, class: "form-control border-1 text-center",
+                    value: @client_service.tds_percentage || 0, step: 0.01, id: "cs_tds_pct" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :tds_amount, class: "form-control border-1 text-center",
+                    value: @client_service.tds_amount || 0, step: 0.01, readonly: true, id: "cs_tds_amt" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :after_tds_value, class: "form-control border-1 text-center fw-bold",
+                    value: @client_service.after_tds_value || 0, step: 0.01, readonly: true, id: "cs_after_tds" %>
+              </td>
+            </tr>
+
+            <!-- Affiliate -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark">Affiliate</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_commission_percentage,
+                    class: "form-control border-1 text-center cs-sub-pct",
+                    value: @client_service.sub_agent_commission_percentage || 2.0, step: 0.01 %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_commission_amount, class: "form-control border-1 text-center",
+                    value: @client_service.sub_agent_commission_amount || 0, step: 0.01, readonly: true %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_tds_percentage, class: "form-control border-1 text-center",
+                    value: @client_service.sub_agent_tds_percentage || 0, step: 0.01 %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_tds_amount, class: "form-control border-1 text-center",
+                    value: @client_service.sub_agent_tds_amount || 0, step: 0.01, readonly: true %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :sub_agent_after_tds_value, class: "form-control border-1 text-center",
+                    value: @client_service.sub_agent_after_tds_value || 0, step: 0.01, readonly: true %>
+              </td>
+            </tr>
+
+            <!-- Ambassador -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark">Ambassador</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :distributor_commission_percentage,
+                    class: "form-control border-1 text-center cs-amb-pct",
+                    value: @client_service.distributor_commission_percentage || 0, step: 0.01 %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :distributor_commission_amount, class: "form-control border-1 text-center",
+                    value: @client_service.distributor_commission_amount || 0, step: 0.01, readonly: true %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :distributor_tds_percentage, class: "form-control border-1 text-center",
+                    value: @client_service.distributor_tds_percentage || 0, step: 0.01 %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :distributor_tds_amount, class: "form-control border-1 text-center",
+                    value: @client_service.distributor_tds_amount || 0, step: 0.01, readonly: true %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :distributor_after_tds_value, class: "form-control border-1 text-center",
+                    value: @client_service.distributor_after_tds_value || 0, step: 0.01, readonly: true %>
+              </td>
+            </tr>
+
+            <!-- Investor -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark">Investor</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :investor_commission_percentage,
+                    class: "form-control border-1 text-center cs-inv-pct",
+                    value: @client_service.investor_commission_percentage || 2.0, step: 0.01 %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :investor_commission_amount, class: "form-control border-1 text-center",
+                    value: @client_service.investor_commission_amount || 0, step: 0.01, readonly: true %>
+              </td>
+              <td class="py-2 px-1 text-center text-muted">—</td>
+              <td class="py-2 px-1 text-center text-muted">—</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :investor_commission_amount, class: "form-control border-1 text-center",
+                    value: @client_service.investor_commission_amount || 0, step: 0.01, readonly: true, name: nil %>
+              </td>
+            </tr>
+
+            <!-- Company -->
+            <tr class="border-bottom">
+              <td class="py-3 px-4 fw-bold text-dark">Company</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :company_expenses_percentage,
+                    class: "form-control border-1 text-center cs-exp-pct",
+                    value: @client_service.company_expenses_percentage || 0, step: 0.01 %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :company_expenses_amount, class: "form-control border-1 text-center",
+                    value: @client_service.company_expenses_amount || 0, step: 0.01, readonly: true %>
+              </td>
+              <td class="py-2 px-1 text-center text-muted">—</td>
+              <td class="py-2 px-1 text-center text-muted">—</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :company_expenses_amount, class: "form-control border-1 text-center",
+                    value: @client_service.company_expenses_amount || 0, step: 0.01, readonly: true, name: nil %>
+              </td>
+            </tr>
+
+            <!-- Profit -->
+            <tr style="background: #f0fff4;">
+              <td class="py-3 px-4 fw-bold text-success">Profit</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :profit_percentage, class: "form-control border-1 text-center fw-bold text-success",
+                    value: @client_service.profit_percentage || 0, step: 0.01, readonly: true, id: "cs_profit_pct" %>
+              </td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :profit_amount, class: "form-control border-1 text-center fw-bold text-success",
+                    value: @client_service.profit_amount || 0, step: 0.01, readonly: true, id: "cs_profit_amt" %>
+              </td>
+              <td class="py-2 px-1 text-center text-muted">—</td>
+              <td class="py-2 px-1 text-center text-muted">—</td>
+              <td class="py-2 px-1 text-center">
+                <%= form.number_field :profit_amount, class: "form-control border-1 text-center fw-bold text-success",
+                    value: @client_service.profit_amount || 0, step: 0.01, readonly: true, name: nil %>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <%= form.hidden_field :total_distribution_percentage, id: "cs_total_dist_pct" %>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="d-flex gap-2">
+    <%= form.submit @client_service.new_record? ? "Create Record" : "Update Record",
+        class: "btn btn-primary px-4" %>
+    <% back_path = @client_service.new_record? ?
+        admin_client_services_path(service_type: @client_service.service_type) :
+        admin_client_service_path(@client_service) %>
+    <%= link_to "Cancel", back_path, class: "btn btn-outline-secondary px-4" %>
+  </div>
+
+<% end %>
+
+<style>
+  .commission-table { box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; }
+  .commission-table .form-control { font-size: 0.9rem; padding: 8px 12px; border-radius: 6px; border: none !important; box-shadow: none !important; font-weight: 500; text-align: center; }
+</style>
+
+<script>
+(function() {
+  function getVal(id) { return parseFloat(document.getElementById(id)?.value) || 0; }
+  function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v.toFixed(2); }
+
+  function recalculate() {
+    const amount  = getVal('cs_amount');
+    const mainPct = getVal('cs_commission_pct');
+    const tdsPct  = getVal('cs_tds_pct');
+
+    const commAmt = amount * mainPct / 100;
+    const tdsAmt  = commAmt * tdsPct / 100;
+    setVal('cs_commission_amt', commAmt);
+    setVal('cs_tds_amt', tdsAmt);
+    setVal('cs_after_tds', commAmt - tdsAmt);
+
+    const subPct = parseFloat(document.querySelector('.cs-sub-pct')?.value) || 0;
+    const ambPct = parseFloat(document.querySelector('.cs-amb-pct')?.value) || 0;
+    const invPct = parseFloat(document.querySelector('.cs-inv-pct')?.value) || 0;
+    const expPct = parseFloat(document.querySelector('.cs-exp-pct')?.value) || 0;
+
+    const subAmt = amount * subPct / 100;
+    const ambAmt = amount * ambPct / 100;
+    const invAmt = amount * invPct / 100;
+    const expAmt = amount * expPct / 100;
+
+    const rows = document.querySelectorAll('.commission-table tbody tr');
+    if (rows[1]) {
+      const inputs = rows[1].querySelectorAll('input[type="number"]');
+      if (inputs[1]) inputs[1].value = subAmt.toFixed(2);
+      const subTdsPct = parseFloat(inputs[2]?.value) || 0;
+      const subTdsAmt = subAmt * subTdsPct / 100;
+      if (inputs[3]) inputs[3].value = subTdsAmt.toFixed(2);
+      if (inputs[4]) inputs[4].value = (subAmt - subTdsAmt).toFixed(2);
+    }
+    if (rows[2]) {
+      const inputs = rows[2].querySelectorAll('input[type="number"]');
+      if (inputs[1]) inputs[1].value = ambAmt.toFixed(2);
+      const ambTdsPct = parseFloat(inputs[2]?.value) || 0;
+      const ambTdsAmt = ambAmt * ambTdsPct / 100;
+      if (inputs[3]) inputs[3].value = ambTdsAmt.toFixed(2);
+      if (inputs[4]) inputs[4].value = (ambAmt - ambTdsAmt).toFixed(2);
+    }
+    if (rows[3]) {
+      const inputs = rows[3].querySelectorAll('input[type="number"]');
+      if (inputs[1]) inputs[1].value = invAmt.toFixed(2);
+      if (inputs[2]) inputs[2].value = invAmt.toFixed(2);
+    }
+    if (rows[4]) {
+      const inputs = rows[4].querySelectorAll('input[type="number"]');
+      if (inputs[1]) inputs[1].value = expAmt.toFixed(2);
+      if (inputs[2]) inputs[2].value = expAmt.toFixed(2);
+    }
+
+    const totalDist = subPct + ambPct + invPct;
+    const profitPct = mainPct - totalDist - expPct;
+    const profitAmt = amount * profitPct / 100;
+    setVal('cs_profit_pct', profitPct);
+    setVal('cs_profit_amt', profitAmt);
+    const distField = document.getElementById('cs_total_dist_pct');
+    if (distField) distField.value = totalDist.toFixed(2);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.commission-table input[type="number"]:not([readonly])').forEach(el => {
+      el.addEventListener('input', recalculate);
+    });
+    document.getElementById('cs_amount')?.addEventListener('input', recalculate);
+    recalculate();
+
+    $('#cs_customer_select').select2({ theme: 'bootstrap-5', placeholder: 'Type to search clients...', width: '100%', allowClear: true, dropdownParent: $('body') });
+    $('#cs_affiliate_select').select2({ theme: 'bootstrap-5', placeholder: 'Type to search affiliates...', width: '100%', allowClear: true, dropdownParent: $('body') });
+
+    $('#cs_customer_select').on('select2:select', function(e) {
+      var customerId = e.params.data.id;
+      if (!customerId) return;
+      $.ajax({
+        url: '/admin/customers/' + customerId + '/affiliate_info',
+        type: 'GET',
+        headers: { 'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content') },
+        success: function(data) {
+          var affiliateId = data.affiliate_id ? String(data.affiliate_id) : '';
+          $('#cs_affiliate_select').val(affiliateId).trigger('change');
+        },
+        error: function() { $('#cs_affiliate_select').val('').trigger('change'); }
+      });
+    });
+
+    $('#cs_customer_select').on('select2:clear', function() {
+      $('#cs_affiliate_select').val('').trigger('change');
+    });
+  });
+})();
+</script>

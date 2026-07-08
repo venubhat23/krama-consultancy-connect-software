@@ -1,0 +1,23 @@
+<div class="mb-4"><h2 class="mb-1">Announcements</h2></div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <% if @announcements.any? %>
+      <% @announcements.each do |a| %>
+        <div class="p-3 border-bottom">
+          <h6 class="mb-1"><%= a.title %></h6>
+          <p class="mb-1"><%= a.body %></p>
+          <small class="text-muted"><%= a.published_at&.strftime("%b %d, %Y") %> · <%= a.created_by.full_name %></small>
+        </div>
+      <% end %>
+      <div class="p-3">
+        <%= render "shared/pagination", records: @announcements %>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-megaphone fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No announcements yet</h5>
+      </div>
+    <% end %>
+  </div>
+</div>

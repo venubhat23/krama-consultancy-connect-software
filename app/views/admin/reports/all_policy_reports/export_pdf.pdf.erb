@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>All Policy Report</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      margin: 0;
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #333;
+      padding-bottom: 15px;
+    }
+    .header h1 {
+      color: #333;
+      margin: 0;
+      font-size: 24px;
+    }
+    .header .subtitle {
+      color: #666;
+      margin: 5px 0;
+      font-size: 12px;
+    }
+    .summary {
+      margin: 20px 0;
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    .summary h3 {
+      margin: 0 0 10px 0;
+      color: #333;
+      font-size: 14px;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+    .summary-item {
+      text-align: center;
+    }
+    .summary-item .label {
+      font-weight: bold;
+      color: #666;
+      font-size: 9px;
+      text-transform: uppercase;
+    }
+    .summary-item .value {
+      font-size: 14px;
+      font-weight: bold;
+      color: #007bff;
+    }
+    .filters {
+      margin: 20px 0;
+      padding: 10px;
+      background: #e9ecef;
+      border-radius: 5px;
+    }
+    .filters h4 {
+      margin: 0 0 8px 0;
+      font-size: 12px;
+      color: #333;
+    }
+    .filter-item {
+      display: inline-block;
+      margin-right: 15px;
+      font-size: 10px;
+    }
+    .filter-item strong {
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 8px;
+    }
+    th, td {
+      padding: 6px 4px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f8f9fa;
+      font-weight: bold;
+      color: #333;
+      font-size: 9px;
+      text-transform: uppercase;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .text-center {
+      text-align: center;
+    }
+    .text-right {
+      text-align: right;
+    }
+    .badge {
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: white;
+      font-size: 7px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .badge-success { background-color: #28a745; }
+    .badge-warning { background-color: #ffc107; color: #333; }
+    .badge-info { background-color: #17a2b8; }
+    .badge-secondary { background-color: #6c757d; }
+    .badge-danger { background-color: #dc3545; }
+    .footer {
+      position: fixed;
+      bottom: 20px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 8px;
+      color: #666;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>All Policy Report</h1>
+    <div class="subtitle">Generated on <%= Date.current.strftime('%d %B %Y') %></div>
+    <div class="subtitle">Dr. Wise Insurance Admin System</div>
+  </div>
+
+  <!-- Summary Section -->
+  <div class="summary">
+    <h3>Report Summary</h3>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="label">Total Policies</div>
+        <div class="value"><%= number_with_delimiter(@policy_data.size) %></div>
+      </div>
+      <div class="summary-item">
+        <div class="label">Total Premium</div>
+        <div class="value"><%= indian_currency(@policy_data.sum { |p| p[:premium_amount] || 0 }.round(0)) %></div>
+      </div>
+      <div class="summary-item">
+        <div class="label">Total Sum Insured</div>
+        <div class="value"><%= indian_currency(@policy_data.sum { |p| p[:sum_insured] || 0 }.round(0)) %></div>
+      </div>
+      <div class="summary-item">
+        <div class="label">Report Date</div>
+        <div class="value"><%= Date.current.strftime('%d/%m/%Y') %></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters">
+    <h4>Applied Filters:</h4>
+    <span class="filter-item"><strong>Date Range:</strong> <%= @start_date.strftime('%d/%m/%Y') %> - <%= @end_date.strftime('%d/%m/%Y') %></span>
+    <span class="filter-item"><strong>Policy Type:</strong> <%= @policy_type.titleize %></span>
+    <% if @status.present? && @status != 'all' %>
+      <span class="filter-item"><strong>Status:</strong> <%= @status.titleize %></span>
+    <% end %>
+    <% if @insurance_company.present? %>
+      <span class="filter-item"><strong>Insurance Company:</strong> <%= @insurance_company %></span>
+    <% end %>
+  </div>
+
+  <!-- Policy Data Table -->
+  <table>
+    <thead>
+      <tr>
+        <% if @selected_columns.include?('policy_number') %><th>Policy Number</th><% end %>
+        <% if @selected_columns.include?('policy_type') %><th>Type</th><% end %>
+        <% if @selected_columns.include?('customer_name') %><th>Customer Name</th><% end %>
+        <% if @selected_columns.include?('insurance_company') %><th>Insurance Company</th><% end %>
+        <% if @selected_columns.include?('policy_holder') %><th>Policy Holder</th><% end %>
+        <% if @selected_columns.include?('start_date') %><th>Start Date</th><% end %>
+        <% if @selected_columns.include?('end_date') %><th>End Date</th><% end %>
+        <% if @selected_columns.include?('premium_amount') %><th class="text-right">Premium</th><% end %>
+        <% if @selected_columns.include?('sum_insured') %><th class="text-right">Sum Insured</th><% end %>
+        <% if @selected_columns.include?('payment_mode') %><th>Payment Mode</th><% end %>
+        <% if @selected_columns.include?('status') %><th class="text-center">Status</th><% end %>
+        <% if @selected_columns.include?('sub_agent_name') %><th>Affiliate</th><% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <% @policy_data.each_with_index do |policy, index| %>
+        <% if index > 0 && index % 40 == 0 %>
+          </tbody>
+        </table>
+        <div class="page-break"></div>
+        <table>
+          <thead>
+            <tr>
+              <% if @selected_columns.include?('policy_number') %><th>Policy Number</th><% end %>
+              <% if @selected_columns.include?('policy_type') %><th>Type</th><% end %>
+              <% if @selected_columns.include?('customer_name') %><th>Customer Name</th><% end %>
+              <% if @selected_columns.include?('insurance_company') %><th>Insurance Company</th><% end %>
+              <% if @selected_columns.include?('policy_holder') %><th>Policy Holder</th><% end %>
+              <% if @selected_columns.include?('start_date') %><th>Start Date</th><% end %>
+              <% if @selected_columns.include?('end_date') %><th>End Date</th><% end %>
+              <% if @selected_columns.include?('premium_amount') %><th class="text-right">Premium</th><% end %>
+              <% if @selected_columns.include?('sum_insured') %><th class="text-right">Sum Insured</th><% end %>
+              <% if @selected_columns.include?('payment_mode') %><th>Payment Mode</th><% end %>
+              <% if @selected_columns.include?('status') %><th class="text-center">Status</th><% end %>
+              <% if @selected_columns.include?('sub_agent_name') %><th>Affiliate</th><% end %>
+            </tr>
+          </thead>
+          <tbody>
+        <% end %>
+        <tr>
+          <% if @selected_columns.include?('policy_number') %><td><%= policy[:policy_number] %></td><% end %>
+          <% if @selected_columns.include?('policy_type') %>
+            <td>
+              <span class="badge badge-<%= policy[:policy_type] == 'Health' ? 'success' : (policy[:policy_type] == 'Motor' ? 'warning' : (policy[:policy_type] == 'Life' ? 'info' : 'secondary')) %>">
+                <%= policy[:policy_type] %>
+              </span>
+            </td>
+          <% end %>
+          <% if @selected_columns.include?('customer_name') %><td><%= policy[:customer_name] %></td><% end %>
+          <% if @selected_columns.include?('insurance_company') %><td><%= policy[:insurance_company] %></td><% end %>
+          <% if @selected_columns.include?('policy_holder') %><td><%= policy[:policy_holder] %></td><% end %>
+          <% if @selected_columns.include?('start_date') %><td><%= policy[:start_date]&.strftime('%d/%m/%Y') || '-' %></td><% end %>
+          <% if @selected_columns.include?('end_date') %><td><%= policy[:end_date]&.strftime('%d/%m/%Y') || '-' %></td><% end %>
+          <% if @selected_columns.include?('premium_amount') %><td class="text-right"><%= indian_currency((policy[:premium_amount] || 0).round(0)) %></td><% end %>
+          <% if @selected_columns.include?('sum_insured') %><td class="text-right"><%= indian_currency((policy[:sum_insured] || 0).round(0)) %></td><% end %>
+          <% if @selected_columns.include?('payment_mode') %><td><%= policy[:payment_mode] %></td><% end %>
+          <% if @selected_columns.include?('status') %>
+            <td class="text-center">
+              <span class="badge badge-<%= policy[:status]&.downcase == 'active' ? 'success' : (policy[:status]&.downcase == 'expired' ? 'danger' : (policy[:status]&.downcase == 'expiring soon' ? 'warning' : 'secondary')) %>">
+                <%= policy[:status] || 'Unknown' %>
+              </span>
+            </td>
+          <% end %>
+          <% if @selected_columns.include?('sub_agent_name') %><td><%= policy[:sub_agent_name] %></td><% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <p>All Policy Report - Generated by Dr. Wise Insurance Admin System on <%= Date.current.strftime('%d %B %Y at %I:%M %p') %></p>
+  </div>
+</body>
+</html>

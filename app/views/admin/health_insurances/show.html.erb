@@ -1,0 +1,742 @@
+<% content_for :page_title, "Health Insurance Policy Details" %>
+<% content_for :page_subtitle, "Policy ##{@health_insurance.policy_number}" %>
+
+<!-- Action Buttons -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <%= link_to admin_health_insurances_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-2"></i>
+      Back to List
+    <% end %>
+  </div>
+
+  <div class="d-flex gap-2">
+    <%= link_to edit_admin_health_insurance_path(@health_insurance), class: "btn btn-primary" do %>
+      <i class="bi bi-pencil me-2"></i>
+      Edit Policy
+    <% end %>
+  </div>
+</div>
+
+<!-- Client & Agent Details Section -->
+<div class="info-section-card">
+  <div class="section-header" data-bs-toggle="collapse" data-bs-target="#clientAgentCollapse" aria-expanded="true">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-person"></i>
+      </div>
+      <h5 class="section-title">Client & Agent Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="clientAgentCollapse" class="collapse show">
+    <div class="section-body">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Client Name*</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.customer&.display_name %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Policy Holder*</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.policy_holder %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Affiliate</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.sub_agent&.display_name || 'Self' %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Broker Code</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.broker_code_type %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Agency Code</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.agency_code_id %>" readonly>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- Policy Details Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#policyDetailsCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-file-text"></i>
+      </div>
+      <h5 class="section-title">Policy Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="policyDetailsCollapse" class="collapse">
+    <div class="section-body">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Policy Number*</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.policy_number %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Insurance Company Name*</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.insurance_company_name %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Policy Type*</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.policy_type %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Insurance Type</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.insurance_type %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Payment Mode*</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.payment_mode %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Policy Start Date</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.policy_start_date&.strftime('%B %d, %Y') %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Policy End Date</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.policy_end_date&.strftime('%B %d, %Y') %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Policy Booking Date</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.policy_booking_date&.strftime('%B %d, %Y') %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Premium Frequency</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.premium_frequency || @health_insurance.payment_mode %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Plan Name</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.plan_name %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Policy Term (Years)</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.policy_term %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Claim Process</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.claim_process %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12 mb-3">
+        <label class="form-label">Additional Details</label>
+        <textarea class="form-control" rows="3" readonly><%= @health_insurance.additional_details %></textarea>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- Premium Details Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#premiumDetailsCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-currency-rupee"></i>
+      </div>
+      <h5 class="section-title">Premium Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="premiumDetailsCollapse" class="collapse">
+    <div class="section-body">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Sum Insured*</label>
+        <input type="text" class="form-control" value="<%= indian_currency(@health_insurance.sum_insured) %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Net Premium*</label>
+        <input type="text" class="form-control" value="<%= indian_currency(@health_insurance.net_premium) %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">GST Percentage</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.gst_percentage %>%" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Total Premium*</label>
+        <input type="text" class="form-control" value="<%= indian_currency(@health_insurance.total_premium) %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Status</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.status || 'Active' %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Days Until Expiry</label>
+        <% if @health_insurance.policy_end_date.present? %>
+          <% days_until_expiry = (@health_insurance.policy_end_date - Date.current).to_i %>
+          <input type="text" class="form-control <%= days_until_expiry <= 30 ? 'text-danger' : days_until_expiry <= 60 ? 'text-warning' : 'text-success' %>"
+                 value="<%= days_until_expiry %> days" readonly>
+        <% else %>
+          <input type="text" class="form-control" value="N/A" readonly>
+        <% end %>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- Commission Calculation Table -->
+<% if @health_insurance.drwise_policy? %>
+  <%= render 'shared/commission_calculation_table', policy: @health_insurance %>
+<% end %>
+
+<!-- Nominee Details Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#nomineeDetailsCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-person-heart"></i>
+      </div>
+      <h5 class="section-title">Nominee Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="nomineeDetailsCollapse" class="collapse">
+    <div class="section-body">
+      <% if @health_insurance.health_insurance_nominees.any? %>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th>Nominee Name</th>
+                    <th>Relationship</th>
+                    <th>Age</th>
+                    <th>Share %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @health_insurance.health_insurance_nominees.each do |nominee| %>
+                    <tr>
+                      <td><%= nominee.nominee_name %></td>
+                      <td><%= nominee.relationship.humanize %></td>
+                      <td><%= nominee.age %></td>
+                      <td><%= nominee.share_percentage %>%</td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% else %>
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-person-x display-4 mb-3"></i>
+          <h6>No nominees found</h6>
+          <p class="mb-0">No nominee information has been added to this policy.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Family Members Section -->
+<% if @health_insurance.health_insurance_members&.any? %>
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#familyMembersCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-people"></i>
+      </div>
+      <h5 class="section-title">Family Members</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="familyMembersCollapse" class="collapse">
+    <div class="section-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Relationship</th>
+            <th>Age</th>
+            <th>Gender</th>
+            <th>Sum Insured</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @health_insurance.health_insurance_members.each do |member| %>
+            <tr>
+              <td><%= member.member_name %></td>
+              <td><%= member.relationship %></td>
+              <td><%= member.age %></td>
+              <td>-</td>
+              <td><%= indian_currency(member.sum_insured) if member.sum_insured %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    </div>
+  </div>
+</div>
+<% end %>
+
+<!-- Additional Information Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#additionalInfoCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-info-circle"></i>
+      </div>
+      <h5 class="section-title">Additional Information</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="additionalInfoCollapse" class="collapse">
+    <div class="section-body">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Lead ID</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.lead_id %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Added By Admin</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.policy_added_by_admin? ? 'Yes' : 'No' %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Admin Added</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.is_admin_added? ? 'Yes' : 'No' %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Customer Added</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.is_customer_added? ? 'Yes' : 'No' %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Agent Added</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.is_agent_added? ? 'Yes' : 'No' %>" readonly>
+      </div>
+    </div>
+
+    <!-- Timestamps -->
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Created At</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.created_at&.strftime('%B %d, %Y at %I:%M %p') %>" readonly>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Last Updated At</label>
+        <input type="text" class="form-control" value="<%= @health_insurance.updated_at&.strftime('%B %d, %Y at %I:%M %p') %>" readonly>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- Policy Documents Section -->
+<div class="info-section-card">
+  <div class="section-header" data-bs-toggle="collapse" data-bs-target="#documentsCollapse" aria-expanded="true">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-file-earmark-text"></i>
+      </div>
+      <h5 class="section-title">Policy Documents</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="documentsCollapse" class="collapse show">
+    <div class="section-body">
+      <%
+        has_main_policy = @health_insurance.has_main_policy_r2?
+        health_insurance_docs = @health_insurance.health_insurance_documents.to_a
+        total_documents = (has_main_policy ? 1 : 0) + health_insurance_docs.count
+      %>
+
+      <% if total_documents > 0 %>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>Total Documents: <%= total_documents %></strong>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-bordered table-sm">
+                <thead class="table-light">
+                  <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                    <th>Uploaded</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Main Policy Document -->
+                  <% if has_main_policy %>
+                    <tr>
+                      <td>
+                        <i class="bi bi-file-earmark-text text-success me-1"></i>
+                        <%= @health_insurance.main_policy_r2_filename.presence || 'Main Policy Document' %>
+                        <span class="badge bg-success ms-1">Main</span>
+                      </td>
+                      <td>Policy Document</td>
+                      <td><%= @health_insurance.main_policy_document_size.present? ? number_to_human_size(@health_insurance.main_policy_document_size) : '-' %></td>
+                      <td><%= @health_insurance.updated_at.strftime('%B %d, %Y') %></td>
+                      <td>
+                        <a href="<%= @health_insurance.main_policy_r2_url %>" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                          <i class="bi bi-eye"></i> View
+                        </a>
+                        <a href="<%= @health_insurance.main_policy_r2_url %>?response-content-disposition=attachment;filename=<%= CGI.escape(@health_insurance.main_policy_r2_filename.presence || 'policy.pdf') %>" class="btn btn-sm btn-outline-success">
+                          <i class="bi bi-download"></i> Download
+                        </a>
+                      </td>
+                    </tr>
+                  <% end %>
+
+                  <!-- Additional / Add-Document uploads -->
+                  <% health_insurance_docs.each do |doc| %>
+                    <% next unless doc.has_r2_file? %>
+                    <tr>
+                      <td>
+                        <i class="bi bi-file-earmark me-1"></i>
+                        <%= doc.title %>
+                      </td>
+                      <td><%= doc.document_type.humanize %></td>
+                      <td><%= doc.formatted_file_size %></td>
+                      <td><%= doc.created_at.strftime('%B %d, %Y') %></td>
+                      <td>
+                        <a href="<%= doc.document_url %>" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                          <i class="bi bi-eye"></i> View
+                        </a>
+                        <a href="<%= doc.download_url %>" class="btn btn-sm btn-outline-success">
+                          <i class="bi bi-download"></i> Download
+                        </a>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% else %>
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-file-earmark-x display-4 mb-3"></i>
+          <h6>No documents found</h6>
+          <p class="mb-0">No documents have been uploaded for this policy.</p>
+          <div class="mt-3">
+            <%= link_to edit_admin_health_insurance_path(@health_insurance), class: "btn btn-primary btn-sm" do %>
+              <i class="bi bi-plus"></i> Add Documents
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<style>
+  .document-card {
+    transition: all 0.2s ease;
+  }
+  .document-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+  }
+
+  /* Make all readonly inputs have a light gray background for better visibility */
+  input[readonly], textarea[readonly] {
+    background-color: #f8f9fa !important;
+    cursor: default;
+  }
+
+  /* Add subtle border on hover for better UX */
+  .form-control[readonly]:hover {
+    border-color: #dee2e6;
+  }
+
+  /* Info Section Cards */
+  .info-section-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #e3e6f0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .info-section-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .section-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #e3e6f0;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    user-select: none;
+  }
+
+  .section-header:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+  }
+
+  .section-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+  }
+
+  .section-icon i {
+    color: white;
+    font-size: 1.1rem;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3436;
+    margin: 0;
+    flex-grow: 1;
+  }
+
+  .section-count {
+    background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-left: 1rem;
+  }
+
+  .collapse-icon {
+    color: #94a3b8;
+    transition: transform 0.3s;
+  }
+
+  .section-header:not(.collapsed) .collapse-icon {
+    transform: rotate(180deg);
+  }
+
+  .section-header.collapsed .collapse-icon {
+    transform: rotate(0deg);
+  }
+
+  .section-body {
+    padding: 1.5rem;
+  }
+
+  /* CONSISTENT SPACING: Fix spacing between all sections */
+  .info-section-card {
+    margin-bottom: 1.5rem !important;
+  }
+
+  .info-section-card:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* Section body proper padding */
+  .section-body {
+    padding: 1.5rem !important;
+  }
+
+  /* Form elements spacing within sections */
+  .section-body .row {
+    margin-bottom: 0.5rem;
+  }
+
+  .section-body .col-md-4,
+  .section-body .col-md-6,
+  .section-body .col-md-3 {
+    margin-bottom: 1rem !important;
+  }
+
+  /* Action buttons top spacing */
+  .d-flex.justify-content-between.align-items-center.mb-4 {
+    margin-bottom: 2rem !important;
+    padding: 1rem 0;
+  }
+
+  /* ANTI-OVERLAP: Ensure sections never overlap */
+  .info-section-card {
+    position: relative;
+    z-index: 1;
+    clear: both;
+  }
+
+  .info-section-card + .info-section-card {
+    margin-top: 0 !important;
+  }
+
+  /* Proper form spacing inside sections */
+  .section-body .form-label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  .section-body .form-control {
+    margin-bottom: 0.75rem;
+  }
+
+  /* Ensure consistent row spacing */
+  .section-body .row + .row {
+    margin-top: 1rem;
+  }
+
+  /* Page structure - ensure clean ending */
+  .container-fluid {
+    padding-top: 1rem;
+    padding-bottom: 0 !important;
+  }
+
+  /* Hide any empty containers at bottom */
+  div:empty:not([class*="collapse"]):not([id*="Collapse"]):not(.section-icon):not(.collapse-icon) {
+    display: none !important;
+  }
+
+  /* Remove bottom margins from last elements */
+  .info-section-card:last-of-type {
+    margin-bottom: 0 !important;
+  }
+
+  .info-section-card:last-of-type .section-body > *:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* Clean page ending */
+  body::after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+
+  /* Print styles */
+  @media print {
+    .btn, .d-flex {
+      display: none !important;
+    }
+    .card, .info-section-card {
+      break-inside: avoid;
+    }
+    .info-section-card:last-child {
+      margin-bottom: 0;
+    }
+  }
+</style>
+
+<script>
+// Enhanced cleanup function for health insurance page
+function aggressiveCleanup() {
+  console.log('🧹 Running health insurance page cleanup...');
+
+  // Find last actual section (Additional Information)
+  const lastSection = document.querySelector('.info-section-card:last-of-type');
+
+  if (lastSection) {
+    console.log('📍 Last section found:', lastSection.querySelector('.section-title')?.textContent);
+
+    // Remove ALL elements after the last section until we hit STYLE/SCRIPT
+    let nextElement = lastSection.nextElementSibling;
+    let removedCount = 0;
+
+    while (nextElement &&
+           nextElement.tagName !== 'STYLE' &&
+           nextElement.tagName !== 'SCRIPT') {
+      const toRemove = nextElement;
+      nextElement = nextElement.nextElementSibling;
+
+      console.log('🗑️ Removing element after last section:', toRemove.tagName, toRemove.className);
+      toRemove.remove();
+      removedCount++;
+    }
+
+    console.log(`✅ Removed ${removedCount} elements after last section`);
+  }
+
+  // Remove any empty info-section-cards
+  const allSections = document.querySelectorAll('.info-section-card');
+  allSections.forEach(section => {
+    const sectionBody = section.querySelector('.section-body');
+    if (sectionBody) {
+      const textContent = sectionBody.textContent.trim();
+      const hasInputs = sectionBody.querySelectorAll('input, textarea, select').length;
+
+      // Only remove if truly empty (no inputs and no text)
+      if (!hasInputs && textContent === '') {
+        console.log('🗑️ Removing empty section:', section);
+        section.remove();
+      }
+    }
+  });
+
+  // Remove empty divs that might be causing spacing issues
+  const allDivs = document.querySelectorAll('div');
+  allDivs.forEach(div => {
+    if (div.children.length === 0 &&
+        div.textContent.trim() === '' &&
+        !div.classList.contains('section-icon') &&
+        !div.classList.contains('collapse-icon') &&
+        !div.classList.contains('collapse') &&
+        !div.id.includes('Collapse')) {
+      console.log('🗑️ Removing empty div:', div);
+      div.remove();
+    }
+  });
+
+  console.log('✅ Health insurance page cleanup completed');
+}
+
+// Run cleanup with multiple triggers
+document.addEventListener('DOMContentLoaded', aggressiveCleanup);
+window.addEventListener('load', aggressiveCleanup);
+setTimeout(aggressiveCleanup, 100);
+setTimeout(aggressiveCleanup, 500);
+setTimeout(aggressiveCleanup, 1000);
+</script>

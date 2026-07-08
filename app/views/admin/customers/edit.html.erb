@@ -1,0 +1,1579 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Edit Client</h2>
+    <p class="text-muted mb-0">Update <%= @customer.display_name %> information</p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to admin_customer_path(@customer), class: "btn btn-outline-info" do %>
+      <i class="bi bi-eye me-1"></i>
+      View Client
+    <% end %>
+    <%= link_to admin_customers_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Clients
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <%= form_with model: [:admin, @customer], local: true, multipart: true, class: "needs-validation", novalidate: true do |form| %>
+      <% if @customer.errors.any? %>
+        <div class="alert alert-danger" role="alert">
+          <strong><%= pluralize(@customer.errors.count, "error") %> prevented this client from being saved:</strong>
+          <ul class="mb-0 mt-2">
+            <% @customer.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+      <!-- Customer Type Selection -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">Client Type</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <%= form.label :customer_type, class: "form-label" do %>
+                Client Type <span class="text-danger">*</span>
+              <% end %>
+              <%= form.select :customer_type,
+                  options_for_select([
+                    ['Individual', 'individual'],
+                    ['Corporate', 'corporate']
+                  ], @customer.customer_type),
+                  { prompt: 'Select client type' },
+                  { class: "form-select", id: "customer_type", required: true } %>
+              <div class="invalid-feedback">Please select a client type.</div>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :added_by, class: "form-label" %>
+              <%= form.select :added_by,
+                  options_for_select([
+                    ['Self', 'self'],
+                    ['Affiliate', 'sub_agent']
+                  ], @customer.added_by),
+                  { prompt: 'Select added by' },
+                  { class: "form-select" } %>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <%= form.label :sub_agent_id, "Affiliate *", class: "form-label" %>
+              <%= form.select :sub_agent_id,
+                  options_for_select([['Self', nil]] + @sub_agents.map { |sa| ["#{sa.first_name} #{sa.last_name}", sa.id] }, @customer.sub_agent_id),
+                  { prompt: 'Select Affiliate' },
+                  { class: "form-control #{'is-invalid' if @customer.errors[:sub_agent_id].any?}", required: true } %>
+              <% if @customer.errors[:sub_agent_id].any? %>
+                <div class="invalid-feedback"><%= @customer.errors[:sub_agent_id].first %></div>
+              <% end %>
+              <small class="form-text text-muted">Select the affiliate for this client</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Individual Customer Details -->
+      <div id="individual_fields" class="card border-0 shadow-sm mb-4" style="display: <%= @customer.individual? ? 'block' : 'none' %>;">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">Personal Details</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <%= form.label :first_name, class: "form-label" do %>
+                First Name <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :first_name, class: "form-control", placeholder: "Enter first name" %>
+              <div class="invalid-feedback">Please provide a first name.</div>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :middle_name, class: "form-label" %>
+              <%= form.text_field :middle_name, class: "form-control", placeholder: "Enter middle name" %>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :last_name, class: "form-label" do %>
+                Last Name <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :last_name, class: "form-control", placeholder: "Enter last name" %>
+              <div class="invalid-feedback">Please provide a last name.</div>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :email, class: "form-label" %>
+              <%= form.email_field :email, class: "form-control", placeholder: "Enter email address" %>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :mobile, class: "form-label" do %>
+                Mobile Number <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :mobile, class: "form-control", placeholder: "Enter mobile number", type: "tel", pattern: '(\+91[\s\-]?)?[6-9][0-9]{4}[\s\-]?[0-9]{5}', title: "Enter a 10-digit Indian mobile number starting with 6, 7, 8, or 9 (with or without +91)" %>
+              <div class="invalid-feedback">Please provide a mobile number.</div>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :birth_date, class: "form-label" do %>
+                Birth Date <span class="text-danger">*</span>
+              <% end %>
+              <%= form.date_field :birth_date, class: "form-control", min: "1900-01-01", max: "2099-12-31" %>
+              <div class="invalid-feedback">Please provide a birth date.</div>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :gender, class: "form-label" do %>
+                Gender <span class="text-danger">*</span>
+              <% end %>
+              <%= form.select :gender,
+                  options_for_select([
+                    ['Male', 'male'],
+                    ['Female', 'female'],
+                    ['Other', 'other']
+                  ], @customer.gender),
+                  { prompt: 'Select gender' },
+                  { class: "form-select" } %>
+              <div class="invalid-feedback">Please select a gender.</div>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :anniversary_date, "Anniversary Date", class: "form-label" %>
+              <%= form.date_field :anniversary_date, class: "form-control", min: "1900-01-01", max: "2099-12-31" %>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :birth_place, class: "form-label" %>
+              <%= form.text_field :birth_place, class: "form-control", placeholder: "Enter birth place" %>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :height_feet, "Height", class: "form-label" %>
+              <%= form.select :height_feet, options_for_select([
+                ['Select Height', ''],
+                ['3.0 feet', 3.0], ['3.1 feet', 3.08], ['3.2 feet', 3.17], ['3.3 feet', 3.25], ['3.4 feet', 3.33], ['3.5 feet', 3.42], ['3.6 feet', 3.5], ['3.7 feet', 3.58], ['3.8 feet', 3.67], ['3.9 feet', 3.75], ['3.10 feet', 3.83], ['3.11 feet', 3.92],
+                ['4.0 feet', 4.0], ['4.1 feet', 4.08], ['4.2 feet', 4.17], ['4.3 feet', 4.25], ['4.4 feet', 4.33], ['4.5 feet', 4.42], ['4.6 feet', 4.5], ['4.7 feet', 4.58], ['4.8 feet', 4.67], ['4.9 feet', 4.75], ['4.10 feet', 4.83], ['4.11 feet', 4.92],
+                ['5.0 feet', 5.0], ['5.1 feet', 5.08], ['5.2 feet', 5.17], ['5.3 feet', 5.25], ['5.4 feet', 5.33], ['5.5 feet', 5.42], ['5.6 feet', 5.5], ['5.7 feet', 5.58], ['5.8 feet', 5.67], ['5.9 feet', 5.75], ['5.10 feet', 5.83], ['5.11 feet', 5.92],
+                ['6.0 feet', 6.0], ['6.1 feet', 6.08], ['6.2 feet', 6.17], ['6.3 feet', 6.25], ['6.4 feet', 6.33], ['6.5 feet', 6.42], ['6.6 feet', 6.5], ['6.7 feet', 6.58], ['6.8 feet', 6.67], ['6.9 feet', 6.75], ['6.10 feet', 6.83], ['6.11 feet', 6.92],
+                ['7.0 feet', 7.0], ['7.1 feet', 7.08], ['7.2 feet', 7.17], ['7.3 feet', 7.25], ['7.4 feet', 7.33], ['7.5 feet', 7.42], ['7.6 feet', 7.5], ['7.7 feet', 7.58], ['7.8 feet', 7.67], ['7.9 feet', 7.75], ['7.10 feet', 7.83], ['7.11 feet', 7.92],
+                ['8.0 feet', 8.0], ['8.1 feet', 8.08], ['8.2 feet', 8.17], ['8.3 feet', 8.25], ['8.4 feet', 8.33], ['8.5 feet', 8.42], ['8.6 feet', 8.5], ['8.7 feet', 8.58], ['8.8 feet', 8.67], ['8.9 feet', 8.75], ['8.10 feet', 8.83], ['8.11 feet', 8.92]
+              ], @customer.height_feet), {}, { class: "form-select" } %>
+              <div class="form-text">Select height from the dropdown</div>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :weight_kg, "Weight (Kg)", class: "form-label" %>
+              <%= form.number_field :weight_kg, class: "form-control", placeholder: "e.g., 70", step: 0.1 %>
+              <small class="form-text text-muted">Enter weight in kg</small>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :education, class: "form-label" %>
+              <%= form.text_field :education, class: "form-control", placeholder: "Enter education qualification" %>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :marital_status, class: "form-label" %>
+              <%= form.select :marital_status,
+                  options_for_select([
+                    ['Single', 'single'],
+                    ['Married', 'married'],
+                    ['Divorced', 'divorced'],
+                    ['Widowed', 'widowed']
+                  ], @customer.marital_status),
+                  { prompt: 'Select marital status' },
+                  { class: "form-select" } %>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :business_job, "Business/Job", class: "form-label" %>
+              <%= form.select :business_job,
+                  options_for_select([
+                    ['Private Employee', 'private_employee'],
+                    ['Government Employee', 'government_employee'],
+                    ['Self Employed', 'self_employed'],
+                    ['Business Owner', 'business_owner'],
+                    ['Professional', 'professional'],
+                    ['Student', 'student'],
+                    ['Homemaker', 'homemaker'],
+                    ['Retired', 'retired'],
+                    ['Unemployed', 'unemployed']
+                  ], @customer.business_job),
+                  { prompt: 'Select Business/Job' },
+                  { class: "form-select" } %>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :business_name, "Name of Business/Job", class: "form-label" %>
+              <%= form.text_field :business_name, class: "form-control", placeholder: "Enter business/job name" %>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :occupation, class: "form-label" %>
+              <%= form.text_field :occupation, class: "form-control", placeholder: "Enter occupation" %>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :job_name, class: "form-label" %>
+              <%= form.text_field :job_name, class: "form-control", placeholder: "Enter job title" %>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :type_of_duty, class: "form-label" %>
+              <%= form.text_field :type_of_duty, class: "form-control", placeholder: "Enter type of duty" %>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :annual_income, class: "form-label" %>
+              <%= form.number_field :annual_income, class: "form-control", placeholder: "Enter annual income", step: 0.01 %>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :pan_no, "PAN No", class: "form-label" %>
+              <%= form.text_field :pan_no, class: "form-control", placeholder: "Enter PAN number", pattern: "[A-Z]{5}[0-9]{4}[A-Z]" %>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :gst_number, class: "form-label" %>
+              <%= form.text_field :gst_number, class: "form-control", placeholder: "Enter GST number" %>
+            </div>
+            <div class="col-12">
+              <%= form.label :additional_information, "Additional Information", class: "form-label" %>
+              <%= form.text_area :additional_information, class: "form-control", rows: 3, placeholder: "Enter additional notes" %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Corporate Customer Details -->
+      <div id="corporate_fields" class="card border-0 shadow-sm mb-4" style="display: <%= @customer.corporate? ? 'block' : 'none' %>;">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">Corporate Details</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <%= form.label :company_name, class: "form-label" do %>
+                Company Name <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :company_name, class: "form-control", placeholder: "Enter company name" %>
+              <div class="invalid-feedback">Please provide a company name.</div>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :email, class: "form-label" %>
+              <%= form.email_field :email, class: "form-control", placeholder: "Enter email address" %>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :mobile, class: "form-label" do %>
+                Mobile Number <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :mobile, class: "form-control", placeholder: "Enter mobile number", type: "tel", pattern: '(\+91[\s\-]?)?[6-9][0-9]{4}[\s\-]?[0-9]{5}', title: "Enter a 10-digit Indian mobile number starting with 6, 7, 8, or 9 (with or without +91)" %>
+              <div class="invalid-feedback">Please provide a mobile number.</div>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :annual_income, class: "form-label" do %>
+                Annual Income <span class="text-danger">*</span>
+              <% end %>
+              <%= form.number_field :annual_income, class: "form-control", placeholder: "Enter annual income", step: 0.01 %>
+              <div class="invalid-feedback">Please provide annual income.</div>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :pan_no, class: "form-label" do %>
+                PAN Number <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :pan_no, class: "form-control", placeholder: "Enter PAN number", pattern: "[A-Z]{5}[0-9]{4}[A-Z]" %>
+              <div class="invalid-feedback">Please provide a valid PAN number.</div>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :gst_number, class: "form-label" %>
+              <%= form.text_field :gst_number, class: "form-control", placeholder: "Enter GST number" %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Common Address Details -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">Address Details</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <%= form.label :address, class: "form-label" do %>
+                Address <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_area :address, class: "form-control", rows: 3, placeholder: "Enter full address" %>
+              <div class="invalid-feedback">Please provide an address.</div>
+            </div>
+            <div class="col-md-4">
+              <%= form.label :state, class: "form-label" do %>
+                State <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :state, class: "form-control", placeholder: "Enter state", id: "customer_state" %>
+              <div class="invalid-feedback">Please provide a state.</div>
+            </div>
+            <div class="col-md-4">
+              <%= form.label :city, class: "form-label" do %>
+                City <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :city, class: "form-control", placeholder: "Enter city", id: "customer_city" %>
+              <div class="invalid-feedback">Please provide a city.</div>
+            </div>
+            <div class="col-md-4">
+              <%= form.label :pincode, class: "form-label" %>
+              <%= form.text_field :pincode, class: "form-control", placeholder: "Enter pincode", id: "customer_pincode" %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Image Upload Section -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-person-circle me-2 text-primary"></i>
+            Profile Image
+          </h5>
+          <p class="text-muted mb-0 mt-1">Upload or update customer profile picture</p>
+        </div>
+        <div class="card-body">
+          <div class="row align-items-center">
+            <!-- Current Profile Image Display -->
+            <div class="col-md-4">
+              <div class="text-center">
+                <div class="profile-image-container mb-3">
+                  <% if @customer.has_r2_profile_image? %>
+                    <img src="<%= @customer.r2_profile_image_url %>"
+                         alt="Profile Image"
+                         class="profile-preview-large rounded-circle shadow-sm"
+                         style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #e9ecef;"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                         style="width: 120px; height: 120px; border: 3px solid #e9ecef; display: none;">
+                      <i class="bi bi-person-fill text-secondary" style="font-size: 2.5rem;"></i>
+                    </div>
+                  <% elsif @customer.has_profile_image? %>
+                    <% image_data = @customer.safe_profile_image_display %>
+                    <% if image_data %>
+                      <img src="<%= image_data[:url] %>"
+                           alt="Profile Image"
+                           class="profile-preview-large rounded-circle shadow-sm"
+                           style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #e9ecef;"
+                           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                      <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                           style="width: 120px; height: 120px; border: 3px solid #e9ecef; display: none;">
+                        <i class="bi bi-person-fill text-secondary" style="font-size: 2.5rem;"></i>
+                      </div>
+                    <% else %>
+                      <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                           style="width: 120px; height: 120px; border: 3px solid #e9ecef;">
+                        <i class="bi bi-person-fill text-secondary" style="font-size: 2.5rem;"></i>
+                      </div>
+                    <% end %>
+                  <% else %>
+                    <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                         style="width: 120px; height: 120px; border: 3px solid #e9ecef;">
+                      <i class="bi bi-person-fill text-secondary" style="font-size: 2.5rem;"></i>
+                    </div>
+                  <% end %>
+                </div>
+                <% if @customer.has_r2_profile_image? || @customer.has_profile_image? %>
+                  <small class="text-success">
+                    <i class="bi bi-check-circle-fill me-1"></i>
+                    Profile image uploaded
+                  </small>
+                <% else %>
+                  <small class="text-muted">No profile image</small>
+                <% end %>
+              </div>
+            </div>
+
+            <!-- Upload Form -->
+            <div class="col-md-8">
+              <div id="profile_image_upload_form" class="border rounded p-3 bg-light">
+                <h6 class="mb-3">
+                  <i class="bi bi-cloud-upload me-2"></i>
+                  <%= @customer.has_r2_profile_image? || @customer.has_profile_image? ? 'Update' : 'Upload' %> Profile Image
+                </h6>
+
+                <div class="row">
+                  <div class="col-12">
+                    <label class="form-label">Choose Profile Image</label>
+                    <input type="file"
+                           class="form-control"
+                           accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                           id="profile_image_file">
+                    <div class="form-text">
+                      <i class="bi bi-info-circle me-1"></i>
+                      Supported formats: JPG, PNG, GIF, WebP. Maximum size: 10MB.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                  <button type="button" class="btn btn-primary btn-sm" id="upload_profile_image_btn">
+                    Upload Profile Image
+                  </button>
+                  <% if @customer.has_r2_profile_image? %>
+                    <%= link_to "Remove Current Image",
+                                admin_customer_document_path(@customer, @customer.r2_profile_image),
+                                method: :delete,
+                                data: {
+                                  confirm: "Are you sure you want to remove this profile image?",
+                                  turbo_method: :delete
+                                },
+                                class: "btn btn-outline-danger btn-sm" %>
+                  <% end %>
+                </div>
+              </div>
+
+              <!-- Image Preview for selected file -->
+              <div id="image_preview_container" style="display: none;" class="mt-3 p-3 border rounded bg-white">
+                <h6 class="mb-2">Preview:</h6>
+                <img id="image_preview"
+                     src=""
+                     alt="Preview"
+                     class="rounded shadow-sm"
+                     style="max-width: 200px; max-height: 200px; object-fit: cover;">
+              </div>
+
+              <!-- Upload Progress -->
+              <div id="upload_progress" style="display: none;" class="mt-3">
+                <div class="d-flex align-items-center">
+                  <div class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Uploading...</span>
+                  </div>
+                  <small class="text-muted">Uploading image to cloud storage...</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nominee Details (individual only) -->
+      <div id="nominee_section" class="card border-0 shadow-sm mb-4" style="display: <%= @customer.corporate? ? 'none' : 'block' %>;">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-people me-2 text-primary"></i>
+            Nominee Details *
+          </h5>
+          <p class="text-muted mb-0 mt-1">Nominee information is mandatory for individual customers</p>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <%= form.label :nominee_name, "Nominee Name *", class: "form-label" %>
+              <%= form.text_field :nominee_name, class: "form-control", placeholder: "Enter nominee full name",
+                  id: "nominee_name_field", required: @customer.individual? %>
+              <div class="invalid-feedback">
+                Please provide a nominee name.
+              </div>
+            </div>
+            <div class="col-md-4">
+              <%= form.label :nominee_relation, "Relationship *", class: "form-label" %>
+              <%= form.select :nominee_relation,
+                  options_for_select([
+                    ['Father', 'father'],
+                    ['Mother', 'mother'],
+                    ['Spouse', 'spouse'],
+                    ['Son', 'son'],
+                    ['Daughter', 'daughter'],
+                    ['Brother', 'brother'],
+                    ['Sister', 'sister'],
+                    ['Other', 'other']
+                  ], @customer.nominee_relation),
+                  { prompt: 'Select Relationship' },
+                  { class: "form-control", id: "nominee_relationship_select", required: @customer.individual? } %>
+              <div class="invalid-feedback">
+                Please select nominee relationship.
+              </div>
+            </div>
+            <div class="col-md-4">
+              <%= form.label :nominee_date_of_birth, "Date of Birth *", class: "form-label" %>
+              <%= form.date_field :nominee_date_of_birth, class: "form-control", id: "nominee_dob_field",
+                  required: @customer.individual?, min: "1900-01-01", max: "2099-12-31" %>
+              <div class="invalid-feedback">
+                Please provide nominee date of birth.
+              </div>
+            </div>
+          </div>
+          <div class="alert alert-info d-flex align-items-center mt-3">
+            <i class="bi bi-info-circle me-2"></i>
+            <div>
+              <small><strong>Important:</strong> Nominee details are mandatory for individual customers. Please ensure the information is accurate as it will be used for legal purposes.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Family Details Section -->
+      <div id="family_details_section" class="card border-0 shadow-sm mb-4" style="display: <%= @customer.individual? ? 'block' : 'none' %>;">
+        <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-people me-2 text-primary"></i>
+            <h5 class="mb-0">Family Details</h5>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-primary" id="add_family_member">
+            <i class="bi bi-plus-lg me-1"></i>
+            Add Family Member
+          </button>
+        </div>
+        <div class="card-body">
+          <div id="family_members_container">
+            <!-- Existing family members -->
+            <% @customer.family_members.each_with_index do |family_member, index| %>
+              <div class="family-member-entry p-3 mb-3 border rounded position-relative" data-index="<%= index %>">
+                <button type="button" class="btn btn-sm btn-outline-danger remove-btn remove-family-member">
+                  <i class="bi bi-trash"></i>
+                </button>
+                <h6 class="mb-3">Family Member <%= index + 1 %></h6>
+
+                <!-- Hidden ID field for existing family members -->
+                <input type="hidden" name="customer[family_members_attributes][<%= index %>][id]" value="<%= family_member.id %>">
+
+                <div class="row">
+                  <div class="col-md-4">
+                    <label class="form-label">First Name <span class="text-danger">*</span></label>
+                    <input type="text" name="customer[family_members_attributes][<%= index %>][first_name]" class="form-control" value="<%= family_member.first_name %>" required>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Middle Name</label>
+                    <input type="text" name="customer[family_members_attributes][<%= index %>][middle_name]" class="form-control" value="<%= family_member.middle_name %>">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                    <input type="text" name="customer[family_members_attributes][<%= index %>][last_name]" class="form-control" value="<%= family_member.last_name %>" required>
+                  </div>
+                </div>
+
+                <div class="row mt-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Mobile</label>
+                    <input type="tel" name="customer[family_members_attributes][<%= index %>][mobile]" class="form-control" value="<%= family_member.mobile %>">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Birth Date</label>
+                    <input type="date" name="customer[family_members_attributes][<%= index %>][birth_date]" class="form-control" value="<%= family_member.birth_date %>" min="1900-01-01" max="2099-12-31">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Age</label>
+                    <input type="text" name="customer[family_members_attributes][<%= index %>][age]" class="form-control" value="<%= family_member.age %>" readonly placeholder="Auto calculated from DOB">
+                  </div>
+                </div>
+
+                <div class="row mt-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Gender</label>
+                    <select name="customer[family_members_attributes][<%= index %>][gender]" class="form-select">
+                      <option value="">Select Gender</option>
+                      <option value="male" <%= 'selected' if family_member.gender == 'male' %>>Male</option>
+                      <option value="female" <%= 'selected' if family_member.gender == 'female' %>>Female</option>
+                      <option value="other" <%= 'selected' if family_member.gender == 'other' %>>Other</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Relationship <span class="text-danger">*</span></label>
+                    <select name="customer[family_members_attributes][<%= index %>][relationship]" class="form-select" required>
+                      <option value="">Select Relationship</option>
+                      <% FamilyMember::RELATIONSHIPS.each do |rel| %>
+                        <option value="<%= rel %>" <%= 'selected' if family_member.relationship == rel %>><%= rel.humanize.titleize %></option>
+                      <% end %>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Height</label>
+                    <select name="customer[family_members_attributes][<%= index %>][height_feet]" class="form-select">
+                      <option value="">Select Height</option>
+                      <% [
+                        ['3.0 feet', 3.0], ['3.1 feet', 3.08], ['3.2 feet', 3.17], ['3.3 feet', 3.25], ['3.4 feet', 3.33], ['3.5 feet', 3.42], ['3.6 feet', 3.5], ['3.7 feet', 3.58], ['3.8 feet', 3.67], ['3.9 feet', 3.75], ['3.10 feet', 3.83], ['3.11 feet', 3.92],
+                        ['4.0 feet', 4.0], ['4.1 feet', 4.08], ['4.2 feet', 4.17], ['4.3 feet', 4.25], ['4.4 feet', 4.33], ['4.5 feet', 4.42], ['4.6 feet', 4.5], ['4.7 feet', 4.58], ['4.8 feet', 4.67], ['4.9 feet', 4.75], ['4.10 feet', 4.83], ['4.11 feet', 4.92],
+                        ['5.0 feet', 5.0], ['5.1 feet', 5.08], ['5.2 feet', 5.17], ['5.3 feet', 5.25], ['5.4 feet', 5.33], ['5.5 feet', 5.42], ['5.6 feet', 5.5], ['5.7 feet', 5.58], ['5.8 feet', 5.67], ['5.9 feet', 5.75], ['5.10 feet', 5.83], ['5.11 feet', 5.92],
+                        ['6.0 feet', 6.0], ['6.1 feet', 6.08], ['6.2 feet', 6.17], ['6.3 feet', 6.25], ['6.4 feet', 6.33], ['6.5 feet', 6.42], ['6.6 feet', 6.5], ['6.7 feet', 6.58], ['6.8 feet', 6.67], ['6.9 feet', 6.75], ['6.10 feet', 6.83], ['6.11 feet', 6.92],
+                        ['7.0 feet', 7.0], ['7.1 feet', 7.08], ['7.2 feet', 7.17], ['7.3 feet', 7.25], ['7.4 feet', 7.33], ['7.5 feet', 7.42], ['7.6 feet', 7.5], ['7.7 feet', 7.58], ['7.8 feet', 7.67], ['7.9 feet', 7.75], ['7.10 feet', 7.83], ['7.11 feet', 7.92],
+                        ['8.0 feet', 8.0], ['8.1 feet', 8.08], ['8.2 feet', 8.17], ['8.3 feet', 8.25], ['8.4 feet', 8.33], ['8.5 feet', 8.42], ['8.6 feet', 8.5], ['8.7 feet', 8.58], ['8.8 feet', 8.67], ['8.9 feet', 8.75], ['8.10 feet', 8.83], ['8.11 feet', 8.92]
+                      ].each do |height_option| %>
+                        <option value="<%= height_option[1] %>" <%= 'selected' if family_member.height_feet == height_option[1] %>><%= height_option[0] %></option>
+                      <% end %>
+                    </select>
+                    <div class="form-text">Select height from the dropdown</div>
+                  </div>
+                </div>
+
+                <div class="row mt-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Weight (Kg)</label>
+                    <input type="number" name="customer[family_members_attributes][<%= index %>][weight_kg]" class="form-control" value="<%= family_member.weight_kg %>" step="0.1">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">PAN No</label>
+                    <input type="text" name="customer[family_members_attributes][<%= index %>][pan_no]" class="form-control" value="<%= family_member.pan_no %>">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Additional Information</label>
+                    <textarea name="customer[family_members_attributes][<%= index %>][additional_information]" class="form-control" rows="1"><%= family_member.additional_information %></textarea>
+                  </div>
+                </div>
+
+                <!-- Add a delete checkbox for existing family members -->
+                <div class="form-check mt-3">
+                  <input class="form-check-input" type="checkbox" name="customer[family_members_attributes][<%= index %>][_destroy]" id="destroy_family_member_<%= index %>">
+                  <label class="form-check-label text-danger" for="destroy_family_member_<%= index %>">
+                    Delete this family member
+                  </label>
+                </div>
+              </div>
+            <% end %>
+            <!-- New family members will be added here dynamically -->
+          </div>
+          <p class="text-muted mb-0 mt-2">
+            <small>Add family members for insurance purposes</small>
+          </p>
+        </div>
+      </div>
+
+      <!-- Current Files -->
+      <% if @customer.documents.any? || @customer.uploaded_documents.any? %>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-transparent border-0">
+            <h5 class="mb-0">Current Files</h5>
+          </div>
+          <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="mb-0">Customer Documents</h6>
+              <button type="button" class="btn btn-sm btn-success" id="add_legacy_document">
+                <i class="bi bi-plus-lg me-1"></i>
+                Add Document
+              </button>
+            </div>
+
+            <% if @customer.documents.any? %>
+              <div class="list-group mb-3">
+                <% @customer.documents.each do |document| %>
+                  <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div class="d-flex align-items-center">
+                        <i class="bi bi-file-earmark me-2"></i>
+                        <div>
+                          <span class="fw-medium"><%= document.document_type %></span>
+                          <% if document.has_file? %>
+                            <br><small class="text-muted"><%= document.document_name %></small>
+                          <% end %>
+                        </div>
+                      </div>
+                      <div class="d-flex gap-2 align-items-center">
+                        <% if document.has_file? %>
+                          <span class="badge bg-success">✓ Cloud Stored</span>
+                          <%= link_to document.document_url, class: "btn btn-sm btn-outline-primary", target: "_blank" do %>
+                            <i class="bi bi-download"></i> Download
+                          <% end %>
+                        <% else %>
+                          <span class="badge bg-warning text-dark">⚠ No file attached</span>
+                        <% end %>
+                        <%= link_to admin_customer_document_path(@customer, document),
+                            method: :delete,
+                            data: {
+                              confirm: "Are you sure you want to unlink this document from the customer? The file will remain in cloud storage.",
+                              turbo_method: :delete
+                            },
+                            class: "btn btn-sm btn-outline-danger",
+                            title: "Unlink Document" do %>
+                          <i class="bi bi-unlink"></i>
+                        <% end %>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+
+            <!-- Add New Document Form Placeholder -->
+            <div id="legacy_document_form_placeholder" style="display: none;">
+              <!-- Form will be moved here by JavaScript -->
+            </div>
+
+            <!-- Customer Documents System -->
+            <% if @customer.uploaded_documents.any? %>
+              <h6>Customer Documents</h6>
+              <div class="list-group mb-3">
+                <% @customer.uploaded_documents.each do |document| %>
+                  <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div class="d-flex align-items-center">
+                        <i class="bi bi-<%= document.file_icon %> me-2"></i>
+                        <div>
+                          <span class="fw-medium"><%= document.title %></span>
+                          <br><small class="text-muted"><%= document.human_document_type %></small>
+                          <% if document.has_file? %>
+                            <br><small class="text-muted"><%= document.file_name %> (<%= number_to_human_size(document.file_size) %>)</small>
+                          <% end %>
+                        </div>
+                      </div>
+                      <div class="d-flex gap-2 align-items-center">
+                        <% if document.has_file? %>
+                          <span class="badge bg-success">✓ Cloud Stored</span>
+                          <%= link_to document.document_url, class: "btn btn-sm btn-outline-primary", target: "_blank" do %>
+                            <i class="bi bi-download"></i> Download
+                          <% end %>
+                        <% else %>
+                          <span class="badge bg-danger">✗ Upload failed</span>
+                        <% end %>
+                        <%= link_to admin_customer_uploaded_document_path(@customer, document),
+                            method: :delete,
+                            data: {
+                              confirm: "Are you sure you want to unlink this document from the customer? The file will remain in cloud storage.",
+                              turbo_method: :delete
+                            },
+                            class: "btn btn-sm btn-outline-danger",
+                            title: "Unlink Document" do %>
+                          <i class="bi bi-unlink"></i>
+                        <% end %>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+
+      <!-- Additional Info -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">Additional Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <%= form.label :additional_info, class: "form-label" %>
+              <%= form.text_area :additional_info, class: "form-control", rows: 4, placeholder: "Enter any additional information" %>
+            </div>
+            <div class="col-md-6">
+              <div class="form-check form-switch">
+                <%= form.check_box :status, class: "form-check-input" %>
+                <%= form.label :status, "Active Status", class: "form-check-label" %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="d-flex gap-2">
+        <%= form.submit "Update Client", class: "btn btn-primary" %>
+        <%= link_to "Cancel", admin_customer_path(@customer), class: "btn btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Add New Document Form (Outside main form to avoid nesting) -->
+  <div id="legacy_document_form" style="display: none;" class="border rounded p-3 mb-3 bg-light">
+    <h6 class="mb-3">Add New Document</h6>
+    <%= form_with url: admin_customer_documents_path(@customer), method: :post,
+                 model: CustomerDocument.new, multipart: true, id: "new_document_form", local: false do |f| %>
+      <div class="row">
+        <div class="col-md-6">
+          <%= f.label :document_type, "Document Type", class: "form-label" %>
+          <%= f.select :document_type, options_for_select([
+            ['Profile Image', 'Profile Image'],
+            ['Aadhaar Card', 'Aadhaar Card'],
+            ['PAN Card', 'Pancard'],
+            ['Driving License', 'Driving License'],
+            ['Mediclaim', 'Mediclaim'],
+            ['RC Book', 'RC Book'],
+            ['Other File', 'Other File']
+          ]), { prompt: 'Select Document Type' }, { class: "form-select", required: true } %>
+        </div>
+        <div class="col-md-6">
+          <%= f.label :document_file, "Upload File", class: "form-label" %>
+          <%= f.file_field :document_file, class: "form-control",
+                         accept: "application/pdf,image/jpeg,image/jpg,image/png,image/gif,image/webp", required: true %>
+        </div>
+      </div>
+      <div class="d-flex gap-2 mt-3">
+        <%= f.submit "Upload Document", class: "btn btn-primary btn-sm" %>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="cancelAddDocument()">Cancel</button>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Customer Summary -->
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">Client Summary</h6>
+      </div>
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-3">
+          <% if @customer.has_profile_image? %>
+            <% image_data = @customer.safe_profile_image_display %>
+            <% if image_data %>
+              <%= image_tag image_data[:url],
+                  class: "rounded-circle me-3",
+                  style: "width: 50px; height: 50px; object-fit: cover;",
+                  onerror: "this.style.display='none'; this.nextElementSibling.style.display='flex';",
+                  loading: "lazy" %>
+              <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; display: none;">
+                <i class="bi bi-person text-primary"></i>
+              </div>
+            <% else %>
+              <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                <i class="bi bi-exclamation-triangle text-warning"></i>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+              <i class="bi bi-person text-primary"></i>
+            </div>
+          <% end %>
+          <div>
+            <h6 class="mb-0"><%= @customer.display_name %></h6>
+            <span class="badge bg-<%= @customer.customer_type == 'individual' ? 'primary' : 'success' %>">
+              <%= @customer.customer_type.humanize %>
+            </span>
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="row g-2 mb-2">
+          <div class="col-5"><strong>ID:</strong></div>
+          <div class="col-7">#<%= @customer.id %></div>
+        </div>
+
+        <div class="row g-2 mb-2">
+          <div class="col-5"><strong>Mobile:</strong></div>
+          <div class="col-7"><%= @customer.mobile %></div>
+        </div>
+
+        <div class="row g-2 mb-2">
+          <div class="col-5"><strong>Email:</strong></div>
+          <div class="col-7"><%= @customer.email %></div>
+        </div>
+
+        <div class="row g-2 mb-2">
+          <div class="col-5"><strong>Location:</strong></div>
+          <div class="col-7"><%= @customer.city %>, <%= @customer.state %></div>
+        </div>
+
+        <% if @customer.policies.any? %>
+          <div class="row g-2 mb-2">
+            <div class="col-5"><strong>Policies:</strong></div>
+            <div class="col-7"><span class="badge bg-info"><%= @customer.policies.count %></span></div>
+          </div>
+        <% end %>
+
+        <div class="row g-2 mb-2">
+          <div class="col-5"><strong>Status:</strong></div>
+          <div class="col-7">
+            <span class="badge bg-<%= @customer.status ? 'success' : 'secondary' %>">
+              <%= @customer.status ? 'Active' : 'Inactive' %>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.family-member-entry {
+  background: #f8f9fa;
+  border-radius: 8px;
+  position: relative;
+}
+
+.family-member-entry .remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+}
+
+.family-member-entry:hover {
+  background: #e9ecef;
+  transition: background 0.2s ease;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const customerTypeSelect = document.getElementById('customer_type');
+  const individualFields = document.getElementById('individual_fields');
+  const corporateFields = document.getElementById('corporate_fields');
+
+  const nomineeSection = document.getElementById('nominee_section');
+  const nomineeFieldIds = ['nominee_name_field', 'nominee_relationship_select', 'nominee_dob_field'];
+
+  function toggleNomineeSection(isIndividual) {
+    if (!nomineeSection) return;
+    nomineeSection.style.display = isIndividual ? 'block' : 'none';
+    nomineeFieldIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (isIndividual) {
+        el.setAttribute('required', 'required');
+      } else {
+        el.removeAttribute('required');
+      }
+    });
+  }
+
+  function setSectionDisabled(section, disabled) {
+    section.querySelectorAll('input, select, textarea').forEach(function(el) {
+      el.disabled = disabled;
+    });
+  }
+
+  function toggleCustomerType() {
+    const selectedType = customerTypeSelect.value;
+
+    if (selectedType === 'individual') {
+      individualFields.style.display = 'block';
+      corporateFields.style.display = 'none';
+      setSectionDisabled(individualFields, false);
+      setSectionDisabled(corporateFields, true);
+
+      document.querySelectorAll('#individual_fields [required]').forEach(el => el.required = true);
+      document.querySelectorAll('#corporate_fields [required]').forEach(el => el.required = false);
+
+      toggleNomineeSection(true);
+    } else if (selectedType === 'corporate') {
+      individualFields.style.display = 'none';
+      corporateFields.style.display = 'block';
+      setSectionDisabled(individualFields, true);
+      setSectionDisabled(corporateFields, false);
+
+      document.querySelectorAll('#individual_fields [required]').forEach(el => el.required = false);
+      document.querySelectorAll('#corporate_fields [required]').forEach(el => el.required = true);
+
+      toggleNomineeSection(false);
+    } else {
+      individualFields.style.display = 'none';
+      corporateFields.style.display = 'none';
+      setSectionDisabled(individualFields, true);
+      setSectionDisabled(corporateFields, true);
+
+      document.querySelectorAll('#individual_fields [required], #corporate_fields [required]').forEach(el => el.required = false);
+
+      toggleNomineeSection(false);
+    }
+  }
+
+  customerTypeSelect.addEventListener('change', toggleCustomerType);
+
+  // Initialize on page load
+  if (customerTypeSelect.value) {
+    toggleCustomerType();
+  }
+
+  // Update family details section visibility based on customer type
+  function toggleFamilyDetailsSection() {
+    const familyDetailsSection = document.getElementById('family_details_section');
+    const selectedType = customerTypeSelect.value;
+
+    if (selectedType === 'individual') {
+      familyDetailsSection.style.display = 'block';
+    } else {
+      familyDetailsSection.style.display = 'none';
+    }
+  }
+
+  // Add event listener for customer type changes
+  customerTypeSelect.addEventListener('change', toggleFamilyDetailsSection);
+
+  // Pincode lookup functionality
+  const pincodeField = document.getElementById('customer_pincode');
+  const cityField = document.getElementById('customer_city');
+  const stateField = document.getElementById('customer_state');
+
+  if (pincodeField && cityField && stateField) {
+    pincodeField.addEventListener('blur', function() {
+      const pincode = this.value.trim();
+      if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
+        fetchLocationFromPincode(pincode);
+      }
+    });
+  }
+
+  async function fetchLocationFromPincode(pincode) {
+    try {
+      // Show loading indication
+      cityField.value = 'Loading...';
+      stateField.value = 'Loading...';
+
+      // Using Indian Postal Code API (free service)
+      const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      const data = await response.json();
+
+      if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice) {
+        const postOffice = data[0].PostOffice[0];
+        cityField.value = postOffice.District || '';
+        stateField.value = postOffice.State || '';
+      } else {
+        // Clear loading and show not found
+        cityField.value = '';
+        stateField.value = '';
+        // Show a small notification that pincode was not found
+        showPincodeNotification('Pincode not found. Please enter city and state manually.', 'warning');
+      }
+    } catch (error) {
+      console.error('Error fetching pincode data:', error);
+      cityField.value = '';
+      stateField.value = '';
+      showPincodeNotification('Unable to fetch location. Please enter city and state manually.', 'error');
+    }
+  }
+
+  function showPincodeNotification(message, type) {
+    // Create a small notification near the pincode field
+    const existingNotification = document.querySelector('.pincode-notification');
+    if (existingNotification) {
+      existingNotification.remove();
+    }
+
+    const notification = document.createElement('div');
+    notification.className = `pincode-notification small mt-1 text-${type === 'warning' ? 'warning' : 'danger'}`;
+    notification.innerHTML = `<i class="bi bi-info-circle me-1"></i>${message}`;
+
+    pincodeField.parentElement.appendChild(notification);
+
+    // Remove notification after 5 seconds
+    setTimeout(() => {
+      if (notification.parentElement) {
+        notification.remove();
+      }
+    }, 5000);
+  }
+
+  // Family Member Management System
+  let familyMemberIndex = <%= @customer.family_members.count %>;
+  const addFamilyMemberBtn = document.getElementById('add_family_member');
+  const familyMembersContainer = document.getElementById('family_members_container');
+
+  addFamilyMemberBtn?.addEventListener('click', function() {
+    const familyMemberHtml = `
+      <div class="family-member-entry p-3 mb-3 border rounded position-relative" data-index="${familyMemberIndex}">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-btn remove-family-member">
+          <i class="bi bi-trash"></i>
+        </button>
+        <h6 class="mb-3">Family Member ${familyMemberIndex + 1}</h6>
+
+        <div class="row">
+          <div class="col-md-4">
+            <label class="form-label">First Name <span class="text-danger">*</span></label>
+            <input type="text" name="customer[family_members_attributes][${familyMemberIndex}][first_name]" class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Middle Name</label>
+            <input type="text" name="customer[family_members_attributes][${familyMemberIndex}][middle_name]" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+            <input type="text" name="customer[family_members_attributes][${familyMemberIndex}][last_name]" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <label class="form-label">Mobile</label>
+            <input type="tel" name="customer[family_members_attributes][${familyMemberIndex}][mobile]" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Birth Date</label>
+            <input type="date" name="customer[family_members_attributes][${familyMemberIndex}][birth_date]" class="form-control" min="1900-01-01" max="2099-12-31">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Age</label>
+            <input type="text" name="customer[family_members_attributes][${familyMemberIndex}][age]" class="form-control" readonly placeholder="Auto calculated from DOB">
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <label class="form-label">Gender</label>
+            <select name="customer[family_members_attributes][${familyMemberIndex}][gender]" class="form-select">
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Relationship <span class="text-danger">*</span></label>
+            <select name="customer[family_members_attributes][${familyMemberIndex}][relationship]" class="form-select" required>
+              <option value="">Select Relationship</option>
+              <% FamilyMember::RELATIONSHIPS.each do |rel| %>
+              <option value="<%= rel %>"><%= rel.humanize.titleize %></option>
+              <% end %>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Height</label>
+            <select name="customer[family_members_attributes][${familyMemberIndex}][height_feet]" class="form-select">
+              <option value="">Select Height</option>
+              <option value="3.0">3.0 feet</option><option value="3.08">3.1 feet</option><option value="3.17">3.2 feet</option><option value="3.25">3.3 feet</option><option value="3.33">3.4 feet</option><option value="3.42">3.5 feet</option><option value="3.5">3.6 feet</option><option value="3.58">3.7 feet</option><option value="3.67">3.8 feet</option><option value="3.75">3.9 feet</option><option value="3.83">3.10 feet</option><option value="3.92">3.11 feet</option>
+              <option value="4.0">4.0 feet</option><option value="4.08">4.1 feet</option><option value="4.17">4.2 feet</option><option value="4.25">4.3 feet</option><option value="4.33">4.4 feet</option><option value="4.42">4.5 feet</option><option value="4.5">4.6 feet</option><option value="4.58">4.7 feet</option><option value="4.67">4.8 feet</option><option value="4.75">4.9 feet</option><option value="4.83">4.10 feet</option><option value="4.92">4.11 feet</option>
+              <option value="5.0">5.0 feet</option><option value="5.08">5.1 feet</option><option value="5.17">5.2 feet</option><option value="5.25">5.3 feet</option><option value="5.33">5.4 feet</option><option value="5.42">5.5 feet</option><option value="5.5">5.6 feet</option><option value="5.58">5.7 feet</option><option value="5.67">5.8 feet</option><option value="5.75">5.9 feet</option><option value="5.83">5.10 feet</option><option value="5.92">5.11 feet</option>
+              <option value="6.0">6.0 feet</option><option value="6.08">6.1 feet</option><option value="6.17">6.2 feet</option><option value="6.25">6.3 feet</option><option value="6.33">6.4 feet</option><option value="6.42">6.5 feet</option><option value="6.5">6.6 feet</option><option value="6.58">6.7 feet</option><option value="6.67">6.8 feet</option><option value="6.75">6.9 feet</option><option value="6.83">6.10 feet</option><option value="6.92">6.11 feet</option>
+              <option value="7.0">7.0 feet</option><option value="7.08">7.1 feet</option><option value="7.17">7.2 feet</option><option value="7.25">7.3 feet</option><option value="7.33">7.4 feet</option><option value="7.42">7.5 feet</option><option value="7.5">7.6 feet</option><option value="7.58">7.7 feet</option><option value="7.67">7.8 feet</option><option value="7.75">7.9 feet</option><option value="7.83">7.10 feet</option><option value="7.92">7.11 feet</option>
+              <option value="8.0">8.0 feet</option><option value="8.08">8.1 feet</option><option value="8.17">8.2 feet</option><option value="8.25">8.3 feet</option><option value="8.33">8.4 feet</option><option value="8.42">8.5 feet</option><option value="8.5">8.6 feet</option><option value="8.58">8.7 feet</option><option value="8.67">8.8 feet</option><option value="8.75">8.9 feet</option><option value="8.83">8.10 feet</option><option value="8.92">8.11 feet</option>
+            </select>
+            <div class="form-text">Select height from the dropdown</div>
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <label class="form-label">Weight (Kg)</label>
+            <input type="number" name="customer[family_members_attributes][${familyMemberIndex}][weight_kg]" class="form-control" step="0.1">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">PAN No</label>
+            <input type="text" name="customer[family_members_attributes][${familyMemberIndex}][pan_no]" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Additional Information</label>
+            <textarea name="customer[family_members_attributes][${familyMemberIndex}][additional_information]" class="form-control" rows="1"></textarea>
+          </div>
+        </div>
+      </div>
+    `;
+    familyMembersContainer.insertAdjacentHTML('beforeend', familyMemberHtml);
+    familyMemberIndex++;
+  });
+
+  // Event delegation for removing family members
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-family-member')) {
+      e.target.closest('.family-member-entry').remove();
+    }
+  });
+
+  // Auto-calculate family member ages
+  document.addEventListener('change', function(e) {
+    if (e.target.matches('input[name*="birth_date"]') && e.target.closest('.family-member-entry')) {
+      const ageField = e.target.closest('.family-member-entry').querySelector('input[name*="[age]"]');
+
+      if (ageField && e.target.value) {
+        const birthDate = new Date(e.target.value);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+
+        ageField.value = age >= 0 ? age + ' years' : '';
+      }
+    }
+  });
+
+
+  // Legacy Document Management System
+  const addLegacyDocumentBtn = document.getElementById('add_legacy_document');
+  const legacyDocumentForm = document.getElementById('legacy_document_form');
+  const legacyDocumentFormPlaceholder = document.getElementById('legacy_document_form_placeholder');
+  const newDocumentForm = document.getElementById('new_document_form');
+
+  // Show legacy document form
+  addLegacyDocumentBtn?.addEventListener('click', function() {
+    // Move the form to the placeholder position
+    if (legacyDocumentForm && legacyDocumentFormPlaceholder) {
+      legacyDocumentFormPlaceholder.appendChild(legacyDocumentForm);
+      legacyDocumentFormPlaceholder.style.display = 'block';
+    }
+    legacyDocumentForm.style.display = 'block';
+    addLegacyDocumentBtn.style.display = 'none';
+  });
+
+  // Handle legacy document form submission
+  newDocumentForm?.addEventListener('ajax:success', function(event) {
+    const response = event.detail[0];
+    if (response.success) {
+      // Show success message
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+      alertDiv.innerHTML = `
+        <i class="bi bi-check-circle me-2"></i>
+        ${response.message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      legacyDocumentForm.insertAdjacentElement('afterend', alertDiv);
+
+      // Add the new document to the existing list
+      addDocumentToList(response.document);
+
+      // Reset and hide form
+      newDocumentForm.reset();
+      cancelAddDocument();
+
+      // Auto-dismiss success message after 3 seconds
+      setTimeout(() => {
+        alertDiv.remove();
+      }, 3000);
+    }
+  });
+
+  // Function to add new document to the existing list without page reload
+  function addDocumentToList(uploadedDoc) {
+    // Find the documents list container
+    let documentsContainer = document.querySelector('.list-group');
+
+    // If no documents exist yet, create the list structure
+    if (!documentsContainer) {
+      const currentFilesCard = document.querySelector('#legacy_document_form_placeholder').closest('.card-body');
+      if (currentFilesCard) {
+        const existingContainer = currentFilesCard.querySelector('.list-group');
+        if (!existingContainer) {
+          // Create new list group
+          const listGroup = document.createElement('div');
+          listGroup.className = 'list-group mb-3';
+
+          // Find the add document button container and insert before it
+          const addButtonContainer = currentFilesCard.querySelector('.d-flex.justify-content-between');
+          if (addButtonContainer) {
+            addButtonContainer.insertAdjacentElement('afterend', listGroup);
+          }
+          documentsContainer = listGroup;
+        } else {
+          documentsContainer = existingContainer;
+        }
+      }
+    }
+
+    if (documentsContainer) {
+      // Create new document list item
+      const documentItem = document.createElement('div');
+      documentItem.className = 'list-group-item';
+      documentItem.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-file-earmark me-2"></i>
+            <div>
+              <span class="fw-medium">${uploadedDoc.type}</span>
+              <br><small class="text-muted">${uploadedDoc.name} • ${uploadedDoc.size}</small>
+            </div>
+          </div>
+          <div class="d-flex gap-2 align-items-center">
+            <span class="badge bg-success">✓ Cloud Stored</span>
+            <a href="${uploadedDoc.url}" class="btn btn-sm btn-outline-primary" target="_blank">
+              <i class="bi bi-download"></i> Download
+            </a>
+            <a href="/admin/customers/${window.location.pathname.split('/')[3]}/documents/${uploadedDoc.id}"
+               data-method="delete"
+               data-confirm="Are you sure you want to unlink this document from the customer? The file will remain in cloud storage."
+               data-turbo-method="delete"
+               class="btn btn-sm btn-outline-danger"
+               title="Unlink Document">
+              <i class="bi bi-unlink"></i>
+            </a>
+          </div>
+        </div>
+      `;
+
+      // Add to the beginning of the list
+      documentsContainer.insertAdjacentElement('afterbegin', documentItem);
+    }
+  }
+
+  newDocumentForm?.addEventListener('ajax:error', function(event) {
+    const response = event.detail[0];
+    let errorMessage = 'Upload failed';
+
+    if (response && response.message) {
+      errorMessage = response.message;
+    } else if (response && response.errors && Array.isArray(response.errors)) {
+      errorMessage = response.errors.join(', ');
+    }
+
+    // Show error message
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+    alertDiv.innerHTML = `
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      ${errorMessage}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    legacyDocumentForm.insertAdjacentElement('afterend', alertDiv);
+  });
+
+  // Cancel add document function (global scope for onclick handler)
+  window.cancelAddDocument = function() {
+    legacyDocumentForm.style.display = 'none';
+    legacyDocumentFormPlaceholder.style.display = 'none';
+    addLegacyDocumentBtn.style.display = 'inline-block';
+    newDocumentForm.reset();
+
+    // Move form back to original position (outside main form)
+    document.body.appendChild(legacyDocumentForm);
+
+    // Remove any existing alerts
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+      if (alert.parentElement === legacyDocumentForm.parentElement) {
+        alert.remove();
+      }
+    });
+  };
+
+  // Profile Image Upload Functionality
+  const profileImageFile = document.getElementById('profile_image_file');
+  const imagePreview = document.getElementById('image_preview');
+  const imagePreviewContainer = document.getElementById('image_preview_container');
+  const uploadProgress = document.getElementById('upload_progress');
+  const uploadBtn = document.getElementById('upload_profile_image_btn');
+
+  // Handle file selection for preview
+  profileImageFile?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+        this.value = '';
+        imagePreviewContainer.style.display = 'none';
+        return;
+      }
+
+      // Validate file size (10MB max)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        this.value = '';
+        imagePreviewContainer.style.display = 'none';
+        return;
+      }
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        imagePreview.src = e.target.result;
+        imagePreviewContainer.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      imagePreviewContainer.style.display = 'none';
+    }
+  });
+
+  // Handle profile image upload button click
+  uploadBtn?.addEventListener('click', async function(e) {
+    e.preventDefault();
+
+    const file = profileImageFile.files[0];
+    if (!file) {
+      alert('Please select an image file first');
+      return;
+    }
+
+    // Show upload progress
+    uploadProgress.style.display = 'block';
+    imagePreviewContainer.style.display = 'none';
+
+    // Disable upload button
+    const originalText = this.textContent;
+    this.disabled = true;
+    this.textContent = 'Uploading...';
+
+    try {
+      // Get CSRF token
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append('customer_document[document_type]', 'Profile Image');
+      formData.append('customer_document[document_file]', file);
+      formData.append('authenticity_token', csrfToken);
+
+      // Upload to customer documents endpoint
+      const response = await fetch('<%= admin_customer_documents_path(@customer) %>', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': csrfToken,
+          'Accept': 'application/json'
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Show success message
+        showProfileImageAlert('success', result.message || 'Profile image uploaded successfully!');
+
+        // Reset form
+        profileImageFile.value = '';
+        imagePreviewContainer.style.display = 'none';
+
+        // Reload page to show new profile image
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        throw new Error(result.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      showProfileImageAlert('danger', error.message || 'Upload failed');
+    } finally {
+      // Re-enable button and hide progress
+      uploadProgress.style.display = 'none';
+      this.disabled = false;
+      this.textContent = originalText;
+    }
+  });
+
+  // Function to show profile image alerts
+  function showProfileImageAlert(type, message) {
+    // Remove existing alerts
+    const existingAlerts = document.querySelectorAll('.profile-image-alert');
+    existingAlerts.forEach(alert => alert.remove());
+
+    // Create new alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-3 profile-image-alert`;
+    alertDiv.innerHTML = `
+      <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Insert after the profile image form
+    document.getElementById('profile_image_upload_form').insertAdjacentElement('afterend', alertDiv);
+
+    // Auto-dismiss success alerts after 3 seconds
+    if (type === 'success') {
+      setTimeout(() => {
+        if (alertDiv.parentElement) {
+          alertDiv.remove();
+        }
+      }, 3000);
+    }
+  }
+
+  // Form validation
+  const forms = document.querySelectorAll('.needs-validation');
+  Array.prototype.slice.call(forms).forEach(function(form) {
+    form.addEventListener('submit', function(event) {
+      // Strip +91/91/0 prefix from mobile fields before checkValidity runs
+      form.querySelectorAll('input[name*="[mobile]"]').forEach(function(field) {
+        let v = field.value.replace(/\D/g, '');
+        if (v.length === 13 && v.startsWith('91')) v = v.slice(2);
+        else if (v.length === 12 && v.startsWith('91')) v = v.slice(2);
+        else if (v.length === 11 && v.startsWith('0'))  v = v.slice(1);
+        else if (v.length === 11)                        v = v.slice(1);
+        field.value = v;
+      });
+
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  });
+
+  // Mobile Number Validation for Indian Numbers (6, 7, 8, 9 starting digits)
+  function validateMobileNumber(input) {
+    const mobilePattern = /^[6789]\d{9}$/;
+    let rawValue = input.value.trim();
+    let digits = rawValue.replace(/\D/g, '');
+
+    // Strip country code / extra leading digit (mirrors Ruby format_mobile_number)
+    if (digits.length === 13 && digits.startsWith('91')) digits = digits.slice(2);
+    else if (digits.length === 12 && digits.startsWith('91')) digits = digits.slice(2);
+    else if (digits.length === 11 && digits.startsWith('0'))  digits = digits.slice(1);
+    else if (digits.length === 11)                             digits = digits.slice(1);
+
+    // Clear previous validation state (do NOT change input.value to preserve user's formatted input)
+    input.classList.remove('is-valid', 'is-invalid');
+    const feedback = input.parentNode.querySelector('.mobile-feedback');
+    if (feedback) feedback.remove();
+
+    if (rawValue.length === 0) {
+      return; // Don't validate empty input
+    }
+
+    if (digits.length !== 10) {
+      showMobileError(input, 'Mobile number must be exactly 10 digits (you entered ' + digits.length + ')');
+    } else if (!mobilePattern.test(digits)) {
+      showMobileError(input, 'Mobile number must start with 6, 7, 8, or 9');
+    } else {
+      input.classList.add('is-valid');
+    }
+  }
+
+  function showMobileError(input, message) {
+    input.classList.add('is-invalid');
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'invalid-feedback mobile-feedback';
+    errorDiv.textContent = message;
+    input.parentNode.appendChild(errorDiv);
+  }
+
+  // Clean mobile fields on page load (strip stored +91 prefix)
+  const mobileFields = document.querySelectorAll('input[name*="[mobile]"]');
+  mobileFields.forEach(function(field) {
+    validateMobileNumber(field);
+
+    field.addEventListener('input', function() {
+      validateMobileNumber(this);
+    });
+
+    field.addEventListener('blur', function() {
+      validateMobileNumber(this);
+    });
+  });
+
+});
+</script>
+
+<!-- Profile Preview Modal -->
+<% if @customer.has_profile_image? %>
+  <% image_data = @customer.safe_profile_image_display %>
+  <% if image_data %>
+    <div class="modal fade" id="profilePreviewModal" tabindex="-1" aria-labelledby="profilePreviewModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="profilePreviewModalLabel">
+              <i class="bi bi-person-circle me-2"></i>Profile Image - <%= @customer.display_name %>
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body text-center">
+            <div class="position-relative">
+              <%= image_tag image_data[:url],
+                  class: "img-fluid rounded shadow",
+                  style: "max-height: 500px; max-width: 100%;",
+                  alt: "Profile image of #{@customer.display_name}",
+                  onerror: "this.style.display='none'; this.nextElementSibling.style.display='block';",
+                  loading: "lazy" %>
+
+              <div style="display: none;" class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Unable to load image. The file may be corrupted or temporarily unavailable.
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <p class="text-muted mb-1">
+                <strong>File:</strong> <%= image_data[:filename] %>
+              </p>
+              <p class="text-muted mb-1">
+                <strong>Size:</strong> <%= number_to_human_size(image_data[:size]) %>
+              </p>
+              <p class="text-muted mb-0">
+                <strong>Type:</strong> <%= image_data[:content_type] %>
+              </p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <a href="<%= image_data[:url] %>"
+               class="btn btn-primary"
+               download="<%= image_data[:filename] %>">
+              <i class="bi bi-download me-1"></i>Download
+            </a>
+            <a href="<%= image_data[:url] %>"
+               class="btn btn-outline-secondary"
+               target="_blank">
+              <i class="bi bi-arrows-fullscreen me-1"></i>Open in New Tab
+            </a>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              <i class="bi bi-x-lg me-1"></i>Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% end %>

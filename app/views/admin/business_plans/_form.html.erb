@@ -1,0 +1,47 @@
+<%= form_with model: [:admin, business_plan], local: true do |form| %>
+  <% if business_plan.errors.any? %>
+    <div class="alert alert-danger">
+      <ul class="mb-0">
+        <% business_plan.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Key (lowercase, unique)</label>
+      <%= form.text_field :key, class: "form-control", placeholder: "bronze" %>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Name</label>
+      <%= form.text_field :name, class: "form-control", placeholder: "Bronze" %>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Price (₹)</label>
+      <%= form.number_field :price, step: 0.01, min: 0, class: "form-control" %>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Chapter Limit</label>
+      <%= form.number_field :chapter_limit, min: 1, class: "form-control", placeholder: "Leave blank = unlimited" %>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Member Limit</label>
+      <%= form.number_field :member_limit, min: 1, class: "form-control", placeholder: "Leave blank = unlimited" %>
+    </div>
+    <div class="col-12">
+      <label class="form-label">Description</label>
+      <%= form.text_area :description, rows: 3, class: "form-control" %>
+    </div>
+    <div class="col-12 form-check ps-4">
+      <%= form.check_box :active, class: "form-check-input" %>
+      <%= form.label :active, "Active", class: "form-check-label" %>
+    </div>
+  </div>
+
+  <div class="mt-4 d-flex gap-2">
+    <%= form.submit business_plan.persisted? ? "Update Plan" : "Create Plan", class: "btn btn-primary" %>
+    <%= link_to "Cancel", admin_business_plans_path, class: "btn btn-outline-secondary" %>
+  </div>
+<% end %>

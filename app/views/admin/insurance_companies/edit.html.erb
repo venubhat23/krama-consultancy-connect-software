@@ -1,0 +1,819 @@
+<!-- Enhanced Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1 text-primary">
+      <i class="bi bi-building me-2"></i>Edit Insurance Company
+    </h2>
+    <p class="text-muted mb-0">Update <strong><%= @insurance_company.name %></strong> information</p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to admin_insurance_company_path(@insurance_company), class: "btn btn-outline-info shadow-sm" do %>
+      <i class="bi bi-eye me-1"></i>
+      View Details
+    <% end %>
+    <%= link_to admin_insurance_companies_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Companies
+    <% end %>
+  </div>
+</div>
+
+<!-- Error Display -->
+<% if @insurance_company.errors.any? %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <div class="d-flex align-items-center">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <div>
+        <h6 class="mb-1"><%= pluralize(@insurance_company.errors.count, "error") %> prohibited this insurance company from being updated:</h6>
+        <ul class="mb-0">
+          <% @insurance_company.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% end %>
+
+<%= form_with model: [:admin, @insurance_company], local: true, class: "needs-validation", novalidate: true do |form| %>
+  <div class="row">
+    <div class="col-lg-8">
+      <!-- Basic Information -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-info-circle me-2 text-primary"></i>
+            <h5 class="mb-0">Company Information</h5>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <%= form.label :insurance_type, class: "form-label" do %>
+                Insurance Type <span class="text-danger">*</span>
+              <% end %>
+              <%= form.select :insurance_type,
+                  options_for_select([
+                    ['Select Insurance Type', ''],
+                    ['Health Insurance', 'health'],
+                    ['Life Insurance', 'life'],
+                    ['Motor and Other Insurance', 'motor_other']
+                  ], @insurance_company.insurance_type),
+                  {},
+                  {
+                    class: "form-select searchable-select #{'is-invalid' if @insurance_company.errors[:insurance_type].any?}",
+                    required: true,
+                    id: "insurance_type_select",
+                    data: { placeholder: "Search and select insurance type..." }
+                  } %>
+              <% if @insurance_company.errors[:insurance_type].any? %>
+                <div class="invalid-feedback">
+                  <%= @insurance_company.errors[:insurance_type].first %>
+                </div>
+              <% end %>
+              <small class="form-text text-muted">Select the type of insurance this company provides</small>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <%= form.label :name, class: "form-label" do %>
+                Company Name <span class="text-danger">*</span>
+              <% end %>
+              <%= form.text_field :name,
+                  class: "form-control #{'is-invalid' if @insurance_company.errors[:name].any?}",
+                  placeholder: "Enter company name",
+                  required: true,
+                  id: "company_name_field" %>
+              <% if @insurance_company.errors[:name].any? %>
+                <div class="invalid-feedback">
+                  <%= @insurance_company.errors[:name].first %>
+                </div>
+              <% end %>
+              <small class="form-text text-muted" id="name_suggestion">Name will auto-update based on type selection</small>
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <%= form.label :code, "Company Short Name", class: "form-label" %>
+              <%= form.text_field :code,
+                  class: "form-control #{'is-invalid' if @insurance_company.errors[:code].any?}",
+                  placeholder: "e.g., LIC, HDFC" %>
+              <% if @insurance_company.errors[:code].any? %>
+                <div class="invalid-feedback">
+                  <%= @insurance_company.errors[:code].first %>
+                </div>
+              <% end %>
+              <small class="form-text text-muted">Optional short name for the company</small>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <%= form.label :contact_person, "Contact Person", class: "form-label" %>
+              <%= form.text_field :contact_person,
+                  class: "form-control #{'is-invalid' if @insurance_company.errors[:contact_person].any?}",
+                  placeholder: "Enter contact person name" %>
+              <% if @insurance_company.errors[:contact_person].any? %>
+                <div class="invalid-feedback">
+                  <%= @insurance_company.errors[:contact_person].first %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <div class="form-check form-switch mt-4">
+                <%= form.check_box :status, { class: "form-check-input" }, "true", "false" %>
+                <%= form.label :status, "Active Status", class: "form-check-label" %>
+              </div>
+              <small class="form-text text-muted">Enable this company for policy creation</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Information -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-telephone me-2 text-primary"></i>
+            <h5 class="mb-0">Contact Information</h5>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <%= form.label :email, "Email Address", class: "form-label" %>
+              <%= form.email_field :email,
+                  class: "form-control #{'is-invalid' if @insurance_company.errors[:email].any?}",
+                  placeholder: "contact@company.com" %>
+              <% if @insurance_company.errors[:email].any? %>
+                <div class="invalid-feedback">
+                  <%= @insurance_company.errors[:email].first %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <%= form.label :mobile, "Mobile Number", class: "form-label" %>
+              <%= form.telephone_field :mobile,
+                  class: "form-control #{'is-invalid' if @insurance_company.errors[:mobile].any?}",
+                  placeholder: "Enter mobile number" %>
+              <% if @insurance_company.errors[:mobile].any? %>
+                <div class="invalid-feedback">
+                  <%= @insurance_company.errors[:mobile].first %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="col-12 mb-3">
+              <%= form.label :address, "Company Address", class: "form-label" %>
+              <%= form.text_area :address,
+                  class: "form-control #{'is-invalid' if @insurance_company.errors[:address].any?}",
+                  rows: 3,
+                  placeholder: "Enter complete company address" %>
+              <% if @insurance_company.errors[:address].any? %>
+                <div class="invalid-feedback">
+                  <%= @insurance_company.errors[:address].first %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <%= link_to admin_insurance_company_path(@insurance_company),
+                  method: :delete,
+                  class: "btn btn-outline-danger",
+                  confirm: "Are you sure you want to delete this insurance company? This action cannot be undone.",
+                  data: {
+                    confirm: "Are you sure you want to delete #{@insurance_company.name}? This action cannot be undone."
+                  } do %>
+                <i class="bi bi-trash me-1"></i>
+                Delete Company
+              <% end %>
+            </div>
+            <div class="d-flex gap-2">
+              <%= link_to "Cancel", admin_insurance_company_path(@insurance_company), class: "btn btn-outline-secondary" %>
+              <%= form.submit "Update Insurance Company", class: "btn btn-primary" %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enhanced Sidebar -->
+    <div class="col-lg-4">
+      <!-- Company Summary -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h6 class="mb-0">
+            <i class="bi bi-info-circle me-2 text-primary"></i>
+            Company Summary
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+              <% case @insurance_company.insurance_type %>
+              <% when 'health' %>
+                <i class="bi bi-heart-pulse text-primary"></i>
+              <% when 'life' %>
+                <i class="bi bi-person-check text-primary"></i>
+              <% when 'motor_other' %>
+                <i class="bi bi-car-front text-primary"></i>
+              <% else %>
+                <i class="bi bi-building text-primary"></i>
+              <% end %>
+            </div>
+            <div>
+              <h6 class="mb-0"><%= @insurance_company.name %></h6>
+              <span class="badge bg-<%= @insurance_company.status? ? 'success' : 'secondary' %>">
+                <%= @insurance_company.status? ? 'Active' : 'Inactive' %>
+              </span>
+            </div>
+          </div>
+
+          <hr>
+
+          <div class="row g-2 mb-2">
+            <div class="col-5"><strong>ID:</strong></div>
+            <div class="col-7">#<%= @insurance_company.id %></div>
+          </div>
+
+          <div class="row g-2 mb-2">
+            <div class="col-5"><strong>Type:</strong></div>
+            <div class="col-7">
+              <span class="badge bg-info">
+                <%= @insurance_company.insurance_type.present? ? @insurance_company.insurance_type.humanize : 'Not Set' %>
+              </span>
+            </div>
+          </div>
+
+          <div class="row g-2 mb-2">
+            <div class="col-5"><strong>Code:</strong></div>
+            <div class="col-7"><%= @insurance_company.code.present? ? @insurance_company.code : 'Not Set' %></div>
+          </div>
+
+          <div class="row g-2 mb-2">
+            <div class="col-5"><strong>Email:</strong></div>
+            <div class="col-7"><%= @insurance_company.email.present? ? @insurance_company.email : 'Not Set' %></div>
+          </div>
+
+          <div class="row g-2 mb-2">
+            <div class="col-5"><strong>Mobile:</strong></div>
+            <div class="col-7"><%= @insurance_company.mobile.present? ? @insurance_company.mobile : 'Not Set' %></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Information -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h6 class="mb-0">
+            <i class="bi bi-clock-history me-2 text-success"></i>
+            Time Information
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <small class="text-muted d-block">Created Date</small>
+            <strong><%= @insurance_company.created_at.strftime('%d %B %Y at %I:%M %p') %></strong>
+          </div>
+          <div class="mb-3">
+            <small class="text-muted d-block">Last Updated</small>
+            <strong><%= @insurance_company.updated_at.strftime('%d %B %Y at %I:%M %p') %></strong>
+          </div>
+          <div class="alert alert-info alert-sm mb-0">
+            <i class="bi bi-shield-check me-2"></i>
+            <small>Make sure all information is accurate before saving.</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Tips -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-0">
+          <h6 class="mb-0">
+            <i class="bi bi-lightbulb me-2 text-warning"></i>
+            Quick Tips
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="small">
+            <p class="mb-2">
+              <i class="bi bi-check-circle text-success me-1"></i>
+              Insurance type determines available policy options
+            </p>
+            <p class="mb-2">
+              <i class="bi bi-check-circle text-success me-1"></i>
+              Company code should be unique and memorable
+            </p>
+            <p class="mb-2">
+              <i class="bi bi-check-circle text-success me-1"></i>
+              Active status enables policy creation
+            </p>
+            <p class="mb-0">
+              <i class="bi bi-check-circle text-success me-1"></i>
+              Contact information helps with customer queries
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Form validation
+  const forms = document.querySelectorAll('.needs-validation');
+
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      form.classList.add('was-validated');
+    }, false);
+  });
+
+  // Auto-loading functionality for insurance type
+  const insuranceTypeSelect = document.getElementById('insurance_type_select');
+  const companyNameField = document.getElementById('company_name_field');
+  const nameSuggestion = document.getElementById('name_suggestion');
+
+  // Store the original value when page loads
+  let originalName = companyNameField.value;
+  let userModifiedName = false;
+
+  // Track if user manually edits the name field
+  companyNameField.addEventListener('input', function() {
+    userModifiedName = true;
+  });
+
+  insuranceTypeSelect.addEventListener('change', function() {
+    const selectedType = this.value;
+    const selectedText = this.options[this.selectedIndex].text;
+
+    if (selectedType && selectedType !== '') {
+      // Only auto-update if user hasn't manually modified the name
+      if (!userModifiedName || companyNameField.value === '') {
+        // Get the base company name (remove any existing insurance type suffix)
+        let baseName = companyNameField.value
+          .replace(/ Health Insurance$/i, '')
+          .replace(/ Life Insurance$/i, '')
+          .replace(/ Motor and Other Insurance$/i, '')
+          .replace(/ Insurance$/i, '')
+          .trim();
+
+        // If no base name, prompt for one
+        if (!baseName) {
+          baseName = prompt('Enter the company base name (e.g., "LIC", "HDFC", "Star Health"):');
+          if (!baseName) {
+            return;
+          }
+        }
+
+        // Add the insurance type suffix
+        companyNameField.value = baseName + ' ' + selectedText;
+
+        // Show suggestion
+        nameSuggestion.textContent = 'Name updated to: ' + companyNameField.value;
+        nameSuggestion.classList.add('text-success');
+
+        // Reset the modified flag since we auto-updated
+        userModifiedName = false;
+      }
+
+      // Load pre-defined company names based on type
+      loadCompanySuggestions(selectedType);
+    } else {
+      nameSuggestion.textContent = 'Name will auto-update based on type selection';
+      nameSuggestion.classList.remove('text-success');
+    }
+  });
+
+  // Function to load company suggestions based on insurance type
+  function loadCompanySuggestions(insuranceType) {
+    const companySuggestions = {
+      'health': [
+        'Star Health Insurance',
+        'HDFC ERGO Health Insurance',
+        'Bajaj Allianz Health Insurance',
+        'Max Bupa Health Insurance',
+        'Apollo Munich Health Insurance',
+        'Religare Health Insurance',
+        'ICICI Lombard Health Insurance',
+        'Aditya Birla Health Insurance',
+        'Care Health Insurance',
+        'Niva Bupa Health Insurance'
+      ],
+      'life': [
+        'LIC Life Insurance',
+        'HDFC Life Insurance',
+        'ICICI Prudential Life Insurance',
+        'SBI Life Insurance',
+        'Max Life Insurance',
+        'Bajaj Allianz Life Insurance',
+        'Kotak Life Insurance',
+        'Tata AIA Life Insurance',
+        'PNB MetLife Insurance',
+        'Aditya Birla Sun Life Insurance'
+      ],
+      'motor_other': [
+        'HDFC ERGO Motor and Other Insurance',
+        'ICICI Lombard Motor and Other Insurance',
+        'Bajaj Allianz Motor and Other Insurance',
+        'Tata AIG Motor and Other Insurance',
+        'New India Motor and Other Insurance',
+        'United India Motor and Other Insurance',
+        'National Motor and Other Insurance',
+        'Oriental Motor and Other Insurance',
+        'Reliance Motor and Other Insurance',
+        'Bharti AXA Motor and Other Insurance',
+        'HDFC ERGO Travel Insurance',
+        'General Insurance Corporation',
+        'Agriculture Insurance Company',
+        'Export Credit Guarantee Corporation'
+      ]
+    };
+
+    // Create datalist for suggestions if it doesn't exist
+    let datalist = document.getElementById('company_suggestions');
+    if (!datalist) {
+      datalist = document.createElement('datalist');
+      datalist.id = 'company_suggestions';
+      companyNameField.parentNode.appendChild(datalist);
+      companyNameField.setAttribute('list', 'company_suggestions');
+    }
+
+    // Clear existing options
+    datalist.innerHTML = '';
+
+    // Add suggestions based on type
+    if (companySuggestions[insuranceType]) {
+      companySuggestions[insuranceType].forEach(function(company) {
+        const option = document.createElement('option');
+        option.value = company;
+        datalist.appendChild(option);
+      });
+    }
+  }
+
+  // Trigger change event on page load if a type is already selected
+  if (insuranceTypeSelect.value) {
+    loadCompanySuggestions(insuranceTypeSelect.value);
+  }
+});
+</script>
+
+<!-- jQuery and Select2 for searchable dropdowns -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Enhanced Custom Styling -->
+<style>
+  /* Main card styling */
+  .card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px 12px 0 0 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  }
+
+  /* Form styling enhancements */
+  .form-control, .form-select {
+    border-radius: 8px;
+    border: 1.5px solid #d1d5db;
+    transition: all 0.3s ease;
+    padding: 0.75rem 1rem;
+  }
+
+  .form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Button enhancements */
+  .btn {
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    padding: 0.625rem 1.25rem;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  }
+
+  /* Alert styling */
+  .alert {
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .alert-danger {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #dc2626;
+  }
+
+  .alert-sm {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 8px;
+  }
+
+  /* Form validation feedback */
+  .invalid-feedback {
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .form-control.is-invalid, .form-select.is-invalid {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
+
+  .form-control.is-valid, .form-select.is-valid {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  }
+
+  /* Switch styling */
+  .form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+  }
+
+  .form-check-input:focus {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  /* Select2 custom styling */
+  .select2-container--bootstrap-5 .select2-selection--single {
+    height: 48px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    background-color: #ffffff;
+  }
+  .select2-container--bootstrap-5 .select2-selection--single:focus-within {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+  .select2-container--bootstrap-5 .select2-selection__rendered {
+    color: #374151;
+    padding-left: 12px;
+    padding-right: 20px;
+    line-height: 44px;
+    font-size: 0.9rem;
+  }
+  .select2-container--bootstrap-5 .select2-selection__arrow {
+    height: 44px;
+    top: 2px;
+    right: 8px;
+  }
+  .select2-container--bootstrap-5 .select2-results__option {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    transition: all 0.15s ease;
+  }
+  .select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: #667eea;
+    color: white;
+  }
+  .select2-container--bootstrap-5 .select2-results__option:hover {
+    background-color: #f8fafc;
+  }
+  .select2-dropdown {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    margin-top: 4px;
+  }
+  .select2-results__options {
+    max-height: 300px !important;
+    overflow-y: auto;
+  }
+  .select2-search__field {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+  .select2-search__field:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+    outline: none;
+  }
+
+  /* Enhanced visual feedback */
+  .select2-container--bootstrap-5 .select2-selection--single.select2-selection--focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  /* Loading state */
+  .select2-container--bootstrap-5 .select2-results__message {
+    padding: 12px 16px;
+    font-style: italic;
+    color: #6b7280;
+  }
+
+  /* No results message */
+  .select2-container--bootstrap-5 .select2-results__option[role="option"][data-select2-id*="no-results"] {
+    color: #6b7280;
+    font-style: italic;
+  }
+
+  /* Badge styling */
+  .badge {
+    padding: 0.5em 0.8em;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+
+  /* Sidebar enhancements */
+  .row > .col-lg-8 {
+    padding-right: 2rem;
+  }
+
+  @media (max-width: 991.98px) {
+    .row > .col-lg-8 {
+      padding-right: 15px;
+      margin-bottom: 2rem;
+    }
+  }
+
+  /* Animation for form sections */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .card {
+    animation: slideInUp 0.6s ease forwards;
+  }
+
+  .card:nth-child(2) { animation-delay: 0.1s; }
+  .card:nth-child(3) { animation-delay: 0.2s; }
+  .card:nth-child(4) { animation-delay: 0.3s; }
+
+  /* Enhanced text styling */
+  .text-muted.small {
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  /* Success message styling */
+  .text-success {
+    font-weight: 600;
+  }
+
+  /* Form section headers */
+  .card-header h5 {
+    color: #374151;
+    font-weight: 600;
+  }
+
+  /* Improved spacing */
+  .form-text {
+    margin-top: 0.375rem;
+    color: #6b7280;
+  }
+</style>
+
+<!-- Initialize Select2 for searchable dropdowns -->
+<script>
+$(document).ready(function() {
+  // Initialize all dropdowns with searchable-select class
+  $('.searchable-select').each(function() {
+    const $element = $(this);
+    const placeholder = $element.data('placeholder') || 'Search and select...';
+
+    $element.select2({
+      theme: 'bootstrap-5',
+      placeholder: placeholder,
+      allowClear: true,
+      width: '100%',
+      minimumResultsForSearch: 0, // Always show search box
+      dropdownParent: $('body'),
+      escapeMarkup: function(markup) {
+        return markup;
+      },
+      templateResult: function(option) {
+        if (option.loading) {
+          return option.text;
+        }
+
+        // Enhanced option display with icons
+        if (option.element && option.element.value) {
+          const value = option.element.value;
+          let icon = '';
+
+          // Add icons based on insurance type
+          switch(value) {
+            case 'health':
+              icon = '<i class="bi bi-heart-pulse me-2 text-danger"></i>';
+              break;
+            case 'life':
+              icon = '<i class="bi bi-person-check me-2 text-success"></i>';
+              break;
+            case 'motor_other':
+              icon = '<i class="bi bi-car-front me-2 text-primary"></i>';
+              break;
+            default:
+              icon = '<i class="bi bi-list-ul me-2 text-muted"></i>';
+          }
+
+          return $('<span>' + icon + option.text + '</span>');
+        }
+
+        return option.text;
+      },
+      templateSelection: function(option) {
+        if (option.element && option.element.value) {
+          const value = option.element.value;
+          let icon = '';
+
+          // Add icons for selected option
+          switch(value) {
+            case 'health':
+              icon = '<i class="bi bi-heart-pulse me-2 text-danger"></i>';
+              break;
+            case 'life':
+              icon = '<i class="bi bi-person-check me-2 text-success"></i>';
+              break;
+            case 'motor_other':
+              icon = '<i class="bi bi-car-front me-2 text-primary"></i>';
+              break;
+          }
+
+          return $('<span>' + icon + option.text + '</span>');
+        }
+
+        return option.text || placeholder;
+      }
+    });
+  });
+
+  // Handle selection events
+  $('.searchable-select').on('select2:select', function (e) {
+    const selectedValue = e.params.data.id;
+    const selectedText = e.params.data.text;
+
+    // Trigger any existing change handlers
+    $(this).trigger('change');
+
+    // Add visual feedback
+    $(this).next('.select2-container').find('.select2-selection').addClass('border-success');
+    setTimeout(() => {
+      $(this).next('.select2-container').find('.select2-selection').removeClass('border-success');
+    }, 1000);
+  });
+
+  // Handle clear events
+  $('.searchable-select').on('select2:clear', function (e) {
+    $(this).trigger('change');
+  });
+});
+</script>

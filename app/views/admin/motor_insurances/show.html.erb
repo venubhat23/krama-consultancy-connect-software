@@ -1,0 +1,938 @@
+<% content_for :page_title, "Motor Insurance Policy Details" %>
+<% content_for :page_subtitle, "Policy ##{@motor_insurance.policy_number}" %>
+
+<!-- Action Buttons -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <%= link_to admin_motor_insurances_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-2"></i>
+      Back to List
+    <% end %>
+  </div>
+
+  <div class="d-flex gap-2">
+    <% if @motor_insurance.is_admin_added? && !Payout.exists?(policy_type: 'motor', policy_id: @motor_insurance.id) %>
+      <%= button_to regenerate_payout_admin_motor_insurance_path(@motor_insurance), method: :post, class: "btn btn-warning", data: { confirm: 'Generate payout for this policy?' } do %>
+        <i class="bi bi-cash-coin me-2"></i>
+        Generate Payout
+      <% end %>
+    <% end %>
+    <%= link_to edit_admin_motor_insurance_path(@motor_insurance), class: "btn btn-primary" do %>
+      <i class="bi bi-pencil me-2"></i>
+      Edit Policy
+    <% end %>
+  </div>
+</div>
+
+<!-- Client & Agent Details Section -->
+<div class="info-section-card">
+  <div class="section-header" data-bs-toggle="collapse" data-bs-target="#clientAgentCollapse" aria-expanded="true">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-person"></i>
+      </div>
+      <h5 class="section-title">Client & Agent Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="clientAgentCollapse" class="collapse show">
+    <div class="section-body">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Client Name*</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.customer&.display_name %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Policy Holder*</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.policy_holder %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Affiliate</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.sub_agent&.display_name || 'Self' %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Vehicle Registration Number*</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.registration_number %>" readonly>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Vehicle Type*</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.vehicle_type %>" readonly>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- Policy Details Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#policyDetailsCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-file-text"></i>
+      </div>
+      <h5 class="section-title">Policy Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="policyDetailsCollapse" class="collapse">
+    <div class="section-body">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Broker Code</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.broker_code_type&.humanize || 'N/A' %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Agency Code</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.agency_code_id || 'N/A' %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Insurance Company Name*</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.insurance_company_name %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Insurance Type*</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.insurance_type %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Class of Vehicle*</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.class_of_vehicle %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Policy Type*</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.policy_type %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Policy Number*</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.policy_number %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Policy Booking Date</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.policy_booking_date&.strftime('%B %d, %Y') %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Lead ID</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.lead_id %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Payment Mode*</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.payment_mode %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Policy Start Date</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.policy_start_date&.strftime('%B %d, %Y') %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Policy End Date</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.policy_end_date&.strftime('%B %d, %Y') %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Installment Autopay Start Date</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.installment_autopay_start_date&.strftime('%B %d, %Y') if @motor_insurance.installment_autopay_start_date %>" readonly>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Installment Autopay End Date</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.installment_autopay_end_date&.strftime('%B %d, %Y') if @motor_insurance.installment_autopay_end_date %>" readonly>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- Vehicle Details Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#vehicleDetailsCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-car-front"></i>
+      </div>
+      <h5 class="section-title">Vehicle Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="vehicleDetailsCollapse" class="collapse">
+    <div class="section-body">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Vehicle IDV*</label>
+        <input type="text" class="form-control" value="<%= indian_currency(@motor_insurance.vehicle_idv) if @motor_insurance.vehicle_idv %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">CNG IDV</label>
+        <input type="text" class="form-control" value="<%= indian_currency(@motor_insurance.cng_idv) if @motor_insurance.cng_idv %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Total IDV (Auto-calculated)</label>
+        <input type="text" class="form-control" value="<%= indian_currency(@motor_insurance.total_idv) if @motor_insurance.total_idv %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Make</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.make %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Model</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.model %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Variant</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.variant %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">MFY (Year of Manufacture)</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.mfy %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Engine Number</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.engine_number %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Chassis Number</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.chassis_number %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Seating Capacity</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.seating_capacity %>" readonly>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Premium Details Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#premiumDetailsCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-currency-rupee"></i>
+      </div>
+      <h5 class="section-title">Premium Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="premiumDetailsCollapse" class="collapse">
+    <div class="section-body">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Net Premium*</label>
+        <input type="text" class="form-control" value="<%= indian_currency(@motor_insurance.net_premium) if @motor_insurance.net_premium %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">TP Premium*</label>
+        <input type="text" class="form-control" value="<%= indian_currency(@motor_insurance.tp_premium) if @motor_insurance.tp_premium %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">GST Percentage</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.gst_percentage %>%" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Total Premium*</label>
+        <input type="text" class="form-control" value="<%= indian_currency(@motor_insurance.total_premium) if @motor_insurance.total_premium %>" readonly>
+      </div>
+
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">NCB</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.ncb ? "#{@motor_insurance.ncb}%" : 'N/A' %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Discount/Loading %</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.discount_loading_percent ? "#{@motor_insurance.discount_loading_percent}%" : 'N/A' %>" readonly>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- Commission Calculation Table -->
+<% if @motor_insurance.drwise_policy? %>
+  <%= render 'shared/commission_calculation_table', policy: @motor_insurance %>
+<% end %>
+
+<!-- Add-ons & Coverage Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#addonsCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-shield-check"></i>
+      </div>
+      <h5 class="section-title">Add-ons & Coverage</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="addonsCollapse" class="collapse">
+    <div class="section-body">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Legal Liability</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.legal_liability? ? 'Yes' : 'No' %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Zero Depreciation</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.zero_depreciation? ? 'Yes' : 'No' %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Engine Protector</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.engine_protector? ? 'Yes' : 'No' %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Roadside Assistance</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.roadside_assistance? ? 'Yes' : 'No' %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Key Replacement</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.key_replacement? ? 'Yes' : 'No' %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Return to Invoice</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.return_to_invoice? ? 'Yes' : 'No' %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Personal Accident Cover</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.personal_accident_cover? ? 'Yes' : 'No' %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Consumable Cover</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.consumable_cover? ? 'Yes' : 'No' %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Electrical Accessories</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.electrical_accessories? ? 'Yes' : 'No' %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Non-Electrical Accessories</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.non_electrical_accessories? ? 'Yes' : 'No' %>" readonly>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- Financier Details Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#financierCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-bank"></i>
+      </div>
+      <h5 class="section-title">Financier & Reference Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="financierCollapse" class="collapse">
+    <div class="section-body">
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Financier / HPA</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.financier %>" readonly>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Reference By</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.reference_by_name %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12 mb-3">
+        <label class="form-label">Extra Note</label>
+        <textarea class="form-control" readonly rows="2"><%= @motor_insurance.extra_note %></textarea>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- Nominee Details Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#nomineeDetailsCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-people"></i>
+      </div>
+      <h5 class="section-title">Nominee Details</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="nomineeDetailsCollapse" class="collapse">
+    <div class="section-body">
+      <% if @motor_insurance.motor_insurance_nominees.any? %>
+        <!-- Display nominees from motor_insurance_nominees association -->
+        <% @motor_insurance.motor_insurance_nominees.each_with_index do |nominee, index| %>
+          <div class="nominee-card <%= 'mb-4' if index < @motor_insurance.motor_insurance_nominees.count - 1 %>" style="border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="mb-0" style="color: #495057; font-weight: 600;">
+                <i class="bi bi-person-circle me-2"></i>Nominee <%= index + 1 %>
+              </h6>
+              <span class="badge bg-primary"><%= nominee.share_percentage || 0 %>% Share</span>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="info-field">
+                  <label>NOMINEE NAME</label>
+                  <div class="info-value"><%= nominee.nominee_name %></div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-field">
+                  <label>RELATIONSHIP</label>
+                  <div class="info-value"><%= nominee.relationship&.titleize || '-' %></div>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="info-field">
+                  <label>AGE</label>
+                  <div class="info-value"><%= nominee.age ? "#{nominee.age} years" : '-' %></div>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="info-field">
+                  <label>SHARE %</label>
+                  <div class="info-value"><%= nominee.share_percentage ? "#{nominee.share_percentage}%" : '-' %></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Summary section for multiple nominees -->
+        <% if @motor_insurance.motor_insurance_nominees.count > 1 %>
+          <div class="mt-4 p-3" style="background-color: #e7f3ff; border-radius: 6px; border-left: 4px solid #0d6efd;">
+            <div class="row">
+              <div class="col-md-6">
+                <strong>Total Nominees: <%= @motor_insurance.motor_insurance_nominees.count %></strong>
+              </div>
+              <div class="col-md-6">
+                <strong>Total Share: <%= @motor_insurance.motor_insurance_nominees.sum(:share_percentage) || 0 %>%</strong>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <!-- No nominee data -->
+        <div class="text-center py-4" style="color: #6c757d;">
+          <i class="bi bi-person-x" style="font-size: 2rem; opacity: 0.5;"></i>
+          <p class="mt-2 mb-0">No nominee details available</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Additional Information Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#additionalInfoCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-info-circle"></i>
+      </div>
+      <h5 class="section-title">Additional Information</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="additionalInfoCollapse" class="collapse">
+    <div class="section-body">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Status</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.status || 'Active' %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Days Until Expiry</label>
+        <% if @motor_insurance.policy_end_date.present? %>
+          <% days_until_expiry = (@motor_insurance.policy_end_date - Date.current).to_i %>
+          <input type="text" class="form-control <%= days_until_expiry <= 30 ? 'text-danger' : days_until_expiry <= 60 ? 'text-warning' : 'text-success' %>"
+                 value="<%= days_until_expiry %> days" readonly>
+        <% else %>
+          <input type="text" class="form-control" value="N/A" readonly>
+        <% end %>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Added By Admin</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.is_admin_added? ? 'Yes' : 'No' %>" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Added By Customer</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.is_customer_added? ? 'Yes' : 'No' %>" readonly>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Added By Agent</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.is_agent_added? ? 'Yes' : 'No' %>" readonly>
+      </div>
+    </div>
+
+    <!-- Timestamps -->
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Created At</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.created_at&.strftime('%B %d, %Y at %I:%M %p') %>" readonly>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Last Updated At</label>
+        <input type="text" class="form-control" value="<%= @motor_insurance.updated_at&.strftime('%B %d, %Y at %I:%M %p') %>" readonly>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+
+<style>
+  .document-card {
+    transition: all 0.2s ease;
+  }
+  .document-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+  }
+
+  /* Make all readonly inputs have a light gray background for better visibility */
+  input[readonly], textarea[readonly] {
+    background-color: #f8f9fa !important;
+    cursor: default;
+  }
+
+  /* Add subtle border on hover for better UX */
+  .form-control[readonly]:hover {
+    border-color: #dee2e6;
+  }
+
+  /* Info Section Cards */
+  .info-section-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #e3e6f0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .info-section-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .section-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #e3e6f0;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    user-select: none;
+  }
+
+  .section-header:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+  }
+
+  .section-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+  }
+
+  .section-icon i {
+    color: white;
+    font-size: 1.1rem;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3436;
+    margin: 0;
+    flex-grow: 1;
+  }
+
+  .section-count {
+    background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-left: 1rem;
+  }
+
+  .collapse-icon {
+    color: #94a3b8;
+    transition: transform 0.3s;
+  }
+
+  .section-header:not(.collapsed) .collapse-icon {
+    transform: rotate(180deg);
+  }
+
+  .section-header.collapsed .collapse-icon {
+    transform: rotate(0deg);
+  }
+
+  .section-body {
+    padding: 1.5rem;
+  }
+
+  /* CONSISTENT SPACING: Fix spacing between all sections */
+  .info-section-card {
+    margin-bottom: 1.5rem !important;
+  }
+
+  .info-section-card:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* Section body proper padding */
+  .section-body {
+    padding: 1.5rem !important;
+  }
+
+  /* Form elements spacing within sections */
+  .section-body .row {
+    margin-bottom: 0.5rem;
+  }
+
+  .section-body .col-md-4,
+  .section-body .col-md-6,
+  .section-body .col-md-3 {
+    margin-bottom: 1rem !important;
+  }
+
+  /* Action buttons top spacing */
+  .d-flex.justify-content-between.align-items-center.mb-4 {
+    margin-bottom: 2rem !important;
+    padding: 1rem 0;
+  }
+
+  /* ANTI-OVERLAP: Ensure sections never overlap */
+  .info-section-card {
+    position: relative;
+    z-index: 1;
+    clear: both;
+  }
+
+  .info-section-card + .info-section-card {
+    margin-top: 0 !important;
+  }
+
+  /* Proper form spacing inside sections */
+  .section-body .form-label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  .section-body .form-control {
+    margin-bottom: 0.75rem;
+  }
+
+  /* Ensure consistent row spacing */
+  .section-body .row + .row {
+    margin-top: 1rem;
+  }
+
+  /* Page structure - ensure clean ending */
+  .container-fluid {
+    padding-top: 1rem;
+    padding-bottom: 0 !important;
+  }
+
+  /* Hide any empty containers at bottom */
+  div:empty:not([class*="collapse"]):not([id*="Collapse"]):not(.section-icon):not(.collapse-icon) {
+    display: none !important;
+  }
+
+  /* Remove bottom margins from last elements */
+  .info-section-card:last-of-type {
+    margin-bottom: 0 !important;
+  }
+
+  .info-section-card:last-of-type .section-body > *:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* Clean page ending */
+  body::after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+
+  /* Print styles */
+  @media print {
+    .btn, .d-flex {
+      display: none !important;
+    }
+    .card, .info-section-card {
+      break-inside: avoid;
+    }
+    .info-section-card:last-child {
+      margin-bottom: 0;
+    }
+  }
+</style>
+
+<script>
+// Enhanced cleanup function for motor insurance page
+function aggressiveCleanup() {
+  console.log('🧹 Running motor insurance page cleanup...');
+
+  // Find last actual section (Additional Information)
+  const lastSection = document.querySelector('.info-section-card:last-of-type');
+
+  if (lastSection) {
+    console.log('📍 Last section found:', lastSection.querySelector('.section-title')?.textContent);
+
+    // Remove ALL elements after the last section until we hit STYLE/SCRIPT
+    let nextElement = lastSection.nextElementSibling;
+    let removedCount = 0;
+
+    while (nextElement &&
+           nextElement.tagName !== 'STYLE' &&
+           nextElement.tagName !== 'SCRIPT') {
+      const toRemove = nextElement;
+      nextElement = nextElement.nextElementSibling;
+
+      console.log('🗑️ Removing element after last section:', toRemove.tagName, toRemove.className);
+      toRemove.remove();
+      removedCount++;
+    }
+
+    console.log(`✅ Removed ${removedCount} elements after last section`);
+  }
+
+  // Remove any empty info-section-cards
+  const allSections = document.querySelectorAll('.info-section-card');
+  allSections.forEach(section => {
+    const sectionBody = section.querySelector('.section-body');
+    if (sectionBody) {
+      const textContent = sectionBody.textContent.trim();
+      const hasInputs = sectionBody.querySelectorAll('input, textarea, select').length;
+
+      // Only remove if truly empty (no inputs and no text)
+      if (!hasInputs && textContent === '') {
+        console.log('🗑️ Removing empty section:', section);
+        section.remove();
+      }
+    }
+  });
+
+  // Remove empty divs that might be causing spacing issues
+  const allDivs = document.querySelectorAll('div');
+  allDivs.forEach(div => {
+    if (div.children.length === 0 &&
+        div.textContent.trim() === '' &&
+        !div.classList.contains('section-icon') &&
+        !div.classList.contains('collapse-icon') &&
+        !div.classList.contains('collapse') &&
+        !div.id.includes('Collapse')) {
+      console.log('🗑️ Removing empty div:', div);
+      div.remove();
+    }
+  });
+
+  console.log('✅ Motor insurance page cleanup completed');
+}
+
+// Run cleanup with multiple triggers
+document.addEventListener('DOMContentLoaded', aggressiveCleanup);
+window.addEventListener('load', aggressiveCleanup);
+setTimeout(aggressiveCleanup, 100);
+setTimeout(aggressiveCleanup, 500);
+setTimeout(aggressiveCleanup, 1000);
+</script>
+
+<!-- Policy Documents Section -->
+<div class="info-section-card">
+  <div class="section-header" data-bs-toggle="collapse" data-bs-target="#policyDocumentsCollapse" aria-expanded="true">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-files"></i>
+      </div>
+      <h5 class="section-title">Policy Documents</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="policyDocumentsCollapse" class="collapse show">
+    <div class="section-body">
+      <%
+        doc_type_labels = {
+          'rc_book' => 'RC Book', 'driving_license' => 'Driving License',
+          'vehicle_photos' => 'Vehicle Photos', 'insurance_certificate' => 'Insurance Certificate',
+          'noc' => 'NOC', 'puc_certificate' => 'PUC Certificate',
+          'policy_document' => 'Policy Document', 'inspection_report' => 'Inspection Report',
+          'additional_document' => 'Additional Document', 'insurance_copy' => 'Insurance Copy',
+          'aadhar' => 'Aadhaar', 'pan_card' => 'PAN Card', 'passport' => 'Passport',
+          'fitness_certificate' => 'Fitness Certificate', 'pollution_certificate' => 'Pollution Certificate',
+          'hypothecation' => 'Hypothecation', 'other' => 'Other'
+        }
+
+        valid_docs = @motor_insurance.motor_insurance_documents.select { |d| d.r2_file_key.present? }
+        main_doc_present = @motor_insurance.has_main_policy_r2_document?
+        total_documents = valid_docs.count + (main_doc_present ? 1 : 0)
+      %>
+
+      <% if total_documents > 0 %>
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <span class="text-muted small">
+            <i class="bi bi-cloud-check text-success me-1"></i>
+            <%= total_documents %> document<%= total_documents == 1 ? '' : 's' %> stored in Cloudflare R2
+          </span>
+        </div>
+
+        <div class="list-group list-group-flush border rounded">
+
+          <% if main_doc_present %>
+            <%
+              ct = @motor_insurance.main_policy_document_content_type.to_s
+              icon = ct.include?('pdf') ? 'bi-file-earmark-pdf text-danger' : ct.include?('image') ? 'bi-file-earmark-image text-success' : 'bi-file-earmark text-primary'
+              main_url = @motor_insurance.main_policy_r2_url
+            %>
+            <div class="list-group-item px-3 py-3">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px;">
+                  <i class="bi <%= icon %> fs-5"></i>
+                </div>
+                <div class="flex-grow-1 min-width-0">
+                  <div class="fw-semibold text-truncate"><%= @motor_insurance.main_policy_document_filename %></div>
+                  <div class="d-flex align-items-center gap-2 mt-1">
+                    <span class="badge bg-primary">Main Policy</span>
+                    <% if @motor_insurance.main_policy_document_size.present? %>
+                      <small class="text-muted"><%= number_to_human_size(@motor_insurance.main_policy_document_size) %></small>
+                    <% end %>
+                  </div>
+                </div>
+                <div class="d-flex gap-2 flex-shrink-0">
+                  <% if main_url %>
+                    <%= link_to main_url, class: "btn btn-sm btn-outline-primary", target: "_blank" do %>
+                      <i class="bi bi-eye me-1"></i>View
+                    <% end %>
+                    <%= link_to main_url, class: "btn btn-sm btn-outline-success", download: @motor_insurance.main_policy_document_filename do %>
+                      <i class="bi bi-download me-1"></i>Download
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+
+          <% valid_docs.each do |document| %>
+            <%
+              ct = document.r2_content_type.to_s
+              icon = ct.include?('pdf') ? 'bi-file-earmark-pdf text-danger' : ct.include?('image') ? 'bi-file-earmark-image text-success' : 'bi-file-earmark text-primary'
+              doc_url = document.respond_to?(:r2_url) && document.r2_url.present? ? document.r2_url : R2Service.public_url(document.r2_file_key)
+              type_label = doc_type_labels[document.document_type] || document.document_type.to_s.humanize
+            %>
+            <div class="list-group-item px-3 py-3">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px;">
+                  <i class="bi <%= icon %> fs-5"></i>
+                </div>
+                <div class="flex-grow-1 min-width-0">
+                  <div class="fw-semibold text-truncate"><%= document.title.presence || document.r2_filename %></div>
+                  <div class="d-flex align-items-center gap-2 mt-1">
+                    <span class="badge bg-secondary"><%= type_label %></span>
+                    <% if document.r2_file_size.present? %>
+                      <small class="text-muted"><%= number_to_human_size(document.r2_file_size) %></small>
+                    <% end %>
+                    <small class="text-muted"><%= document.created_at.strftime("%d %b %Y") %></small>
+                  </div>
+                  <% if document.description.present? %>
+                    <small class="text-muted d-block mt-1"><%= truncate(document.description, length: 80) %></small>
+                  <% end %>
+                </div>
+                <div class="d-flex gap-2 flex-shrink-0">
+                  <%= link_to doc_url, class: "btn btn-sm btn-outline-primary", target: "_blank" do %>
+                    <i class="bi bi-eye me-1"></i>View
+                  <% end %>
+                  <%= link_to doc_url, class: "btn btn-sm btn-outline-success", download: document.r2_filename do %>
+                    <i class="bi bi-download me-1"></i>Download
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+
+        </div>
+
+      <% else %>
+        <div class="text-center py-4">
+          <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px;">
+            <i class="bi bi-files text-muted fs-3"></i>
+          </div>
+          <h6 class="text-muted mb-1">No documents uploaded</h6>
+          <p class="text-muted small mb-0">Documents added to this policy will appear here with View and Download options.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

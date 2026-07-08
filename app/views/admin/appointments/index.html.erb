@@ -1,0 +1,982 @@
+<% content_for :title, "Appointments" %>
+
+<style>
+  .appointments-page { padding: 1.5rem; }
+
+  /* ===== Page Tabs ===== */
+  .page-tab-bar {
+    display: flex; gap: 4px;
+    background: #f1f3f9; border-radius: 14px; padding: 4px;
+    width: fit-content;
+  }
+  .page-tab {
+    padding: 9px 22px; border-radius: 11px; border: none; background: transparent;
+    font-weight: 600; font-size: 0.88rem; color: #6b7280; cursor: pointer;
+    transition: all 0.2s; display: flex; align-items: center; gap: 7px;
+  }
+  .page-tab.active {
+    background: white; color: #4338ca;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .page-tab .tab-badge {
+    background: #667eea; color: white; font-size: 0.68rem;
+    padding: 1px 7px; border-radius: 20px; font-weight: 700;
+  }
+  .page-tab.active .tab-badge { background: #667eea; }
+
+  /* ===== Stats Row ===== */
+  .appt-stat-card {
+    background: white; border-radius: 16px; padding: 1.25rem 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .appt-stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+  .appt-stat-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; flex-shrink: 0;
+  }
+  .appt-stat-info .stat-value { font-size: 1.8rem; font-weight: 700; line-height: 1; color: #1a1a2e; }
+  .appt-stat-info .stat-label { font-size: 0.78rem; color: #6b7280; font-weight: 500; margin-top: 2px; }
+
+  /* ===== Calendar ===== */
+  .calendar-card { background: white; border-radius: 20px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); overflow: hidden; }
+  .calendar-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 1.25rem 1.5rem; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .calendar-header h5 { margin: 0; font-weight: 700; font-size: 1.1rem; }
+  .cal-nav-btn {
+    background: rgba(255,255,255,0.2); border: none; color: white;
+    width: 34px; height: 34px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .cal-nav-btn:hover { background: rgba(255,255,255,0.35); }
+  .calendar-grid { padding: 1rem; }
+  .cal-weekdays { display: grid; grid-template-columns: repeat(7,1fr); text-align: center; margin-bottom: 0.5rem; }
+  .cal-weekdays span { font-size: 0.72rem; font-weight: 600; color: #9ca3af; padding: 0.4rem 0; text-transform: uppercase; }
+  .cal-days { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
+  .cal-day {
+    aspect-ratio: 1; border-radius: 10px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; cursor: pointer;
+    transition: all 0.15s; position: relative; font-size: 0.85rem; font-weight: 500; color: #374151;
+  }
+  .cal-day:hover:not(.cal-empty) { background: #f3f4f6; }
+  .cal-day.cal-empty { cursor: default; }
+  .cal-day.today { background: linear-gradient(135deg, #667eea, #764ba2) !important; color: white !important; font-weight: 700; }
+  .cal-day.selected { background: #e0e7ff; color: #4338ca; font-weight: 700; border: 2px solid #818cf8; }
+  .cal-day.has-appt::after { content:''; position:absolute; bottom:4px; width:5px; height:5px; background:#f59e0b; border-radius:50%; }
+  .cal-day.today.has-appt::after { background: white; }
+
+  /* ===== Appointment List ===== */
+  .appt-list-card { background: white; border-radius: 20px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); overflow: hidden; }
+  .appt-list-header {
+    padding: 1.25rem 1.5rem; border-bottom: 1px solid #f3f4f6;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .appt-list-header h5 { margin: 0; font-weight: 700; color: #1a1a2e; }
+  .appt-list-body { max-height: 520px; overflow-y: auto; }
+  .appt-item {
+    padding: 1rem 1.5rem; border-bottom: 1px solid #f9fafb;
+    transition: background 0.15s; cursor: pointer;
+    display: flex; align-items: flex-start; gap: 1rem;
+  }
+  .appt-item:hover { background: #fafafa; }
+  .appt-item:last-child { border-bottom: none; }
+  .appt-avatar {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1rem; flex-shrink: 0;
+  }
+  .appt-info { flex: 1; min-width: 0; }
+  .appt-name { font-weight: 600; color: #1f2937; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .appt-meta { font-size: 0.78rem; color: #6b7280; margin-top: 2px; }
+  .appt-time-tag { font-size: 0.78rem; font-weight: 600; color: #667eea; background: #eef2ff; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+  .appt-date-divider {
+    padding: 0.5rem 1.5rem; background: #f9fafb;
+    font-size: 0.75rem; font-weight: 600; color: #9ca3af;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .empty-state { padding: 3rem 1.5rem; text-align: center; color: #9ca3af; }
+  .empty-state i { font-size: 3rem; margin-bottom: 0.75rem; display: block; opacity: 0.4; }
+
+  /* ===== Reminders Tab ===== */
+  .reminders-panel { padding: 0; }
+  .reminders-date-header {
+    background: linear-gradient(135deg, #f0abfc 0%, #818cf8 100%);
+    border-radius: 20px; padding: 1.5rem 2rem; margin-bottom: 1.5rem;
+    color: white; display: flex; align-items: center; justify-content: space-between;
+  }
+  .reminders-date-header .date-day { font-size: 3.5rem; font-weight: 800; line-height: 1; }
+  .reminders-date-header .date-info { font-size: 0.95rem; opacity: 0.9; margin-top: 2px; }
+  .reminders-date-header .date-weekday { font-size: 1.3rem; font-weight: 700; }
+  .reminders-live-badge {
+    background: rgba(255,255,255,0.25); border-radius: 20px; padding: 6px 14px;
+    font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; gap: 6px;
+  }
+  .reminders-live-dot { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; animation: pulse-dot 1.5s infinite; }
+  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(1.3)} }
+
+  .reminder-card {
+    background: white; border-radius: 18px; padding: 1.25rem 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 1rem;
+    border-left: 4px solid #e5e7eb; transition: all 0.2s; cursor: pointer;
+    display: flex; align-items: center; gap: 1.25rem;
+  }
+  .reminder-card:hover { transform: translateX(4px); box-shadow: 0 6px 24px rgba(0,0,0,0.1); }
+  .reminder-card.status-pending  { border-left-color: #f59e0b; }
+  .reminder-card.status-confirmed { border-left-color: #22c55e; }
+  .reminder-card.status-completed { border-left-color: #3b82f6; opacity: 0.75; }
+  .reminder-card.status-cancelled { border-left-color: #ef4444; opacity: 0.6; }
+  .reminder-card.is-now { border-left-color: #a855f7; background: #fdf4ff; box-shadow: 0 4px 20px rgba(168,85,247,0.15); }
+  .reminder-card.is-past:not(.status-completed):not(.status-cancelled) { opacity: 0.65; }
+
+  .reminder-time-block {
+    min-width: 72px; text-align: center; flex-shrink: 0;
+  }
+  .reminder-time-main { font-size: 1rem; font-weight: 800; color: #1f2937; line-height: 1; }
+  .reminder-time-ampm { font-size: 0.7rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; margin-top: 1px; }
+  .reminder-time-pill {
+    font-size: 0.68rem; font-weight: 700; padding: 3px 8px;
+    border-radius: 20px; margin-top: 5px; display: inline-block;
+  }
+
+  .reminder-avatar {
+    width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1.05rem;
+  }
+  .reminder-body { flex: 1; min-width: 0; }
+  .reminder-name { font-weight: 700; color: #111827; font-size: 1rem; }
+  .reminder-contact { font-size: 0.78rem; color: #6b7280; margin-top: 1px; }
+  .reminder-agenda { font-size: 0.82rem; color: #374151; margin-top: 4px; background: #f9fafb; border-radius: 8px; padding: 5px 10px; }
+  .reminder-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+  .reminder-action-btn {
+    padding: 5px 12px; border-radius: 10px; font-size: 0.75rem; font-weight: 600;
+    border: 1.5px solid; cursor: pointer; background: white; transition: all 0.15s; white-space: nowrap;
+  }
+  .reminder-action-btn.done-btn { border-color: #22c55e; color: #16a34a; }
+  .reminder-action-btn.done-btn:hover { background: #22c55e; color: white; }
+  .reminder-action-btn.edit-btn { border-color: #818cf8; color: #4338ca; }
+  .reminder-action-btn.edit-btn:hover { background: #818cf8; color: white; }
+
+  .reminders-empty {
+    text-align: center; padding: 4rem 2rem;
+    background: white; border-radius: 20px; box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  }
+  .reminders-empty .empty-icon { font-size: 4rem; margin-bottom: 1rem; display: block; }
+
+  .reminder-section-label {
+    font-size: 0.72rem; font-weight: 700; color: #9ca3af; text-transform: uppercase;
+    letter-spacing: 0.08em; margin: 1.25rem 0 0.75rem;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .reminder-section-label::after { content:''; flex:1; height:1px; background:#e5e7eb; }
+
+  /* ===== Create Modal ===== */
+  .modal-header-appt {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white; border-radius: 20px 20px 0 0; padding: 1.25rem 1.5rem;
+  }
+  .modal-content { border-radius: 20px; border: none; box-shadow: 0 25px 60px rgba(0,0,0,0.2); }
+
+  /* ── Custom form fields (no form-floating, no alignment bugs) ── */
+  .appt-label {
+    display: block; font-size: 0.77rem; font-weight: 700;
+    color: #4b5563; margin-bottom: 5px; letter-spacing: 0.01em;
+  }
+  .appt-label .req { color: #ef4444; margin-left: 1px; }
+  .appt-input {
+    display: block; width: 100%; padding: 9px 13px;
+    border: 1.5px solid #e5e7eb; border-radius: 10px;
+    font-size: 0.87rem; color: #1f2937; background: white;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none; line-height: 1.5;
+    box-sizing: border-box;
+  }
+  .appt-input:focus { border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
+  .appt-input::placeholder { color: #9ca3af; font-weight: 400; }
+  textarea.appt-input { resize: vertical; min-height: 70px; }
+
+  /* ── Section dividers ── */
+  .form-section-title {
+    font-size: 0.7rem; font-weight: 700; color: #667eea;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    display: flex; align-items: center; gap: 7px;
+    margin-bottom: 10px; padding: 12px 0 8px;
+    border-top: 1px solid #f0f0f8;
+  }
+  .form-section-title:first-of-type { padding-top: 0; border-top: none; }
+  .form-section-title i { font-size: 0.78rem; opacity: 0.8; }
+  .form-section-title .req { color: #ef4444; font-size: 0.75rem; margin-left: 2px; }
+
+  /* ── Time slots: 4-col grid, compact, strong selected state ── */
+  .time-slot-grid {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 6px;
+    max-height: 148px; overflow-y: auto; padding-right: 2px;
+  }
+  .time-slot-btn {
+    padding: 8px 2px; text-align: center; border-radius: 8px;
+    border: 1.5px solid #e5e7eb; background: white; cursor: pointer;
+    font-size: 0.73rem; font-weight: 500; transition: all 0.15s; color: #374151;
+    white-space: nowrap; user-select: none;
+  }
+  .time-slot-btn:hover { border-color: #818cf8; color: #4338ca; background: #eef2ff; }
+  .time-slot-btn.selected {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; font-weight: 700;
+    box-shadow: 0 3px 10px rgba(102,126,234,0.4);
+  }
+  .time-slot-btn.selected::before { content: '✓ '; font-size: 0.65rem; }
+  .time-slot-error { color: #ef4444; font-size: 0.75rem; margin-top: 5px; display: none; }
+
+  /* ── Customer toggle ── */
+  .customer-source-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
+  .src-btn {
+    flex: 1; padding: 8px; border: 2px solid #e5e7eb; border-radius: 10px;
+    text-align: center; cursor: pointer; font-size: 0.82rem; font-weight: 600;
+    transition: all 0.15s; background: white; color: #6b7280;
+  }
+  .src-btn.active { border-color: #667eea; background: #eef2ff; color: #4338ca; }
+
+  /* ── Buttons ── */
+  .btn-create-appt {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white; border: none; padding: 12px 28px; border-radius: 12px;
+    font-weight: 600; font-size: 0.95rem; transition: all 0.2s; width: 100%;
+  }
+  .btn-create-appt:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(102,126,234,0.4); color: white; }
+  .btn-new-appt {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white; border: none; padding: 9px 18px; border-radius: 12px;
+    font-weight: 600; font-size: 0.85rem; transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-new-appt:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(102,126,234,0.4); color: white; }
+
+  /* ── Customer autocomplete ── */
+  .customer-suggestions {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 1000;
+    background: white; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    max-height: 200px; overflow-y: auto; border: 1px solid #e5e7eb; display: none;
+  }
+  .suggestion-item { padding: 10px 14px; cursor: pointer; transition: background 0.1s; border-bottom: 1px solid #f3f4f6; font-size: 0.88rem; }
+  .suggestion-item:hover { background: #f9fafb; }
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-name { font-weight: 600; color: #1f2937; }
+  .suggestion-email { font-size: 0.77rem; color: #6b7280; }
+  #reminderClock { font-size: 1.6rem; font-weight: 800; letter-spacing: 1px; }
+</style>
+
+<div class="appointments-page">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-3">
+    <div>
+      <h2 class="fw-bold mb-1" style="color:#1a1a2e;">
+        <i class="bi bi-calendar3 me-2" style="color:#667eea;"></i>Appointments
+      </h2>
+      <p class="text-muted mb-0" style="font-size:0.88rem;">Manage and schedule client meetings</p>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <!-- Tab Bar -->
+      <div class="page-tab-bar">
+        <button class="page-tab <%= @active_tab == 'appointments' ? 'active' : '' %>" onclick="switchTab('appointments')">
+          <i class="bi bi-calendar3"></i> Appointments
+        </button>
+        <button class="page-tab <%= @active_tab == 'reminders' ? 'active' : '' %>" onclick="switchTab('reminders')">
+          <i class="bi bi-bell-fill"></i> Reminders
+          <% if @today_count > 0 %>
+            <span class="tab-badge"><%= @today_count %></span>
+          <% end %>
+        </button>
+      </div>
+      <div class="dropdown download-dropdown">
+        <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius:12px;padding:9px 18px;font-weight:600;font-size:0.85rem;">
+          <i class="bi bi-download me-1"></i> Download
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+            <a class="dropdown-item" data-turbo="false" href="<%= download_admin_appointments_path(request.query_parameters.merge(format_type: 'csv')) %>">
+              <i class="bi bi-filetype-csv text-success me-2"></i>CSV
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" data-turbo="false" href="<%= download_admin_appointments_path(request.query_parameters.merge(format_type: 'excel')) %>">
+              <i class="bi bi-file-earmark-excel text-success me-2"></i>Excel
+            </a>
+          </li>
+        </ul>
+      </div>
+      <button class="btn-new-appt" onclick="openCreateModal()">
+        <i class="bi bi-plus-lg"></i> New
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+      <div class="appt-stat-card">
+        <div class="appt-stat-icon" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+          <i class="bi bi-calendar-check-fill text-white"></i>
+        </div>
+        <div class="appt-stat-info">
+          <div class="stat-value"><%= @upcoming_count %></div>
+          <div class="stat-label">Upcoming</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="appt-stat-card" style="cursor:pointer;" onclick="switchTab('reminders')">
+        <div class="appt-stat-icon" style="background:linear-gradient(135deg,#f093fb,#f5576c);">
+          <i class="bi bi-clock-fill text-white"></i>
+        </div>
+        <div class="appt-stat-info">
+          <div class="stat-value"><%= @today_count %></div>
+          <div class="stat-label">Today</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="appt-stat-card">
+        <div class="appt-stat-icon" style="background:linear-gradient(135deg,#ffecd2,#fcb69f);color:#c2410c;">
+          <i class="bi bi-hourglass-split"></i>
+        </div>
+        <div class="appt-stat-info">
+          <div class="stat-value"><%= @pending_count %></div>
+          <div class="stat-label">Pending</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== APPOINTMENTS TAB ===== -->
+  <div id="tabAppointments" style="<%= @active_tab == 'reminders' ? 'display:none;' : '' %>">
+    <div class="row g-4">
+      <!-- Calendar -->
+      <div class="col-12 col-lg-4">
+        <div class="calendar-card">
+          <div class="calendar-header">
+            <button class="cal-nav-btn" onclick="changeMonth(-1)"><i class="bi bi-chevron-left"></i></button>
+            <h5 id="calMonthTitle">Loading...</h5>
+            <button class="cal-nav-btn" onclick="changeMonth(1)"><i class="bi bi-chevron-right"></i></button>
+          </div>
+          <div class="calendar-grid">
+            <div class="cal-weekdays">
+              <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
+              <span>Thu</span><span>Fri</span><span>Sat</span>
+            </div>
+            <div class="cal-days" id="calDays"></div>
+          </div>
+        </div>
+        <div id="dateQuickInfo" class="mt-3" style="display:none;">
+          <div class="appt-stat-card" style="background:linear-gradient(135deg,#eef2ff,#f5f3ff);">
+            <div class="appt-stat-icon" style="background:white;color:#667eea;">
+              <i class="bi bi-calendar-event-fill"></i>
+            </div>
+            <div class="appt-stat-info flex-grow-1">
+              <div class="stat-label" id="selectedDateLabel">Selected Date</div>
+              <div id="selectedDateCount" class="stat-value" style="font-size:1.3rem;"></div>
+            </div>
+            <button class="btn-new-appt" style="padding:7px 14px;font-size:0.78rem;" onclick="openCreateModal()">
+              <i class="bi bi-plus"></i> Add
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointment List -->
+      <div class="col-12 col-lg-8">
+        <div class="appt-list-card">
+          <div class="appt-list-header">
+            <div>
+              <h5 id="listTitle"><%= @selected_date ? "Appointments on #{@selected_date.strftime('%d %b %Y')}" : 'All Appointments' %></h5>
+              <small class="text-muted" id="listSubtitle">
+                <%= @selected_date ? "#{@appointments.count} appointment(s)" : 'Nearest upcoming first' %>
+              </small>
+            </div>
+            <% if @selected_date %>
+              <a href="<%= admin_appointments_path %>" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">
+                <i class="bi bi-x"></i> Clear Filter
+              </a>
+            <% end %>
+          </div>
+          <div class="appt-list-body">
+            <% if @appointments.any? %>
+              <% current_date = nil %>
+              <% @appointments.each do |appt| %>
+                <% if appt.appointment_date != current_date %>
+                  <% current_date = appt.appointment_date %>
+                  <div class="appt-date-divider">
+                    <%= appt.appointment_date == Date.current ? 'Today — ' : '' %>
+                    <%= appt.appointment_date == Date.current + 1 ? 'Tomorrow — ' : '' %>
+                    <%= appt.appointment_date.strftime('%A, %d %B %Y') %>
+                  </div>
+                <% end %>
+                <% colors = ['#667eea','#764ba2','#f093fb','#43e97b','#f5576c','#4facfe','#fa709a','#30cfd0'] %>
+                <% color = colors[appt.id % colors.length] %>
+                <div class="appt-item" onclick="showAppointmentDetail(<%= appt.id %>)">
+                  <div class="appt-avatar" style="background:<%= color %>22;color:<%= color %>;">
+                    <%= appt.customer_name.split.map(&:first).first(2).join.upcase %>
+                  </div>
+                  <div class="appt-info">
+                    <div class="appt-name"><%= appt.customer_name %></div>
+                    <div class="appt-meta">
+                      <% if appt.customer_email.present? %><i class="bi bi-envelope-fill me-1"></i><%= appt.customer_email %><% end %>
+                      <% if appt.meeting_agenda.present? %><span class="ms-2"><i class="bi bi-chat-text me-1"></i><%= truncate(appt.meeting_agenda, length: 40) %></span><% end %>
+                    </div>
+                  </div>
+                  <div class="d-flex flex-column align-items-end gap-1">
+                    <div class="appt-time-tag"><i class="bi bi-clock me-1"></i><%= appt.time_slot %></div>
+                    <span class="badge bg-<%= appt.status_color %>-subtle text-<%= appt.status_color %>" style="font-size:0.68rem;padding:3px 10px;border-radius:20px;">
+                      <%= appt.status.capitalize %>
+                    </span>
+                  </div>
+                </div>
+              <% end %>
+            <% else %>
+              <div class="empty-state">
+                <i class="bi bi-calendar-x"></i>
+                <p class="fw-semibold">No appointments found</p>
+                <p class="small">Click a date on the calendar or press New to schedule one.</p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== REMINDERS TAB ===== -->
+  <div id="tabReminders" style="<%= @active_tab == 'appointments' ? 'display:none;' : '' %>">
+    <!-- Date Header Banner -->
+    <div class="reminders-date-header">
+      <div>
+        <div class="date-weekday"><%= Date.current.strftime('%A') %></div>
+        <div class="d-flex align-items-end gap-3">
+          <div class="date-day"><%= Date.current.strftime('%d') %></div>
+          <div class="date-info">
+            <div><%= Date.current.strftime('%B %Y') %></div>
+            <div><%= @today_count %> appointment<%= @today_count != 1 ? 's' : '' %> today</div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex flex-column align-items-end gap-2">
+        <div id="reminderClock">--:--</div>
+        <div class="reminders-live-badge">
+          <span class="reminders-live-dot"></span> Live
+        </div>
+      </div>
+    </div>
+
+    <% if @today_appointments.any? %>
+      <%
+        now_hour = Time.current.hour
+        now_min  = Time.current.min
+
+        upcoming_today = []
+        past_today     = []
+
+        @today_appointments.each do |appt|
+          # Parse slot like "09:30 AM"
+          slot_parts = appt.time_slot.match(/(\d+):(\d+)\s*(AM|PM)/i)
+          if slot_parts
+            sh = slot_parts[1].to_i
+            sm = slot_parts[2].to_i
+            period = slot_parts[3].upcase
+            sh = sh == 12 ? 12 : sh + 12 if period == 'PM'
+            sh = 0 if period == 'AM' && sh == 12
+            appt_minutes = sh * 60 + sm
+            now_minutes  = now_hour * 60 + now_min
+            if appt.status == 'completed' || appt.status == 'cancelled'
+              past_today << appt
+            elsif appt_minutes < now_minutes - 30
+              past_today << appt
+            else
+              upcoming_today << appt
+            end
+          else
+            upcoming_today << appt
+          end
+        end
+      %>
+
+      <% if upcoming_today.any? %>
+        <div class="reminder-section-label"><i class="bi bi-arrow-right-circle-fill" style="color:#667eea;"></i> Upcoming Today</div>
+        <% upcoming_today.each do |appt| %>
+          <%
+            colors = ['#667eea','#764ba2','#f093fb','#43e97b','#f5576c','#4facfe','#fa709a','#30cfd0']
+            color  = colors[appt.id % colors.length]
+            slot_parts = appt.time_slot.match(/(\d+):(\d+)\s*(AM|PM)/i)
+            is_now = false
+            if slot_parts
+              sh = slot_parts[1].to_i; sm = slot_parts[2].to_i; period = slot_parts[3].upcase
+              sh = sh == 12 ? 12 : sh + 12 if period == 'PM'
+              sh = 0 if period == 'AM' && sh == 12
+              appt_min = sh * 60 + sm
+              now_min_total = Time.current.hour * 60 + Time.current.min
+              is_now = (appt_min - now_min_total).abs <= 30
+            end
+          %>
+          <div class="reminder-card status-<%= appt.status %><%= is_now ? ' is-now' : '' %>" onclick="showAppointmentDetail(<%= appt.id %>)">
+            <div class="reminder-time-block">
+              <% time_parts = appt.time_slot.split(' ') %>
+              <div class="reminder-time-main"><%= time_parts[0] %></div>
+              <div class="reminder-time-ampm"><%= time_parts[1] %></div>
+              <% if is_now %>
+                <span class="reminder-time-pill" style="background:#fdf4ff;color:#a855f7;border:1px solid #e9d5ff;">Now</span>
+              <% else %>
+                <span class="reminder-time-pill" style="background:#eef2ff;color:#667eea;">Soon</span>
+              <% end %>
+            </div>
+            <div class="reminder-avatar" style="background:<%= color %>22;color:<%= color %>;">
+              <%= appt.customer_name.split.map(&:first).first(2).join.upcase %>
+            </div>
+            <div class="reminder-body">
+              <div class="reminder-name"><%= appt.customer_name %></div>
+              <div class="reminder-contact">
+                <% if appt.customer_email.present? %><i class="bi bi-envelope me-1"></i><%= appt.customer_email %><% end %>
+                <% if appt.customer_phone.present? %><span class="ms-2"><i class="bi bi-phone me-1"></i><%= appt.customer_phone %></span><% end %>
+              </div>
+              <% if appt.meeting_agenda.present? %>
+                <div class="reminder-agenda"><i class="bi bi-chat-square-text me-1" style="color:#667eea;"></i><%= truncate(appt.meeting_agenda, length: 60) %></div>
+              <% end %>
+            </div>
+            <div class="reminder-actions" onclick="event.stopPropagation()">
+              <% if appt.status != 'completed' && appt.status != 'cancelled' %>
+                <%= button_to admin_appointment_path(appt), method: :patch,
+                    params: { appointment: { status: 'completed' } },
+                    class: 'reminder-action-btn done-btn',
+                    data: { confirm: 'Mark as completed?' } do %>
+                  <i class="bi bi-check2"></i> Done
+                <% end %>
+              <% end %>
+              <%= link_to edit_admin_appointment_path(appt),
+                  data: { turbo: false },
+                  class: 'reminder-action-btn edit-btn' do %>
+                <i class="bi bi-pencil"></i> Edit
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+
+      <% if past_today.any? %>
+        <div class="reminder-section-label"><i class="bi bi-check2-circle" style="color:#9ca3af;"></i> Earlier / Done</div>
+        <% past_today.each do |appt| %>
+          <%
+            colors = ['#667eea','#764ba2','#f093fb','#43e97b','#f5576c','#4facfe','#fa709a','#30cfd0']
+            color  = colors[appt.id % colors.length]
+          %>
+          <div class="reminder-card status-<%= appt.status %> is-past" onclick="showAppointmentDetail(<%= appt.id %>)">
+            <div class="reminder-time-block">
+              <% time_parts = appt.time_slot.split(' ') %>
+              <div class="reminder-time-main"><%= time_parts[0] %></div>
+              <div class="reminder-time-ampm"><%= time_parts[1] %></div>
+              <span class="reminder-time-pill" style="background:#f3f4f6;color:#9ca3af;">Past</span>
+            </div>
+            <div class="reminder-avatar" style="background:<%= color %>22;color:<%= color %>;">
+              <%= appt.customer_name.split.map(&:first).first(2).join.upcase %>
+            </div>
+            <div class="reminder-body">
+              <div class="reminder-name"><%= appt.customer_name %></div>
+              <div class="reminder-contact">
+                <% if appt.customer_email.present? %><i class="bi bi-envelope me-1"></i><%= appt.customer_email %><% end %>
+              </div>
+              <% if appt.meeting_agenda.present? %>
+                <div class="reminder-agenda"><i class="bi bi-chat-square-text me-1"></i><%= truncate(appt.meeting_agenda, length: 60) %></div>
+              <% end %>
+            </div>
+            <div class="reminder-actions" onclick="event.stopPropagation()">
+              <span class="badge bg-<%= appt.status_color %>-subtle text-<%= appt.status_color %>" style="font-size:0.72rem;padding:5px 12px;border-radius:20px;">
+                <%= appt.status.capitalize %>
+              </span>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+
+    <% else %>
+      <div class="reminders-empty">
+        <span class="empty-icon">🗓️</span>
+        <h5 class="fw-bold" style="color:#374151;">No appointments today</h5>
+        <p class="text-muted mb-3">Your schedule is clear for today.</p>
+        <button class="btn-new-appt mx-auto" onclick="openCreateModal()">
+          <i class="bi bi-plus-lg"></i> Schedule Something
+        </button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- ===== Create Appointment Modal ===== -->
+<div class="modal fade" id="createAppointmentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header-appt d-flex align-items-center justify-content-between">
+        <div>
+          <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-plus me-2"></i>Schedule Appointment</h5>
+          <small style="opacity:0.8;">Fill in the details below</small>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:1.25rem 1.5rem;">
+        <%= form_with url: admin_appointments_path, scope: :appointment, method: :post, id: 'appointmentForm', local: true, data: { turbo: false } do |f| %>
+
+          <!-- Section 1: Customer Details -->
+          <div class="form-section-title" style="padding-top:0;border-top:none;">
+            <i class="bi bi-person-fill"></i> Customer Details
+          </div>
+          <div class="customer-source-toggle">
+            <div class="src-btn active" id="srcExisting" onclick="switchSource('existing')">
+              <i class="bi bi-people-fill me-1"></i>Existing Customer
+            </div>
+            <div class="src-btn" id="srcNew" onclick="switchSource('new')">
+              <i class="bi bi-person-plus me-1"></i>New Customer
+            </div>
+          </div>
+
+          <div id="existingCustomerSection" class="mb-2">
+            <div style="position:relative;" id="customerSearch">
+              <label class="appt-label">Search Customer</label>
+              <input type="text" class="appt-input" id="customerSearchInput"
+                     placeholder="Search by name, email, or phone..." autocomplete="off">
+              <div class="customer-suggestions" id="customerSuggestions"></div>
+            </div>
+            <input type="hidden" name="appointment[customer_id]"    id="selectedCustomerId">
+            <input type="hidden" name="appointment[customer_name]"  id="selectedCustomerName">
+            <input type="hidden" name="appointment[customer_email]" id="selectedCustomerEmail">
+            <input type="hidden" name="appointment[customer_phone]" id="selectedCustomerPhone">
+            <div id="selectedCustomerChip" style="display:none;" class="mt-2">
+              <span class="badge rounded-pill px-3 py-2" style="background:#eef2ff;color:#4338ca;font-size:0.82rem;">
+                <i class="bi bi-person-check-fill me-1"></i>
+                <span id="chipName"></span>
+                <button type="button" onclick="clearCustomer()" class="btn-close ms-2" style="font-size:0.6rem;filter:none;"></button>
+              </span>
+            </div>
+          </div>
+
+          <div id="newCustomerSection" style="display:none;" class="mb-2">
+            <div class="row g-2">
+              <div class="col-12">
+                <label class="appt-label" for="newCustomerName">Full Name <span class="req">*</span></label>
+                <%= f.text_field :customer_name, class:'appt-input', id:'newCustomerName',
+                    placeholder:'Enter full name', autocomplete:'off' %>
+              </div>
+              <div class="col-md-6">
+                <label class="appt-label" for="newCustomerEmail">Email Address</label>
+                <%= f.email_field :customer_email, class:'appt-input', id:'newCustomerEmail',
+                    placeholder:'Enter email address', autocomplete:'off' %>
+              </div>
+              <div class="col-md-6">
+                <label class="appt-label" for="newCustomerPhone">Phone Number</label>
+                <%= f.telephone_field :customer_phone, class:'appt-input', id:'newCustomerPhone',
+                    placeholder:'Enter phone number', autocomplete:'off' %>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Appointment Details -->
+          <div class="form-section-title">
+            <i class="bi bi-calendar3"></i> Appointment Details
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-md-5">
+              <label class="appt-label">Date <span class="req">*</span></label>
+              <%= f.date_field :appointment_date, class:'appt-input', id:'appointmentDate',
+                  value: Date.current.to_s, min: Date.current.to_s %>
+            </div>
+            <div class="col-md-7">
+              <label class="appt-label">Meeting Agenda</label>
+              <%= f.text_field :meeting_agenda, class:'appt-input', placeholder:'Brief description of meeting' %>
+            </div>
+          </div>
+
+          <!-- Section 3: Time Selection -->
+          <div class="form-section-title">
+            <i class="bi bi-clock"></i> Select Time Slot <span class="req">*</span>
+          </div>
+          <div class="mb-2">
+            <div class="time-slot-grid">
+              <% Appointment::TIME_SLOTS.each do |slot| %>
+                <div class="time-slot-btn" onclick="selectTimeSlot(this,'<%= slot %>')"><%= slot %></div>
+              <% end %>
+            </div>
+            <input type="hidden" name="appointment[time_slot]" id="selectedTimeSlot">
+            <div id="timeSlotError" class="time-slot-error">Please select a time slot.</div>
+          </div>
+
+          <!-- Section 4: Additional Notes -->
+          <div class="form-section-title">
+            <i class="bi bi-pencil-square"></i> Additional Notes
+          </div>
+          <div class="mb-3">
+            <%= f.text_area :notes, class:'appt-input', placeholder:'Add any notes or special instructions...' %>
+          </div>
+
+          <div id="formErrors" class="alert alert-danger rounded-3" style="display:none;font-size:0.85rem;"></div>
+          <button type="submit" class="btn-create-appt" id="submitAppointmentBtn">
+            <i class="bi bi-calendar-check me-2"></i>Create Appointment
+          </button>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="appointmentDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">Appointment Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="appointmentDetailBody">
+        <div class="text-center py-4"><div class="spinner-border text-primary" style="width:2rem;height:2rem;"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Tab Switching =====
+function switchTab(tab) {
+  document.getElementById('tabAppointments').style.display = tab === 'appointments' ? '' : 'none';
+  document.getElementById('tabReminders').style.display    = tab === 'reminders'    ? '' : 'none';
+  document.querySelectorAll('.page-tab').forEach(b => {
+    b.classList.remove('active');
+    if ((tab === 'appointments' && b.textContent.trim().startsWith('Appointments')) ||
+        (tab === 'reminders'    && b.textContent.trim().startsWith('Reminders'))) {
+      b.classList.add('active');
+    }
+  });
+  history.replaceState(null, '', tab === 'reminders' ? '?tab=reminders' : '<%= admin_appointments_path %>');
+  if (tab === 'appointments') loadCalendar();
+}
+
+// ===== Live Clock =====
+function updateClock() {
+  const now  = new Date();
+  const h    = String(now.getHours()).padStart(2,'0');
+  const m    = String(now.getMinutes()).padStart(2,'0');
+  const s    = String(now.getSeconds()).padStart(2,'0');
+  const el   = document.getElementById('reminderClock');
+  if (el) el.textContent = `${h}:${m}:${s}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ===== Calendar State =====
+let calYear  = <%= Date.current.year %>;
+let calMonth = <%= Date.current.month %>;
+let calData  = {};
+let selectedCalDate = null;
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+async function loadCalendar() {
+  document.getElementById('calMonthTitle').textContent = `${MONTH_NAMES[calMonth-1]} ${calYear}`;
+  try {
+    const res = await fetch(`<%= calendar_data_admin_appointments_path %>?month=${calMonth}&year=${calYear}`);
+    calData = await res.json();
+  } catch(e) { calData = {}; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const container = document.getElementById('calDays');
+  container.innerHTML = '';
+  const today    = new Date();
+  const firstDay = new Date(calYear, calMonth - 1, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth, 0).getDate();
+  for (let i = 0; i < firstDay; i++) {
+    const e = document.createElement('div'); e.className = 'cal-day cal-empty'; container.appendChild(e);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const div = document.createElement('div');
+    div.className = 'cal-day';
+    div.textContent = d;
+    div.dataset.date = dateStr;
+    const isToday = today.getFullYear()===calYear && today.getMonth()===calMonth-1 && today.getDate()===d;
+    if (isToday) div.classList.add('today');
+    if (calData[dateStr]?.length > 0) div.classList.add('has-appt');
+    if (selectedCalDate === dateStr) div.classList.add('selected');
+    div.onclick = () => selectCalDate(dateStr, div);
+    container.appendChild(div);
+  }
+}
+
+function selectCalDate(dateStr, el) {
+  document.querySelectorAll('.cal-day.selected').forEach(d => d.classList.remove('selected'));
+  if (selectedCalDate === dateStr) {
+    selectedCalDate = null;
+    document.getElementById('dateQuickInfo').style.display = 'none';
+    loadAppointments(null);
+  } else {
+    selectedCalDate = dateStr;
+    el.classList.add('selected');
+    const count = calData[dateStr]?.length || 0;
+    document.getElementById('dateQuickInfo').style.display = 'flex';
+    document.getElementById('selectedDateLabel').textContent = new Date(dateStr+'T00:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+    document.getElementById('selectedDateCount').textContent = `${count} appointment${count!==1?'s':''}`;
+    document.getElementById('appointmentDate').value = dateStr;
+    loadAppointments(dateStr);
+  }
+}
+
+function changeMonth(delta) {
+  calMonth += delta;
+  if (calMonth > 12) { calMonth = 1; calYear++; }
+  if (calMonth < 1)  { calMonth = 12; calYear--; }
+  selectedCalDate = null;
+  document.getElementById('dateQuickInfo').style.display = 'none';
+  loadCalendar();
+}
+
+function loadAppointments(dateStr) {
+  const url = dateStr ? `<%= admin_appointments_path %>?date=${encodeURIComponent(dateStr)}` : '<%= admin_appointments_path %>';
+  window.location.href = url;
+}
+
+// ===== Time Slot =====
+function selectTimeSlot(el, slot) {
+  document.querySelectorAll('.time-slot-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('selectedTimeSlot').value = slot;
+  document.getElementById('timeSlotError').style.display = 'none';
+}
+
+// ===== Customer Source =====
+let customerSource = 'existing';
+function switchSource(src) {
+  customerSource = src;
+  document.getElementById('srcExisting').classList.toggle('active', src === 'existing');
+  document.getElementById('srcNew').classList.toggle('active', src === 'new');
+  document.getElementById('existingCustomerSection').style.display = src==='existing'?'block':'none';
+  document.getElementById('newCustomerSection').style.display      = src==='new'     ?'block':'none';
+}
+
+// ===== Customer Search =====
+let searchTimeout;
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('customerSearchInput');
+  if (!inp) return;
+  inp.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => searchCustomers(inp.value), 280);
+  });
+  document.addEventListener('click', e => {
+    const cs = document.getElementById('customerSearch');
+    if (cs && !cs.contains(e.target)) document.getElementById('customerSuggestions').style.display = 'none';
+  });
+});
+
+async function searchCustomers(q) {
+  const box = document.getElementById('customerSuggestions');
+  try {
+    const res  = await fetch(`<%= search_customers_admin_appointments_path %>?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (!data.length) { box.style.display='none'; return; }
+    box.innerHTML = data.map(c=>`
+      <div class="suggestion-item" onclick="selectCustomer(${c.id},'${esc(c.name)}','${esc(c.email||'')}','${esc(c.phone||'')}')">
+        <div class="suggestion-name">${esc(c.name)}</div>
+        <div class="suggestion-email">${esc(c.email||'')}${c.phone?' · '+esc(c.phone):''}</div>
+      </div>`).join('');
+    box.style.display = 'block';
+  } catch(e) {}
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function selectCustomer(id,name,email,phone) {
+  document.getElementById('selectedCustomerId').value    = id;
+  document.getElementById('selectedCustomerName').value  = name;
+  document.getElementById('selectedCustomerEmail').value = email;
+  document.getElementById('selectedCustomerPhone').value = phone;
+  document.getElementById('customerSearchInput').value   = '';
+  document.getElementById('customerSuggestions').style.display = 'none';
+  document.getElementById('selectedCustomerChip').style.display = 'block';
+  document.getElementById('chipName').textContent = name + (email?` (${email})`:'');
+}
+
+function clearCustomer() {
+  ['selectedCustomerId','selectedCustomerName','selectedCustomerEmail','selectedCustomerPhone'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('selectedCustomerChip').style.display = 'none';
+}
+
+// ===== Modal =====
+function openCreateModal() {
+  if (selectedCalDate) document.getElementById('appointmentDate').value = selectedCalDate;
+  document.getElementById('formErrors').style.display = 'none';
+  new bootstrap.Modal(document.getElementById('createAppointmentModal')).show();
+}
+
+// ===== Form Submit =====
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('appointmentForm');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!document.getElementById('selectedTimeSlot').value) {
+      document.getElementById('timeSlotError').style.display = 'block';
+      return;
+    }
+    document.getElementById('timeSlotError').style.display = 'none';
+    document.getElementById('formErrors').style.display = 'none';
+
+    const btn = document.getElementById('submitAppointmentBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+    try {
+      const formData = new FormData(form);
+      const res = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content },
+        body: formData
+      });
+      const d = await res.json();
+      if (d.success) {
+        bootstrap.Modal.getInstance(document.getElementById('createAppointmentModal')).hide();
+        window.location.reload();
+      } else {
+        document.getElementById('formErrors').innerHTML = (d.errors || ['Something went wrong.']).join('<br>');
+        document.getElementById('formErrors').style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-calendar-check me-2"></i>Create Appointment';
+      }
+    } catch (_) {
+      document.getElementById('formErrors').innerHTML = 'Something went wrong. Please try again.';
+      document.getElementById('formErrors').style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-calendar-check me-2"></i>Create Appointment';
+    }
+  });
+});
+
+// ===== Detail Modal =====
+async function showAppointmentDetail(id) {
+  const modal = new bootstrap.Modal(document.getElementById('appointmentDetailModal'));
+  document.getElementById('appointmentDetailBody').innerHTML =
+    '<div class="text-center py-4"><div class="spinner-border text-primary" style="width:2rem;height:2rem;"></div></div>';
+  modal.show();
+  try {
+    const res = await fetch(`<%= admin_appointments_path %>/${id}`, { headers:{'Accept':'text/html','X-Requested-With':'XMLHttpRequest'} });
+    if (res.ok) document.getElementById('appointmentDetailBody').innerHTML = await res.text();
+  } catch(e) {}
+}
+
+// ===== Init =====
+<% if @active_tab == 'appointments' %>
+  loadCalendar();
+  <% if @selected_date %>
+    selectedCalDate = '<%= @selected_date %>';
+  <% end %>
+<% end %>
+</script>

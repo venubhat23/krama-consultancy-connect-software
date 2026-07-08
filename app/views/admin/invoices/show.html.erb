@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Invoice #<%= @invoice.invoice_number %></title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 10px;
+        background-color: #f5f5f5;
+        font-size: 11px;
+      }
+
+      .invoice-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: white;
+        padding: 15px;
+        border: 1px solid #ddd;
+        position: relative;
+      }
+
+      /* PAID Watermark - Attractive Design */
+      .paid-watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-25deg);
+        font-size: 150px;
+        font-weight: 900;
+        font-family: 'Arial Black', Arial, sans-serif;
+        z-index: 10;
+        pointer-events: none;
+
+        /* Gradient text effect */
+        background: linear-gradient(45deg, #28a745, #20c997);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+
+        /* Fallback for browsers that don't support gradient text */
+        color: rgba(40, 167, 69, 0.3);
+
+        /* Multiple text shadows for depth */
+        text-shadow:
+          2px 2px 4px rgba(40, 167, 69, 0.2),
+          4px 4px 8px rgba(40, 167, 69, 0.15),
+          6px 6px 12px rgba(40, 167, 69, 0.1);
+
+        /* Border effect */
+        -webkit-text-stroke: 2px rgba(40, 167, 69, 0.1);
+
+        letter-spacing: 15px;
+        text-transform: uppercase;
+      }
+
+      /* Header section */
+      .company-header {
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .logo-section {
+        flex-shrink: 0;
+      }
+
+      .company-logo {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        border-radius: 4px;
+      }
+
+      .company-info {
+        flex: 1;
+      }
+
+      .tax-label-container {
+        margin-bottom: 10px;
+        position: relative;
+      }
+
+      .tax-label {
+        font-weight: bold;
+        font-size: 14px;
+        color: #333;
+        display: inline-block;
+      }
+
+      .original-recipient {
+        display: inline-block;
+        font-size: 10px;
+        color: #666;
+        border: 1px solid #999;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-left: 12px;
+        background-color: #f9f9f9;
+      }
+
+      .company-name {
+        color: #5a4ec9;
+        font-size: 22px;
+        font-weight: bold;
+        margin: 0 0 5px 0;
+      }
+
+      .address,
+      .contact {
+        font-size: 11px;
+        line-height: 1.3;
+        color: #333;
+      }
+
+      .highlight {
+        font-weight: bold;
+      }
+
+      .top-bar {
+        height: 6px;
+        background-color: #5a4ec9;
+        margin-bottom: 10px;
+        width: 100%;
+      }
+
+      .invoice-divider {
+        height: 2px;
+        background-color: #5a4ec9;
+        margin: 12px 0;
+        width: 100%;
+        border-radius: 2px;
+      }
+
+      /* Invoice meta */
+      .invoice-meta-table {
+        width: 100%;
+        background-color: #e7e7e7;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+
+      .invoice-meta-table td {
+        padding: 8px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: bold;
+        width: 50%;
+        border-right: 1px solid #ddd;
+      }
+
+      .invoice-meta-table td:last-child {
+        border-right: none;
+      }
+
+      .invoice-meta-table span {
+        font-weight: normal;
+        margin-left: 5px;
+      }
+
+      /* Bill/Ship section */
+      .bill-ship-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0 10px 0;
+      }
+
+      .bill-ship-table td {
+        width: 50%;
+        vertical-align: top;
+        padding: 0 8px;
+      }
+
+      .bill-title,
+      .ship-title {
+        font-size: 12px;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #5a4ec9;
+      }
+
+      .client-name {
+        font-size: 13px;
+        font-weight: bold;
+        margin-bottom: 3px;
+        color: #333;
+      }
+
+      .mobile {
+        font-size: 11px;
+        color: #666;
+      }
+
+      /* Items table */
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+      }
+
+      .items-table thead {
+        border-top: 3px solid #5a4ec9;
+        border-bottom: 3px solid #5a4ec9;
+        background-color: #f8f9fa;
+      }
+
+      .items-table th {
+        padding: 6px 4px;
+        font-size: 12px;
+        font-weight: bold;
+        text-align: left;
+        color: #333;
+      }
+
+      .items-table th.center-align {
+        text-align: center;
+      }
+
+      .items-table th.right-align {
+        text-align: right;
+      }
+
+      .items-table td {
+        padding: 5px 4px;
+        font-size: 11px;
+        vertical-align: top;
+        border-bottom: 1px solid #eee;
+      }
+
+      .items-table td.center-align {
+        text-align: center;
+      }
+
+      .items-table td.right-align {
+        text-align: right;
+        font-weight: bold;
+      }
+
+      .items-table tbody tr:nth-child(even) {
+        background-color: #f8f9fa;
+      }
+
+      /* Subtotal section */
+      .subtotal-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+      }
+
+      .subtotal-table .section-border {
+        border-top: 3px solid #5a4ec9;
+        border-bottom: 3px solid #5a4ec9;
+        font-weight: bold;
+        font-size: 14px;
+        background-color: #f8f9fa;
+      }
+
+      .subtotal-table td {
+        padding: 8px;
+      }
+
+      .subtotal-values-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .subtotal-values-table td {
+        text-align: right;
+        padding: 0 12px;
+        font-weight: bold;
+        font-size: 12px;
+      }
+
+      /* Bank details and payment QR */
+      .details-main-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+      }
+
+      .details-main-table td {
+        vertical-align: top;
+        padding: 0 6px;
+      }
+
+      .bank-details-cell {
+        width: 48%;
+      }
+
+      .tax-summary-cell {
+        width: 48%;
+        border-left: 1px solid #ddd;
+        padding-left: 12px;
+      }
+
+      .bank-details h3,
+      .payment-qr h4 {
+        font-size: 13px;
+        margin-bottom: 5px;
+        color: #5a4ec9;
+        border-bottom: 2px solid #5a4ec9;
+        padding-bottom: 2px;
+      }
+
+      .bank-details-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10px;
+        margin-bottom: 8px;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+
+      .bank-details-table td {
+        padding: 4px 6px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .bank-details-table td:first-child {
+        font-weight: bold;
+        background-color: #f0f0f0;
+        width: 35%;
+      }
+
+      .payment-qr-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+
+      .payment-qr-table td {
+        vertical-align: middle;
+        padding: 5px;
+      }
+
+      .qr-image {
+        width: 60px;
+        height: 60px;
+        border: 2px solid #5a4ec9;
+        border-radius: 6px;
+      }
+
+      .upi-icons {
+        margin-top: 3px;
+      }
+
+      .upi-icons span {
+        display: inline-block;
+        margin-right: 5px;
+        margin-bottom: 3px;
+        padding: 3px 5px;
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        font-size: 8px;
+        font-weight: bold;
+      }
+
+      .phonepe { color: #5f2d91; }
+      .gpay { color: #4285f4; }
+      .paytm { color: #00baf2; }
+      .upi { color: #ff6600; }
+
+      .upi-id {
+        font-size: 9px;
+        color: #666;
+        margin-bottom: 3px;
+      }
+
+      /* Summary section */
+      .summary-section {
+        font-size: 11px;
+        line-height: 1.4;
+        background-color: #f9f9f9;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #e0e0e0;
+      }
+
+      .amount-words {
+        margin-top: 8px;
+        background-color: #f0f0f0;
+        padding: 6px;
+        border-radius: 5px;
+      }
+
+      .amount-words h3 {
+        font-size: 11px;
+        font-weight: bold;
+        margin-bottom: 3px;
+        color: #5a4ec9;
+        text-align: left;
+      }
+
+      .amount-words div {
+        font-size: 10px;
+        font-weight: bold;
+        text-align: left;
+      }
+
+      /* Terms and signature */
+      .terms-signature-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+
+      .terms-signature-table td {
+        vertical-align: top;
+        padding: 0 6px;
+      }
+
+      .terms-cell {
+        width: 65%;
+      }
+
+      .signature-cell {
+        width: 35%;
+        text-align: center;
+      }
+
+      .terms h3 {
+        font-size: 12px;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #5a4ec9;
+      }
+
+      .terms ol {
+        font-size: 9px;
+        padding-left: 15px;
+        line-height: 1.3;
+        margin: 0;
+      }
+
+      .signature-box {
+        height: 50px;
+        border: 2px solid #5a4ec9;
+        margin-bottom: 5px;
+        width: 120px;
+        margin-left: auto;
+        margin-right: auto;
+        border-radius: 5px;
+        background-color: #f8f9fa;
+      }
+
+      .signature-label {
+        font-weight: bold;
+        font-size: 9px;
+        color: #333;
+      }
+
+      .signature-name {
+        font-size: 10px;
+        margin-top: 2px;
+        color: #5a4ec9;
+        font-weight: bold;
+      }
+
+      /* Print styles */
+      @media print {
+        body {
+          padding: 0;
+          background-color: white;
+          font-size: 10px;
+        }
+        .invoice-container {
+          border: none;
+          padding: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="invoice-container">
+      <!-- PAID Watermark (only show when invoice is paid) -->
+      <% if @invoice.status == 'paid' %>
+        <div class="paid-watermark">PAID</div>
+      <% end %>
+
+      <!-- Tax label and original recipient -->
+      <div class="tax-label-container">
+        <span class="tax-label">PAYMENT INVOICE</span>
+        <span class="original-recipient">ORIGINAL FOR RECIPIENT</span>
+      </div>
+
+      <!-- Header section with logo -->
+      <div class="company-header">
+        <div class="logo-section">
+          <img src="/logo.jpeg" alt="Drwise Insurance Services" class="company-logo" />
+        </div>
+        <div class="company-info">
+          <div class="company-name">Drwise Insurance Services</div>
+          <div class="address">
+            Business Address Line 1,
+            Business Address Line 2,
+            City, State, PIN Code
+          </div>
+          <div class="contact">
+            <span class="highlight">Mobile:</span> +91-9999999999 &nbsp;&nbsp;
+            <span class="highlight">GSTIN:</span> 29AOIPT8113K1ZC &nbsp;&nbsp;
+            <span class="highlight">PAN Number:</span> AOIPT8113K<br />
+            <span class="highlight">Email:</span> admin@drwise.com
+          </div>
+        </div>
+      </div>
+
+      <!-- Top bar -->
+      <div class="top-bar"></div>
+
+      <!-- Invoice meta information -->
+      <table class="invoice-meta-table">
+        <tr>
+          <td>Invoice No.: <span><%= @invoice.invoice_number %></span></td>
+          <td>Invoice Date: <span><%= @invoice.invoice_date.strftime('%d/%m/%Y') %></span></td>
+        </tr>
+        <tr>
+          <td>Policy No.: <span><%= @invoice.policy_number %></span></td>
+          <td>Due Date: <span><%= @invoice.due_date.strftime('%d/%m/%Y') %></span></td>
+        </tr>
+      </table>
+
+      <!-- Add horizontal line -->
+      <div class="invoice-divider"></div>
+
+      <!-- Bill to and Ship to section -->
+      <table class="bill-ship-table">
+        <tr>
+          <td>
+            <div class="bill-title">BILL TO</div>
+            <%
+              # Get recipient info based on payout type
+              if @invoice.payout_type == 'affiliate' && @invoice.payout_id.present?
+                affiliate = SubAgent.find_by(id: @invoice.payout_id)
+                recipient_name = affiliate ? "#{affiliate.first_name} #{affiliate.last_name}" : 'Unknown Affiliate'
+                recipient_address = affiliate&.address || 'Address not provided'
+                recipient_email = affiliate&.email
+              else
+                recipient_name = @invoice.respond_to?(:recipient_name) ? @invoice.recipient_name : 'Unknown'
+                recipient_address = @invoice.respond_to?(:recipient_address) ? (@invoice.recipient_address || 'Address not provided') : 'Address not provided'
+                recipient_email = @invoice.respond_to?(:recipient_email) ? @invoice.recipient_email : nil
+              end
+            %>
+            <div class="client-name"><%= recipient_name %></div>
+            <div><%= recipient_address %></div>
+            <% if recipient_email.present? %>
+              <div class="mobile">Email: <%= recipient_email %></div>
+            <% end %>
+          </td>
+          <td>
+            <div class="ship-title">PAYOUT DETAILS</div>
+            <div class="client-name">Commission Payout - <%= @invoice.payout_type.humanize %></div>
+            <div>Payment Type: <%= @invoice.payout_type.humanize %> Commission</div>
+            <div>Status: <%= @invoice.status.humanize %></div>
+            <% if @invoice.status == 'paid' %>
+              <div>Paid Date: <%= @invoice.updated_at.strftime('%d/%m/%Y at %I:%M %p') %></div>
+            <% end %>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Items table -->
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>DESCRIPTION</th>
+            <th class="center-align">TYPE</th>
+            <th class="center-align">QTY</th>
+            <th class="right-align">RATE</th>
+            <th class="right-align">AMOUNT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%
+            # Get commission payouts for this specific invoice
+            if @invoice.payout_type == 'affiliate'
+              # For affiliate invoices, we need to find the specific SubAgent
+              # and get their paid commission payouts that sum to the invoice amount
+              sub_agent = SubAgent.find_by(id: @invoice.payout_id)
+              if sub_agent
+                # Get all policies where this SubAgent is involved and has paid affiliate commissions
+                commission_payouts = []
+
+                # Health policies
+                HealthInsurance.where(sub_agent_id: sub_agent.id).each do |policy|
+                  payouts = CommissionPayout.where(policy_type: 'health', policy_id: policy.id,
+                                                  payout_to: 'affiliate', status: 'paid')
+                  commission_payouts += payouts
+                end
+
+                # Life policies
+                LifeInsurance.where(sub_agent_id: sub_agent.id).each do |policy|
+                  payouts = CommissionPayout.where(policy_type: 'life', policy_id: policy.id,
+                                                  payout_to: 'affiliate', status: 'paid')
+                  commission_payouts += payouts
+                end
+
+                # Motor policies
+                MotorInsurance.where(sub_agent_id: sub_agent.id).each do |policy|
+                  payouts = CommissionPayout.where(policy_type: 'motor', policy_id: policy.id,
+                                                  payout_to: 'affiliate', status: 'paid')
+                  commission_payouts += payouts
+                end
+
+                # Other policies
+                OtherInsurance.where(sub_agent_id: sub_agent.id).each do |policy|
+                  payouts = CommissionPayout.where(policy_type: 'other', policy_id: policy.id,
+                                                  payout_to: 'affiliate', status: 'paid')
+                  commission_payouts += payouts
+                end
+
+                # Sort by policy type and ID
+                commission_payouts = commission_payouts.sort_by { |p| [p.policy_type, p.policy_id] }
+              else
+                commission_payouts = [@invoice.payout_record].compact
+              end
+            elsif @invoice.payout_type == 'ambassador'
+              # For ambassador invoices, we need to consider both SubAgent and Distributor relationships
+              commission_payouts = []
+
+              # First check if payout_id refers to a DistributorPayout
+              distributor_payout = DistributorPayout.find_by(id: @invoice.payout_id)
+              if distributor_payout
+                # Get the distributor (ambassador)
+                distributor = Distributor.find_by(id: distributor_payout.distributor_id)
+                if distributor
+                  # Get all paid DistributorPayout records for this distributor
+                  distributor_payouts = DistributorPayout.where(distributor_id: distributor.id, status: 'paid')
+                  commission_payouts = distributor_payouts.sort_by { |p| [p.policy_type, p.policy_id] }
+                end
+              else
+                # Try SubAgent approach (ambassador commissions via CommissionPayout)
+                sub_agent = SubAgent.find_by(id: @invoice.payout_id)
+                if sub_agent
+                  # Get ambassador commissions for this specific sub_agent's policies
+                  HealthInsurance.where(sub_agent_id: sub_agent.id).each do |policy|
+                    payouts = CommissionPayout.where(policy_type: 'health', policy_id: policy.id,
+                                                    payout_to: 'ambassador', status: 'paid')
+                    commission_payouts += payouts
+                  end
+
+                  LifeInsurance.where(sub_agent_id: sub_agent.id).each do |policy|
+                    payouts = CommissionPayout.where(policy_type: 'life', policy_id: policy.id,
+                                                    payout_to: 'ambassador', status: 'paid')
+                    commission_payouts += payouts
+                  end
+
+                  MotorInsurance.where(sub_agent_id: sub_agent.id).each do |policy|
+                    payouts = CommissionPayout.where(policy_type: 'motor', policy_id: policy.id,
+                                                    payout_to: 'ambassador', status: 'paid')
+                    commission_payouts += payouts
+                  end
+
+                  OtherInsurance.where(sub_agent_id: sub_agent.id).each do |policy|
+                    payouts = CommissionPayout.where(policy_type: 'other', policy_id: policy.id,
+                                                    payout_to: 'ambassador', status: 'paid')
+                    commission_payouts += payouts
+                  end
+
+                  commission_payouts = commission_payouts.sort_by { |p| [p.policy_type, p.policy_id] }
+                else
+                  commission_payouts = [@invoice.payout_record].compact
+                end
+              end
+            else
+              # For other types, show single payout record
+              commission_payouts = [@invoice.payout_record].compact
+            end
+
+            total_line_items = 0
+          %>
+
+          <% commission_payouts.each_with_index do |commission_payout, index| %>
+            <%
+              # Get policy details based on policy type
+              policy = case commission_payout.policy_type
+              when 'health'
+                HealthInsurance.find_by(id: commission_payout.policy_id)
+              when 'life'
+                LifeInsurance.find_by(id: commission_payout.policy_id)
+              when 'motor'
+                MotorInsurance.find_by(id: commission_payout.policy_id)
+              when 'other'
+                OtherInsurance.find_by(id: commission_payout.policy_id)
+              end
+
+              customer_name = policy&.customer&.display_name || 'Unknown Customer'
+              policy_number = policy&.policy_number || 'N/A'
+
+              # Handle both CommissionPayout and DistributorPayout amounts
+              payout_amount = commission_payout.respond_to?(:payout_amount) ? commission_payout.payout_amount : 0
+              total_line_items += payout_amount
+            %>
+            <tr>
+              <td>
+                <div style="font-weight: bold; font-size: 11px; color: #333; margin-bottom: 2px;">
+                  Commission Payout - <%= @invoice.payout_type.humanize %>
+                </div>
+                <div style="color: #666; font-size: 9px; font-style: italic; margin-bottom: 6px;">
+                  Payment for <%= @invoice.payout_type.humanize.downcase %> commission services
+                </div>
+
+                <div style="margin-top: 6px; padding: 6px; background-color: #f8f9fa; border-radius: 4px; border-left: 3px solid #5a4ec9;">
+                  <div style="font-weight: bold; font-size: 10px; color: #5a4ec9; margin-bottom: 4px;">Commission Breakdown:</div>
+                  <div style="font-size: 9px; color: #333; margin-bottom: 2px;">
+                    <strong>Policy ID:</strong> #<%= commission_payout.policy_id %>
+                  </div>
+                  <div style="font-size: 9px; color: #333; margin-bottom: 2px;">
+                    <strong>Policy Number:</strong> <%= policy_number %>
+                  </div>
+                  <div style="font-size: 9px; color: #333; margin-bottom: 2px;">
+                    <strong>Customer:</strong> <%= customer_name %>
+                  </div>
+                  <% if commission_payout.respond_to?(:lead_id) && commission_payout.lead_id.present? %>
+                    <div style="font-size: 9px; color: #333; margin-bottom: 2px;">
+                      <strong>Lead ID:</strong> <%= commission_payout.lead_id %>
+                    </div>
+                  <% end %>
+                  <div style="font-size: 9px; color: #333;">
+                    <strong>Policy Type:</strong> <%= commission_payout.policy_type.humanize %>
+                  </div>
+                </div>
+              </td>
+              <td class="center-align"><%= @invoice.payout_type.humanize %></td>
+              <td class="center-align">1 Policy</td>
+              <td class="right-align"><%= indian_currency(payout_amount, delimiter: ',') %></td>
+              <td class="right-align"><%= indian_currency(payout_amount, delimiter: ',') %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <%
+        # Sync invoice total_amount with the actual line items sum so the index shows the correct figure
+        if total_line_items > 0 && total_line_items.round(2) != @invoice.total_amount.to_f.round(2)
+          @invoice.update_column(:total_amount, total_line_items.round(2))
+        end
+      %>
+
+      <!-- Subtotal section -->
+      <table class="subtotal-table">
+        <tr class="section-border">
+          <td>SUBTOTAL</td>
+          <td>-</td>
+          <td style="width: 40%;">
+            <table class="subtotal-values-table">
+              <tr>
+                <td><%= indian_currency(total_line_items) %></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Details section -->
+      <table class="details-main-table">
+        <tr>
+          <td class="bank-details-cell">
+            <!-- Bank details removed as requested -->
+          </td>
+          <td class="tax-summary-cell">
+            <div class="summary-section">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 5px; padding: 3px 0; border-bottom: 1px solid #eee;">
+                <span>SUBTOTAL</span>
+                <span style="font-weight: bold;"><%= indian_currency(total_line_items) %></span>
+              </div>
+              <%
+                # Calculate TDS amount to display in TAX field
+                tax_amount = 0
+                if (@invoice.payout_type == 'affiliate' || @invoice.payout_type == 'ambassador') && commission_payouts.any?
+                  commission_payouts.each do |cp|
+                    # First try to get TDS from commission payout record
+                    if cp.respond_to?(:tds_amount) && cp.tds_amount.present? && cp.tds_amount > 0
+                      tax_amount += cp.tds_amount.to_f
+                    elsif cp.respond_to?(:gross_amount) && cp.gross_amount.present? && cp.gross_amount > cp.payout_amount
+                      tax_amount += (cp.gross_amount.to_f - cp.payout_amount.to_f)
+                    else
+                      # Get TDS from the policy record
+                      policy = case cp.policy_type
+                      when 'health'
+                        HealthInsurance.find_by(id: cp.policy_id)
+                      when 'life'
+                        LifeInsurance.find_by(id: cp.policy_id)
+                      when 'motor'
+                        MotorInsurance.find_by(id: cp.policy_id)
+                      when 'other'
+                        OtherInsurance.find_by(id: cp.policy_id)
+                      end
+
+                      if policy&.respond_to?(:sub_agent_tds_amount) && policy.sub_agent_tds_amount.present? && policy.sub_agent_tds_amount > 0
+                        # Use TDS amount from policy
+                        tax_amount += policy.sub_agent_tds_amount.to_f
+                      elsif policy&.respond_to?(:sub_agent_commission_amount) && policy.sub_agent_commission_amount.present? && policy.sub_agent_tds_percentage.present?
+                        # Calculate TDS from policy commission and percentage
+                        gross_amount = policy.sub_agent_commission_amount.to_f
+                        tds_percentage = policy.sub_agent_tds_percentage.to_f
+                        tax_amount += (gross_amount * tds_percentage / 100.0)
+                      else
+                        # Calculate using default 2% TDS rate
+                        tds_rate = 2.0
+                        net_amount = cp.payout_amount.to_f
+                        gross_amount = net_amount / (1 - tds_rate / 100.0)
+                        tax_amount += (gross_amount - net_amount)
+                      end
+                    end
+                  end
+                end
+              %>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 5px; padding: 3px 0; border-bottom: 1px solid #eee;">
+                <span>TAX</span>
+                <span style="font-weight: bold;"><%= indian_currency(tax_amount) %></span>
+              </div>
+
+              <% if @invoice.payout_type == 'affiliate' && commission_payouts.any? %>
+                <!-- TDS Calculation Breakdown -->
+                <%
+                  # Calculate totals from actual commission payouts
+                  total_gross = 0
+                  total_tds = 0
+                  total_net = 0
+
+                  commission_payouts.each do |cp|
+                    net_payout = cp.payout_amount.to_f
+                    total_net += net_payout
+
+                    # Check if commission payout already has gross_amount and tds_amount
+                    if cp.respond_to?(:gross_amount) && cp.gross_amount.present? && cp.gross_amount > 0
+                      # Use existing gross amount from database
+                      gross_payout = cp.gross_amount.to_f
+                      tds_payout = cp.respond_to?(:tds_amount) && cp.tds_amount.present? ? cp.tds_amount.to_f : 0
+
+                      # If TDS amount is not set but we have gross, calculate it
+                      if tds_payout <= 0 && gross_payout > net_payout
+                        tds_payout = gross_payout - net_payout
+                      end
+                    else
+                      # Calculate from policy data or use defaults
+                      policy = case cp.policy_type
+                      when 'health'
+                        HealthInsurance.find_by(id: cp.policy_id)
+                      when 'life'
+                        LifeInsurance.find_by(id: cp.policy_id)
+                      when 'motor'
+                        MotorInsurance.find_by(id: cp.policy_id)
+                      when 'other'
+                        OtherInsurance.find_by(id: cp.policy_id)
+                      end
+
+                      if policy&.respond_to?(:sub_agent_commission_amount) && policy.sub_agent_commission_amount.present? && policy.sub_agent_commission_amount > 0
+                        # Use policy commission data
+                        gross_payout = policy.sub_agent_commission_amount.to_f
+                        tds_payout = policy.respond_to?(:sub_agent_tds_amount) && policy.sub_agent_tds_amount.present? ?
+                                    policy.sub_agent_tds_amount.to_f : 0
+
+                        # If TDS amount is not set, calculate from percentage
+                        if tds_payout <= 0 && policy.respond_to?(:sub_agent_tds_percentage) && policy.sub_agent_tds_percentage.to_f > 0
+                          tds_payout = gross_payout * policy.sub_agent_tds_percentage.to_f / 100
+                        end
+                      else
+                        # Calculate using default 2% TDS rate
+                        tds_rate = 2.0
+                        gross_payout = net_payout / (1 - tds_rate / 100.0)
+                        tds_payout = gross_payout - net_payout
+                      end
+                    end
+
+                    total_gross += gross_payout
+                    total_tds += tds_payout
+                  end
+
+                  tds_percentage = total_gross > 0 ? (total_tds / total_gross * 100).round(2) : 0
+                %>
+
+                <% if total_tds > 0 %>
+                  <!-- TDS Breakdown Display -->
+                  <div style="background-color: #f8f9fa; padding: 8px; margin: 8px 0; border-radius: 5px; border-left: 4px solid #007bff;">
+                    <div style="font-weight: bold; margin-bottom: 4px; color: #007bff; font-size: 12px;">TDS CALCULATION BREAKDOWN:</div>
+                    <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #333;">
+                      <%= indian_currency(total_gross) %> - <%= indian_currency(total_tds) %> (<%= tds_percentage %>%) = <%= indian_currency(total_net) %>
+                    </div>
+                    <div style="font-size: 10px; color: #666; margin-top: 2px;">
+                      Gross Commission - TDS Deducted = Net Payable
+                    </div>
+                  </div>
+
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; padding: 3px 0; border-bottom: 1px solid #eee;">
+                    <span>TDS DEDUCTED (<%= tds_percentage %>%)</span>
+                    <span style="font-weight: bold; color: #dc3545;">-<%= indian_currency(total_tds) %></span>
+                  </div>
+                <% end %>
+              <% end %>
+
+              <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; border-top: 2px solid #5a4ec9; padding-top: 6px; margin-top: 6px; background-color: #f0f0f0; padding: 8px; border-radius: 5px;">
+                <span>NET AMOUNT PAYABLE</span>
+                <span><%= indian_currency(@invoice.payout_type == 'affiliate' && defined?(total_net) && total_net > 0 ? total_net : total_line_items) %></span>
+              </div>
+
+              <div class="amount-words">
+                <h3>Total Amount (in words)</h3>
+                <%
+                  total_amount_int = total_line_items.to_i
+                  ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
+                  teens = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"]
+                  tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"]
+
+                  def convert_hundreds(num, ones, teens, tens)
+                    result = ""
+                    if num >= 100
+                      result += ones[num / 100] + " Hundred "
+                      num %= 100
+                    end
+                    if num >= 20
+                      result += tens[num / 10] + " "
+                      num %= 10
+                    elsif num >= 10
+                      result += teens[num - 10] + " "
+                      num = 0
+                    end
+                    if num > 0
+                      result += ones[num] + " "
+                    end
+                    result.strip
+                  end
+
+                  words = ""
+                  if total_amount_int >= 10000000
+                    crores = total_amount_int / 10000000
+                    words += convert_hundreds(crores, ones, teens, tens) + " Crore "
+                    total_amount_int %= 10000000
+                  end
+                  if total_amount_int >= 100000
+                    lakhs = total_amount_int / 100000
+                    words += convert_hundreds(lakhs, ones, teens, tens) + " Lakh "
+                    total_amount_int %= 100000
+                  end
+                  if total_amount_int >= 1000
+                    thousands = total_amount_int / 1000
+                    words += convert_hundreds(thousands, ones, teens, tens) + " Thousand "
+                    total_amount_int %= 1000
+                  end
+                  if total_amount_int > 0
+                    words += convert_hundreds(total_amount_int, ones, teens, tens)
+                  end
+                  words = words.strip
+                  words = "Zero" if words.empty?
+                %>
+                <div><%= words %> Rupees Only</div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Terms and signature section -->
+      <table class="terms-signature-table">
+        <tr>
+          <td class="terms-cell">
+            <div class="terms">
+              <h3>TERMS AND CONDITIONS</h3>
+              <% if @invoice.respond_to?(:notes) && @invoice.notes.present? %>
+                <div style="padding-left: 15px; font-size: 9px;"><%= simple_format(@invoice.notes) %></div>
+              <% else %>
+                <ol>
+                  <li>This invoice represents commission payment for insurance services rendered</li>
+                  <li>Payment terms are as per the agreement between Drwise and the recipient</li>
+                  <li>Any disputes should be raised within 7 days of invoice generation</li>
+                </ol>
+              <% end %>
+            </div>
+          </td>
+          <td class="signature-cell">
+            <div class="signature-box"></div>
+            <div class="signature-label">AUTHORISED SIGNATORY FOR</div>
+            <div class="signature-name">Drwise Insurance Services</div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,68 @@
+<div class="mb-4">
+  <h2 class="mb-1">Welcome, <%= current_user.first_name %></h2>
+  <p class="text-muted mb-0"><%= current_user.forum&.name %> · <%= current_user.chapter&.name %></p>
+</div>
+
+<div class="row mb-4">
+  <div class="col-xl-4 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted mb-2">Upcoming Events</h6>
+        <h3 class="mb-0 text-primary"><%= @upcoming_events.size %></h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-4 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted mb-2">My Open Tickets</h6>
+        <h3 class="mb-0 text-warning"><%= @my_open_tickets %></h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-4 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted mb-2">Announcements</h6>
+        <h3 class="mb-0 text-info"><%= @announcements.size %></h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0"><h5 class="mb-0">Upcoming Events</h5></div>
+      <div class="card-body">
+        <% if @upcoming_events.any? %>
+          <% @upcoming_events.each do |event| %>
+            <div class="d-flex justify-content-between border-bottom py-2">
+              <span><%= link_to event.title, member_portal_event_path(event) %></span>
+              <small class="text-muted"><%= event.starts_at.strftime("%b %d, %Y") %></small>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-muted mb-0">No upcoming events.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0"><h5 class="mb-0">Announcements</h5></div>
+      <div class="card-body">
+        <% if @announcements.any? %>
+          <% @announcements.each do |a| %>
+            <div class="border-bottom py-2">
+              <strong><%= a.title %></strong>
+              <p class="mb-0 text-muted small"><%= truncate(a.body, length: 100) %></p>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-muted mb-0">No announcements yet.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

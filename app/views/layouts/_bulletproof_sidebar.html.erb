@@ -1,0 +1,109 @@
+<!-- BULLETPROOF SIDEBAR FOR RAILS -->
+<style>
+  /* Import the bulletproof CSS inline for immediate loading */
+  <%= File.read(Rails.root.join('app/assets/stylesheets/bulletproof_sidebar.css')).html_safe %>
+</style>
+
+<div class="layout-container" id="layoutContainer">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <nav class="sidebar-nav">
+      <ul class="menu-list">
+        <!-- Dashboard -->
+        <li class="menu-item">
+          <%= link_to root_path, class: "menu-link #{'active' if current_page?(root_path)}", data: { tooltip: "Dashboard" } do %>
+            <span class="icon-wrapper">
+              <i class="icon bi bi-speedometer2"></i>
+            </span>
+            <span class="label">Dashboard</span>
+          <% end %>
+        </li>
+
+        <!-- Analytics -->
+        <li class="menu-item">
+          <%= link_to admin_analytics_path, class: "menu-link #{'active' if request.path.include?('/analytics')}", data: { tooltip: "Analytics" } do %>
+            <span class="icon-wrapper">
+              <i class="icon bi bi-bar-chart-line"></i>
+            </span>
+            <span class="label">Analytics</span>
+          <% end %>
+        </li>
+
+        <!-- Customers -->
+        <li class="menu-item">
+          <%= link_to admin_customers_path, class: "menu-link #{'active' if request.path.include?('/customers')}", data: { tooltip: "Customers" } do %>
+            <span class="icon-wrapper">
+              <i class="icon bi bi-people"></i>
+            </span>
+            <span class="label">Customers</span>
+          <% end %>
+        </li>
+
+        <!-- Sub Agents -->
+        <li class="menu-item">
+          <%= link_to admin_sub_agents_path, class: "menu-link #{'active' if request.path.include?('/sub_agents')}", data: { tooltip: "Affiliates" } do %>
+            <span class="icon-wrapper">
+              <i class="icon bi bi-person-badge"></i>
+            </span>
+            <span class="label">Affiliates</span>
+          <% end %>
+        </li>
+
+        <!-- Insurance Section Header -->
+        <li class="menu-item section-header">
+          <span class="section-title">Insurance</span>
+        </li>
+
+        <!-- Life Insurance -->
+        <li class="menu-item">
+          <%= link_to admin_life_insurances_path, class: "menu-link #{'active' if request.path.include?('/life_insurances')}", data: { tooltip: "Life Insurance" } do %>
+            <span class="icon-wrapper">
+              <i class="icon bi bi-heart-fill"></i>
+            </span>
+            <span class="label">Life</span>
+          <% end %>
+        </li>
+
+        <!-- Health Insurance -->
+        <li class="menu-item">
+          <%= link_to admin_health_insurances_path, class: "menu-link #{'active' if request.path.include?('/health_insurances')}", data: { tooltip: "Health Insurance" } do %>
+            <span class="icon-wrapper">
+              <i class="icon bi bi-heart-pulse-fill"></i>
+            </span>
+            <span class="label">Health</span>
+          <% end %>
+        </li>
+
+        <!-- Motor Insurance -->
+        <li class="menu-item">
+          <%= link_to admin_motor_insurances_path, class: "menu-link #{'active' if request.path.include?('/motor_insurances')}", data: { tooltip: "Motor Insurance" } do %>
+            <span class="icon-wrapper">
+              <i class="icon bi bi-car-front-fill"></i>
+            </span>
+            <span class="label">Motor</span>
+          <% end %>
+        </li>
+
+        <!-- Settings -->
+        <li class="menu-item">
+          <%= link_to admin_settings_path, class: "menu-link #{'active' if request.path.include?('/settings')}", data: { tooltip: "Settings" } do %>
+            <span class="icon-wrapper">
+              <i class="icon bi bi-gear-fill"></i>
+            </span>
+            <span class="label">Settings</span>
+          <% end %>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <%= yield %>
+  </main>
+</div>
+
+<!-- Sidebar Toggle Script -->
+<script>
+  <%= File.read(Rails.root.join('app/assets/javascripts/sidebar_toggle.js')).html_safe %>
+</script>

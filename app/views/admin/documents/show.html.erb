@@ -1,0 +1,288 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><%= @document.title %></h2>
+    <p class="text-muted mb-0">Document details and preview</p>
+  </div>
+  <div class="d-flex gap-2">
+    <% if @document.downloadable? %>
+      <%= link_to download_admin_document_path(@document), class: "btn btn-success" do %>
+        <i class="bi bi-download me-1"></i>
+        Download
+      <% end %>
+    <% end %>
+    <%= link_to edit_admin_document_path(@document), class: "btn btn-outline-primary" do %>
+      <i class="bi bi-pencil me-1"></i>
+      Edit
+    <% end %>
+    <%= link_to admin_documents_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Documents
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Document Details -->
+  <div class="col-lg-8">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">
+          <i class="bi bi-file-earmark-text me-2"></i>
+          Document Information
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Title</label>
+            <div class="fw-bold"><%= @document.title %></div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Document Type</label>
+            <div><span class="badge bg-info"><%= @document.document_type.humanize %></span></div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">File Name</label>
+            <div><%= @document.file_name %></div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">File Type</label>
+            <div><%= @document.human_file_type %></div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">File Size</label>
+            <div><%= @document.file_size_mb %> MB</div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Uploaded By</label>
+            <div><%= @document.uploaded_by %></div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Upload Date</label>
+            <div>
+              <%= @document.created_at.strftime("%B %d, %Y at %I:%M %p") %><br>
+              <small class="text-muted">(<%= time_ago_in_words(@document.created_at) %> ago)</small>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-muted">Last Modified</label>
+            <div>
+              <%= @document.updated_at.strftime("%B %d, %Y at %I:%M %p") %><br>
+              <small class="text-muted">(<%= time_ago_in_words(@document.updated_at) %> ago)</small>
+            </div>
+          </div>
+          <% if @document.description.present? %>
+            <div class="col-12 mb-3">
+              <label class="form-label text-muted">Description</label>
+              <div class="border rounded p-3 bg-light">
+                <%= simple_format(@document.description) %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- File Preview -->
+    <% if @document.file.attached? %>
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="bi bi-eye me-2"></i>
+            File Preview
+          </h5>
+        </div>
+        <div class="card-body">
+          <% case @document.file_extension %>
+          <% when '.pdf' %>
+            <div class="text-center p-4">
+              <i class="bi bi-file-pdf text-danger" style="font-size: 5rem;"></i>
+              <h5 class="mt-3">PDF Document</h5>
+              <p class="text-muted">PDF preview not available. Click download to view the file.</p>
+              <%= link_to download_admin_document_path(@document), class: "btn btn-primary" do %>
+                <i class="bi bi-download me-1"></i>
+                Download PDF
+              <% end %>
+            </div>
+          <% when '.jpg', '.jpeg', '.png' %>
+            <div class="text-center">
+              <%= image_tag @document.file, class: "img-fluid rounded", style: "max-height: 500px;" %>
+            </div>
+          <% when '.doc', '.docx' %>
+            <div class="text-center p-4">
+              <i class="bi bi-file-word text-primary" style="font-size: 5rem;"></i>
+              <h5 class="mt-3">Word Document</h5>
+              <p class="text-muted">Word document preview not available. Click download to view the file.</p>
+              <%= link_to download_admin_document_path(@document), class: "btn btn-primary" do %>
+                <i class="bi bi-download me-1"></i>
+                Download Document
+              <% end %>
+            </div>
+          <% else %>
+            <div class="text-center p-4">
+              <i class="bi bi-file text-secondary" style="font-size: 5rem;"></i>
+              <h5 class="mt-3">File</h5>
+              <p class="text-muted">Preview not available for this file type.</p>
+              <%= link_to download_admin_document_path(@document), class: "btn btn-primary" do %>
+                <i class="bi bi-download me-1"></i>
+                Download File
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <!-- Linked Record -->
+    <% if @document.documentable %>
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">
+            <i class="bi bi-link me-2"></i>
+            Linked Record
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="me-3">
+              <i class="bi bi-person-circle text-primary fs-3"></i>
+            </div>
+            <div>
+              <h6 class="mb-0"><%= @document.documentable.class.name %></h6>
+              <small class="text-muted">
+                <% if @document.documentable.respond_to?(:display_name) %>
+                  <%= @document.documentable.display_name %>
+                <% elsif @document.documentable.respond_to?(:name) %>
+                  <%= @document.documentable.name %>
+                <% else %>
+                  ID: <%= @document.documentable.id %>
+                <% end %>
+              </small>
+              <br>
+              <%= link_to "View #{@document.documentable.class.name}", polymorphic_path([:admin, @document.documentable]), class: "btn btn-sm btn-outline-primary mt-2" %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Actions -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <h6 class="mb-0">
+          <i class="bi bi-gear me-2"></i>
+          Actions
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <% if @document.downloadable? %>
+            <%= link_to download_admin_document_path(@document), class: "btn btn-success" do %>
+              <i class="bi bi-download me-2"></i>
+              Download File
+            <% end %>
+          <% end %>
+          <%= link_to edit_admin_document_path(@document), class: "btn btn-outline-primary" do %>
+            <i class="bi bi-pencil me-2"></i>
+            Edit Document
+          <% end %>
+          <%= link_to "#",
+                     class: "btn btn-outline-danger delete-document-btn",
+                     data: {
+                       "document-id": @document.id,
+                       "document-name": @document.title,
+                       "delete-url": admin_document_path(@document)
+                     } do %>
+            <i class="bi bi-trash me-2"></i>
+            Delete Document
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Related Documents -->
+    <% if @related_documents.any? %>
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">
+            <i class="bi bi-files me-2"></i>
+            Related Documents
+          </h6>
+        </div>
+        <div class="card-body">
+          <% @related_documents.each do |doc| %>
+            <div class="d-flex align-items-center mb-2 <%= 'border-bottom pb-2' unless doc == @related_documents.last %>">
+              <div class="me-2">
+                <% case doc.file_extension %>
+                <% when '.pdf' %>
+                  <i class="bi bi-file-pdf text-danger"></i>
+                <% when '.jpg', '.jpeg', '.png' %>
+                  <i class="bi bi-file-image text-primary"></i>
+                <% when '.doc', '.docx' %>
+                  <i class="bi bi-file-word text-primary"></i>
+                <% else %>
+                  <i class="bi bi-file text-secondary"></i>
+                <% end %>
+              </div>
+              <div class="flex-grow-1">
+                <%= link_to doc.title, admin_document_path(doc), class: "text-decoration-none" %>
+                <br><small class="text-muted"><%= doc.document_type.humanize %></small>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Delete confirmation functionality (same as index page)
+  const deleteButton = document.querySelector('.delete-document-btn');
+  if (deleteButton) {
+    deleteButton.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      const documentId = this.dataset.documentId;
+      const documentName = this.dataset.documentName;
+      const deleteUrl = this.dataset.deleteUrl;
+
+      showDeleteConfirmation(documentName, deleteUrl);
+    });
+  }
+
+  function showDeleteConfirmation(documentName, deleteUrl) {
+    if (confirm(`Are you sure you want to delete "${documentName}"? This action cannot be undone.`)) {
+      // Create and submit delete form
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = deleteUrl;
+
+      // Add CSRF token
+      const csrfToken = document.querySelector('meta[name="csrf-token"]');
+      if (csrfToken) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'authenticity_token';
+        csrfInput.value = csrfToken.getAttribute('content');
+        form.appendChild(csrfInput);
+      }
+
+      // Add method override for DELETE
+      const methodInput = document.createElement('input');
+      methodInput.type = 'hidden';
+      methodInput.name = '_method';
+      methodInput.value = 'DELETE';
+      form.appendChild(methodInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+});
+</script>

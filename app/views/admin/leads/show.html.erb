@@ -1,0 +1,1055 @@
+<!-- Lead Details Header -->
+<div class="customer-header-card">
+  <div class="d-flex justify-content-between align-items-start">
+    <!-- Left Section with Lead Info -->
+    <div class="d-flex align-items-center gap-3">
+      <!-- Avatar/Icon -->
+      <div class="customer-avatar">
+        <div class="avatar-placeholder">
+          <%= @lead.name&.first&.upcase || 'L' %>
+        </div>
+      </div>
+
+      <!-- Lead Info -->
+      <div>
+        <h2 class="customer-name mb-2">Lead: <%= @lead.name %></h2>
+        <div class="d-flex align-items-center gap-3 mb-2">
+          <span class="badge customer-type-badge individual">
+            ID: <%= @lead.lead_id %>
+          </span>
+          <span class="badge status-badge <%= @lead.current_stage == 'converted' ? 'active' : 'inactive' %>">
+            <%= @lead.current_stage&.humanize || 'Unknown Stage' %>
+          </span>
+        </div>
+        <div class="text-muted small">
+          <i class="bi bi-calendar me-1"></i>Created: <%= @lead.created_at.strftime("%B %d, %Y") %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Section with Actions -->
+    <div class="text-end">
+      <div class="d-flex gap-2 justify-content-end">
+        <%= link_to admin_leads_path, class: "btn btn-outline-secondary btn-sm" do %>
+          <i class="bi bi-arrow-left me-1"></i>Back to Leads
+        <% end %>
+
+        <!-- Conversion Action Button -->
+        <% if @lead.can_convert_to_customer? %>
+          <%= link_to new_admin_customer_path(lead_id: @lead.id), class: "btn btn-success btn-sm", title: "Convert this lead to customer" do %>
+            <i class="bi bi-person-plus-fill me-1"></i>Convert to Customer
+          <% end %>
+        <% elsif @lead.converted_customer.present? %>
+          <%= link_to admin_customer_path(@lead.converted_customer), class: "btn btn-info btn-sm customer-link",
+              title: "View Customer: #{@lead.converted_customer.display_name}" do %>
+            <i class="bi bi-person-check-fill me-1"></i>View Customer
+          <% end %>
+        <% end %>
+
+        <button class="btn btn-info btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#leadStagesGuideModal">
+          <i class="bi bi-question-circle me-1"></i>Lead Stages Guide
+        </button>
+
+        <div class="dropdown">
+          <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="bi bi-gear me-1"></i>Actions
+          </button>
+          <ul class="dropdown-menu">
+            <li><%= link_to "Edit Lead", edit_admin_lead_path(@lead), class: "dropdown-item" %></li>
+            <li><%= link_to "Add Notes", edit_admin_lead_path(@lead), class: "dropdown-item" %></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <%= link_to "#",
+                  class: "dropdown-item text-danger delete-lead-btn",
+                  data: {
+                    "lead-id": @lead.id,
+                    "lead-name": @lead.name,
+                    "delete-url": admin_lead_path(@lead)
+                  } do %>
+                <i class="bi bi-trash me-2"></i>Delete Lead
+              <% end %>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lead Progress Timeline Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#timelineCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-diagram-3"></i>
+      </div>
+      <h5 class="section-title">Lead Progress Timeline</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="timelineCollapse" class="collapse">
+    <div class="section-body">
+      <!-- Flow Legend -->
+      <div class="mb-4 p-3 bg-light rounded">
+        <h6 class="mb-2">
+          <i class="bi bi-info-circle me-1"></i>Lead Flow Guide
+        </h6>
+        <div class="row">
+          <div class="col-md-6">
+            <small class="text-success">
+              <strong>✅ Success Path:</strong> Lead Generated → Consultation → Discussion → Follow-Up → Success → Converted
+            </small>
+          </div>
+          <div class="col-md-6">
+            <small class="text-danger">
+              <strong>❌ Alternative Path:</strong> Follow-Up → Unsuccessful → Re-Follow-Up → Not Interested → Closed
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-container">
+        <%
+          # Define timeline stages with their proper flow
+          timeline_stages = [
+            { key: 'lead_generated', title: '🟢 Lead Generated', description: 'Initial lead entry into the system' },
+            { key: 'consultation_scheduled', title: '📅 Consultation Scheduled', description: 'First contact and consultation setup' },
+            { key: 'one_on_one', title: '🤝 One-on-One Discussion', description: 'Detailed discussion about insurance needs' },
+            { key: 'follow_up', title: '🔁 Follow-Up', description: 'Follow-up to gauge customer interest' },
+            { key: 'follow_up_successful', title: '✅ Follow-Up Successful', description: 'Customer shows interest and ready to proceed' },
+            { key: 'converted', title: '👤 Converted to Customer', description: 'Lead successfully converted to customer' }
+          ]
+
+          # Define alternative flow stages that branch after follow_up
+          alt_timeline_stages = [
+            { key: 'follow_up_unsuccessful', title: '❌ Follow-Up Unsuccessful', description: 'Customer not interested at this time', is_alt_path: true },
+            { key: 're_follow_up', title: '🔄 Re-Follow-Up', description: 'Second attempt to contact customer', is_alt_path: true },
+            { key: 'not_interested', title: '❌ Not Interested', description: 'Customer declined insurance', is_alt_path: true },
+            { key: 'closed', title: '🚫 Lead Closed', description: 'Lead marked as closed/complete', is_alt_path: true }
+          ]
+
+          # Combine all stages for rendering
+          all_stages = timeline_stages + alt_timeline_stages
+
+          # Successful path stages
+          successful_path = ['lead_generated', 'consultation_scheduled', 'one_on_one', 'follow_up', 'follow_up_successful', 'converted']
+
+          # Check if lead is on unsuccessful path
+          is_on_unsuccessful_path = ['follow_up_unsuccessful', 're_follow_up', 'not_interested', 'closed'].include?(@lead.current_stage)
+
+          # Get stage history if available
+          stage_history = @lead.respond_to?(:stage_history) ? @lead.stage_history : {}
+        %>
+
+        <% all_stages.each_with_index do |stage, index| %>
+          <%
+            # Determine status for this stage
+            current_stage_index = timeline_stages.map { |s| s[:key] }.index(@lead.current_stage) || -1
+            this_stage_index = timeline_stages.map { |s| s[:key] }.index(stage[:key]) || -1
+
+            # Status logic
+            if stage[:key] == @lead.current_stage
+              status = 'active'
+              status_class = 'text-primary fw-bold'
+              date_text = 'Currently at this stage'
+            elsif (this_stage_index >= 0 && current_stage_index >= 0 && this_stage_index < current_stage_index) ||
+                 (stage[:is_alt_path] && is_on_unsuccessful_path &&
+                  ['follow_up_unsuccessful', 're_follow_up', 'not_interested'].include?(stage[:key]) &&
+                  (['follow_up_unsuccessful', 're_follow_up', 'not_interested', 'closed'].index(@lead.current_stage) || 0) >=
+                  (['follow_up_unsuccessful', 're_follow_up', 'not_interested', 'closed'].index(stage[:key]) || 0))
+              status = 'completed'
+              status_class = 'text-success'
+              # Try to get actual date from stage history
+              if stage_history[stage[:key]].present?
+                date_text = Time.parse(stage_history[stage[:key]]).strftime("%b %d, %Y at %I:%M %p")
+              else
+                date_text = 'Completed'
+              end
+            else
+              status = 'pending'
+              status_class = 'text-muted'
+              date_text = 'Not yet reached'
+            end
+          %>
+
+          <!-- Timeline Stage -->
+          <div class="timeline-item <%= status %> <%= 'alternative-path' if stage[:is_alt_path] %> <%= 'inaccessible' if is_on_unsuccessful_path && successful_path.include?(stage[:key]) && successful_path.index(stage[:key]) > successful_path.index('follow_up') %> <%= 'branching-point' if stage[:key] == 'follow_up' && is_on_unsuccessful_path %>">
+            <div class="timeline-marker"></div>
+            <div class="timeline-content">
+              <h6><%= stage[:title] %></h6>
+              <p class="text-muted mb-1"><%= stage[:description] %></p>
+              <small class="<%= status_class %>"><%= date_text %></small>
+
+              <!-- Show current path indicator -->
+              <% if stage[:key] == @lead.current_stage %>
+                <div class="mt-1">
+                  <span class="badge bg-warning text-dark">
+                    <i class="bi bi-geo-alt-fill me-1"></i>Current Stage
+                  </span>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Basic Information Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#basicInfoCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-person-check"></i>
+      </div>
+      <h5 class="section-title">Customer Type & Basic Information</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="basicInfoCollapse" class="collapse">
+    <div class="section-body">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>LEAD ID</label>
+            <div class="info-value"><%= @lead.lead_id %></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>CUSTOMER TYPE</label>
+            <div class="info-value">
+              <% if @lead.customer_type.present? %>
+                <%= @lead.customer_type.humanize %>
+              <% else %>
+                Not specified
+              <% end %>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>CONTACT NUMBER</label>
+            <div class="info-value">
+              <% if @lead.contact_number.present? %>
+                <a href="tel:<%= @lead.contact_number %>" class="text-decoration-none">
+                  <%= @lead.contact_number %>
+                </a>
+              <% else %>
+                Not provided
+              <% end %>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>EMAIL</label>
+            <div class="info-value">
+              <% if @lead.email.present? %>
+                <a href="mailto:<%= @lead.email %>" class="text-decoration-none">
+                  <%= @lead.email %>
+                </a>
+              <% else %>
+                Not provided
+              <% end %>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>LEAD SOURCE</label>
+            <div class="info-value"><%= @lead.lead_source&.humanize || 'Not specified' %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Personal Information Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#personalInfoCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-person"></i>
+      </div>
+      <h5 class="section-title">Personal Information</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="personalInfoCollapse" class="collapse">
+    <div class="section-body">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>FIRST NAME</label>
+            <div class="info-value"><%= @lead.first_name || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>MIDDLE NAME</label>
+            <div class="info-value"><%= @lead.middle_name || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>LAST NAME</label>
+            <div class="info-value"><%= @lead.last_name || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>GENDER</label>
+            <div class="info-value"><%= @lead.gender&.humanize || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>DATE OF BIRTH</label>
+            <div class="info-value"><%= @lead.birth_date&.strftime("%B %d, %Y") || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>AGE</label>
+            <div class="info-value"><%= @lead.age ? "#{@lead.age} years" : '-' %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Corporate Information Section -->
+<% if @lead.customer_type == 'corporate' %>
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#corporateInfoCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-building"></i>
+      </div>
+      <h5 class="section-title">Corporate Information</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="corporateInfoCollapse" class="collapse">
+    <div class="section-body">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>COMPANY NAME</label>
+            <div class="info-value"><%= @lead.company_name || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>DESIGNATION</label>
+            <div class="info-value"><%= @lead.designation || '-' %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<% end %>
+
+<!-- Professional Information Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#professionalInfoCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-briefcase"></i>
+      </div>
+      <h5 class="section-title">Professional Information</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="professionalInfoCollapse" class="collapse">
+    <div class="section-body">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>OCCUPATION</label>
+            <div class="info-value"><%= @lead.occupation || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>ANNUAL INCOME</label>
+            <div class="info-value">
+              <% if @lead.annual_income.present? %>
+                <%= indian_currency(@lead.annual_income) %>
+              <% else %>
+                -
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Address Information Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#addressInfoCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-geo-alt"></i>
+      </div>
+      <h5 class="section-title">Address Information</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="addressInfoCollapse" class="collapse">
+    <div class="section-body">
+      <% if @lead.address.present? %>
+        <div class="info-field">
+          <label>ADDRESS</label>
+          <div class="info-value"><%= @lead.address %></div>
+        </div>
+      <% else %>
+        <div class="text-center text-muted py-4">
+          <i class="bi bi-geo-alt fs-3 d-block mb-2"></i>
+          <p class="mb-0">No address information provided</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Product & Insurance Information Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#productInfoCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-info-circle"></i>
+      </div>
+      <h5 class="section-title">Product & Insurance Information</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="productInfoCollapse" class="collapse">
+    <div class="section-body">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>PRODUCT CATEGORY</label>
+            <div class="info-value"><%= @lead.product_category&.humanize || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>PRODUCT SUBCATEGORY</label>
+            <div class="info-value"><%= @lead.product_subcategory&.humanize || '-' %></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>PRODUCT INTEREST</label>
+            <div class="info-value"><%= @lead.product_interest&.humanize || '-' %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Additional Information Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#additionalInfoCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-journal-text"></i>
+      </div>
+      <h5 class="section-title">Additional Information</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="additionalInfoCollapse" class="collapse">
+    <div class="section-body">
+      <% if @lead.additional_information.present? %>
+        <div class="info-field">
+          <label>ADDITIONAL NOTES</label>
+          <div class="info-value"><%= simple_format(@lead.additional_information) %></div>
+        </div>
+      <% else %>
+        <div class="text-center text-muted py-4">
+          <i class="bi bi-journal-text fs-3 d-block mb-2"></i>
+          <p class="mb-0">No additional information provided</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Conversion Status Section -->
+<% if @lead.converted_customer_id.present? %>
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#conversionCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+        <i class="bi bi-check-circle-fill"></i>
+      </div>
+      <h5 class="section-title">Conversion Status</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="conversionCollapse" class="collapse">
+    <div class="section-body">
+      <div class="alert alert-success d-flex align-items-center mb-0">
+        <i class="bi bi-check-circle-fill me-2 fs-4"></i>
+        <div class="flex-grow-1">
+          <h6 class="alert-heading mb-1">Successfully Converted!</h6>
+          <p class="mb-2">This lead has been successfully converted to a customer.</p>
+          <% if @lead.converted_customer.present? %>
+            <div class="d-flex flex-wrap gap-2">
+              <%= link_to admin_customer_path(@lead.converted_customer), class: "btn btn-success btn-sm" do %>
+                <i class="bi bi-person-check-fill me-1"></i>
+                View Customer Profile: <%= @lead.converted_customer.display_name %>
+              <% end %>
+              <% service_type_map = {
+                   'taxation'    => { 'itr' => 'taxation_itr', 'tax_planning' => 'taxation_tax_planning' },
+                   'loans'       => { 'personal' => 'loans_personal', 'home' => 'loans_home', 'mortgage' => 'loans_mortgage', 'business' => 'loans_business' },
+                   'travel'      => { 'domestic' => 'travel_domestic', 'international' => 'travel_international' },
+                   'credit_card' => { 'rewards' => 'credit_card_rewards', 'business' => 'credit_card_business', 'travel' => 'credit_card_travel' },
+                   'investments' => { 'mutual_fund' => 'investments_mutual_fund', 'fd' => 'investments_fd', 'other' => 'investments_other' }
+                 }
+                 service_type = service_type_map.dig(@lead.product_category, @lead.product_subcategory)
+              %>
+              <% if service_type.present? %>
+                <%= link_to new_admin_client_service_path(service_type: service_type, customer_id: @lead.converted_customer_id, lead_id: @lead.id), class: "btn btn-primary btn-sm" do %>
+                  <i class="bi bi-plus-circle me-1"></i>
+                  Create <%= ClientService::SERVICE_TYPES[service_type] %>
+                <% end %>
+              <% elsif @lead.product_category == 'insurance' && @lead.can_create_policy? %>
+                <%= link_to create_policy_admin_lead_path(@lead), method: :patch, class: "btn btn-primary btn-sm", data: { turbo_method: :patch } do %>
+                  <i class="bi bi-file-earmark-plus me-1"></i>
+                  Create Policy
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<% end %>
+
+<!-- Lead Management Section -->
+<div class="info-section-card">
+  <div class="section-header collapsed" data-bs-toggle="collapse" data-bs-target="#managementCollapse" aria-expanded="false">
+    <div class="d-flex align-items-center">
+      <div class="section-icon">
+        <i class="bi bi-gear"></i>
+      </div>
+      <h5 class="section-title">Lead Management</h5>
+    </div>
+    <i class="bi bi-chevron-down collapse-icon"></i>
+  </div>
+  <div id="managementCollapse" class="collapse">
+    <div class="section-body">
+      <!-- Current Stage Display -->
+      <div class="mb-3">
+        <div class="info-field">
+          <label>CURRENT STAGE</label>
+          <div class="info-value">
+            <span class="badge bg-primary fs-6"><%= @lead.current_stage&.humanize || 'Unknown' %></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage Update Text -->
+      <div class="mb-3">
+        <div class="info-field">
+          <label>UPDATE LEAD STAGE</label>
+          <div class="info-value">Update Lead Stage</div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>CREATED AT</label>
+            <div class="info-value"><%= @lead.created_at.strftime("%B %d, %Y at %I:%M %p") %></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>LAST UPDATED</label>
+            <div class="info-value"><%= @lead.updated_at.strftime("%B %d, %Y at %I:%M %p") %></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-field">
+            <label>DAYS SINCE CREATED</label>
+            <div class="info-value"><%= (Date.current - @lead.created_at.to_date).to_i %> days</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lead Stages Guide Modal -->
+<div class="modal fade" id="leadStagesGuideModal" tabindex="-1" aria-labelledby="leadStagesGuideModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="leadStagesGuideModalLabel">
+          <i class="bi bi-diagram-3 me-2"></i>Lead Stages Flow Guide
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <!-- Main Flow Stages -->
+          <div class="col-md-6">
+            <h6 class="text-success mb-3">
+              <i class="bi bi-arrow-right-circle me-1"></i>Main Success Flow
+            </h6>
+            <div class="stage-guide-item mb-3">
+              <div class="d-flex align-items-start">
+                <span class="stage-icon me-2">🟢</span>
+                <div>
+                  <h6 class="mb-1">Lead Generated</h6>
+                  <small class="text-muted">Initial stage - Lead entry into system</small>
+                </div>
+              </div>
+            </div>
+            <div class="stage-guide-item mb-3">
+              <div class="d-flex align-items-start">
+                <span class="stage-icon me-2">📅</span>
+                <div>
+                  <h6 class="mb-1">Consultation Scheduled</h6>
+                  <small class="text-muted">Meeting scheduled - Initial contact and requirement gathering</small>
+                </div>
+              </div>
+            </div>
+            <div class="stage-guide-item mb-3">
+              <div class="d-flex align-items-start">
+                <span class="stage-icon me-2">🤝</span>
+                <div>
+                  <h6 class="mb-1">One-on-One</h6>
+                  <small class="text-muted">Personal meeting - Detailed discussion and product presentation</small>
+                </div>
+              </div>
+            </div>
+            <div class="stage-guide-item mb-3">
+              <div class="d-flex align-items-start">
+                <span class="stage-icon me-2">🔁</span>
+                <div>
+                  <h6 class="mb-1">Follow-Up</h6>
+                  <small class="text-muted">Following up - Regular contact to maintain engagement</small>
+                </div>
+              </div>
+            </div>
+            <div class="stage-guide-item mb-3">
+              <div class="d-flex align-items-start">
+                <span class="stage-icon me-2">✅</span>
+                <div>
+                  <h6 class="mb-1">Follow-Up Successful</h6>
+                  <small class="text-muted">Successful follow-up - Positive response received</small>
+                </div>
+              </div>
+            </div>
+            <div class="stage-guide-item mb-3">
+              <div class="d-flex align-items-start">
+                <span class="stage-icon me-2">👤</span>
+                <div>
+                  <h6 class="mb-1">Customer Converted</h6>
+                  <small class="text-muted">Customer converted - Ready for policy creation</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alternative Flow Stages -->
+          <div class="col-md-6">
+            <h6 class="text-danger mb-3">
+              <i class="bi bi-arrow-down-circle me-1"></i>Alternative Flow
+            </h6>
+            <div class="stage-guide-item mb-3 alternative-stage">
+              <div class="d-flex align-items-start">
+                <span class="stage-icon me-2">❌</span>
+                <div>
+                  <h6 class="mb-1">Follow-Up Unsuccessful</h6>
+                  <small class="text-muted">Unsuccessful follow-up - No positive response</small>
+                </div>
+              </div>
+            </div>
+            <div class="stage-guide-item mb-3 alternative-stage">
+              <div class="d-flex align-items-start">
+                <span class="stage-icon me-2">🔄</span>
+                <div>
+                  <h6 class="mb-1">Re-Follow Up</h6>
+                  <small class="text-muted">Re-attempting follow-up - Second attempt to engage</small>
+                </div>
+              </div>
+            </div>
+            <div class="stage-guide-item mb-3 alternative-stage">
+              <div class="d-flex align-items-start">
+                <span class="stage-icon me-2">🚫</span>
+                <div>
+                  <h6 class="mb-1">Not Interested</h6>
+                  <small class="text-muted">Lead not interested - Customer declined the offer</small>
+                </div>
+              </div>
+            </div>
+            <div class="stage-guide-item mb-3 alternative-stage">
+              <div class="d-flex align-items-start">
+                <span class="stage-icon me-2">📁</span>
+                <div>
+                  <h6 class="mb-1">Lead Close - Follow-Up Unsuccessful</h6>
+                  <small class="text-muted">Lead close - Follow-up unsuccessful</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Reference -->
+        <hr class="my-4">
+        <div class="row">
+          <div class="col-12">
+            <h6 class="mb-3"><i class="bi bi-info-circle me-2"></i>Quick Reference</h6>
+            <div class="row">
+              <div class="col-md-6">
+                <small class="text-success">
+                  <strong>✅ Success Path:</strong> Lead Generated → Consultation → Discussion → Follow-Up → Success → Converted
+                </small>
+              </div>
+              <div class="col-md-6">
+                <small class="text-danger">
+                  <strong>❌ Alternative Path:</strong> Follow-Up → Unsuccessful → Re-Follow-Up → Not Interested → Closed
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Customer Header Card */
+.customer-header-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.customer-avatar {
+  width: 80px;
+  height: 80px;
+  position: relative;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: white;
+  font-weight: bold;
+}
+
+.customer-name {
+  font-size: 28px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.customer-type-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.customer-type-badge.individual {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status-badge.active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.inactive {
+  background: #ffebee;
+  color: #c62828;
+}
+
+/* Info Section Cards */
+.info-section-card {
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.info-section-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.section-header {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 1px solid #e9ecef;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.section-header:hover {
+  background: linear-gradient(135deg, #f0f2f5 0%, #ffffff 100%);
+}
+
+.section-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  margin-right: 12px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.collapse-icon {
+  color: #6c757d;
+  transition: transform 0.3s ease;
+}
+
+.section-header.collapsed .collapse-icon {
+  transform: rotate(0deg);
+}
+
+.section-header:not(.collapsed) .collapse-icon {
+  transform: rotate(180deg);
+}
+
+.section-body {
+  padding: 20px;
+}
+
+/* Info Fields */
+.info-field {
+  margin-bottom: 12px;
+}
+
+.info-field label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.info-value {
+  font-size: 15px;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+/* Timeline Styles */
+.timeline-container {
+  position: relative;
+  padding-left: 30px;
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 2rem;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 12px;
+  bottom: -2rem;
+  width: 2px;
+  background: #e2e8f0;
+}
+
+.timeline-item:last-child::before {
+  display: none;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -30px;
+  top: 8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid #e2e8f0;
+  background: white;
+  z-index: 1;
+}
+
+.timeline-item.completed .timeline-marker {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+.timeline-item.active .timeline-marker {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  animation: pulse-timeline 2s infinite;
+}
+
+.timeline-item.pending .timeline-marker {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.timeline-item.alternative-path {
+  opacity: 0.7;
+}
+
+.timeline-item.alternative-path .timeline-marker {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+.timeline-content h6 {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+@keyframes pulse-timeline {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.7; }
+}
+
+/* Customer link styling */
+.customer-link {
+  background: linear-gradient(45deg, #0dcaf0, #17a2b8);
+  border: none;
+  color: white;
+  font-weight: 500;
+}
+
+.customer-link:hover {
+  background: linear-gradient(45deg, #17a2b8, #0dcaf0);
+  color: white;
+  box-shadow: 0 4px 12px rgba(13, 202, 240, 0.3);
+  transform: translateY(-2px);
+  transition: all 0.2s ease;
+}
+
+/* Delete lead confirmation */
+.delete-lead-btn:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.stage-guide-item {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+  transition: all 0.2s ease;
+}
+
+.stage-guide-item:hover {
+  background: #e9ecef;
+  transform: translateX(5px);
+}
+
+.stage-guide-item.alternative-stage {
+  border-left-color: #dc3545;
+}
+
+.stage-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+</style>
+
+<script>
+// Delete Lead Confirmation
+document.addEventListener('DOMContentLoaded', function() {
+  const deleteButtons = document.querySelectorAll('.delete-lead-btn');
+
+  deleteButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      const leadId = this.dataset.leadId;
+      const leadName = this.dataset.leadName;
+      const deleteUrl = this.dataset.deleteUrl;
+
+      const confirmed = confirm(`Are you sure you want to delete lead "${leadName}" (ID: ${leadId})?\n\nThis action cannot be undone.`);
+
+      if (confirmed) {
+        // Create a form to submit the DELETE request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = deleteUrl;
+
+        // Add CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (csrfToken) {
+          const csrfInput = document.createElement('input');
+          csrfInput.type = 'hidden';
+          csrfInput.name = 'authenticity_token';
+          csrfInput.value = csrfToken;
+          form.appendChild(csrfInput);
+        }
+
+        // Add method override for DELETE
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'DELETE';
+        form.appendChild(methodInput);
+
+        // Submit the form
+        document.body.appendChild(form);
+        form.submit();
+      }
+    });
+  });
+});
+</script>

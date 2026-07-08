@@ -1,0 +1,247 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-0">Roles & Permissions Management</h2>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to admin_permissions_path, class: "btn btn-outline-info" do %>
+      <i class="bi bi-gear me-1"></i>
+      Manage Permissions
+    <% end %>
+    <%= link_to new_admin_role_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg me-1"></i>
+      Create New Role
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Roles</h6>
+            <h3 class="mb-0 text-primary"><%= number_with_delimiter(@roles.count) %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-person-badge text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Active Roles</h6>
+            <h3 class="mb-0 text-success"><%= number_with_delimiter(@active_roles) %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-check-circle text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">User Assignments</h6>
+            <h3 class="mb-0 text-info"><%= number_with_delimiter(@total_assignments) %></h3>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-people text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Available Permissions</h6>
+            <h3 class="mb-0 text-warning"><%= number_with_delimiter(@permissions_count) %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-shield-check text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Roles List -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">System Roles</h5>
+  </div>
+  <div class="card-body p-0">
+    <% if @roles.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Role Name</th>
+              <th class="border-0">Description</th>
+              <th class="border-0">Users Assigned</th>
+              <th class="border-0">Permissions</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @roles.each do |role| %>
+              <tr>
+                <td>
+                  <div>
+                    <h6 class="mb-1">
+                      <i class="bi bi-person-badge me-2 text-primary"></i>
+                      <%= role.display_name %>
+                    </h6>
+                    <small class="text-muted">ID: <%= role.id %></small>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <div class="text-truncate" style="max-width: 300px;" title="<%= role.description %>">
+                      <%= role.description.present? ? role.description : 'No description provided' %>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <span class="badge bg-info"><%= role.user_count %> users</span>
+                    <% if role.users.any? %>
+                      <div class="mt-1">
+                        <small class="text-muted">
+                          <%= role.users.limit(3).map(&:full_name).join(', ') %>
+                          <% if role.users.count > 3 %>
+                            and <%= role.users.count - 3 %> more
+                          <% end %>
+                        </small>
+                      </div>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <span class="badge bg-secondary"><%= role.permissions.count %> permissions</span>
+                    <% if role.permissions.any? %>
+                      <div class="mt-1">
+                        <% role.permissions.distinct.pluck(:module_name).first(3).each do |module_name| %>
+                          <span class="badge badge-sm bg-outline-primary me-1"><%= module_name.humanize %></span>
+                        <% end %>
+                        <% if role.permissions.distinct.count(:module_name) > 3 %>
+                          <span class="text-muted">+<%= role.permissions.distinct.count(:module_name) - 3 %> more</span>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-<%= role.status? ? 'success' : 'secondary' %>">
+                    <%= role.status? ? 'Active' : 'Inactive' %>
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <%= link_to admin_role_path(role), class: "btn btn-sm btn-outline-primary", title: "View Details" do %>
+                      <i class="bi bi-eye"></i>
+                    <% end %>
+                    <%= link_to edit_admin_role_path(role), class: "btn btn-sm btn-outline-warning", title: "Edit Role" do %>
+                      <i class="bi bi-pencil"></i>
+                    <% end %>
+                    <%= button_to toggle_status_admin_role_path(role),
+                        method: :patch,
+                        class: "btn btn-sm btn-outline-#{role.status? ? 'secondary' : 'success'}",
+                        title: role.status? ? 'Deactivate' : 'Activate',
+                        data: {
+                          confirm: "Are you sure you want to #{role.status? ? 'deactivate' : 'activate'} this role?"
+                        },
+                        form: { style: "display: inline;" } do %>
+                      <i class="bi bi-#{role.status? ? 'pause-circle' : 'play-circle'}"></i>
+                    <% end %>
+                    <% unless role.users.any? || role.name == 'super_admin' %>
+                      <%= button_to admin_role_path(role),
+                          method: :delete,
+                          class: "btn btn-sm btn-outline-danger",
+                          title: "Delete Role",
+                          data: {
+                            confirm: "Are you sure you want to delete this role? This action cannot be undone."
+                          },
+                          form: { style: "display: inline;" } do %>
+                        <i class="bi bi-trash"></i>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-person-badge fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No roles found</h5>
+        <p class="text-muted mb-3">
+          Get started by creating your first role to manage user permissions.
+        </p>
+        <%= link_to new_admin_role_path, class: "btn btn-primary" do %>
+          <i class="bi bi-plus-lg me-1"></i>
+          Create First Role
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Quick Actions Help -->
+<div class="card border-0 shadow-sm mt-4">
+  <div class="card-header bg-transparent border-0">
+    <h6 class="mb-0">
+      <i class="bi bi-info-circle me-2 text-info"></i>
+      Role Management Guide
+    </h6>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h6 class="text-primary mb-2">Best Practices:</h6>
+        <ul class="list-unstyled">
+          <li class="mb-1"><i class="bi bi-check text-success me-2"></i>Create roles based on job functions</li>
+          <li class="mb-1"><i class="bi bi-check text-success me-2"></i>Follow principle of least privilege</li>
+          <li class="mb-1"><i class="bi bi-check text-success me-2"></i>Regularly review role assignments</li>
+          <li class="mb-1"><i class="bi bi-check text-success me-2"></i>Document role responsibilities clearly</li>
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <h6 class="text-warning mb-2">Important Notes:</h6>
+        <ul class="list-unstyled">
+          <li class="mb-1"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Cannot delete roles with assigned users</li>
+          <li class="mb-1"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Super Admin role cannot be deleted</li>
+          <li class="mb-1"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Permission changes take effect immediately</li>
+          <li class="mb-1"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Inactive roles restrict user access</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.badge-sm {
+  font-size: 0.7em;
+}
+</style>

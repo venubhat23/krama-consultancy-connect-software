@@ -1,0 +1,674 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><%= [@investor.first_name, @investor.last_name].compact.join(' ') %></h2>
+    <p class="text-muted mb-0">
+      <span class="badge bg-info me-2">Investor</span>
+      Investor Details & Information
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to edit_admin_investor_path(@investor), class: "btn btn-outline-warning" do %>
+      <i class="bi bi-pencil me-1"></i>
+      Edit Investor
+    <% end %>
+    <%= link_to admin_investors_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Investors
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Main Information -->
+  <div class="col-lg-8">
+    <!-- Personal Details -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">
+          <i class="bi bi-person me-2 text-primary"></i>
+          Personal Information
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <strong>Full Name:</strong>
+            <div class="text-muted"><%= @investor.full_name %></div>
+          </div>
+          <div class="col-md-6">
+            <strong>Email:</strong>
+            <div class="text-muted">
+              <%= link_to @investor.email, "mailto:#{@investor.email}", class: "text-decoration-none" if @investor.email.present? %>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <strong>Mobile:</strong>
+            <div class="text-muted">
+              <%= link_to @investor.mobile, "tel:#{@investor.mobile}", class: "text-decoration-none" if @investor.mobile.present? %>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <strong>Username:</strong>
+            <div class="text-muted font-monospace"><%= @investor.username %></div>
+          </div>
+          <div class="col-md-6">
+            <strong>Status:</strong>
+            <div>
+              <span class="badge bg-<%= @investor.status == 'active' ? 'success' : 'secondary' %>">
+                <%= @investor.status&.humanize || 'Active' %>
+              </span>
+            </div>
+          </div>
+          <% if @investor.birth_date.present? %>
+            <div class="col-md-6">
+              <strong>Date of Birth:</strong>
+              <div class="text-muted"><%= @investor.birth_date.strftime("%d %B %Y") %></div>
+            </div>
+          <% end %>
+          <% if @investor.gender.present? %>
+            <div class="col-md-6">
+              <strong>Gender:</strong>
+              <div class="text-muted"><%= @investor.gender.humanize %></div>
+            </div>
+          <% end %>
+          <% if @investor.company_name.present? %>
+            <div class="col-md-6">
+              <strong>Company:</strong>
+              <div class="text-muted"><%= @investor.company_name %></div>
+            </div>
+          <% end %>
+        </div>
+
+        <% if @investor.address.present? %>
+          <hr>
+          <h6 class="fw-semibold mb-3">Address Information</h6>
+          <div class="row g-3">
+            <div class="col-12">
+              <strong>Address:</strong>
+              <div class="text-muted"><%= @investor.address %></div>
+            </div>
+          </div>
+        <% end %>
+
+        <% if @investor.pan_no.present? || @investor.gst_no.present? %>
+          <hr>
+          <h6 class="fw-semibold mb-3">Tax Information</h6>
+          <div class="row g-3">
+            <% if @investor.pan_no.present? %>
+              <div class="col-md-6">
+                <strong>PAN Number:</strong>
+                <div class="text-muted font-monospace"><%= @investor.pan_no %></div>
+              </div>
+            <% end %>
+            <% if @investor.gst_no.present? %>
+              <div class="col-md-6">
+                <strong>GST Number:</strong>
+                <div class="text-muted font-monospace"><%= @investor.gst_no %></div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Bank Details -->
+    <% if @investor.bank_name.present? || @investor.account_no.present? || @investor.ifsc_code.present? %>
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-bank me-2 text-success"></i>
+            Banking Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <% if @investor.bank_name.present? %>
+              <div class="col-md-6">
+                <strong>Bank Name:</strong>
+                <div class="text-muted"><%= @investor.bank_name %></div>
+              </div>
+            <% end %>
+            <% if @investor.account_no.present? %>
+              <div class="col-md-6">
+                <strong>Account Number:</strong>
+                <div class="text-muted font-monospace">
+                  **** **** <%= @investor.account_no.to_s.last(4) %>
+                </div>
+              </div>
+            <% end %>
+            <% if @investor.ifsc_code.present? %>
+              <div class="col-md-6">
+                <strong>IFSC Code:</strong>
+                <div class="text-muted font-monospace"><%= @investor.ifsc_code %></div>
+              </div>
+            <% end %>
+            <% if @investor.account_holder_name.present? %>
+              <div class="col-md-6">
+                <strong>Account Holder:</strong>
+                <div class="text-muted"><%= @investor.account_holder_name %></div>
+              </div>
+            <% end %>
+            <% if @investor.account_type.present? %>
+              <div class="col-md-6">
+                <strong>Account Type:</strong>
+                <div class="text-muted"><%= @investor.account_type.humanize %></div>
+              </div>
+            <% end %>
+            <% if @investor.upi_id.present? %>
+              <div class="col-md-6">
+                <strong>UPI ID:</strong>
+                <div class="text-muted font-monospace"><%= @investor.upi_id %></div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Investment Details -->
+    <% if @investor.number_of_shares.present? || @investor.invested_amount.present? || @investor.investment_percentage.present? %>
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-currency-rupee me-2 text-primary"></i>
+            Investment Details
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <% if @investor.number_of_shares.present? %>
+              <div class="col-md-4">
+                <strong>No. of Shares:</strong>
+                <div class="text-muted"><%= number_with_delimiter(@investor.number_of_shares) %></div>
+              </div>
+            <% end %>
+            <% if @investor.invested_amount.present? %>
+              <div class="col-md-4">
+                <strong>Invested Amount:</strong>
+                <div class="text-muted"><%= indian_currency(@investor.invested_amount) %></div>
+              </div>
+            <% end %>
+            <% if @investor.investment_percentage.present? %>
+              <div class="col-md-4">
+                <strong>Investment Percentage:</strong>
+                <div class="text-muted"><%= @investor.investment_percentage %>%</div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Login Credentials -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">
+          <i class="bi bi-key me-2 text-warning"></i>
+          Login Credentials
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info d-flex align-items-center mb-3">
+          <i class="bi bi-info-circle me-2"></i>
+          <div>
+            <strong>Portal Access:</strong> The investor can log in using their email or mobile number with the password below.
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <strong>Login Options:</strong>
+            <div class="mt-2">
+              <div class="badge bg-light text-dark border me-2 mb-2">
+                <i class="bi bi-envelope me-1"></i>
+                <%= @investor.email %>
+              </div>
+              <div class="badge bg-light text-dark border mb-2">
+                <i class="bi bi-telephone me-1"></i>
+                <%= @investor.mobile %>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <strong>Password:</strong>
+            <div class="input-group mt-2">
+              <input type="password"
+                     class="form-control font-monospace bg-light"
+                     value="<%= @investor.original_password || 'Not Set' %>"
+                     readonly
+                     id="password-field">
+              <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                <i class="bi bi-eye" id="password-icon"></i>
+              </button>
+            </div>
+            <% unless @investor.original_password.present? %>
+              <small class="text-muted">No password set for this investor</small>
+            <% end %>
+          </div>
+          <% if @investor.username.present? %>
+            <div class="col-md-6">
+              <strong>Username:</strong>
+              <div class="text-muted font-monospace mt-1"><%= @investor.username %></div>
+            </div>
+          <% end %>
+          <div class="col-12">
+            <div class="bg-light rounded p-3">
+              <h6 class="fw-semibold mb-2">
+                <i class="bi bi-shield-check me-1 text-success"></i>
+                Security Information
+              </h6>
+              <ul class="mb-0 text-sm">
+                <li>Investor can use either email or mobile number to log in</li>
+                <li>Password is case-sensitive</li>
+                <li>Account access is restricted to investor portal only</li>
+                <li>Sessions expire after 30 days of inactivity</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents -->
+    <% if @investor.has_r2_document? || @investor.investor_documents.any? %>
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-files me-2 text-info"></i>
+            Documents & Attachments
+          </h5>
+        </div>
+        <div class="card-body">
+
+          <!-- R2 Main Document -->
+          <% if @investor.has_r2_document? %>
+            <div class="mb-4">
+              <h6 class="fw-semibold mb-3">
+                <i class="bi bi-star me-1 text-warning"></i>
+                Main Document
+              </h6>
+              <%
+                r2_url = @investor.r2_document_url
+                filename = @investor.main_document_filename
+                content_type = @investor.main_document_content_type || 'application/octet-stream'
+                file_size = @investor.main_document_size || 0
+                is_image = content_type.start_with?('image/')
+                is_pdf = content_type == 'application/pdf'
+              %>
+
+              <div class="border rounded p-3 bg-light">
+                <div class="row align-items-center">
+                  <div class="col-auto">
+                    <% if is_image %>
+                      <div class="position-relative">
+                        <%= image_tag r2_url, class: "img-thumbnail",
+                            style: "width: 80px; height: 80px; object-fit: cover;",
+                            onclick: "showImageModal('#{r2_url}', '#{filename}')" %>
+                        <div class="position-absolute top-0 end-0 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                             style="width: 20px; height: 20px; font-size: 10px; transform: translate(25%, -25%);">
+                          <i class="bi bi-eye"></i>
+                        </div>
+                      </div>
+                    <% elsif is_pdf %>
+                      <div class="bg-danger text-white rounded d-flex align-items-center justify-content-center"
+                           style="width: 80px; height: 80px;">
+                        <i class="bi bi-file-earmark-pdf fs-1"></i>
+                      </div>
+                    <% else %>
+                      <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center"
+                           style="width: 80px; height: 80px;">
+                        <i class="bi bi-file-earmark fs-1"></i>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <div class="col">
+                    <div class="fw-medium"><%= filename %></div>
+                    <small class="text-muted d-block">
+                      <%= (file_size / 1024.0 / 1024.0).round(2) %> MB •
+                      <%= content_type %>
+                    </small>
+                    <small class="text-muted">
+                      <i class="bi bi-cloud me-1"></i>
+                      Stored in Cloudflare R2
+                    </small>
+                  </div>
+
+                  <div class="col-auto">
+                    <div class="d-flex gap-2">
+                      <%= link_to r2_url, class: "btn btn-sm btn-outline-primary", target: "_blank", title: "View" do %>
+                        <i class="bi bi-eye"></i>
+                      <% end %>
+                      <%= link_to r2_url, class: "btn btn-sm btn-outline-success", download: filename, title: "Download" do %>
+                        <i class="bi bi-download"></i>
+                      <% end %>
+                      <button class="btn btn-sm btn-outline-info" onclick="copyToClipboard('<%= r2_url %>')" title="Copy URL">
+                        <i class="bi bi-clipboard"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Cloudflare R2 Info -->
+                <div class="mt-3 p-2 bg-white rounded border-start border-success border-3">
+                  <div class="row text-sm">
+                    <div class="col-md-6">
+                      <strong>R2 Storage Key:</strong>
+                      <code class="d-block mt-1"><%= @investor.main_document_key %></code>
+                    </div>
+                    <div class="col-md-6">
+                      <strong>Public URL:</strong>
+                      <div class="mt-1">
+                        <a href="<%= r2_url %>" target="_blank" class="text-decoration-none small">
+                          <%= r2_url.length > 50 ? r2_url[0..50] + '...' : r2_url %>
+                          <i class="bi bi-box-arrow-up-right ms-1"></i>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- Additional Documents -->
+          <% if @investor.investor_documents.any? %>
+            <div>
+              <h6 class="fw-semibold mb-3">
+                <i class="bi bi-collection me-1 text-secondary"></i>
+                Additional Documents
+              </h6>
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead class="bg-light">
+                    <tr>
+                      <th class="border-0">Document Type</th>
+                      <th class="border-0">File</th>
+                      <th class="border-0">Uploaded</th>
+                      <th class="border-0">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% @investor.investor_documents.each do |document| %>
+                      <tr>
+                        <td>
+                          <div class="fw-semibold"><%= document.document_type %></div>
+                          <% if document.has_r2_document? %>
+                            <small class="text-success">
+                              <i class="bi bi-cloud-check me-1"></i>R2 Storage
+                            </small>
+                          <% elsif document.legacy_activestorage_document? %>
+                            <small class="text-info">
+                              <i class="bi bi-archive me-1"></i>Legacy Storage
+                            </small>
+                          <% end %>
+                        </td>
+                        <td>
+                          <% if document.document_url.present? %>
+                            <div class="d-flex align-items-center">
+                              <% if document.content_type&.start_with?('image/') %>
+                                <%= image_tag document.document_url, class: "me-2 rounded",
+                                    style: "width: 30px; height: 30px; object-fit: cover;" %>
+                              <% elsif document.content_type == 'application/pdf' %>
+                                <i class="bi bi-file-earmark-pdf me-2 text-danger fs-5"></i>
+                              <% else %>
+                                <i class="bi bi-file-earmark me-2 text-muted fs-5"></i>
+                              <% end %>
+                              <div>
+                                <span class="d-block"><%= document.document_name %></span>
+                                <small class="text-muted d-block"><%= document.document_size %></small>
+                                <!-- Public URL Display -->
+                                <div class="mt-1">
+                                  <a href="<%= document.document_url %>" target="_blank" class="text-decoration-none small text-info">
+                                    <i class="bi bi-link-45deg me-1"></i>
+                                    <%= document.document_url.length > 40 ? document.document_url[0..40] + '...' : document.document_url %>
+                                    <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+                          <% else %>
+                            <span class="text-muted">No file attached</span>
+                          <% end %>
+                        </td>
+                        <td><%= document.created_at.strftime("%d %b %Y") %></td>
+                        <td>
+                          <% if document.document_url.present? %>
+                            <div class="d-flex gap-1">
+                              <%= link_to document.document_url, class: "btn btn-sm btn-outline-primary", target: "_blank", title: "View" do %>
+                                <i class="bi bi-eye"></i>
+                              <% end %>
+                              <% if document.has_r2_document? %>
+                                <%= link_to R2Service.signed_url(document.r2_file_key), class: "btn btn-sm btn-outline-success", download: document.r2_filename, title: "Download" do %>
+                                  <i class="bi bi-download"></i>
+                                <% end %>
+                              <% end %>
+                              <button class="btn btn-sm btn-outline-info" onclick="copyToClipboard('<%= document.document_url %>')" title="Copy URL">
+                                <i class="bi bi-clipboard"></i>
+                              </button>
+                            </div>
+                          <% end %>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- No Documents Message -->
+          <% unless @investor.has_r2_document? || @investor.investor_documents.any? %>
+            <div class="text-center py-4">
+              <i class="bi bi-file-earmark-x fs-1 text-muted mb-3"></i>
+              <h6 class="text-muted">No documents uploaded</h6>
+              <p class="text-muted small mb-0">This investor has not uploaded any documents yet.</p>
+            </div>
+          <% end %>
+
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <!-- Profile Card -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body text-center">
+        <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 120px; height: 120px;">
+          <i class="bi bi-person-badge fs-1 text-info"></i>
+        </div>
+        <h5 class="mb-1"><%= @investor.full_name %></h5>
+        <p class="text-muted mb-3"><%= @investor.email %></p>
+
+      </div>
+    </div>
+
+    <!-- Account Information -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">Account Information</h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-2 text-sm">
+          <div class="col-5"><strong>Investor ID:</strong></div>
+          <div class="col-7 text-muted">#<%= @investor.id %></div>
+
+          <div class="col-5"><strong>Role:</strong></div>
+          <div class="col-7">
+            <span class="badge bg-info">Investor</span>
+          </div>
+
+          <div class="col-5"><strong>Status:</strong></div>
+          <div class="col-7">
+            <span class="badge bg-<%= @investor.status == 'active' ? 'success' : 'secondary' %>">
+              <%= @investor.status&.humanize || 'Active' %>
+            </span>
+          </div>
+
+          <div class="col-5"><strong>Username:</strong></div>
+          <div class="col-7 text-muted"><%= @investor.username %></div>
+
+          <% if @investor.original_password.present? %>
+            <div class="col-5"><strong>Password:</strong></div>
+            <div class="col-7 text-muted font-monospace"><%= @investor.original_password %></div>
+          <% end %>
+
+          <div class="col-5"><strong>Created:</strong></div>
+          <div class="col-7 text-muted"><%= @investor.created_at.strftime("%d %b %Y") %></div>
+
+          <div class="col-5"><strong>Last Updated:</strong></div>
+          <div class="col-7 text-muted"><%= @investor.updated_at.strftime("%d %b %Y") %></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Investment Details -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">
+          <i class="bi bi-currency-rupee me-2 text-primary"></i>
+          Investment Details
+        </h6>
+      </div>
+      <div class="card-body">
+        <% if @investor.number_of_shares.present? || @investor.invested_amount.present? || @investor.investment_percentage.present? %>
+          <div class="row g-3 text-sm">
+            <% if @investor.number_of_shares.present? %>
+              <div class="col-12">
+                <div class="d-flex justify-content-between">
+                  <strong>No. of Shares:</strong>
+                  <span class="text-info fw-bold"><%= number_with_delimiter(@investor.number_of_shares) %></span>
+                </div>
+              </div>
+            <% end %>
+
+            <% if @investor.invested_amount.present? %>
+              <div class="col-12">
+                <div class="d-flex justify-content-between">
+                  <strong>Invested Amount:</strong>
+                  <span class="text-success fw-bold"><%= indian_currency(@investor.invested_amount) %></span>
+                </div>
+              </div>
+            <% end %>
+
+            <% if @investor.investment_percentage.present? %>
+              <div class="col-12">
+                <div class="d-flex justify-content-between">
+                  <strong>Investment Percentage:</strong>
+                  <span class="text-primary fw-bold"><%= @investor.investment_percentage %>%</span>
+                </div>
+              </div>
+            <% end %>
+
+            <% if @investor.invested_amount.present? && @investor.investment_percentage.present? %>
+              <div class="col-12">
+                <hr class="my-2">
+                <div class="bg-light rounded-2 p-2">
+                  <small class="text-muted d-block">Investment Contribution</small>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">Total Share:</span>
+                    <span class="badge bg-primary"><%= @investor.investment_percentage %>% of <%= indian_currency(@investor.invested_amount) %></span>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="text-center">
+            <div class="border rounded-3 p-3 bg-light">
+              <i class="bi bi-currency-rupee fs-3 text-muted mb-2"></i>
+              <p class="text-muted mb-0 small">No investment details added</p>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageModalLabel">Document Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="modalImage" src="" class="img-fluid" alt="Document Preview">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <a id="modalDownload" href="" download="" class="btn btn-primary">
+          <i class="bi bi-download me-1"></i>Download
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePassword() {
+  const passwordField = document.getElementById('password-field');
+  const passwordIcon = document.getElementById('password-icon');
+
+  if (passwordField.type === 'password') {
+    passwordField.type = 'text';
+    passwordIcon.classList.remove('bi-eye');
+    passwordIcon.classList.add('bi-eye-slash');
+  } else {
+    passwordField.type = 'password';
+    passwordIcon.classList.remove('bi-eye-slash');
+    passwordIcon.classList.add('bi-eye');
+  }
+}
+
+function showImageModal(imageUrl, filename) {
+  const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+  const modalImage = document.getElementById('modalImage');
+  const modalDownload = document.getElementById('modalDownload');
+  const modalTitle = document.getElementById('imageModalLabel');
+
+  modalImage.src = imageUrl;
+  modalDownload.href = imageUrl;
+  modalDownload.download = filename;
+  modalTitle.textContent = filename || 'Document Preview';
+
+  modal.show();
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(function() {
+    // Create a temporary toast notification
+    const toast = document.createElement('div');
+    toast.className = 'toast align-items-center text-white bg-success border-0';
+    toast.style.position = 'fixed';
+    toast.style.top = '20px';
+    toast.style.right = '20px';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="bi bi-check-circle me-2"></i>URL copied to clipboard!
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    `;
+
+    document.body.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast, { autohide: true, delay: 3000 });
+    bsToast.show();
+
+    // Remove element after toast is hidden
+    toast.addEventListener('hidden.bs.toast', () => {
+      document.body.removeChild(toast);
+    });
+  }).catch(function(err) {
+    console.error('Failed to copy text: ', err);
+    alert('Failed to copy URL to clipboard');
+  });
+}
+</script>

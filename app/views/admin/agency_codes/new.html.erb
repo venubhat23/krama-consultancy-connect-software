@@ -1,0 +1,281 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Add New Agency Code</h2>
+    <p class="text-muted mb-0">Create a new agency code entry for insurance agents</p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to admin_agency_codes_path, class: "btn btn-secondary" do %>
+      <i class="bi bi-list me-1"></i>
+      View All Codes
+    <% end %>
+  </div>
+</div>
+
+<!-- Add New Agency Code Form -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0 d-flex align-items-center">
+    <i class="bi bi-plus-circle me-2 text-primary fs-5"></i>
+    <div>
+      <h5 class="mb-0">Add Agency Code</h5>
+      <small class="text-muted">Create a new agency code entry</small>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <%= form_with model: [:admin, @agency_code], local: true, class: "row g-4", data: { turbo: false } do |form| %>
+
+      <!-- Insurance Type -->
+      <div class="col-md-6">
+        <label class="form-label">Type</label>
+        <%= form.select :insurance_type,
+            options_for_select(@insurance_types.map { |type| [type, type] }, @agency_code.insurance_type),
+            { prompt: 'Select Type' },
+            { class: "form-select searchable-select", required: true, id: "agency_code_insurance_type", data: { placeholder: "Health, Life, Motor & General..." } } %>
+        <% if @agency_code.errors[:insurance_type].any? %>
+          <div class="text-danger small mt-1"><%= @agency_code.errors[:insurance_type].first %></div>
+        <% end %>
+      </div>
+
+      <!-- Company Name -->
+      <div class="col-md-6">
+        <label class="form-label">Company Name</label>
+        <%= form.select :company_name,
+            [],
+            { prompt: 'Select Company' },
+            { class: "form-select searchable-select", required: true, id: "agency_code_company_name", data: { placeholder: "Search and select company..." } } %>
+        <% if @agency_code.errors[:company_name].any? %>
+          <div class="text-danger small mt-1"><%= @agency_code.errors[:company_name].first %></div>
+        <% end %>
+      </div>
+
+      <!-- Agent Name -->
+      <div class="col-md-6">
+        <label class="form-label">Agent Name</label>
+        <%= form.text_field :agent_name,
+            class: "form-control",
+            placeholder: "Enter agent name",
+            required: true %>
+        <% if @agency_code.errors[:agent_name].any? %>
+          <div class="text-danger small mt-1"><%= @agency_code.errors[:agent_name].first %></div>
+        <% end %>
+      </div>
+
+      <!-- Agency Code -->
+      <div class="col-md-6">
+        <label class="form-label">Agency Code</label>
+        <%= form.text_field :code,
+            class: "form-control",
+            placeholder: "Enter agency code",
+            required: true %>
+        <% if @agency_code.errors[:code].any? %>
+          <div class="text-danger small mt-1"><%= @agency_code.errors[:code].first %></div>
+        <% end %>
+      </div>
+
+      <div class="col-12">
+        <div class="d-flex gap-2">
+          <%= form.submit "Save Agency Code", class: "btn btn-primary" %>
+          <%= link_to "Cancel", admin_agency_codes_path, class: "btn btn-secondary" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- jQuery and Select2 for searchable dropdowns -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+.card {
+  border-radius: 12px;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+  border: 1px solid #e0e6ed;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+}
+
+/* Select2 styling */
+.select2-container--bootstrap-5 .select2-selection--single {
+  height: 48px;
+  border: 1px solid #e0e6ed;
+  border-radius: 8px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single:focus-within {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.select2-container--bootstrap-5 .select2-selection__rendered {
+  color: #495057;
+  padding-left: 1rem;
+  padding-right: 20px;
+  line-height: 46px;
+  font-size: 0.9rem;
+}
+
+.select2-container--bootstrap-5 .select2-results__option {
+  padding: 8px 16px;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.select2-dropdown {
+  border: 1px solid #e0e6ed;
+  border-radius: 8px;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.select2-results__options {
+  max-height: 400px !important;
+  overflow-y: auto;
+}
+
+.select2-search__field {
+  border: 1px solid #e0e6ed;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize all searchable dropdowns with Select2
+  if (typeof $ !== 'undefined' && $.fn.select2) {
+    $('.searchable-select').each(function() {
+      const $element = $(this);
+      const placeholder = $element.data('placeholder') || 'Search and select...';
+
+      $element.select2({
+        theme: 'bootstrap-5',
+        placeholder: placeholder,
+        allowClear: true,
+        width: '100%',
+        minimumResultsForSearch: 0,
+        dropdownParent: $('body')
+      });
+    });
+  }
+
+  // Dynamic company filtering based on insurance type
+  const insuranceTypeSelect = document.getElementById('agency_code_insurance_type');
+  const companySelect = document.getElementById('agency_code_company_name');
+
+  if (insuranceTypeSelect && companySelect) {
+    // Function to load companies based on insurance type
+    function loadCompaniesByType(insuranceType) {
+      if (!insuranceType) {
+        // Reset company dropdown if no type selected
+        companySelect.innerHTML = '<option value="">Select Company</option>';
+        if ($(companySelect).hasClass('select2-hidden-accessible')) {
+          $(companySelect).val(null).trigger('change');
+        }
+        return;
+      }
+
+      // Show loading state
+      companySelect.innerHTML = '<option value="">Loading companies...</option>';
+      if ($(companySelect).hasClass('select2-hidden-accessible')) {
+        $(companySelect).trigger('change');
+      }
+
+      // Fetch companies for the selected insurance type
+      fetch(`/admin/agency_codes/companies_by_type?insurance_type=${encodeURIComponent(insuranceType)}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Clear existing options
+          companySelect.innerHTML = '<option value="">Select Company</option>';
+
+          // Add new options
+          data.companies.forEach(company => {
+            const option = document.createElement('option');
+            option.value = company;
+            option.textContent = company;
+            companySelect.appendChild(option);
+          });
+
+          // Update Select2 if it's initialized
+          if ($(companySelect).hasClass('select2-hidden-accessible')) {
+            $(companySelect).trigger('change');
+          }
+
+          console.log(`Loaded ${data.companies.length} companies for ${insuranceType} insurance`);
+        } else {
+          console.error('Failed to load companies:', data.message);
+          companySelect.innerHTML = '<option value="">Select Company</option>';
+          if ($(companySelect).hasClass('select2-hidden-accessible')) {
+            $(companySelect).trigger('change');
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error loading companies:', error);
+        companySelect.innerHTML = '<option value="">Error loading companies</option>';
+        if ($(companySelect).hasClass('select2-hidden-accessible')) {
+          $(companySelect).trigger('change');
+        }
+      });
+    }
+
+    // Handle insurance type change
+    insuranceTypeSelect.addEventListener('change', function() {
+      const selectedType = this.value;
+      loadCompaniesByType(selectedType);
+    });
+
+    // Handle Select2 change event for insurance type
+    $('#agency_code_insurance_type').on('select2:select', function(e) {
+      const selectedType = e.params.data.id;
+      loadCompaniesByType(selectedType);
+    });
+
+    // Clear company when insurance type is cleared
+    $('#agency_code_insurance_type').on('select2:clear', function() {
+      loadCompaniesByType(null);
+    });
+
+    // Load companies on page load if insurance type is already selected
+    const initialInsuranceType = insuranceTypeSelect.value;
+    if (initialInsuranceType) {
+      loadCompaniesByType(initialInsuranceType);
+    }
+  }
+});
+</script>

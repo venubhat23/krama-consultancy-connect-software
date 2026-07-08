@@ -1,0 +1,506 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Expired Policies</h2>
+    <p class="text-muted mb-0">Insurance policies that have already expired and need immediate attention</p>
+  </div>
+  <div class="d-flex gap-2">
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-download me-1"></i>
+        Export
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-text me-2"></i>Export as CSV</a></li>
+        <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-excel me-2"></i>Export as Excel</a></li>
+      </ul>
+    </div>
+    <button class="btn btn-danger" onclick="sendExpiryNotifications()">
+      <i class="bi bi-exclamation-triangle me-1"></i>
+      Send Notifications
+    </button>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-2 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Expired</h6>
+            <h3 class="mb-0 text-danger"><%= number_with_delimiter(@stats[:total_expired]) %></h3>
+          </div>
+          <div class="bg-danger bg-opacity-10 rounded p-3">
+            <i class="bi bi-exclamation-triangle text-danger fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-2 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Health Insurance</h6>
+            <h3 class="mb-0 text-success"><%= number_with_delimiter(@stats[:health_expired]) %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-heart-pulse text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-2 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Life Insurance</h6>
+            <h3 class="mb-0 text-info"><%= number_with_delimiter(@stats[:life_expired]) %></h3>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-shield-check text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-2 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Motor Insurance</h6>
+            <h3 class="mb-0 text-warning"><%= number_with_delimiter(@stats[:motor_expired]) %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-car-front text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-2 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">General Insurance</h6>
+            <h3 class="mb-0 text-secondary"><%= number_with_delimiter(@stats[:other_expired]) %></h3>
+          </div>
+          <div class="bg-secondary bg-opacity-10 rounded p-3">
+            <i class="bi bi-clipboard-check text-secondary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Health Insurance Expired -->
+<% if @expired_health_insurances.any? %>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">
+      <i class="bi bi-heart-pulse text-success me-2"></i>
+      Expired Health Insurance (<%= @expired_health_insurances.count %>)
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th class="border-0">Customer</th>
+            <th class="border-0">Policy Details</th>
+            <th class="border-0">Company & Plan</th>
+            <th class="border-0">Coverage</th>
+            <th class="border-0">Expired Date</th>
+            <th class="border-0">Days Overdue</th>
+            <th class="border-0">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @expired_health_insurances.each do |insurance| %>
+            <tr>
+              <td>
+                <div>
+                  <h6 class="mb-1"><%= insurance.customer.display_name %></h6>
+                  <small class="text-muted"><%= insurance.customer.email %></small>
+                  <div><small class="text-muted"><%= insurance.customer.mobile %></small></div>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.policy_number %></div>
+                  <span class="badge bg-<%= insurance.policy_type == 'New' ? 'primary' : 'success' %>">
+                    <%= insurance.policy_type %>
+                  </span>
+                  <div><small class="text-muted">Type: <%= insurance.class.name.split('Insurance').first %> Insurance</small></div>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.insurance_company_name %></div>
+                  <% if insurance.plan_name.present? %>
+                    <small class="text-muted"><%= insurance.plan_name %></small>
+                  <% end %>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= indian_currency(insurance.sum_insured) %></div>
+                  <small class="text-muted">Premium: <%= indian_currency(insurance.total_premium) %></small>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold text-danger"><%= insurance.policy_end_date.strftime("%d %b %Y") %></div>
+                  <small class="text-muted">Started: <%= insurance.policy_start_date.strftime("%d %b %Y") %></small>
+                </div>
+              </td>
+              <td>
+                <% days_overdue = (Date.current - insurance.policy_end_date).to_i %>
+                <span class="badge bg-<%= days_overdue > 30 ? 'danger' : 'warning' %>">
+                  <%= days_overdue %> days
+                </span>
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <%= link_to admin_health_insurance_path(insurance), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                    <i class="bi bi-eye"></i>
+                  <% end %>
+                  <button class="btn btn-sm btn-outline-warning" title="Send Notification" onclick="sendExpiryNotification('<%= insurance.id %>', 'health')">
+                    <i class="bi bi-bell"></i>
+                  </button>
+                  <%= link_to new_admin_health_insurance_path(renewal_from: insurance.id), class: "btn btn-sm btn-outline-success", title: "Renew Now" do %>
+                    <i class="bi bi-arrow-repeat"></i>
+                  <% end %>
+                  <%= link_to "tel:#{insurance.customer.mobile}", class: "btn btn-sm btn-outline-info", title: "Call Customer" do %>
+                    <i class="bi bi-telephone"></i>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% end %>
+
+<!-- Life Insurance Expired -->
+<% if @expired_life_insurances&.any? %>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">
+      <i class="bi bi-shield-check text-info me-2"></i>
+      Expired Life Insurance (<%= @expired_life_insurances.count %>)
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th class="border-0">Customer</th>
+            <th class="border-0">Policy Details</th>
+            <th class="border-0">Company & Plan</th>
+            <th class="border-0">Coverage</th>
+            <th class="border-0">Expired Date</th>
+            <th class="border-0">Days Overdue</th>
+            <th class="border-0">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @expired_life_insurances.each do |insurance| %>
+            <tr>
+              <td>
+                <div>
+                  <h6 class="mb-1"><%= insurance.customer.display_name %></h6>
+                  <small class="text-muted"><%= insurance.customer.email %></small>
+                  <div><small class="text-muted"><%= insurance.customer.mobile %></small></div>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.policy_number %></div>
+                  <span class="badge bg-<%= insurance.policy_type == 'New' ? 'primary' : 'success' %>">
+                    <%= insurance.policy_type %>
+                  </span>
+                  <div><small class="text-muted">Type: <%= insurance.class.name.split('Insurance').first %> Insurance</small></div>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.insurance_company_name %></div>
+                  <% if insurance.plan_name.present? %>
+                    <small class="text-muted"><%= insurance.plan_name %></small>
+                  <% end %>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= indian_currency(insurance.sum_insured) %></div>
+                  <small class="text-muted">Premium: <%= indian_currency(insurance.total_premium) %></small>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold text-danger"><%= insurance.policy_end_date.strftime("%d %b %Y") %></div>
+                  <small class="text-muted">Started: <%= insurance.policy_start_date.strftime("%d %b %Y") %></small>
+                </div>
+              </td>
+              <td>
+                <% days_overdue = (Date.current - insurance.policy_end_date).to_i %>
+                <span class="badge bg-<%= days_overdue > 30 ? 'danger' : 'warning' %>">
+                  <%= days_overdue %> days
+                </span>
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <%= link_to admin_life_insurance_path(insurance), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                    <i class="bi bi-eye"></i>
+                  <% end %>
+                  <button class="btn btn-sm btn-outline-warning" title="Send Notification" onclick="sendExpiryNotification('<%= insurance.id %>', 'life')">
+                    <i class="bi bi-bell"></i>
+                  </button>
+                  <%= link_to new_admin_life_insurance_path(renewal_from: insurance.id), class: "btn btn-sm btn-outline-success", title: "Renew Now" do %>
+                    <i class="bi bi-arrow-repeat"></i>
+                  <% end %>
+                  <%= link_to "tel:#{insurance.customer.mobile}", class: "btn btn-sm btn-outline-info", title: "Call Customer" do %>
+                    <i class="bi bi-telephone"></i>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% end %>
+
+<!-- Motor Insurance Expired -->
+<% if @expired_motor_insurances&.any? %>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">
+      <i class="bi bi-car-front text-warning me-2"></i>
+      Expired Motor Insurance (<%= @expired_motor_insurances.count %>)
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th class="border-0">Customer</th>
+            <th class="border-0">Policy Details</th>
+            <th class="border-0">Vehicle & Company</th>
+            <th class="border-0">Coverage</th>
+            <th class="border-0">Expired Date</th>
+            <th class="border-0">Days Overdue</th>
+            <th class="border-0">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @expired_motor_insurances.each do |insurance| %>
+            <tr>
+              <td>
+                <div>
+                  <h6 class="mb-1"><%= insurance.customer.display_name %></h6>
+                  <small class="text-muted"><%= insurance.customer.email %></small>
+                  <div><small class="text-muted"><%= insurance.customer.mobile %></small></div>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.policy_number %></div>
+                  <span class="badge bg-<%= insurance.policy_type == 'New' ? 'primary' : 'success' %>">
+                    <%= insurance.policy_type %>
+                  </span>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.insurance_company_name %></div>
+                  <% if insurance.respond_to?(:vehicle_number) && insurance.vehicle_number.present? %>
+                    <small class="text-muted">Vehicle: <%= insurance.vehicle_number %></small>
+                  <% end %>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= indian_currency(insurance.sum_insured) %></div>
+                  <small class="text-muted">Premium: <%= indian_currency(insurance.total_premium) %></small>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold text-danger"><%= insurance.policy_end_date.strftime("%d %b %Y") %></div>
+                  <small class="text-muted">Started: <%= insurance.policy_start_date.strftime("%d %b %Y") %></small>
+                </div>
+              </td>
+              <td>
+                <% days_overdue = (Date.current - insurance.policy_end_date).to_i %>
+                <span class="badge bg-<%= days_overdue > 30 ? 'danger' : 'warning' %>">
+                  <%= days_overdue %> days
+                </span>
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <%= link_to admin_motor_insurance_path(insurance), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                    <i class="bi bi-eye"></i>
+                  <% end %>
+                  <button class="btn btn-sm btn-outline-warning" title="Send Notification" onclick="sendExpiryNotification('<%= insurance.id %>', 'motor')">
+                    <i class="bi bi-bell"></i>
+                  </button>
+                  <%= link_to new_admin_motor_insurance_path(renewal_from: insurance.id), class: "btn btn-sm btn-outline-success", title: "Renew Now" do %>
+                    <i class="bi bi-arrow-repeat"></i>
+                  <% end %>
+                  <%= link_to "tel:#{insurance.customer.mobile}", class: "btn btn-sm btn-outline-info", title: "Call Customer" do %>
+                    <i class="bi bi-telephone"></i>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% end %>
+
+<!-- General Insurance Expired -->
+<% if @expired_other_insurances&.any? %>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">
+      <i class="bi bi-clipboard-check text-secondary me-2"></i>
+      Expired General Insurance (<%= @expired_other_insurances.count %>)
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th class="border-0">Customer</th>
+            <th class="border-0">Policy Details</th>
+            <th class="border-0">Company & Plan</th>
+            <th class="border-0">Coverage</th>
+            <th class="border-0">Expired Date</th>
+            <th class="border-0">Days Overdue</th>
+            <th class="border-0">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @expired_other_insurances.each do |insurance| %>
+            <tr>
+              <td>
+                <div>
+                  <h6 class="mb-1"><%= insurance.customer.display_name %></h6>
+                  <small class="text-muted"><%= insurance.customer.email %></small>
+                  <div><small class="text-muted"><%= insurance.customer.mobile %></small></div>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.policy_number %></div>
+                  <span class="badge bg-<%= insurance.policy_type == 'New' ? 'primary' : 'success' %>">
+                    <%= insurance.policy_type %>
+                  </span>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= insurance.insurance_company_name %></div>
+                  <% if insurance.plan_name.present? %>
+                    <small class="text-muted"><%= insurance.plan_name %></small>
+                  <% end %>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold"><%= indian_currency(insurance.sum_insured) %></div>
+                  <small class="text-muted">Premium: <%= indian_currency(insurance.total_premium) %></small>
+                </div>
+              </td>
+              <td>
+                <div>
+                  <div class="fw-semibold text-danger"><%= insurance.policy_end_date.strftime("%d %b %Y") %></div>
+                  <small class="text-muted">Started: <%= insurance.policy_start_date.strftime("%d %b %Y") %></small>
+                </div>
+              </td>
+              <td>
+                <% days_overdue = (Date.current - insurance.policy_end_date).to_i %>
+                <span class="badge bg-<%= days_overdue > 30 ? 'danger' : 'warning' %>">
+                  <%= days_overdue %> days
+                </span>
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <%= link_to admin_other_insurance_path(insurance), class: "btn btn-sm btn-outline-primary", title: "View" do %>
+                    <i class="bi bi-eye"></i>
+                  <% end %>
+                  <button class="btn btn-sm btn-outline-warning" title="Send Notification" onclick="sendExpiryNotification('<%= insurance.id %>', 'other')">
+                    <i class="bi bi-bell"></i>
+                  </button>
+                  <%= link_to new_admin_other_insurance_path(renewal_from: insurance.id), class: "btn btn-sm btn-outline-success", title: "Renew Now" do %>
+                    <i class="bi bi-arrow-repeat"></i>
+                  <% end %>
+                  <%= link_to "tel:#{insurance.customer.mobile}", class: "btn btn-sm btn-outline-info", title: "Call Customer" do %>
+                    <i class="bi bi-telephone"></i>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% end %>
+
+<!-- Empty State -->
+<% if @stats[:total_expired] == 0 %>
+<div class="card border-0 shadow-sm">
+  <div class="card-body text-center py-5">
+    <i class="bi bi-check-circle-fill fs-1 text-success d-block mb-3"></i>
+    <h5 class="text-muted">No expired policies</h5>
+    <p class="text-muted mb-3">
+      Great! All policies are up to date. No expired policies found.
+    </p>
+    <%= link_to "View Upcoming Renewals", admin_reports_upcoming_renewal_path, class: "btn btn-primary" %>
+  </div>
+</div>
+<% end %>
+
+<script>
+function sendExpiryNotifications() {
+  if (confirm('Are you sure you want to send expiry notifications to all customers with expired policies?')) {
+    // Implementation for bulk notification sending
+    alert('Feature coming soon! This will send expiry notifications to all customers with expired policies.');
+  }
+}
+
+function sendExpiryNotification(insuranceId, insuranceType) {
+  if (confirm('Are you sure you want to send an expiry notification to this customer?')) {
+    // Implementation for individual notification sending
+    alert(`Feature coming soon! This will send an expiry notification for ${insuranceType} insurance policy ID: ${insuranceId}`);
+  }
+}
+</script>

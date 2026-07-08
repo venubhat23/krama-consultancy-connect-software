@@ -1,0 +1,159 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-person-plus-fill me-2"></i>
+            Convert Lead to Customer
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <!-- Lead Information -->
+            <div class="col-md-6">
+              <h6 class="text-muted mb-3">Lead Information</h6>
+              <div class="bg-light p-3 rounded">
+                <p><strong>Lead ID:</strong> <%= @lead.lead_id %></p>
+                <p><strong>Name:</strong> <%= @lead.name %></p>
+                <p><strong>Contact:</strong> <%= @lead.contact_number %></p>
+                <% if @lead.email.present? %>
+                  <p><strong>Email:</strong> <%= @lead.email %></p>
+                <% end %>
+                <p><strong>Type:</strong> <%= @lead.customer_type&.titleize || 'Individual' %></p>
+                <p><strong>Lead Type:</strong>
+                  <span class="badge <%= @lead.is_branch_out? ? 'bg-info' : 'bg-primary' %>">
+                    <%= @lead.is_branch_out? ? 'Branch Lead' : 'Parent Lead' %>
+                  </span>
+                </p>
+                <% if @lead.product_category.present? && @lead.product_subcategory.present? %>
+                  <p><strong>Product:</strong> <%= @lead.product_category.titleize %> - <%= @lead.product_subcategory.titleize %></p>
+                <% end %>
+              </div>
+            </div>
+
+            <!-- Customer Status -->
+            <div class="col-md-6">
+              <h6 class="text-muted mb-3">Customer Status</h6>
+              <div class="bg-light p-3 rounded">
+                <% case @conversion_context %>
+                <% when :parent_customer %>
+                  <div class="alert alert-warning mb-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Customer already exists for this Parent Lead.</strong>
+                  </div>
+                  <p><strong>Customer ID:</strong> <%= @existing_customer.id %></p>
+                  <p><strong>Name:</strong> <%= @existing_customer.display_name %></p>
+                  <p><strong>Mobile:</strong> <%= @existing_customer.mobile %></p>
+                  <p class="text-muted">
+                    This customer was created from the parent lead. This branch lead will be linked to the same customer.
+                  </p>
+                <% when :sibling_customer %>
+                  <div class="alert alert-warning mb-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Customer already exists for this Parent Lead.</strong>
+                  </div>
+                  <p><strong>Customer ID:</strong> <%= @existing_customer.id %></p>
+                  <p><strong>Name:</strong> <%= @existing_customer.display_name %></p>
+                  <p><strong>Mobile:</strong> <%= @existing_customer.mobile %></p>
+                  <p class="text-muted">
+                    This customer was created from another branch lead. This branch lead will be linked to the same customer.
+                  </p>
+                <% when :branch_customer %>
+                  <div class="alert alert-warning mb-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Customer already exists for this lead.</strong>
+                  </div>
+                  <p><strong>Customer ID:</strong> <%= @existing_customer.id %></p>
+                  <p><strong>Name:</strong> <%= @existing_customer.display_name %></p>
+                  <p><strong>Mobile:</strong> <%= @existing_customer.mobile %></p>
+                  <p class="text-muted">
+                    This customer was created from a branch lead. This parent lead will be linked to the same customer.
+                  </p>
+                <% when :contact_match %>
+                  <div class="alert alert-warning mb-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Customer already exists with matching contact details.</strong>
+                  </div>
+                  <p><strong>Customer ID:</strong> <%= @existing_customer.id %></p>
+                  <p><strong>Name:</strong> <%= @existing_customer.display_name %></p>
+                  <p><strong>Mobile:</strong> <%= @existing_customer.mobile %></p>
+                  <p class="text-muted">
+                    A customer with the same mobile number or email already exists.
+                  </p>
+                <% else %>
+                  <div class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <strong>New Customer</strong>
+                  </div>
+                  <p class="text-muted">
+                    No existing customer found. A new customer record will be created.
+                  </p>
+                <% end %>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="d-flex justify-content-between">
+                <%= link_to 'Cancel', admin_lead_path(@lead), class: 'btn btn-secondary' %>
+
+                <div>
+                  <% if @existing_customer %>
+                    <%= form_with model: @lead, url: convert_to_customer_admin_lead_path(@lead),
+                        method: :patch, local: true, class: 'd-inline me-2' do |form| %>
+                      <%= hidden_field_tag :continue_with_existing, true %>
+                      <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Do you want to continue with this customer?
+                      </button>
+                    <% end %>
+                  <% else %>
+                    <%= form_with model: @lead, url: convert_to_customer_admin_lead_path(@lead),
+                        method: :patch, local: true, class: 'd-inline' do |form| %>
+                      <button type="submit" class="btn btn-success">
+                        <i class="bi bi-person-plus-fill me-2"></i>
+                        Create New Customer
+                      </button>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Information -->
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="alert alert-info">
+                <h6 class="alert-heading">
+                  <i class="bi bi-info-circle me-2"></i>
+                  What happens next?
+                </h6>
+                <ul class="mb-0">
+                  <% if @existing_customer %>
+                    <li>The lead will be marked as converted and linked to the existing customer</li>
+                    <% if @lead.product_category == 'insurance' && @lead.product_subcategory.present? %>
+                      <li>You'll be automatically redirected to the <%= @lead.product_subcategory.titleize %> Insurance creation page</li>
+                      <li>Lead and customer details will be pre-filled in the insurance form</li>
+                      <li>Only this lead will move to the Converted stage</li>
+                    <% else %>
+                      <li>You'll be redirected to the customer's profile page to select insurance type</li>
+                    <% end %>
+                  <% else %>
+                    <li>You'll be redirected to the customer creation form</li>
+                    <li>All lead information will be automatically filled in the form</li>
+                    <li>You can review and edit the information before creating the customer</li>
+                    <li>Once saved, the lead will be marked as converted</li>
+                  <% end %>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

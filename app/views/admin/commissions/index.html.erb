@@ -1,0 +1,17 @@
+<% content_for :title, "Commission Center" %>
+
+<script>
+  // Redirect to dashboard
+  window.location.href = '<%= admin_commissions_dashboard_path %>';
+</script>
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-center align-items-center" style="height: 50vh;">
+    <div class="text-center">
+      <div class="spinner-border text-primary mb-3" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <h6 class="text-muted">Redirecting to Commission Dashboard...</h6>
+    </div>
+  </div>
+</div>

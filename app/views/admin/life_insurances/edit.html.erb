@@ -1,0 +1,72 @@
+<% content_for :page_title, "Edit Life Insurance" %>
+<% content_for :page_subtitle, "Update life insurance policy details" %>
+
+<!-- Action Buttons -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <%= link_to admin_life_insurances_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-2"></i>
+      Back to List
+    <% end %>
+  </div>
+
+  <div class="d-flex gap-2">
+    <%= link_to admin_life_insurance_path(@life_insurance), class: "btn btn-outline-info" do %>
+      <i class="bi bi-eye me-2"></i>
+      View Policy
+    <% end %>
+    <button type="button" class="btn btn-outline-success" onclick="toggleDocumentSection()">
+      <i class="bi bi-file-earmark-plus me-2"></i>
+      Update Documents
+    </button>
+    <div class="trust-seal">
+      <i class="bi bi-shield-check seal-icon"></i>
+      <span>Update Policy</span>
+    </div>
+  </div>
+</div>
+
+<%= render 'form' %>
+
+<!-- Document Management Section (Hidden by default) -->
+<div id="document-management-section" style="display: none;">
+  <%= render 'admin/policy_documents/document_manager', policy: @life_insurance, policy_type: 'life' %>
+</div>
+
+
+<script>
+function toggleDocumentSection() {
+  const documentSection = document.getElementById('document-management-section');
+  const button = event.target.closest('button');
+
+  if (documentSection.style.display === 'none') {
+    documentSection.style.display = 'block';
+    button.innerHTML = '<i class="bi bi-file-earmark-minus me-2"></i>Hide Documents';
+    button.className = 'btn btn-outline-warning';
+
+    // Initialize the document manager if it hasn't been initialized yet
+    if (typeof initializePolicyDocumentManager === 'function') {
+      initializePolicyDocumentManager();
+    }
+
+    // Scroll to document section
+    setTimeout(() => {
+      documentSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  } else {
+    documentSection.style.display = 'none';
+    button.innerHTML = '<i class="bi bi-file-earmark-plus me-2"></i>Update Documents';
+    button.className = 'btn btn-outline-success';
+  }
+}
+
+// Ensure the document manager JavaScript is loaded when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  // Pre-initialize even if section is hidden to avoid JavaScript errors
+  if (document.getElementById('policy-documents-manager') && typeof initializePolicyDocumentManager === 'function') {
+    setTimeout(() => {
+      initializePolicyDocumentManager();
+    }, 100);
+  }
+});
+</script>

@@ -1,0 +1,51 @@
+<div class="mb-4"><h2 class="mb-1">New Announcement</h2></div>
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <%= form_with model: @announcement, url: forum_portal_announcements_path, local: true do |form| %>
+      <% if @announcement.errors.any? %>
+        <div class="alert alert-danger">
+          <ul class="mb-0"><% @announcement.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %></ul>
+        </div>
+      <% end %>
+
+      <div class="mb-3">
+        <label class="form-label">Title</label>
+        <%= form.text_field :title, class: "form-control", required: true %>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Message</label>
+        <%= form.text_area :body, rows: 4, class: "form-control", required: true %>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Audience</label>
+        <% options = current_user.forum_admin? ? [["Whole forum", "specific_forum"], ["A specific chapter", "specific_chapter"], ["A specific member", "specific_member"]] : [["My chapter", "specific_chapter"], ["A specific member", "specific_member"]] %>
+        <%= form.select :audience, options_for_select(options, @announcement.audience), {}, class: "form-select", id: "fp_audience_select" %>
+      </div>
+      <div class="mb-3" id="fp-chapter-field">
+        <label class="form-label">Chapter</label>
+        <%= form.select :chapter_id, @chapters.map { |c| [c.name, c.id] }, { include_blank: true }, class: "form-select" %>
+      </div>
+      <div class="mb-3" id="fp-member-field">
+        <label class="form-label">Member</label>
+        <%= form.select :target_user_id, @members.map { |m| ["#{m.full_name} (#{m.email})", m.id] }, { include_blank: true }, class: "form-select" %>
+      </div>
+
+      <div class="mt-4 d-flex gap-2">
+        <%= form.submit "Post Announcement", class: "btn btn-primary" %>
+        <%= link_to "Cancel", forum_portal_announcements_path, class: "btn btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const select = document.getElementById('fp_audience_select');
+    function sync() {
+      document.getElementById('fp-chapter-field').style.display = select.value === 'specific_chapter' ? '' : 'none';
+      document.getElementById('fp-member-field').style.display = select.value === 'specific_member' ? '' : 'none';
+    }
+    select.addEventListener('change', sync);
+    sync();
+  })();
+</script>

@@ -1,0 +1,67 @@
+<!-- Simple Centered Login Page -->
+<div class="simple-login-wrapper">
+  <div class="simple-login-container">
+    <div class="simple-login-card">
+      <!-- Flash Messages -->
+      <% if notice %>
+        <div class="alert alert-success mb-3">
+          <i class="fas fa-check-circle me-2"></i><%= notice %>
+        </div>
+      <% end %>
+
+      <% if alert && alert.present? && alert.strip != "" %>
+        <div class="alert alert-danger mb-3">
+          <i class="fas fa-exclamation-triangle me-2"></i><%= alert %>
+        </div>
+      <% end %>
+
+      <!-- Logo Section -->
+      <div class="text-center mb-4">
+        <div class="simple-logo">
+          <img src="/logo.jpeg" alt="Dr WISE" class="login-logo-img" />
+        </div>
+        <h2 class="simple-title">Dr WISE</h2>
+      </div>
+
+      <!-- Login Banners -->
+      <%= display_banners('login') %>
+
+      <!-- Simple Login Form -->
+      <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { authenticity_token: true }) do |f| %>
+        <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+        <div class="mb-3">
+          <%= f.label :login, "Email", class: "form-label" %>
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="fas fa-envelope"></i>
+            </span>
+            <%= f.email_field :login, autofocus: true, autocomplete: "email", class: "form-control", placeholder: "email@example.com" %>
+          </div>
+          <small class="text-muted">Please enter your email address</small>
+        </div>
+
+        <div class="mb-3">
+          <%= f.label :password, "Password", class: "form-label" %>
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="fas fa-lock"></i>
+            </span>
+            <%= f.password_field :password, autocomplete: "current-password", class: "form-control", placeholder: "••••••••" %>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <% if devise_mapping.rememberable? %>
+            <div class="form-check">
+              <%= f.check_box :remember_me, class: "form-check-input" %>
+              <%= f.label :remember_me, "Remember me", class: "form-check-label" %>
+            </div>
+          <% end %>
+
+        </div>
+
+        <%= f.submit "Sign In", class: "btn btn-primary w-100 py-3 fs-5 fw-semibold" %>
+      <% end %>
+    </div>
+  </div>
+</div>

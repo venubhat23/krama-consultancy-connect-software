@@ -1,0 +1,1096 @@
+<% content_for :title, "AI Reports Assistant" %>
+
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">
+        <i class="bi bi-robot text-primary me-2"></i>
+        AI Reports Assistant
+        <span class="badge bg-primary-subtle text-primary ms-2">Beta</span>
+      </h2>
+      <p class="text-muted mb-0">Generate intelligent reports and get insights using AI</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary" onclick="clearChat()">
+        <i class="bi bi-trash me-1"></i>
+        Clear Chat
+      </button>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#quickReportModal">
+        <i class="bi bi-lightning me-1"></i>
+        Quick Report
+      </button>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Chat Interface -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-gradient-primary text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-chat-dots me-2"></i>
+            Chat with AI Assistant
+            <span class="badge bg-white text-primary ms-2">Online</span>
+          </h5>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="card-body p-0" style="height: 600px; overflow-y: auto;" id="chatMessages">
+          <!-- Welcome Message -->
+          <div class="p-3 border-bottom">
+            <div class="d-flex">
+              <div class="ai-avatar bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                <i class="bi bi-robot text-white"></i>
+              </div>
+              <div class="flex-grow-1">
+                <div class="bg-primary bg-opacity-10 rounded p-3">
+                  <p class="mb-2">👋 Hello! I'm your AI Reports Assistant. I can help you:</p>
+                  <ul class="small mb-3">
+                    <li>📊 Generate intelligent reports with filters</li>
+                    <li>🔍 Analyze patterns and trends in your data</li>
+                    <li>📈 Provide predictions and recommendations</li>
+                    <li>❓ Answer questions about your insurance business</li>
+                  </ul>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-sm btn-primary" onclick="askSample('Show me commission report for last 30 days')">
+                      💰 Commission Report
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="askSample('Which policies are expiring soon?')">
+                      ⏰ Expiring Policies
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="askSample('Predict next month revenue')">
+                      🔮 Revenue Prediction
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="card-footer border-0 bg-light">
+          <div class="input-group">
+            <input type="text" class="form-control border-0 bg-white"
+                   placeholder="Ask me about your reports, data, or analytics..."
+                   id="chatInput"
+                   onkeypress="handleEnterKey(event)">
+            <button class="btn btn-primary" onclick="sendMessage()" id="sendButton">
+              <i class="bi bi-send"></i>
+            </button>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="mt-2">
+            <small class="text-muted">Quick actions:</small>
+            <div class="d-flex gap-2 mt-1 flex-wrap">
+              <button class="btn btn-outline-secondary btn-sm" onclick="insertText('Generate commission report for ')">
+                💰 Commission
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" onclick="insertText('Show expired policies where ')">
+                📋 Expired
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" onclick="insertText('Analyze payment trends for ')">
+                💳 Payments
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" onclick="insertText('Which leads are most likely to convert?')">
+                🎯 Leads
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Generation Panel -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header">
+          <h6 class="mb-0">
+            <i class="bi bi-sliders text-info me-2"></i>
+            Generate Custom Report
+          </h6>
+        </div>
+        <div class="card-body">
+          <form id="reportGenerationForm">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Report Type</label>
+              <select class="form-select" id="reportType" onchange="updateFilters()">
+                <option value="">Select Report Type</option>
+                <option value="commission">💰 Commission Analysis</option>
+                <option value="expired_insurance">⏰ Expired Insurance</option>
+                <option value="payment_due">💳 Payment Due</option>
+                <option value="upcoming_renewal">🔄 Upcoming Renewals</option>
+                <option value="leads">🎯 Lead Intelligence</option>
+                <option value="sessions">👥 User Sessions</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Time Period</label>
+              <select class="form-select" id="dateRange">
+                <option value="7_days">Last 7 Days</option>
+                <option value="30_days" selected>Last 30 Days</option>
+                <option value="3_months">Last 3 Months</option>
+                <option value="6_months">Last 6 Months</option>
+                <option value="1_year">Last Year</option>
+              </select>
+            </div>
+
+            <!-- Dynamic Filters -->
+            <div id="dynamicFilters">
+              <!-- Filters will be populated based on report type -->
+            </div>
+
+            <button type="button" class="btn btn-primary w-100" onclick="generateAIReport()">
+              <i class="bi bi-robot me-2"></i>
+              Generate AI Report
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- AI Insights Preview -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header">
+          <h6 class="mb-0">
+            <i class="bi bi-lightbulb text-warning me-2"></i>
+            AI Insights
+          </h6>
+        </div>
+        <div class="card-body">
+          <div id="aiInsightsPreview">
+            <div class="text-center py-3">
+              <i class="bi bi-brain text-muted fs-3 d-block mb-2"></i>
+              <small class="text-muted">Generate a report to see AI insights</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Reports -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header">
+          <h6 class="mb-0">
+            <i class="bi bi-clock-history text-secondary me-2"></i>
+            Recent AI Reports
+          </h6>
+        </div>
+        <div class="card-body p-0">
+          <% if @recent_reports && @recent_reports.any? %>
+            <% @recent_reports.each do |report| %>
+              <div class="p-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6 class="mb-1 small">
+                      <%= report.report_type.humanize %> Report
+                    </h6>
+                    <small class="text-muted">
+                      <i class="bi bi-calendar3"></i>
+                      <%= time_ago_in_words(report.generated_at) %> ago
+                    </small>
+                  </div>
+                  <div>
+                    <span class="badge bg-success-subtle text-success small">
+                      <%= report.confidence_score %>% confidence
+                    </span>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <button class="btn btn-sm btn-outline-primary" onclick="loadReport(<%= report.id %>)">
+                    <i class="bi bi-eye"></i> View
+                  </button>
+                </div>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-center py-4">
+              <i class="bi bi-file-earmark-text text-muted fs-3 d-block mb-2"></i>
+              <small class="text-muted">No recent reports</small>
+              <div class="mt-2">
+                <button class="btn btn-sm btn-primary" onclick="generateAIReport()">
+                  Generate First Report
+                </button>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI Report Result Modal -->
+<div class="modal fade" id="aiReportModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-robot text-primary me-2"></i>
+          AI Generated Report
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="aiReportContent">
+        <!-- AI Report will be loaded here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="downloadReport()">
+          <i class="bi bi-download me-1"></i>
+          Download Report
+        </button>
+        <button type="button" class="btn btn-success" onclick="scheduleReport()">
+          <i class="bi bi-calendar-plus me-1"></i>
+          Schedule Regular Reports
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Report Modal -->
+<div class="modal fade" id="quickReportModal" tabindex="-1" aria-labelledby="quickReportModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="quickReportModalLabel">
+          <i class="bi bi-lightning text-warning me-2"></i>
+          Quick Report Generation
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">Generate quick insights with one click:</p>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <button class="btn btn-outline-primary w-100" onclick="generateQuickReport('commission')">
+              <i class="bi bi-currency-dollar"></i><br>
+              Commission Report
+            </button>
+          </div>
+          <div class="col-md-6">
+            <button class="btn btn-outline-warning w-100" onclick="generateQuickReport('expired_insurance')">
+              <i class="bi bi-clock-history"></i><br>
+              Expired Policies
+            </button>
+          </div>
+          <div class="col-md-6">
+            <button class="btn btn-outline-success w-100" onclick="generateQuickReport('leads')">
+              <i class="bi bi-people"></i><br>
+              Lead Analysis
+            </button>
+          </div>
+          <div class="col-md-6">
+            <button class="btn btn-outline-info w-100" onclick="generateQuickReport('upcoming_renewal')">
+              <i class="bi bi-arrow-clockwise"></i><br>
+              Upcoming Renewals
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* AGGRESSIVE MODAL Z-INDEX FIXES - MUCH HIGHER VALUES */
+
+/* Force modal backdrop to proper layer */
+.modal-backdrop {
+  z-index: 9998 !important;
+  opacity: 0.6 !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Force modal container to top layer */
+.modal {
+  z-index: 9999 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  outline: 0 !important;
+}
+
+/* Force modal dialog above everything */
+.modal-dialog {
+  z-index: 10000 !important;
+  position: relative !important;
+  width: auto !important;
+  margin: 1.75rem auto !important;
+  pointer-events: none !important;
+}
+
+/* Force modal content to be bright and visible */
+.modal-content {
+  z-index: 10001 !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  pointer-events: auto !important;
+  background-color: #fff !important;
+  background-clip: padding-box !important;
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+  border-radius: 0.3rem !important;
+  outline: 0 !important;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Specific modal targeting */
+#aiReportModal,
+#quickReportModal {
+  z-index: 9999 !important;
+  position: fixed !important;
+}
+
+#aiReportModal .modal-dialog,
+#quickReportModal .modal-dialog {
+  z-index: 10000 !important;
+}
+
+#aiReportModal .modal-content,
+#quickReportModal .modal-content {
+  z-index: 10001 !important;
+  background: white !important;
+  opacity: 1 !important;
+}
+
+/* Force body modal state */
+body.modal-open {
+  overflow: hidden !important;
+  padding-right: 0 !important;
+}
+
+/* Suppress all other page elements */
+.modal-open .sidebar,
+.modal-open .header,
+.modal-open .main-content,
+.modal-open .content-area {
+  z-index: 100 !important;
+}
+
+/* Force modal visibility when shown */
+.modal.show {
+  display: block !important;
+  z-index: 9999 !important;
+}
+
+.modal.show .modal-dialog {
+  z-index: 10000 !important;
+  transform: none !important;
+}
+
+.modal.show .modal-content {
+  z-index: 10001 !important;
+  opacity: 1 !important;
+  background-color: white !important;
+}
+
+/* Remove any transforms or transitions that might interfere */
+.modal-dialog {
+  transform: none !important;
+  transition: none !important;
+}
+
+/* Ensure all modal content is interactive */
+.modal-content,
+.modal-content * {
+  pointer-events: auto !important;
+  z-index: inherit !important;
+}
+
+/* Force proper modal header, body, footer visibility */
+.modal-header,
+.modal-body,
+.modal-footer {
+  background-color: transparent !important;
+  z-index: inherit !important;
+}
+.bg-gradient-primary {
+  background: linear-gradient(45deg, #007bff 0%, #6610f2 100%);
+}
+
+.ai-avatar {
+  box-shadow: 0 2px 10px rgba(0,123,255,0.3);
+}
+
+#chatMessages {
+  scroll-behavior: smooth;
+}
+
+.message-user {
+  margin-left: 60px;
+}
+
+.message-ai {
+  margin-right: 60px;
+}
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+}
+
+.typing-indicator span {
+  height: 10px;
+  width: 10px;
+  background: #007bff;
+  border-radius: 50%;
+  margin: 0 2px;
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+}
+
+.ai-insight-card {
+  border-left: 4px solid #007bff;
+  background: linear-gradient(135deg, rgba(0,123,255,0.05) 0%, rgba(102,16,242,0.05) 100%);
+}
+
+.confidence-bar {
+  height: 4px;
+  background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #198754 100%);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.confidence-indicator {
+  height: 100%;
+  background: white;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+.btn-group-sm .btn {
+  font-size: 0.775rem;
+}
+</style>
+
+<script>
+let currentReportData = null;
+
+// Chat functionality
+function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const message = input.value.trim();
+
+  if (!message) return;
+
+  // Add user message
+  addMessageToChat('user', message);
+  input.value = '';
+
+  // Show typing indicator
+  showTypingIndicator();
+
+  // Send to AI
+  fetch('<%= ask_admin_ai_reports_path %>', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+    },
+    body: JSON.stringify({
+      question: message,
+      context: getCurrentContext()
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    hideTypingIndicator();
+
+    if (data.success) {
+      addMessageToChat('ai', data.response, data.suggested_actions);
+      updateAIInsights(data);
+    } else {
+      addMessageToChat('ai', 'Sorry, I encountered an error. Please try again.', [], 'error');
+    }
+  })
+  .catch(error => {
+    hideTypingIndicator();
+    console.error('Error:', error);
+    addMessageToChat('ai', 'Sorry, I encountered an error. Please try again.', [], 'error');
+  });
+}
+
+function addMessageToChat(sender, message, actions = [], type = 'normal') {
+  const chatMessages = document.getElementById('chatMessages');
+
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `p-3 border-bottom message-${sender}`;
+
+  const isUser = sender === 'user';
+  const timestamp = new Date().toLocaleTimeString();
+
+  messageDiv.innerHTML = `
+    <div class="d-flex ${isUser ? 'justify-content-end' : ''}">
+      ${!isUser ? `
+        <div class="ai-avatar bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+          <i class="bi bi-robot text-white"></i>
+        </div>
+      ` : ''}
+      <div class="flex-grow-1 ${isUser ? 'text-end' : ''}">
+        <div class="bg-${isUser ? 'primary' : type === 'error' ? 'danger' : 'light'} ${isUser ? 'text-white' : ''} rounded p-3 ${isUser ? 'ms-5' : 'me-5'}">
+          <p class="mb-0">${message}</p>
+          ${actions && actions.length > 0 ? `
+            <div class="mt-3">
+              ${actions.map(action => `
+                <button class="btn btn-sm btn-outline-${isUser ? 'light' : 'primary'} me-2 mb-1"
+                        onclick="executeAction('${action.type}', '${action.data}')">
+                  ${action.label}
+                </button>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+        <div class="mt-1">
+          <small class="text-muted">
+            <i class="bi bi-clock"></i>
+            ${timestamp}
+            ${!isUser && type !== 'error' ? `<span class="badge bg-success-subtle text-success ms-2">AI</span>` : ''}
+          </small>
+        </div>
+      </div>
+      ${isUser ? `
+        <div class="user-avatar bg-secondary rounded-circle d-flex align-items-center justify-content-center ms-3" style="width: 40px; height: 40px;">
+          <i class="bi bi-person text-white"></i>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  chatMessages.appendChild(messageDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function showTypingIndicator() {
+  const chatMessages = document.getElementById('chatMessages');
+
+  const typingDiv = document.createElement('div');
+  typingDiv.id = 'typingIndicator';
+  typingDiv.className = 'p-3';
+  typingDiv.innerHTML = `
+    <div class="d-flex">
+      <div class="ai-avatar bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+        <i class="bi bi-robot text-white"></i>
+      </div>
+      <div class="bg-light rounded p-3">
+        <div class="typing-indicator">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  chatMessages.appendChild(typingDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function hideTypingIndicator() {
+  const indicator = document.getElementById('typingIndicator');
+  if (indicator) {
+    indicator.remove();
+  }
+}
+
+function updateAIInsights(data) {
+  const insightsDiv = document.getElementById('aiInsightsPreview');
+
+  insightsDiv.innerHTML = `
+    <div class="ai-insight-card p-3 rounded">
+      <h6 class="text-primary mb-2">
+        <i class="bi bi-lightbulb me-1"></i>
+        Latest Insight
+      </h6>
+      <p class="small mb-2">${data.response.substring(0, 100)}...</p>
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="badge bg-primary-subtle text-primary">${data.confidence}% confident</span>
+        <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+      </div>
+    </div>
+  `;
+}
+
+// Report generation
+function generateAIReport() {
+  const reportType = document.getElementById('reportType').value;
+  if (!reportType) {
+    alert('Please select a report type');
+    return;
+  }
+
+  const filters = gatherFilters();
+
+  // Show loading
+  const button = event.target;
+  const originalText = button.innerHTML;
+  button.innerHTML = '<i class="bi bi-gear-fill spin"></i> Generating...';
+  button.disabled = true;
+
+  fetch('<%= generate_admin_ai_reports_path %>', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+    },
+    body: JSON.stringify({
+      report_type: reportType,
+      date_range: document.getElementById('dateRange').value,
+      ...filters
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    button.innerHTML = originalText;
+    button.disabled = false;
+
+    if (data.success) {
+      currentReportData = data.report;
+      displayAIReport(data.report);
+
+      // Add success message to chat
+      addMessageToChat('ai', `✅ Generated ${data.report.report_type} with ${data.report.confidence_score}% confidence. Check the modal for detailed insights!`, [
+        { type: 'view_details', data: 'modal', label: 'View Full Report' }
+      ]);
+    } else {
+      alert('Error generating report: ' + (data.error || 'Unknown error'));
+    }
+  })
+  .catch(error => {
+    button.innerHTML = originalText;
+    button.disabled = false;
+    console.error('Error:', error);
+    alert('Error generating report');
+  });
+}
+
+function displayAIReport(report) {
+  const content = document.getElementById('aiReportContent');
+
+  content.innerHTML = `
+    <!-- Report Header -->
+    <div class="row mb-4">
+      <div class="col-md-8">
+        <h4>${report.report_type}</h4>
+        <p class="text-muted">Generated on ${new Date(report.generated_at).toLocaleString()}</p>
+        <div class="badge bg-info-subtle text-info">Filters: ${Object.entries(report.filters_applied || {}).map(([k,v]) => `${k}: ${v}`).join(', ') || 'None'}</div>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="confidence-score mb-2">
+          <div class="badge bg-success-subtle text-success fs-6">
+            ${report.confidence_score}% AI Confidence
+          </div>
+        </div>
+        <div class="confidence-bar">
+          <div class="confidence-indicator" style="width: ${report.confidence_score}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Insights Summary -->
+    <div class="card border-0 bg-light mb-4">
+      <div class="card-body">
+        <h5 class="card-title text-primary">
+          <i class="bi bi-lightbulb me-2"></i>
+          AI Insights Summary
+        </h5>
+        <p class="card-text">${report.ai_analysis.summary}</p>
+      </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+      ${generateMetricCards(report.data)}
+    </div>
+
+    <!-- AI Analysis Sections -->
+    ${generateAnalysisSections(report.ai_analysis)}
+  `;
+
+  // COMPLETELY REWRITTEN MODAL DISPLAY LOGIC
+  const modalElement = document.getElementById('aiReportModal');
+
+  // 1. BRUTAL CLEANUP - Remove all existing modal artifacts
+  const existingInstance = bootstrap.Modal.getInstance(modalElement);
+  if (existingInstance) {
+    existingInstance.dispose();
+  }
+
+  // Remove ALL backdrops
+  document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+
+  // Reset body state
+  document.body.classList.remove('modal-open');
+  document.body.style.overflow = '';
+  document.body.style.paddingRight = '';
+  document.body.style.position = '';
+
+  // 2. MOVE MODAL TO DOCUMENT BODY (critical for z-index)
+  if (modalElement.parentNode !== document.body) {
+    document.body.appendChild(modalElement);
+  }
+
+  // 3. FORCE MODAL STYLES BEFORE SHOWING
+  modalElement.style.cssText = `
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 9999 !important;
+    width: 100% !important;
+    height: 100% !important;
+    outline: 0 !important;
+    display: block !important;
+  `;
+
+  const modalDialog = modalElement.querySelector('.modal-dialog');
+  if (modalDialog) {
+    modalDialog.style.cssText = `
+      z-index: 10000 !important;
+      position: relative !important;
+      margin: 1.75rem auto !important;
+      pointer-events: none !important;
+      transform: none !important;
+    `;
+  }
+
+  const modalContent = modalElement.querySelector('.modal-content');
+  if (modalContent) {
+    modalContent.style.cssText = `
+      z-index: 10001 !important;
+      position: relative !important;
+      background-color: white !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.8) !important;
+    `;
+  }
+
+  // 4. CREATE AND SHOW MODAL
+  const modalInstance = new bootstrap.Modal(modalElement, {
+    backdrop: true,
+    keyboard: true,
+    focus: true
+  });
+
+  modalInstance.show();
+
+  // 5. FORCE BACKDROP POSITIONING AFTER SHOW
+  setTimeout(() => {
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (backdrop) {
+      backdrop.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        z-index: 9998 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background-color: rgba(0, 0, 0, 0.6) !important;
+        opacity: 1 !important;
+      `;
+    }
+
+    // Force body modal-open state
+    document.body.classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
+
+  }, 100);
+}
+
+function generateMetricCards(data) {
+  let cards = '';
+
+  if (data.total_commission !== undefined) {
+    cards += `
+      <div class="col-md-4 mb-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="text-success">Rs. ${data.total_commission?.toLocaleString() || '0'}</h5>
+            <p class="card-text">Total Commission</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (data.agent_commissions !== undefined) {
+    cards += `
+      <div class="col-md-4 mb-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="text-primary">${data.agent_commissions?.length || 0}</h5>
+            <p class="card-text">Active Agents</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (data.average_commission !== undefined) {
+    cards += `
+      <div class="col-md-4 mb-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="text-info">Rs. ${Math.round(data.average_commission || 0).toLocaleString()}</h5>
+            <p class="card-text">Average Commission</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  return cards || '<div class="col-12 text-center text-muted">No metrics available</div>';
+}
+
+function generateAnalysisSections(analysis) {
+  let sections = '';
+
+  // Insights Section
+  if (analysis.insights && analysis.insights.length > 0) {
+    sections += `
+      <div class="card mb-3">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-eye me-2"></i>AI Insights</h6>
+        </div>
+        <div class="card-body">
+          ${analysis.insights.map(insight => `
+            <div class="border-start border-4 border-${insight.impact === 'high' ? 'danger' : insight.impact === 'medium' ? 'warning' : 'info'} ps-3 mb-3">
+              <h6 class="text-${insight.impact === 'high' ? 'danger' : insight.impact === 'medium' ? 'warning' : 'info'}">${insight.type?.replace('_', ' ').toUpperCase()}</h6>
+              <p class="mb-1">${insight.insight}</p>
+              <small class="text-muted">${insight.recommendation}</small>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // Predictions Section
+  if (analysis.predictions) {
+    sections += `
+      <div class="card mb-3">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-graph-up me-2"></i>AI Predictions</h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            ${Object.entries(analysis.predictions).map(([key, value]) => `
+              <div class="col-md-6 mb-2">
+                <strong>${key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong>
+                <span class="text-primary">${value}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Recommendations Section
+  if (analysis.recommendations && analysis.recommendations.length > 0) {
+    sections += `
+      <div class="card mb-3">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-check-circle me-2"></i>AI Recommendations</h6>
+        </div>
+        <div class="card-body">
+          ${analysis.recommendations.map((rec, index) => `
+            <div class="d-flex align-items-start mb-3">
+              <div class="badge bg-${rec.priority === 'high' ? 'danger' : rec.priority === 'medium' ? 'warning' : 'info'}-subtle text-${rec.priority === 'high' ? 'danger' : rec.priority === 'medium' ? 'warning' : 'info'} me-3">${index + 1}</div>
+              <div class="flex-grow-1">
+                <h6 class="mb-1">${rec.title}</h6>
+                <p class="mb-1 text-muted">${rec.description}</p>
+                <small class="text-success">Impact: ${rec.potential_impact}</small>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  return sections || '<div class="text-center text-muted">No detailed analysis available</div>';
+}
+
+function executeAction(type, data) {
+  switch(type) {
+    case 'generate_report':
+      document.getElementById('reportType').value = data;
+      generateAIReport();
+      break;
+    case 'view_details':
+      // Already in modal
+      break;
+    default:
+      console.log('Action:', type, data);
+  }
+}
+
+function gatherFilters() {
+  return {
+    // Add any additional filters here
+  };
+}
+
+// Utility functions
+function handleEnterKey(event) {
+  if (event.key === 'Enter') {
+    sendMessage();
+  }
+}
+
+function askSample(question) {
+  document.getElementById('chatInput').value = question;
+  sendMessage();
+}
+
+function insertText(text) {
+  const input = document.getElementById('chatInput');
+  input.value = text;
+  input.focus();
+}
+
+function clearChat() {
+  const chatMessages = document.getElementById('chatMessages');
+  // Keep only the welcome message
+  const welcomeMessage = chatMessages.firstElementChild;
+  chatMessages.innerHTML = '';
+  chatMessages.appendChild(welcomeMessage);
+
+  // Clear insights
+  document.getElementById('aiInsightsPreview').innerHTML = `
+    <div class="text-center py-3">
+      <i class="bi bi-brain text-muted fs-3 d-block mb-2"></i>
+      <small class="text-muted">Generate a report to see AI insights</small>
+    </div>
+  `;
+}
+
+function getCurrentContext() {
+  return {
+    current_page: 'ai_reports',
+    user_role: '<%= current_user&.user_type || 'user' %>',
+    timestamp: new Date().toISOString()
+  };
+}
+
+function downloadReport() {
+  if (currentReportData) {
+    // Create downloadable content
+    const content = JSON.stringify(currentReportData, null, 2);
+    const blob = new Blob([content], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ai-report-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+}
+
+function scheduleReport() {
+  alert('Report scheduling feature coming soon!');
+}
+
+function updateFilters() {
+  const reportType = document.getElementById('reportType').value;
+  const filtersDiv = document.getElementById('dynamicFilters');
+
+  // Clear existing filters
+  filtersDiv.innerHTML = '';
+
+  // Add report-specific filters
+  switch(reportType) {
+    case 'commission':
+      filtersDiv.innerHTML = `
+        <div class="mb-3">
+          <label class="form-label">Insurance Type</label>
+          <select class="form-select" id="insuranceType">
+            <option value="">All Types</option>
+            <option value="life">Life Insurance</option>
+            <option value="health">Health Insurance</option>
+            <option value="motor">Motor Insurance</option>
+          </select>
+        </div>
+      `;
+      break;
+    case 'leads':
+      filtersDiv.innerHTML = `
+        <div class="mb-3">
+          <label class="form-label">Lead Status</label>
+          <select class="form-select" id="leadStatus">
+            <option value="">All Status</option>
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="qualified">Qualified</option>
+            <option value="converted">Converted</option>
+          </select>
+        </div>
+      `;
+      break;
+  }
+}
+
+// Quick Report Generation Function
+function generateQuickReport(reportType) {
+  // Close the quick report modal
+  const quickModal = bootstrap.Modal.getInstance(document.getElementById('quickReportModal'));
+  if (quickModal) {
+    quickModal.hide();
+  }
+
+  // Set the report type in the form
+  document.getElementById('reportType').value = reportType;
+
+  // Generate the report automatically
+  generateReport(reportType);
+
+  // Add a message to the chat
+  addMessageToChat('user', `Generate ${reportType.replace('_', ' ')} report`, []);
+  addMessageToChat('ai', `🚀 Generating ${reportType.replace('_', ' ')} report for you...`, []);
+}
+</script>

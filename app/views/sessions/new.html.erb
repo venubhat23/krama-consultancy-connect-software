@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Login - Krama Consultancy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .login-container {
+        display: flex;
+        height: 100vh;
+      }
+
+      /* Left Side - Gradient with Illustration */
+      .left-side {
+        flex: 1;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 60px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .left-side::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background:
+          radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+          radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+        animation: float 20s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(180deg); }
+      }
+
+      .shield-illustration {
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 40px;
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        position: relative;
+      }
+
+      .shield-illustration::before {
+        content: '';
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+      }
+
+      .shield-icon {
+        width: 80px;
+        height: 80px;
+        color: white;
+        z-index: 2;
+        filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.3));
+      }
+
+      .tagline {
+        color: white;
+        text-align: center;
+        max-width: 400px;
+      }
+
+      .tagline h1 {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        line-height: 1.2;
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .tagline p {
+        font-size: 18px;
+        opacity: 0.9;
+        line-height: 1.6;
+        font-weight: 400;
+      }
+
+      /* Right Side - Login Card */
+      .right-side {
+        flex: 1;
+        background: linear-gradient(135deg, #f093fb 0%, #f5f7fa 50%, #c3cfe2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        position: relative;
+      }
+
+      /* Subtle Background Shapes */
+      .bg-shape {
+        position: absolute;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(102, 126, 234, 0.08));
+        filter: blur(50px);
+      }
+
+      .bg-shape-1 {
+        width: 300px;
+        height: 300px;
+        top: -100px;
+        right: -100px;
+      }
+
+      .bg-shape-2 {
+        width: 200px;
+        height: 200px;
+        bottom: -50px;
+        left: -50px;
+      }
+
+      .bg-shape-3 {
+        width: 150px;
+        height: 150px;
+        top: 50%;
+        right: 20%;
+        transform: translateY(-50%);
+      }
+
+      .login-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 28px;
+        padding: 48px;
+        width: 100%;
+        max-width: 440px;
+        box-shadow:
+          0 25px 80px rgba(0, 0, 0, 0.12),
+          0 10px 40px rgba(240, 147, 251, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        position: relative;
+        z-index: 10;
+      }
+
+      /* Logo Section */
+      .logo-section {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .logo {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        box-shadow: 0 12px 35px rgba(240, 147, 251, 0.4);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .logo::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), transparent, rgba(255, 255, 255, 0.1));
+        animation: logoShine 3s ease-in-out infinite;
+      }
+
+      @keyframes logoShine {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(180deg); }
+      }
+
+      .logo svg {
+        width: 32px;
+        height: 32px;
+        color: white;
+      }
+
+      .sessions-logo-img {
+        width: 50px;
+        height: 50px;
+        object-fit: contain;
+        border-radius: 12px;
+      }
+
+      .brand-name {
+        font-size: 32px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 12px;
+        letter-spacing: -1px;
+        text-transform: uppercase;
+      }
+
+      .welcome-message {
+        font-size: 16px;
+        color: #64748b;
+        font-weight: 400;
+      }
+
+      /* Form Styles */
+      .form-section {
+        margin-bottom: 32px;
+      }
+
+      .form-group {
+        margin-bottom: 24px;
+      }
+
+      .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 8px;
+      }
+
+      .input-wrapper {
+        position: relative;
+      }
+
+      .input-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        z-index: 2;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 16px 16px 16px 50px;
+        border: 2px solid rgba(240, 147, 251, 0.2);
+        border-radius: 14px;
+        font-size: 16px;
+        color: #1f2937;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        outline: none;
+      }
+
+      .form-input:focus {
+        border-color: #f093fb;
+        box-shadow: 0 0 0 4px rgba(240, 147, 251, 0.15);
+        background: rgba(255, 255, 255, 0.95);
+        transform: translateY(-1px);
+      }
+
+      .form-input::placeholder {
+        color: #9ca3af;
+      }
+
+      .password-toggle {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 6px;
+        transition: color 0.3s ease;
+      }
+
+      .password-toggle:hover {
+        color: #667eea;
+      }
+
+      .form-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+      }
+
+      .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .checkbox-wrapper input {
+        width: 16px;
+        height: 16px;
+        accent-color: #667eea;
+        cursor: pointer;
+      }
+
+      .checkbox-wrapper label {
+        font-size: 14px;
+        color: #374151;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .forgot-link {
+        font-size: 14px;
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+      }
+
+      .forgot-link:hover {
+        color: #5a67d8;
+        text-decoration: underline;
+      }
+
+      .login-button {
+        width: 100%;
+        padding: 18px;
+        background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+        border: none;
+        border-radius: 16px;
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 12px 30px rgba(240, 147, 251, 0.4);
+        margin-bottom: 32px;
+        letter-spacing: 0.25px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .login-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.6s ease;
+      }
+
+      .login-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(240, 147, 251, 0.5);
+        background: linear-gradient(135deg, #5a67d8, #6a42a0, #e879f9);
+      }
+
+      .login-button:hover::before {
+        left: 100%;
+      }
+
+      .login-button:active {
+        transform: translateY(0);
+      }
+
+      /* Divider */
+      .divider {
+        display: flex;
+        align-items: center;
+        margin: 32px 0;
+        color: #9ca3af;
+        font-size: 14px;
+      }
+
+      .divider::before,
+      .divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #e5e7eb;
+      }
+
+      .divider span {
+        padding: 0 16px;
+        background: white;
+        font-weight: 500;
+      }
+
+      .signup-link {
+        text-align: center;
+        font-size: 14px;
+        color: #64748b;
+      }
+
+      .signup-link a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+      }
+
+      .signup-link a:hover {
+        color: #5a67d8;
+        text-decoration: underline;
+      }
+
+      /* Mobile Responsive */
+      @media (max-width: 1024px) {
+        .login-container {
+          flex-direction: column;
+        }
+
+        .left-side {
+          flex: none;
+          min-height: 40vh;
+          padding: 40px 20px;
+        }
+
+        .shield-illustration {
+          width: 120px;
+          height: 120px;
+          margin-bottom: 24px;
+        }
+
+        .shield-illustration::before {
+          width: 80px;
+          height: 80px;
+        }
+
+        .shield-icon {
+          width: 50px;
+          height: 50px;
+        }
+
+        .tagline h1 {
+          font-size: 24px;
+        }
+
+        .tagline p {
+          font-size: 16px;
+        }
+
+        .right-side {
+          flex: none;
+          min-height: 60vh;
+          padding: 20px;
+        }
+
+        .login-card {
+          padding: 32px 24px;
+          max-width: 100%;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .left-side {
+          min-height: 35vh;
+          padding: 20px;
+        }
+
+        .login-card {
+          padding: 24px 20px;
+          border-radius: 20px;
+        }
+
+        .brand-name {
+          font-size: 24px;
+        }
+
+        .form-input {
+          padding: 12px 16px 12px 44px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="login-container">
+      <!-- Left Side - Gradient with Illustration -->
+      <div class="left-side">
+        <div class="shield-illustration">
+          <svg class="shield-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+        <div class="tagline">
+          <h1>Secure Healthcare Management</h1>
+          <p>Protect what matters most with our comprehensive healthcare platform designed for modern professionals.</p>
+        </div>
+      </div>
+
+      <!-- Right Side - Login Card -->
+      <div class="right-side">
+        <!-- Background Shapes -->
+        <div class="bg-shape bg-shape-1"></div>
+        <div class="bg-shape bg-shape-2"></div>
+        <div class="bg-shape bg-shape-3"></div>
+
+        <div class="login-card">
+          <!-- Logo Section -->
+          <div class="logo-section">
+            <div class="logo">
+              <img src="/logo.jpeg" alt="Krama Consultancy" class="sessions-logo-img" />
+            </div>
+            <h1 class="brand-name">Krama Consultancy</h1>
+            <p class="welcome-message">Access your dashboard</p>
+          </div>
+
+          <!-- Login Form -->
+          <div class="form-section">
+            <%= form_with url: session_path, local: true do |form| %>
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <div class="input-wrapper">
+                  <div class="input-icon">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                    </svg>
+                  </div>
+                  <%= form.email_field :email, class: "form-input", placeholder: "Enter your email address" %>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Password</label>
+                <div class="input-wrapper">
+                  <div class="input-icon">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <%= form.password_field :password, class: "form-input", placeholder: "Enter your password" %>
+                  <button type="button" class="password-toggle">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="checkbox-wrapper">
+                  <%= form.check_box :remember_me %>
+                  <label for="<%= form.field_id(:remember_me) %>">Remember me</label>
+                </div>
+                <a href="#" class="forgot-link">Forgot password?</a>
+              </div>
+
+              <button type="submit" class="login-button">Sign In</button>
+            <% end %>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

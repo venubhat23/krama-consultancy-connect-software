@@ -1,0 +1,229 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Saved Commission Reports</h2>
+    <p class="text-muted mb-0">View and manage previously generated commission reports</p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to generate_admin_reports_commission_reports_path,
+                class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg me-1"></i>Generate New Report
+    <% end %>
+    <%= link_to admin_reports_commission_reports_path,
+                class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>Back to Live Reports
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Reports</h6>
+            <h3 class="mb-0 text-primary"><%= number_with_delimiter(@saved_reports.total_count) %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-file-text text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">This Month</h6>
+            <h3 class="mb-0 text-success"><%= Report.where(report_type: 'commission').where('created_at >= ?', 1.month.ago).count %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-calendar-month text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">This Week</h6>
+            <h3 class="mb-0 text-info"><%= Report.where(report_type: 'commission').where('created_at >= ?', 1.week.ago).count %></h3>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-calendar-week text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Today</h6>
+            <h3 class="mb-0 text-warning"><%= Report.where(report_type: 'commission').where('created_at >= ?', 1.day.ago).count %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-calendar-day text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Saved Reports List -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">Saved Reports</h5>
+  </div>
+  <div class="card-body p-0">
+    <% if @saved_reports.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Report Details</th>
+              <th class="border-0">Date Range</th>
+              <th class="border-0">Filters Applied</th>
+              <th class="border-0">Generated</th>
+              <th class="border-0">Created By</th>
+              <th class="border-0">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @saved_reports.each do |report| %>
+              <tr>
+                <td>
+                  <div>
+                    <h6 class="mb-1"><%= report.name %></h6>
+                    <small class="text-muted d-flex align-items-center">
+                      <span class="badge bg-primary me-2">
+                        <%= report.report_type.humanize %>
+                      </span>
+                      <% if report.report_data && report.report_data['statistics'] %>
+                        <%= number_with_delimiter(report.report_data['statistics']['total_records'] || 0) %> records
+                      <% end %>
+                    </small>
+                  </div>
+                </td>
+                <td>
+                  <% if report.filters && report.filters['start_date'] && report.filters['end_date'] %>
+                    <div>
+                      <small class="text-muted">From:</small>
+                      <div><%= Date.parse(report.filters['start_date']).strftime('%d %b %Y') rescue 'N/A' %></div>
+                    </div>
+                    <div>
+                      <small class="text-muted">To:</small>
+                      <div><%= Date.parse(report.filters['end_date']).strftime('%d %b %Y') rescue 'N/A' %></div>
+                    </div>
+                  <% else %>
+                    <span class="text-muted">No date range</span>
+                  <% end %>
+                </td>
+                <td>
+                  <% if report.filters&.any? %>
+                    <div class="d-flex flex-wrap gap-1">
+                      <% if report.filters['payout_to'].present? %>
+                        <span class="badge bg-secondary"><%= report.filters['payout_to'].humanize %></span>
+                      <% end %>
+                      <% if report.filters['policy_type'].present? %>
+                        <span class="badge bg-info"><%= report.filters['policy_type'].humanize %></span>
+                      <% end %>
+                      <% if report.filters['status'].present? %>
+                        <span class="badge bg-warning"><%= report.filters['status'].humanize %></span>
+                      <% end %>
+                    </div>
+                    <% if report.filters.values.count(&:present?) == 0 %>
+                      <span class="text-muted">No filters</span>
+                    <% end %>
+                  <% else %>
+                    <span class="text-muted">No filters</span>
+                  <% end %>
+                </td>
+                <td>
+                  <div>
+                    <%= report.generated_at&.strftime('%d %b %Y') || 'N/A' %>
+                  </div>
+                  <small class="text-muted">
+                    <%= time_ago_in_words(report.generated_at || report.created_at) %> ago
+                  </small>
+                </td>
+                <td>
+                  <div>
+                    <%= report.created_by&.first_name || 'Unknown' %>
+                    <%= report.created_by&.last_name %>
+                  </div>
+                  <small class="text-muted">
+                    <%= report.created_by&.email %>
+                  </small>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <%= link_to show_saved_report_admin_reports_commission_report_path(report),
+                                class: "btn btn-sm btn-outline-primary",
+                                title: "View Report" do %>
+                      <i class="bi bi-eye"></i>
+                    <% end %>
+                    <%= link_to destroy_saved_report_admin_reports_commission_report_path(report),
+                                method: :delete,
+                                class: "btn btn-sm btn-outline-danger",
+                                title: "Delete Report",
+                                data: {
+                                  confirm: "Are you sure you want to delete this report? This action cannot be undone.",
+                                  turbo_method: :delete
+                                } do %>
+                      <i class="bi bi-trash"></i>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="card-footer bg-transparent border-0">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+          <small class="text-muted mb-2 mb-md-0">
+            <% if @saved_reports.respond_to?(:total_count) %>
+              Showing <%= @saved_reports.current_page == 1 ? 1 : ((@saved_reports.current_page - 1) * @saved_reports.limit_value + 1) %>
+              to <%= [@saved_reports.current_page * @saved_reports.limit_value, @saved_reports.total_count].min %>
+              of <%= number_with_delimiter(@saved_reports.total_count) %> saved reports
+            <% end %>
+          </small>
+
+          <% if @saved_reports.respond_to?(:total_pages) && @saved_reports.total_pages > 1 %>
+            <div class="pagination-wrapper">
+              <%= paginate @saved_reports %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-folder-plus fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No saved reports found</h5>
+        <p class="text-muted mb-3">
+          You haven't generated any commission reports yet.
+        </p>
+        <%= link_to generate_admin_reports_commission_reports_path,
+                    class: "btn btn-primary" do %>
+          <i class="bi bi-plus-lg me-1"></i>Generate Your First Report
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

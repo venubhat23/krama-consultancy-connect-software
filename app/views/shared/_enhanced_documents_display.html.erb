@@ -1,0 +1,618 @@
+<%
+  # Enhanced Documents Display Partial
+  require 'ostruct'
+  title ||= 'Documents'
+  editable ||= false
+  container_class ||= ''
+
+  # Get documents from insurance_record if available
+  documents = []
+  if defined?(insurance_record) && insurance_record.present?
+    # Check for structured documents data first
+    if insurance_record.respond_to?(:documents_data)
+      documents = insurance_record.documents_data || []
+    elsif insurance_record.respond_to?(:policy_documents_data)
+      documents = insurance_record.policy_documents_data || []
+    else
+      # Fall back to ActiveStorage attachments
+      documents = []
+      if insurance_record.respond_to?(:policy_documents) && insurance_record.policy_documents.attached?
+        policy_docs = insurance_record.policy_documents.map do |attachment|
+          # Create OpenStruct to simulate Document model methods
+          OpenStruct.new(
+            id: attachment.id,
+            title: attachment.filename.to_s,
+            filename: attachment.filename.to_s,
+            file_size: attachment.byte_size,
+            content_type: attachment.content_type,
+            document_type: 'policy',
+            uploaded_at: attachment.created_at,
+            created_at: attachment.created_at,
+            description: nil,
+            uploaded_by: 'Admin',
+            file_extension: File.extname(attachment.filename.to_s).downcase,
+            human_document_type: 'Policy Document',
+            file_icon: 'file-earmark-pdf'
+          )
+        end
+        documents = documents + policy_docs
+      end
+      if insurance_record.respond_to?(:documents) && insurance_record.documents.attached?
+        additional_docs = insurance_record.documents.map do |attachment|
+          # Create OpenStruct to simulate Document model methods
+          OpenStruct.new(
+            id: attachment.id,
+            title: attachment.filename.to_s,
+            filename: attachment.filename.to_s,
+            file_size: attachment.byte_size,
+            content_type: attachment.content_type,
+            document_type: 'other',
+            uploaded_at: attachment.created_at,
+            created_at: attachment.created_at,
+            description: nil,
+            uploaded_by: 'Admin',
+            file_extension: File.extname(attachment.filename.to_s).downcase,
+            human_document_type: 'Additional Document',
+            file_icon: 'file-earmark'
+          )
+        end
+        documents = documents + additional_docs
+      end
+    end
+  end
+  documents ||= []
+
+  # Helper methods for styling
+  def document_type_color(doc_type)
+    case doc_type&.downcase
+    when 'policy' then 'primary'
+    when 'proposal' then 'success'
+    when 'medical' then 'danger'
+    when 'identity' then 'warning'
+    when 'address' then 'info'
+    when 'financial' then 'secondary'
+    when 'other' then 'dark'
+    else 'light'
+    end
+  end
+
+  def file_icon_gradient(extension)
+    case extension&.downcase
+    when 'pdf' then '#dc3545, #fd7e14'
+    when 'jpg', 'jpeg', 'png', 'gif' then '#198754, #20c997'
+    when 'doc', 'docx' then '#0d6efd, #6610f2'
+    when 'xls', 'xlsx' then '#198754, #fd7e14'
+    when 'ppt', 'pptx' then '#fd7e14, #dc3545'
+    else '#6c757d, #495057'
+    end
+  end
+
+  def file_type_icon(content_type)
+    return 'file-earmark' unless content_type
+    case content_type
+    when /pdf/ then 'file-earmark-pdf'
+    when /image/ then 'file-earmark-image'
+    when /word|msword/ then 'file-earmark-word'
+    when /excel|spreadsheet/ then 'file-earmark-excel'
+    when /powerpoint|presentation/ then 'file-earmark-ppt'
+    when /text/ then 'file-earmark-text'
+    when /zip|rar|7z/ then 'file-earmark-zip'
+    else 'file-earmark'
+    end
+  end
+%>
+
+<!-- Enhanced Documents Display -->
+<div class="card shadow-lg border-0 <%= container_class %>">
+  <!-- Document Header with Animation -->
+  <div class="card-header position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 120px;">
+    <!-- Background Animation -->
+    <div class="position-absolute top-0 start-0 w-100 h-100">
+      <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+      </div>
+    </div>
+
+    <div class="position-relative d-flex align-items-center justify-content-between h-100">
+      <div class="d-flex align-items-center">
+        <!-- Icon Container -->
+        <div class="document-header-icon me-4">
+          <div class="rounded-circle bg-white bg-opacity-20 backdrop-blur p-3 shadow-lg">
+            <i class="bi bi-folder2-open fs-2"></i>
+          </div>
+        </div>
+
+        <!-- Title and Stats -->
+        <div>
+          <h4 class="mb-1 fw-bold"><%= title %></h4>
+          <div class="d-flex align-items-center gap-3">
+            <small class="opacity-75 d-flex align-items-center">
+              <i class="bi bi-files me-1"></i>
+              <% if documents.any? %>
+                <%= pluralize(documents.count, 'document') %> uploaded
+              <% else %>
+                No documents available
+              <% end %>
+            </small>
+            <% if documents.any? %>
+              <%
+                total_size = documents.sum { |d| d.file_size || 0 }
+                doc_types_count = documents.map(&:document_type).uniq.count
+              %>
+              <small class="opacity-75 d-flex align-items-center">
+                <i class="bi bi-hdd me-1"></i>
+                <%= number_to_human_size(total_size) %> total
+              </small>
+              <small class="opacity-75 d-flex align-items-center">
+                <i class="bi bi-tags me-1"></i>
+                <%= pluralize(doc_types_count, 'type') %>
+              </small>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Menu -->
+      <% if documents.any? %>
+        <div class="dropdown">
+          <button class="btn btn-outline-light btn-sm dropdown-toggle border-0 shadow-sm" type="button" data-bs-toggle="dropdown">
+            <i class="bi bi-three-dots-vertical"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li><a class="dropdown-item" href="#" onclick="printDocumentsList()">
+              <i class="bi bi-printer me-2 text-secondary"></i>Print List
+            </a></li>
+            <li><a class="dropdown-item" href="#" onclick="toggleViewMode()">
+              <i class="bi bi-grid-3x3-gap me-2 text-info"></i>Toggle View
+            </a></li>
+          </ul>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+    <% if documents.any? %>
+      <!-- Documents Stats Dashboard -->
+      <div class="documents-stats bg-gradient border-bottom">
+        <div class="container-fluid px-4 py-3">
+          <div class="row text-center g-3">
+            <%
+              # Count total documents including legacy ones
+              total_documents_count = documents.count
+              legacy_docs_count = 0
+
+              if defined?(record) && record.present?
+                legacy_docs_count += record.policy_documents.attached? ? record.policy_documents.count : 0 if record.respond_to?(:policy_documents)
+                legacy_docs_count += record.documents.attached? ? record.documents.count : 0 if record.respond_to?(:documents)
+              end
+
+              total_documents_count += legacy_docs_count
+
+              doc_types = documents.group_by(&:document_type).map { |type, docs| [type, docs.count] }.to_h
+              total_size = documents.sum { |d| d.file_size || 0 }
+            %>
+            <div class="col-md-4">
+              <div class="stat-card">
+                <div class="stat-icon text-primary">
+                  <i class="bi bi-files"></i>
+                </div>
+                <div class="stat-number"><%= total_documents_count %></div>
+                <div class="stat-label">Total Documents</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stat-card">
+                <div class="stat-icon text-success">
+                  <i class="bi bi-tags"></i>
+                </div>
+                <div class="stat-number"><%= doc_types.keys.count %></div>
+                <div class="stat-label">Document Types</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stat-card">
+                <div class="stat-icon text-info">
+                  <i class="bi bi-hdd"></i>
+                </div>
+                <div class="stat-number"><%= number_to_human_size(total_size) %></div>
+                <div class="stat-label">Total Size</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View Toggle Buttons -->
+      <div class="border-bottom bg-light px-4 py-2">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="btn-group btn-group-sm" role="group">
+            <input type="radio" class="btn-check" name="viewMode" id="gridView" checked>
+            <label class="btn btn-outline-secondary" for="gridView">
+              <i class="bi bi-grid-3x3-gap me-1"></i>Grid
+            </label>
+            <input type="radio" class="btn-check" name="viewMode" id="listView">
+            <label class="btn btn-outline-secondary" for="listView">
+              <i class="bi bi-list me-1"></i>List
+            </label>
+          </div>
+
+          <!-- Filter Buttons -->
+          <% if doc_types.keys.count > 1 %>
+            <div class="document-filters">
+              <small class="text-muted me-2">Filter:</small>
+              <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-primary active" data-filter="all">
+                  All (<%= documents.count %>)
+                </button>
+                <% doc_types.each do |type, count| %>
+                  <button type="button" class="btn btn-outline-secondary" data-filter="<%= type %>">
+                    <%= type.humanize %> (<%= count %>)
+                  </button>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Documents Grid/List Container -->
+      <div class="documents-container p-4" id="documentsContainer">
+        <!-- Grid View -->
+        <div id="gridViewContent" class="documents-grid">
+          <div class="row g-4">
+            <% documents.each_with_index do |document, index| %>
+              <div class="col-xl-3 col-lg-4 col-md-6 document-item" data-type="<%= document.document_type %>">
+                <div class="document-card h-100 position-relative">
+                  <!-- Document Type Badge -->
+                  <div class="position-absolute top-0 end-0 m-3 z-3">
+                    <span class="badge bg-<%= document_type_color(document.document_type) %> shadow-sm">
+                      <%= document.human_document_type %>
+                    </span>
+                  </div>
+
+                  <!-- Document Preview -->
+                  <div class="document-preview">
+                    <div class="document-icon-container">
+                      <div class="document-icon" style="background: linear-gradient(135deg, <%= file_icon_gradient(document.file_extension) %>);">
+                        <i class="bi bi-<%= document.file_icon %> text-white"></i>
+                      </div>
+                      <div class="file-extension-badge">
+                        <%= document.file_extension&.upcase %>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Document Info -->
+                  <div class="document-info p-3">
+                    <h6 class="document-title mb-2" title="<%= document.title %>">
+                      <%= truncate(document.title, length: 30) %>
+                    </h6>
+
+                    <div class="document-meta mb-3">
+                      <small class="text-muted d-flex align-items-center mb-1">
+                        <i class="bi bi-hdd me-1"></i>
+                        <%= number_to_human_size(document.file_size) if document.file_size %>
+                      </small>
+                      <small class="text-muted d-flex align-items-center">
+                        <i class="bi bi-calendar3 me-1"></i>
+                        <%= document.created_at.strftime("%b %d, %Y") %>
+                      </small>
+                    </div>
+
+                    <% if document.description.present? %>
+                      <p class="document-description small text-muted mb-3">
+                        <%= truncate(document.description, length: 80) %>
+                      </p>
+                    <% end %>
+
+                    <!-- Upload Info -->
+                    <div class="upload-info border-top pt-2">
+                      <small class="text-muted d-flex align-items-center">
+                        <div class="avatar-sm me-2">
+                          <span class="avatar-initials">
+                            <%= document.uploaded_by&.first&.upcase %>
+                          </span>
+                        </div>
+                        <%= truncate(document.uploaded_by, length: 15) %>
+                      </small>
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="document-actions">
+                    <div class="d-grid gap-2">
+                      <%= link_to admin_document_path(document),
+                          target: "_blank",
+                          class: "btn btn-primary btn-sm document-view-btn",
+                          title: "View Document" do %>
+                        <i class="bi bi-eye me-1"></i> View Document
+                      <% end %>
+                      <div class="btn-group btn-group-sm w-100" role="group">
+                        <button type="button" class="btn btn-outline-secondary" onclick="downloadDocument('<%= admin_document_path(document) %>')" title="Download">
+                          <i class="bi bi-download"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="shareDocument('<%= document.title %>')" title="Share">
+                          <i class="bi bi-share"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- List View -->
+        <div id="listViewContent" class="documents-list d-none">
+          <div class="list-group list-group-flush">
+            <% documents.each_with_index do |document, index| %>
+              <div class="list-group-item border-0 document-list-item" data-type="<%= document.document_type %>">
+                <div class="d-flex align-items-center py-2">
+                  <!-- File Icon -->
+                  <div class="flex-shrink-0 me-3">
+                    <div class="list-document-icon" style="background: linear-gradient(135deg, <%= file_icon_gradient(document.file_extension) %>);">
+                      <i class="bi bi-<%= document.file_icon %> text-white"></i>
+                    </div>
+                  </div>
+
+                  <!-- Document Details -->
+                  <div class="flex-grow-1">
+                    <div class="d-flex align-items-start justify-content-between">
+                      <div>
+                        <h6 class="mb-1 fw-semibold"><%= document.title %></h6>
+                        <div class="mb-2">
+                          <span class="badge bg-<%= document_type_color(document.document_type) %> me-2">
+                            <%= document.human_document_type %>
+                          </span>
+                          <span class="badge bg-light text-dark me-2">
+                            <%= document.file_extension&.upcase %>
+                          </span>
+                          <span class="badge bg-secondary">
+                            <%= number_to_human_size(document.file_size) if document.file_size %>
+                          </span>
+                        </div>
+                        <% if document.description.present? %>
+                          <p class="text-muted mb-1 small"><%= truncate(document.description, length: 120) %></p>
+                        <% end %>
+                        <div class="text-muted small">
+                          <i class="bi bi-person-circle me-1"></i>
+                          Uploaded by <strong><%= document.uploaded_by %></strong> on
+                          <strong><%= document.created_at.strftime("%B %d, %Y at %I:%M %p") %></strong>
+                        </div>
+                      </div>
+
+                      <!-- Actions -->
+                      <div class="flex-shrink-0 ms-3">
+                        <div class="btn-group btn-group-sm">
+                          <%= link_to admin_document_path(document),
+                              target: "_blank",
+                              class: "btn btn-primary",
+                              title: "View Document" do %>
+                            <i class="bi bi-eye"></i> View
+                          <% end %>
+                          <button type="button" class="btn btn-outline-secondary" onclick="downloadDocument('<%= admin_document_path(document) %>')" title="Download">
+                            <i class="bi bi-download"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% else %>
+      <!-- Beautiful Empty State -->
+      <div class="empty-state text-center py-5">
+        <div class="empty-state-icon mb-4">
+          <div class="empty-icon-container mx-auto">
+            <div class="empty-icon-bg">
+              <i class="bi bi-file-earmark-plus"></i>
+            </div>
+            <div class="empty-icon-particles">
+              <div class="particle particle-1"></div>
+              <div class="particle particle-2"></div>
+              <div class="particle particle-3"></div>
+            </div>
+          </div>
+        </div>
+
+        <h4 class="text-muted mb-3">No Documents Available</h4>
+        <p class="text-muted mb-4 lead">Upload documents to keep all policy-related files organized in one place</p>
+
+        <% if editable %>
+          <%= link_to "#", class: "btn btn-primary btn-lg me-2" do %>
+            <i class="bi bi-plus-lg me-2"></i>Upload Documents
+          <% end %>
+        <% else %>
+          <%= link_to edit_polymorphic_path([:admin, record]), class: "btn btn-primary btn-lg" do %>
+            <i class="bi bi-plus-lg me-2"></i>Add Documents
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Legacy Documents Section (if any) -->
+    <% if defined?(record) && record.respond_to?(:policy_documents) && record.policy_documents.attached? ||
+          defined?(record) && record.respond_to?(:documents) && record.documents.attached? %>
+      <div class="legacy-documents-section border-top">
+        <div class="card-header bg-light border-0">
+          <h6 class="mb-0 text-muted">
+            <i class="bi bi-archive me-2"></i>
+            Legacy Documents
+          </h6>
+        </div>
+        <div class="card-body bg-light">
+          <% if defined?(record) && record.respond_to?(:policy_documents) && record.policy_documents.attached? %>
+            <div class="mb-3">
+              <small class="text-muted fw-bold d-block mb-2">Policy Documents:</small>
+              <div class="d-flex flex-wrap gap-2">
+                <% record.policy_documents.each do |doc| %>
+                  <%= link_to rails_blob_path(doc, disposition: "attachment"), target: "_blank",
+                      class: "btn btn-sm btn-outline-secondary d-flex align-items-center legacy-doc-btn" do %>
+                    <i class="bi bi-file-earmark me-2"></i>
+                    <%= truncate(doc.filename.to_s, length: 25) %>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+          <% if defined?(record) && record.respond_to?(:documents) && record.documents.attached? %>
+            <div class="mb-2">
+              <small class="text-muted fw-bold d-block mb-2">Additional Documents:</small>
+              <div class="d-flex flex-wrap gap-2">
+                <% record.documents.each do |doc| %>
+                  <%= link_to rails_blob_path(doc, disposition: "attachment"), target: "_blank",
+                      class: "btn btn-sm btn-outline-secondary d-flex align-items-center legacy-doc-btn" do %>
+                    <i class="bi bi-file-earmark me-2"></i>
+                    <%= truncate(doc.filename.to_s, length: 25) %>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Enhanced Styles -->
+<style>
+  /* Floating Animation */
+  .floating-shapes { position: absolute; width: 100%; height: 100%; overflow: hidden; }
+  .shape { position: absolute; background: rgba(255, 255, 255, 0.1); border-radius: 50%; animation: float 6s ease-in-out infinite; }
+  .shape-1 { width: 20px; height: 20px; left: 20%; top: 20%; animation-delay: 0s; }
+  .shape-2 { width: 15px; height: 15px; right: 20%; top: 60%; animation-delay: 2s; }
+  .shape-3 { width: 12px; height: 12px; left: 60%; bottom: 30%; animation-delay: 4s; }
+  @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; } 50% { transform: translateY(-20px) rotate(180deg); opacity: 0.8; } }
+
+  /* Document Stats */
+  .documents-stats { background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); }
+  .stat-card { text-align: center; padding: 1rem; border-radius: 12px; background: white; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); transition: transform 0.2s ease; }
+  .stat-card:hover { transform: translateY(-2px); }
+  .stat-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .stat-number { font-size: 1.5rem; font-weight: bold; color: #2c3e50; }
+  .stat-label { font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Document Cards */
+  .document-card { background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); transition: all 0.3s ease; overflow: hidden; border: 1px solid rgba(0, 0, 0, 0.05); }
+  .document-card:hover { transform: translateY(-5px); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15); }
+  .document-preview { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 2rem 1rem 1rem; text-align: center; position: relative; }
+  .document-icon-container { position: relative; display: inline-block; }
+  .document-icon { width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); position: relative; }
+  .file-extension-badge { position: absolute; bottom: -8px; right: -8px; background: #fff; color: #6c757d; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+  .document-title { color: #2c3e50; font-weight: 600; }
+  .document-meta { border-bottom: 1px solid #f8f9fa; }
+  .document-description { line-height: 1.4; }
+  .upload-info { background: #f8f9fa; margin: 0 -1rem -1rem; padding: 0.75rem 1rem; }
+  .avatar-sm { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; }
+  .avatar-initials { color: white; font-size: 0.7rem; font-weight: bold; }
+  .document-actions { padding: 1rem; border-top: 1px solid #f8f9fa; background: #fafbfc; }
+
+  /* List View */
+  .list-document-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+  .document-list-item { transition: background-color 0.2s ease; }
+  .document-list-item:hover { background-color: #f8f9fa; }
+
+  /* Empty State */
+  .empty-icon-container { width: 120px; height: 120px; position: relative; }
+  .empty-icon-bg { width: 100%; height: 100%; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #adb5bd; position: relative; z-index: 2; }
+  .empty-icon-particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .particle { position: absolute; width: 6px; height: 6px; background: #dee2e6; border-radius: 50%; animation: particleFloat 3s ease-in-out infinite; }
+  .particle-1 { top: 20%; left: 20%; animation-delay: 0s; }
+  .particle-2 { top: 30%; right: 15%; animation-delay: 1s; }
+  .particle-3 { bottom: 25%; left: 30%; animation-delay: 2s; }
+  @keyframes particleFloat { 0%, 100% { transform: translateY(0px) scale(1); opacity: 0.5; } 50% { transform: translateY(-10px) scale(1.2); opacity: 1; } }
+
+  /* Legacy Documents */
+  .legacy-documents-section { background: #f8f9fa; }
+  .legacy-doc-btn { transition: all 0.2s ease; margin-bottom: 0.5rem; }
+  .legacy-doc-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
+
+  @media (max-width: 768px) {
+    .document-card { margin-bottom: 1rem; }
+    .stat-card { padding: 0.75rem; }
+    .stat-number { font-size: 1.2rem; }
+  }
+</style>
+
+<!-- JavaScript for Enhanced Functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // View Mode Toggle
+  const gridViewRadio = document.getElementById('gridView');
+  const listViewRadio = document.getElementById('listView');
+  const gridContainer = document.querySelector('#gridViewContent');
+  const listContainer = document.querySelector('#listViewContent');
+
+  if (gridViewRadio && listViewRadio) {
+    gridViewRadio.addEventListener('change', function() {
+      if (this.checked) {
+        gridContainer?.classList.remove('d-none');
+        listContainer?.classList.add('d-none');
+      }
+    });
+
+    listViewRadio.addEventListener('change', function() {
+      if (this.checked) {
+        gridContainer?.classList.add('d-none');
+        listContainer?.classList.remove('d-none');
+      }
+    });
+  }
+
+  // Document Filtering
+  const filterButtons = document.querySelectorAll('[data-filter]');
+  filterButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const filter = this.getAttribute('data-filter');
+
+      // Update active button
+      filterButtons.forEach(btn => btn.classList.remove('active', 'btn-primary'));
+      filterButtons.forEach(btn => btn.classList.add('btn-outline-secondary'));
+      this.classList.remove('btn-outline-secondary');
+      this.classList.add('btn-primary', 'active');
+
+      // Filter documents
+      const documentItems = document.querySelectorAll('.document-item, .document-list-item');
+      documentItems.forEach(item => {
+        if (filter === 'all' || item.getAttribute('data-type') === filter) {
+          item.style.display = 'block';
+          item.classList.remove('d-none');
+        } else {
+          item.style.display = 'none';
+          item.classList.add('d-none');
+        }
+      });
+    });
+  });
+});
+
+// Utility Functions
+function downloadDocument(url) { window.open(url, '_blank'); }
+function printDocumentsList() { window.print(); }
+function shareDocument(title) {
+  if (navigator.share) {
+    navigator.share({ title: 'Document: ' + title, text: 'Check out this document: ' + title });
+  } else {
+    navigator.clipboard.writeText(window.location.href);
+    alert('Document link copied to clipboard!');
+  }
+}
+function toggleViewMode() {
+  const listViewRadio = document.getElementById('listView');
+  const gridViewRadio = document.getElementById('gridView');
+  if (gridViewRadio && gridViewRadio.checked) {
+    listViewRadio && listViewRadio.click();
+  } else {
+    gridViewRadio && gridViewRadio.click();
+  }
+}
+</script>

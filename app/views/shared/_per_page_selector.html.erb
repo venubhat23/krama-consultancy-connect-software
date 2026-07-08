@@ -1,0 +1,24 @@
+<%
+  current_per_page = @items_per_page || SystemSetting.default_pagination_per_page
+  options = [5, 10, 15, 20, 25, 30, 50, 100]
+%>
+<div class="d-flex align-items-center gap-2 per-page-selector">
+  <span class="text-muted" style="font-size:0.8rem;white-space:nowrap;">Rows per page</span>
+  <select class="form-select form-select-sm per-page-select"
+          style="width:70px;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;"
+          onchange="applyPerPage(this.value)"
+          title="Items per page">
+    <% options.each do |n| %>
+      <option value="<%= n %>" <%= 'selected' if n == current_per_page.to_i %>><%= n %></option>
+    <% end %>
+  </select>
+</div>
+
+<script>
+  function applyPerPage(value) {
+    const url    = new URL(window.location.href);
+    url.searchParams.set('per_page', value);
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+  }
+</script>

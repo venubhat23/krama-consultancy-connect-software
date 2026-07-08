@@ -1,0 +1,779 @@
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Create Affiliate</h2>
+    <p class="text-muted mb-0">Fill in the details to create a new affiliate account</p>
+  </div>
+  <div>
+    <%= link_to admin_sub_agents_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Affiliates
+    <% end %>
+  </div>
+</div>
+
+<%= form_with model: [:admin, @sub_agent], local: true, multipart: true, class: "needs-validation", novalidate: true, data: { turbo: false } do |form| %>
+  <% if @sub_agent.errors.any? %>
+    <div class="alert alert-danger alert-dismissible show mb-4" role="alert">
+      <h6>Please correct the following errors:</h6>
+      <ul class="mb-0">
+        <% @sub_agent.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% end %>
+
+  <!-- 1. Personal Details -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-person-circle me-2 text-primary"></i>
+      <h5 class="mb-0">Personal Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <%= form.label :first_name, class: "form-label" do %>
+            First Name <span class="text-danger">*</span>
+          <% end %>
+          <%= form.text_field :first_name, class: "form-control", placeholder: "Enter first name", required: true %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :middle_name, "Middle Name", class: "form-label" %>
+          <%= form.text_field :middle_name, class: "form-control", placeholder: "Enter middle name" %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :last_name, class: "form-label" do %>
+            Last Name <span class="text-danger">*</span>
+          <% end %>
+          <%= form.text_field :last_name, class: "form-control", placeholder: "Enter last name", required: true %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :mobile, class: "form-label" do %>
+            Mobile <span class="text-danger">*</span>
+          <% end %>
+          <%= form.telephone_field :mobile,
+              class: "form-control",
+              placeholder: "9876543210 or +919876543210",
+              required: true %>
+          <small class="form-text text-muted">Enter 10-digit number (6-9 as first digit) or +91 format</small>
+          <div class="invalid-feedback">
+            Please enter a valid 10-digit Indian mobile number
+          </div>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :email, class: "form-label" do %>
+            Email <span class="text-danger">*</span>
+          <% end %>
+          <%= form.email_field :email, class: "form-control", placeholder: "Enter email address", required: true %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :password, class: "form-label" do %>
+            Password <span class="text-danger">*</span>
+          <% end %>
+          <%= form.password_field :password, class: "form-control", placeholder: "Enter password", required: true %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :password_confirmation, "Confirm Password", class: "form-label" do %>
+            Confirm Password <span class="text-danger">*</span>
+          <% end %>
+          <%= form.password_field :password_confirmation, class: "form-control", placeholder: "Confirm password", required: true %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :role_id, class: "form-label" do %>
+            Role <span class="text-danger">*</span>
+          <% end %>
+          <%= form.select :role_id,
+              options_for_select([
+                ['Affiliate', Role.find_by(name: 'sub_agent')&.id]
+              ], @sub_agent.role_id),
+              { prompt: 'Select Role' },
+              { class: "form-select", required: true } %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :birth_date, "Birth Date", class: "form-label" %>
+          <%= form.date_field :birth_date,
+              class: "form-control",
+              max: Date.today.strftime("%Y-%m-%d"),
+              min: (Date.today - 100.years).strftime("%Y-%m-%d"),
+              placeholder: "YYYY-MM-DD" %>
+          <small class="form-text text-muted">Format: YYYY-MM-DD</small>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-4">
+          <%= form.label :state, "State", class: "form-label" %>
+          <%= form.select :state,
+              options_for_select(LocationData.states_for_select.map { |name, value| [name, value] }, @sub_agent.state),
+              { prompt: 'Search and select state...' },
+              { class: "form-select searchable-select", id: "sub_agent_state", data: { placeholder: "Type to search states..." } } %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :city, "City", class: "form-label" %>
+          <%= form.select :city,
+              options_for_select([], @sub_agent.city),
+              { prompt: 'Search and select city...' },
+              { class: "form-select searchable-select", id: "sub_agent_city", disabled: true, data: { placeholder: "Type to search cities..." } } %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :gender, "Gender", class: "form-label" %>
+          <%= form.select :gender,
+              options_for_select([
+                ['Male', 'Male'], ['Female', 'Female'], ['Other', 'Other']
+              ], @sub_agent.gender),
+              { prompt: 'Select Gender' },
+              { class: "form-select" } %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-4">
+          <%= form.label :pan_no, "PAN No", class: "form-label" %>
+          <%= form.text_field :pan_no, class: "form-control", placeholder: "Enter PAN number" %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :gst_no, "GST No", class: "form-label" %>
+          <%= form.text_field :gst_no, class: "form-control", placeholder: "Enter GST number" %>
+        </div>
+        <div class="col-md-4">
+          <%= form.label :company_name, "Company Name", class: "form-label" %>
+          <%= form.text_field :company_name, class: "form-control", placeholder: "Enter company name" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-12">
+          <%= form.label :address, "Address", class: "form-label" %>
+          <%= form.text_area :address, class: "form-control", rows: 3, placeholder: "Enter full address" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :profile_image, "Profile Image", class: "form-label" %>
+          <%= form.file_field :profile_image, class: "form-control", accept: "image/*", id: "sub_agent_profile_image" %>
+          <small class="form-text text-muted">Upload a profile picture (JPG, PNG, GIF)</small>
+        </div>
+        <div class="col-md-6">
+          <div class="mt-2">
+            <div id="sub_agent_profile_image_preview" style="display: none;">
+              <img id="preview_img" src="" alt="Preview" class="img-thumbnail" style="max-height: 120px; max-width: 120px;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Bank Details -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-bank me-2 text-success"></i>
+      <h5 class="mb-0">Bank Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <%= form.label :bank_name, "Bank Name", class: "form-label" %>
+          <%= form.text_field :bank_name, class: "form-control", placeholder: "Enter bank name" %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :account_no, "Account Number", class: "form-label" %>
+          <%= form.text_field :account_no, class: "form-control", placeholder: "Enter account number" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :ifsc_code, "IFSC Code", class: "form-label" %>
+          <%= form.text_field :ifsc_code, class: "form-control", placeholder: "Enter IFSC code" %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :account_holder_name, "Account Holder Name", class: "form-label" %>
+          <%= form.text_field :account_holder_name, class: "form-control", placeholder: "Enter account holder name" %>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <%= form.label :account_type, "Account Type", class: "form-label" %>
+          <%= form.select :account_type,
+              options_for_select([
+                ['Savings', 'Savings'], ['Current', 'Current'], ['Salary', 'Salary']
+              ], @sub_agent.account_type),
+              { prompt: 'Select Account Type' },
+              { class: "form-select" } %>
+        </div>
+        <div class="col-md-6">
+          <%= form.label :upi_id, "UPI ID", class: "form-label" %>
+          <%= form.text_field :upi_id, class: "form-control", placeholder: "Enter UPI ID" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Documents & QR Code -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-file-earmark-arrow-up me-2 text-warning"></i>
+      <h5 class="mb-0">Documents & QR Code</h5>
+    </div>
+    <div class="card-body">
+      <!-- Main Document Upload -->
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <%= form.label :upload_main_document, "Upload Main Document", class: "form-label" %>
+          <%= form.file_field :upload_main_document, class: "form-control", accept: "image/*,application/pdf", id: "main_document_upload" %>
+          <small class="form-text text-muted">Upload main identification document (JPG, PNG, PDF)</small>
+
+          <!-- Main Document Preview -->
+          <%= render 'shared/file_upload_preview',
+                     field_id: 'main_document_upload',
+                     preview_id: 'main_document_preview',
+                     accept: 'image/*,application/pdf',
+                     show_file_info: true,
+                     max_file_size: '10MB' %>
+        </div>
+      </div>
+
+      <!-- Repeatable Documents Section -->
+      <div class="border-top pt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0">Upload Documents</h6>
+          <div>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="add_document">
+              <i class="bi bi-plus-lg me-1"></i>
+              Add Document
+            </button>
+          </div>
+        </div>
+
+        <div id="documents_container">
+          <!-- Dynamic documents will be added here -->
+        </div>
+
+        <p class="text-muted mb-0 mt-2">
+          <small>Document types: Aadhar, PAN Card, Driving License, Passport, Other</small>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ambassador Assignment -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-person-badge me-2 text-info"></i>
+      <h5 class="mb-0">Ambassador Assignment <span class="text-muted fw-normal fs-6">(Optional)</span></h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-12">
+          <label class="form-label">
+            <i class="bi bi-person-plus me-1"></i>
+            Assign to Ambassador
+          </label>
+          <%= select_tag 'assigned_distributor_id',
+              options_for_select([['-- No Ambassador --', '']] +
+                @available_distributors.map { |d|
+                  [
+                    "#{d.display_name} - #{d.email}",
+                    d.id,
+                    { 'data-email' => d.email, 'data-mobile' => d.mobile }
+                  ]
+                }),
+              { class: "form-select", id: "distributor_select", include_blank: false } %>
+          <small class="form-text text-muted">Search and select an ambassador to assign this affiliate to (optional).</small>
+        </div>
+      </div>
+
+      <!-- Ambassador Preview -->
+      <div id="distributor_preview" class="mt-3" style="display: none;">
+        <div class="card bg-light">
+          <div class="card-body">
+            <h6 class="card-title mb-2">
+              <i class="bi bi-person-circle me-1"></i>
+              Selected Ambassador Details
+            </h6>
+            <div class="row">
+              <div class="col-md-4">
+                <small class="text-muted">Name:</small>
+                <div id="preview_name" class="fw-bold"></div>
+              </div>
+              <div class="col-md-4">
+                <small class="text-muted">Email:</small>
+                <div id="preview_email"></div>
+              </div>
+              <div class="col-md-4">
+                <small class="text-muted">Mobile:</small>
+                <div id="preview_mobile"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-end gap-2">
+        <%= link_to "Cancel", admin_sub_agents_path, class: "btn btn-outline-secondary" %>
+        <%= form.submit "Create Affiliate", class: "btn btn-primary" %>
+      </div>
+    </div>
+  </div>
+
+<% end %>
+
+<style>
+.document-entry {
+  background: #f8f9fa;
+  border-radius: 8px;
+  position: relative;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+</style>
+
+<!-- jQuery and Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Include Location Data -->
+<script>
+<%= File.read(Rails.root.join('app/assets/javascripts/location_data.js')).html_safe %>
+</script>
+
+<!-- State-City Dependency Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Mobile number handling
+  const mobileInput = document.querySelector('input[name="sub_agent[mobile]"]');
+  if (mobileInput && mobileInput.value) {
+    // Remove +91 and spaces if present
+    let cleanNumber = mobileInput.value.replace(/^\+91\s*/, '').replace(/\s+/g, '');
+    // Keep only the last 10 digits
+    if (cleanNumber.length > 10) {
+      cleanNumber = cleanNumber.slice(-10);
+    }
+    mobileInput.value = cleanNumber;
+  }
+
+  // Add input validation for mobile number
+  if (mobileInput) {
+    mobileInput.addEventListener('input', function(e) {
+      // Remove non-digit characters and strip country code
+      let _val = this.value.replace(/\D/g, '');
+      if (_val.length === 12 && _val.startsWith('91')) _val = _val.slice(2);
+      else if (_val.length === 11 && _val.startsWith('0')) _val = _val.slice(1);
+      if (_val.length > 10) _val = _val.slice(0, 10);
+      this.value = _val;
+
+      // Remove validation classes
+      this.classList.remove('is-invalid', 'is-valid');
+
+      // Check if valid
+      if (this.value.length === 10) {
+        this.classList.add('is-valid');
+      } else if (this.value.length > 0) {
+        this.classList.add('is-invalid');
+      }
+    });
+  }
+
+  const stateSelect = document.getElementById('sub_agent_state');
+  const citySelect = document.getElementById('sub_agent_city');
+
+  // Use global location data
+  let citiesData = {};
+  if (window.LocationData && window.LocationData.states) {
+    citiesData = Object.keys(window.LocationData.states).reduce((acc, key) => {
+      acc[key] = window.LocationData.states[key].cities;
+      return acc;
+    }, {});
+  }
+
+  function loadCitiesForState(stateValue) {
+    console.log('Loading cities for state:', stateValue);
+    if (!stateValue) {
+      populateCityDropdown([]);
+      citySelect.disabled = true;
+      return;
+    }
+
+    // Get cities for this state from local data
+    let cities = citiesData[stateValue] || [];
+    populateCityDropdown(cities);
+  }
+
+  function populateCityDropdown(cities) {
+    // First destroy Select2 if it exists
+    const $citySelect = $(citySelect);
+    if ($citySelect.hasClass('select2-hidden-accessible')) {
+      $citySelect.select2('destroy');
+    }
+
+    // Clear dropdown and add cities
+    citySelect.innerHTML = '<option value="">Select City</option>';
+    cities.forEach(city => {
+      const option = document.createElement('option');
+      option.value = city;  // Use city name as value instead of ID
+      option.textContent = city;
+      citySelect.appendChild(option);
+    });
+
+    citySelect.disabled = false;
+    console.log(`Loaded ${cities.length} cities`);
+
+    // Reinitialize Select2
+    setTimeout(() => {
+      $citySelect.select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select city...',
+        allowClear: true,
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+    }, 50);
+  }
+
+  // Initialize Select2 for state and city dropdowns
+  if (typeof $ !== 'undefined' && $.fn.select2) {
+    $(stateSelect).select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select state...',
+      allowClear: true,
+      width: '100%',
+      minimumResultsForSearch: 0
+    });
+
+    $(citySelect).select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select city...',
+      allowClear: true,
+      width: '100%',
+      minimumResultsForSearch: 0
+    });
+
+    // Initialize Select2 for Ambassador dropdown
+    $('#distributor_select').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select ambassador...',
+      allowClear: true,
+      width: '100%'
+    });
+
+    // Show ambassador preview on selection
+    $('#distributor_select').on('select2:select', function(e) {
+      const data = e.params.data;
+      const option = $(this).find('option[value="' + data.id + '"]');
+      const email = option.data('email') || '';
+      const mobile = option.data('mobile') || '';
+
+      if (data.id) {
+        $('#preview_name').text(data.text.split(' - ')[0]);
+        $('#preview_email').text(email);
+        $('#preview_mobile').text(mobile);
+        $('#distributor_preview').show();
+      } else {
+        $('#distributor_preview').hide();
+      }
+    });
+
+    $('#distributor_select').on('select2:unselect select2:clear', function() {
+      $('#distributor_preview').hide();
+    });
+  }
+
+  // Handle state change
+  stateSelect.addEventListener('change', function() {
+    loadCitiesForState(this.value);
+  });
+
+  // Handle Select2 change event specifically
+  $('#sub_agent_state').on('select2:select', function (e) {
+    const selectedValue = e.params.data.id;
+    loadCitiesForState(selectedValue);
+  });
+
+  // Load cities if state is pre-selected
+  if (stateSelect.value) {
+    loadCitiesForState(stateSelect.value);
+  }
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Document management
+  let documentIndex = 0;
+  const addDocumentBtn = document.getElementById('add_document');
+  const documentsContainer = document.getElementById('documents_container');
+
+  addDocumentBtn?.addEventListener('click', function() {
+    const documentHtml = `
+      <div class="document-entry p-3 mb-3 border rounded position-relative" data-index="${documentIndex}" style="background: #f8f9fa;">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-btn remove-document">
+          <i class="bi bi-trash"></i>
+        </button>
+        <div class="row">
+          <div class="col-md-6">
+            <label class="form-label">Document Type <span class="text-danger">*</span></label>
+            <select name="sub_agent[sub_agent_documents_attributes][${documentIndex}][document_type]" class="form-select" required>
+              <option value="">Select Document Type</option>
+              <option value="Aadhaar Card">Aadhaar Card</option>
+              <option value="Pancard">Pancard</option>
+              <option value="Driving License">Driving License</option>
+              <option value="Mediclaim">Mediclaim</option>
+              <option value="RC Book">RC Book</option>
+              <option value="Other File">Other File</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Document File <span class="text-danger">*</span></label>
+            <input type="file" name="sub_agent[sub_agent_documents_attributes][${documentIndex}][document_file]" class="form-control" accept="image/*,application/pdf" required id="sub_agent_doc_file_${documentIndex}">
+          </div>
+        </div>
+
+        <!-- Document Preview Container -->
+        <div id="sub_agent_doc_preview_${documentIndex}" class="mt-3" style="display: none;">
+          <div class="card border-light bg-light">
+            <div class="card-body p-3">
+              <div class="d-flex align-items-start">
+                <!-- Preview Content -->
+                <div class="preview-content me-3">
+                  <!-- Image Preview -->
+                  <div class="image-preview" style="display: none;">
+                    <img class="preview-image rounded" style="max-width: 120px; max-height: 120px; object-fit: cover; border: 2px solid #e9ecef;" alt="Preview">
+                  </div>
+
+                  <!-- Document Preview -->
+                  <div class="document-preview" style="display: none;">
+                    <div class="d-flex align-items-center p-2 border rounded" style="background-color: #f8f9fa; min-width: 120px;">
+                      <i class="file-icon bi bi-file-earmark text-primary fs-3 me-2"></i>
+                      <div>
+                        <div class="fw-bold file-name text-truncate small" style="max-width: 100px;"></div>
+                        <small class="text-muted file-type"></small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- File Information -->
+                <div class="file-info flex-grow-1">
+                  <h6 class="mb-1 small">
+                    <i class="bi bi-file-earmark-check text-success me-1"></i>
+                    <span class="file-title">Document Ready</span>
+                  </h6>
+                  <div class="file-details small text-muted">
+                    <div><strong>Name:</strong> <span class="file-name-detail"></span></div>
+                    <div><strong>Size:</strong> <span class="file-size-detail"></span></div>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="file-actions">
+                  <button type="button" class="btn btn-sm btn-outline-danger remove-file" title="Remove File">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    documentsContainer.insertAdjacentHTML('beforeend', documentHtml);
+
+    // Add event listener for the new file input
+    setupSubAgentDocumentPreview(documentIndex);
+
+    documentIndex++;
+  });
+
+
+  // Function to setup preview functionality for sub agent documents
+  function setupSubAgentDocumentPreview(index) {
+    const fileInput = document.getElementById(`sub_agent_doc_file_${index}`);
+    const previewContainer = document.getElementById(`sub_agent_doc_preview_${index}`);
+
+    if (!fileInput || !previewContainer) return;
+
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+
+      if (!file) {
+        previewContainer.style.display = 'none';
+        return;
+      }
+
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        showSubAgentDocError(fileInput, 'File size exceeds 10MB limit');
+        fileInput.value = '';
+        previewContainer.style.display = 'none';
+        return;
+      }
+
+      showSubAgentDocumentPreview(file, previewContainer);
+    });
+
+    // Remove file button
+    previewContainer.querySelector('.remove-file')?.addEventListener('click', function() {
+      fileInput.value = '';
+      previewContainer.style.display = 'none';
+    });
+  }
+
+  function showSubAgentDocumentPreview(file, previewContainer) {
+    const imagePreview = previewContainer.querySelector('.image-preview');
+    const documentPreview = previewContainer.querySelector('.document-preview');
+    const fileNameElement = previewContainer.querySelector('.file-name-detail');
+    const fileSizeElement = previewContainer.querySelector('.file-size-detail');
+
+    // Hide both previews initially
+    imagePreview.style.display = 'none';
+    documentPreview.style.display = 'none';
+
+    // Show preview container
+    previewContainer.style.display = 'block';
+
+    // Update file details
+    if (fileNameElement) fileNameElement.textContent = file.name;
+    if (fileSizeElement) fileSizeElement.textContent = formatSubAgentFileSize(file.size);
+
+    // Check if file is an image
+    if (file.type && file.type.startsWith('image/')) {
+      showSubAgentImagePreview(file, imagePreview);
+    } else {
+      showSubAgentDocPreview(file, documentPreview);
+    }
+
+    // Add smooth animation
+    previewContainer.style.opacity = '0';
+    setTimeout(() => {
+      previewContainer.style.transition = 'opacity 0.3s ease';
+      previewContainer.style.opacity = '1';
+    }, 10);
+  }
+
+  function showSubAgentImagePreview(file, container) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = container.querySelector('.preview-image');
+      img.src = e.target.result;
+      container.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function showSubAgentDocPreview(file, container) {
+    const fileIcon = container.querySelector('.file-icon');
+    const fileName = container.querySelector('.file-name');
+    const fileType = container.querySelector('.file-type');
+
+    fileName.textContent = file.name;
+    fileType.textContent = file.type || 'Unknown type';
+
+    // Set appropriate icon
+    fileIcon.className = 'file-icon bi fs-3 me-2 ' + getSubAgentFileIcon(file.type || file.name);
+
+    container.style.display = 'block';
+  }
+
+  function formatSubAgentFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  function getSubAgentFileIcon(fileType) {
+    if (fileType.includes('pdf')) return 'bi-file-earmark-pdf text-danger';
+    if (fileType.includes('word') || fileType.includes('document')) return 'bi-file-earmark-word text-primary';
+    if (fileType.includes('excel') || fileType.includes('spreadsheet')) return 'bi-file-earmark-excel text-success';
+    if (fileType.includes('image')) return 'bi-file-earmark-image text-info';
+    return 'bi-file-earmark text-muted';
+  }
+
+  function showSubAgentDocError(inputElement, message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'alert alert-danger alert-dismissible fade show mt-2';
+    errorDiv.innerHTML = `
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    inputElement.parentNode.insertBefore(errorDiv, inputElement.nextSibling);
+    setTimeout(() => errorDiv.remove(), 5000);
+  }
+
+  // Event delegation for remove buttons
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-document')) {
+      e.target.closest('.document-entry').remove();
+    }
+  });
+
+  // Profile image preview functionality
+  const profileImageInput = document.getElementById('sub_agent_profile_image');
+  const profileImagePreview = document.getElementById('sub_agent_profile_image_preview');
+  const previewImg = document.getElementById('preview_img');
+
+  if (profileImageInput && profileImagePreview && previewImg) {
+    profileImageInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+
+      if (!file) {
+        profileImagePreview.style.display = 'none';
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (JPG, PNG, GIF)');
+        this.value = '';
+        profileImagePreview.style.display = 'none';
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Profile image size should be less than 5MB');
+        this.value = '';
+        profileImagePreview.style.display = 'none';
+        return;
+      }
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        previewImg.src = e.target.result;
+        profileImagePreview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+});
+</script>

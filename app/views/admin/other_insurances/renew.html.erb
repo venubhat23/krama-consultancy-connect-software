@@ -1,0 +1,176 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Renew Other Insurance Policy</h2>
+    <div class="text-muted">
+      <i class="bi bi-arrow-repeat me-1"></i>
+      Renewing Policy: <strong><%= @original_policy_number || 'Unknown' %></strong>
+    </div>
+  </div>
+  <div>
+    <%= link_to admin_other_insurances_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to List
+    <% end %>
+  </div>
+</div>
+
+<!-- Renewal Notice Card -->
+<div class="alert alert-info d-flex align-items-start mb-4">
+  <i class="bi bi-info-circle-fill me-3 fs-5"></i>
+  <div>
+    <h6 class="alert-heading">Renewal Information</h6>
+    <p class="mb-0">This form has been pre-filled with data from the original policy. Please review and update the following:</p>
+    <ul class="mb-0 mt-2">
+      <li>Enter a new policy number</li>
+      <li>Verify the policy dates (start and end dates have been automatically calculated)</li>
+      <li>Update premium amounts if they have changed</li>
+      <li>Review and update coverage details if necessary</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Form Card -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-primary text-white">
+    <h5 class="mb-0">
+      <i class="bi bi-file-earmark-text me-2"></i>
+      Renewal Policy Details
+    </h5>
+  </div>
+  <div class="card-body">
+    <%= form_with model: @other_insurance, url: create_renewal_admin_other_insurance_path(@other_insurance.original_policy_id || params[:id]), local: true, html: { class: "needs-validation", novalidate: true } do |form| %>
+      <!-- Error Messages -->
+      <% if @other_insurance.errors.any? %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <h6 class="alert-heading">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <%= pluralize(@other_insurance.errors.count, "error") %> prohibited this policy from being renewed:
+          </h6>
+          <ul class="mb-0">
+            <% @other_insurance.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      <% end %>
+
+      <!-- Render the form fields partial -->
+      <%= render 'form_fields', form: form %>
+
+      <!-- Form Actions -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="d-flex justify-content-between">
+            <%= link_to admin_other_insurances_path, class: "btn btn-outline-secondary" do %>
+              <i class="bi bi-x-lg me-1"></i>
+              Cancel
+            <% end %>
+            <%= form.submit "Create Renewal Policy", class: "btn btn-success btn-lg", data: { turbo: false } %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- JavaScript for Form Validation and Dynamic Updates -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Bootstrap form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.from(forms).forEach(form => {
+      form.addEventListener('submit', event => {
+        if (!form.checkValidity()) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+    });
+
+    // Highlight renewal-specific fields
+    const renewalFields = ['policy_number', 'policy_booking_date', 'policy_start_date', 'policy_end_date'];
+    renewalFields.forEach(fieldId => {
+      const field = document.getElementById('other_insurance_' + fieldId);
+      if (field) {
+        field.style.backgroundColor = '#fff3cd';
+        field.addEventListener('focus', function() {
+          this.style.backgroundColor = '#ffffff';
+        });
+        field.addEventListener('blur', function() {
+          if (renewalFields.includes(fieldId.replace('other_insurance_', ''))) {
+            this.style.backgroundColor = '#fff3cd';
+          }
+        });
+      }
+    });
+
+    // Auto-calculate GST and total premium
+    const netPremiumField = document.getElementById('other_insurance_net_premium');
+    const gstPercentageField = document.getElementById('other_insurance_gst_percentage');
+    const totalPremiumField = document.getElementById('other_insurance_total_premium');
+
+    function calculateTotalPremium() {
+      if (netPremiumField && gstPercentageField && totalPremiumField) {
+        const netPremium = parseFloat(netPremiumField.value) || 0;
+        const gstPercentage = parseFloat(gstPercentageField.value) || 0;
+        const gstAmount = (netPremium * gstPercentage) / 100;
+        const totalPremium = netPremium + gstAmount;
+        totalPremiumField.value = totalPremium.toFixed(2);
+      }
+    }
+
+    if (netPremiumField) {
+      netPremiumField.addEventListener('input', calculateTotalPremium);
+    }
+    if (gstPercentageField) {
+      gstPercentageField.addEventListener('input', calculateTotalPremium);
+    }
+
+    // Payment mode based date calculation
+    const paymentModeField = document.getElementById('other_insurance_payment_mode');
+    const startDateField = document.getElementById('other_insurance_policy_start_date');
+    const endDateField = document.getElementById('other_insurance_policy_end_date');
+
+    function calculateEndDate() {
+      if (paymentModeField && startDateField && endDateField) {
+        const startDate = new Date(startDateField.value);
+        if (!isNaN(startDate)) {
+          let endDate = new Date(startDate);
+          const paymentMode = paymentModeField.value;
+
+          switch(paymentMode) {
+            case 'Yearly':
+            case 'Annual':
+              endDate.setFullYear(endDate.getFullYear() + 1);
+              break;
+            case 'Half Yearly':
+            case 'Semi-Annual':
+              endDate.setMonth(endDate.getMonth() + 6);
+              break;
+            case 'Quarterly':
+              endDate.setMonth(endDate.getMonth() + 3);
+              break;
+            case 'Monthly':
+              endDate.setMonth(endDate.getMonth() + 1);
+              break;
+            default:
+              endDate.setFullYear(endDate.getFullYear() + 1);
+          }
+
+          endDate.setDate(endDate.getDate() - 1);
+          endDateField.value = endDate.toISOString().split('T')[0];
+        }
+      }
+    }
+
+    if (paymentModeField) {
+      paymentModeField.addEventListener('change', calculateEndDate);
+    }
+    if (startDateField) {
+      startDateField.addEventListener('change', calculateEndDate);
+    }
+  });
+</script>

@@ -1,0 +1,161 @@
+<% if @preview_data && @preview_data.any? %>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="bg-light">
+        <tr>
+          <th class="border-0">Policy Details</th>
+          <th class="border-0">Customer</th>
+          <th class="border-0">Policy Type</th>
+          <th class="border-0">Start Date</th>
+          <th class="border-0">End Date</th>
+          <th class="border-0">Premium</th>
+          <th class="border-0">Status</th>
+          <th class="border-0">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @preview_data.each do |policy| %>
+          <tr>
+            <!-- Policy Details -->
+            <td>
+              <div>
+                <h6 class="mb-1"><%= policy[:policy_number] %></h6>
+                <small class="text-muted d-block">
+                  <%= policy[:insurance_company] %>
+                </small>
+                <small class="text-muted">
+                  Sum Insured: <%= indian_currency(policy[:sum_insured] || 0) %>
+                </small>
+              </div>
+            </td>
+
+            <!-- Customer -->
+            <td>
+              <div>
+                <h6 class="mb-1"><%= policy[:customer_name] %></h6>
+                <% if policy[:customer_email] %>
+                  <small class="text-muted d-block">
+                    <%= policy[:customer_email] %>
+                  </small>
+                <% end %>
+                <% if policy[:customer_mobile] %>
+                  <small class="text-muted">
+                    <%= policy[:customer_mobile] %>
+                  </small>
+                <% end %>
+              </div>
+            </td>
+
+            <!-- Policy Type -->
+            <td>
+              <span class="badge bg-<%= policy[:policy_type] == 'health' ? 'success' : (policy[:policy_type] == 'motor' ? 'warning' : 'info') %>">
+                <%= policy[:policy_type]&.capitalize %>
+              </span>
+            </td>
+
+            <!-- Start Date -->
+            <td>
+              <span class="text-primary">
+                <%= policy[:policy_start_date].strftime('%d %b %Y') if policy[:policy_start_date] %>
+              </span>
+            </td>
+
+            <!-- End Date -->
+            <td>
+              <span class="text-<%= policy[:status] == 'Expired' ? 'danger' : 'warning' %>">
+                <%= policy[:policy_end_date].strftime('%d %b %Y') if policy[:policy_end_date] %>
+              </span>
+              <% if policy[:days_expired] > 0 %>
+                <small class="d-block text-muted">
+                  <%= policy[:days_expired] %> days ago
+                </small>
+              <% elsif policy[:days_expired] < 0 %>
+                <small class="d-block text-muted">
+                  <%= policy[:days_expired].abs %> days remaining
+                </small>
+              <% else %>
+                <small class="d-block text-muted">Today</small>
+              <% end %>
+            </td>
+
+            <!-- Premium -->
+            <td>
+              <strong class="text-danger"><%= indian_currency(policy[:premium_amount] || 0) %></strong>
+            </td>
+
+            <!-- Status -->
+            <td>
+              <span class="badge bg-<%= policy[:status] == 'Expired' ? 'danger' : 'warning' %>">
+                <%= policy[:status] %>
+              </span>
+              <% if policy[:affiliate] && policy[:affiliate] != 'Self' %>
+                <small class="d-block text-muted mt-1">
+                  Affiliate: <%= policy[:affiliate] %>
+                </small>
+              <% end %>
+            </td>
+
+            <!-- Actions -->
+            <td>
+              <div class="d-flex gap-1">
+                <% case policy[:policy_type] %>
+                <% when 'health' %>
+                  <%= link_to admin_health_insurance_path(policy[:id]), class: "btn btn-sm btn-outline-primary", title: "View Policy" do %>
+                    <i class="bi bi-eye"></i>
+                  <% end %>
+                <% when 'motor' %>
+                  <%= link_to admin_motor_insurance_path(policy[:id]), class: "btn btn-sm btn-outline-primary", title: "View Policy" do %>
+                    <i class="bi bi-eye"></i>
+                  <% end %>
+                <% when 'life' %>
+                  <%= link_to admin_life_insurance_path(policy[:id]), class: "btn btn-sm btn-outline-primary", title: "View Policy" do %>
+                    <i class="bi bi-eye"></i>
+                  <% end %>
+                <% end %>
+                <button class="btn btn-sm btn-outline-success" title="Contact for Renewal">
+                  <i class="bi bi-telephone"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Summary Statistics -->
+  <div class="card-footer bg-light">
+    <div class="row text-center">
+      <div class="col-md-3">
+        <h6 class="text-muted mb-1">Total Policies</h6>
+        <h4 class="mb-0"><%= @preview_data.size %></h4>
+      </div>
+      <div class="col-md-3">
+        <h6 class="text-muted mb-1">Total Premium</h6>
+        <h4 class="mb-0 text-danger">
+          <%= indian_currency(@preview_data.sum { |p| p[:premium_amount] || 0 }) %>
+        </h4>
+      </div>
+      <div class="col-md-3">
+        <h6 class="text-muted mb-1">Total Sum Insured</h6>
+        <h4 class="mb-0 text-info">
+          <%= indian_currency(@preview_data.sum { |p| p[:sum_insured] || 0 }) %>
+        </h4>
+      </div>
+      <div class="col-md-3">
+        <h6 class="text-muted mb-1">Expired Count</h6>
+        <h4 class="mb-0 text-warning">
+          <%= @preview_data.count { |p| p[:status] == 'Expired' } %>
+        </h4>
+      </div>
+    </div>
+  </div>
+<% else %>
+  <div class="text-center py-5">
+    <i class="bi bi-clock-history fs-1 text-muted d-block mb-3"></i>
+    <h5 class="text-muted">No data found</h5>
+    <p class="text-muted mb-0">
+      No expired insurance policies found for the selected filters.
+    </p>
+  </div>
+<% end %>

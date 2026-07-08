@@ -1,0 +1,221 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Upload Document</h2>
+    <p class="text-muted mb-0">
+      <% if @documentable %>
+        Upload a document for <%= @documentable.class.name %> #<%= @documentable.id %>
+      <% else %>
+        Upload a new document to the system
+      <% end %>
+    </p>
+  </div>
+  <div>
+    <% if @documentable %>
+      <%= link_to polymorphic_path([:admin, @documentable, :documents]), class: "btn btn-outline-secondary" do %>
+        <i class="bi bi-arrow-left me-1"></i>
+        Back to Documents
+      <% end %>
+    <% else %>
+      <%= link_to admin_documents_path, class: "btn btn-outline-secondary" do %>
+        <i class="bi bi-arrow-left me-1"></i>
+        Back to Documents
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<!-- Upload Form -->
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">
+          <i class="bi bi-cloud-upload me-2"></i>
+          Document Upload
+        </h5>
+      </div>
+      <div class="card-body">
+        <%= form_with model: [:admin, @document], local: true, multipart: true, class: "needs-validation", novalidate: true do |form| %>
+          <% if @document.errors.any? %>
+            <div class="alert alert-danger">
+              <h6>Please fix the following errors:</h6>
+              <ul class="mb-0">
+                <% @document.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <!-- Hidden fields for polymorphic association -->
+          <% if @documentable %>
+            <%= form.hidden_field :documentable_type, value: @documentable.class.name %>
+            <%= form.hidden_field :documentable_id, value: @documentable.id %>
+          <% end %>
+
+          <!-- Document Title -->
+          <div class="mb-3">
+            <%= form.label :title, class: "form-label" %>
+            <%= form.text_field :title, class: "form-control", placeholder: "Enter document title", required: true %>
+            <div class="invalid-feedback">
+              Please provide a document title.
+            </div>
+          </div>
+
+          <!-- Document Type -->
+          <div class="mb-3">
+            <%= form.label :document_type, class: "form-label" %>
+            <%= form.select :document_type,
+                           options_for_select([
+                             ['Select document type', ''],
+                             *Document::DOCUMENT_TYPES.map { |type| [type.humanize, type] }
+                           ], @document.document_type),
+                           {},
+                           { class: "form-select", required: true } %>
+            <div class="invalid-feedback">
+              Please select a document type.
+            </div>
+          </div>
+
+          <!-- File Upload -->
+          <div class="mb-3">
+            <%= form.label :file, class: "form-label" %>
+            <%= form.file_field :file, class: "form-control", accept: "application/pdf,image/jpeg,image/jpg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document", required: true, id: "document_file" %>
+            <div class="form-text">
+              Accepted formats: PDF, JPG, PNG, DOC. Maximum size: 10MB.
+            </div>
+            <div class="invalid-feedback">
+              Please select a file to upload.
+            </div>
+
+            <!-- File Preview Component -->
+            <%= render 'shared/file_upload_preview',
+                       field_id: 'document_file',
+                       preview_id: 'document_file_preview',
+                       accept: 'application/pdf,image/jpeg,image/jpg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                       show_file_info: true,
+                       max_file_size: '10MB' %>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-3">
+            <%= form.label :description, class: "form-label" %>
+            <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Optional: Add a description for this document" %>
+          </div>
+
+          <!-- Linked Record Info (if documentable exists) -->
+          <% if @documentable %>
+            <div class="alert alert-info">
+              <h6><i class="bi bi-info-circle me-2"></i>Document will be linked to:</h6>
+              <p class="mb-0">
+                <strong><%= @documentable.class.name %></strong>:
+                <% if @documentable.respond_to?(:display_name) %>
+                  <%= @documentable.display_name %>
+                <% elsif @documentable.respond_to?(:name) %>
+                  <%= @documentable.name %>
+                <% else %>
+                  ID #<%= @documentable.id %>
+                <% end %>
+              </p>
+            </div>
+          <% else %>
+            <!-- Manual Link Selection -->
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <%= form.label :documentable_type, "Link to Record Type", class: "form-label" %>
+                  <%= form.select :documentable_type,
+                                 options_for_select([
+                                   ['No Link', ''],
+                                   ['User', 'User'],
+                                   ['Lead', 'Lead'],
+                                   ['Customer', 'Customer']
+                                 ], @document.documentable_type),
+                                 {},
+                                 { class: "form-select", id: "documentable_type_select" } %>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <%= form.label :documentable_id, "Record ID", class: "form-label" %>
+                  <%= form.number_field :documentable_id, class: "form-control", placeholder: "Enter record ID", id: "documentable_id_input" %>
+                  <div class="form-text" id="documentable_help">
+                    Leave blank to upload without linking to a specific record.
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- Submit Buttons -->
+          <div class="d-flex justify-content-end gap-2">
+            <% if @documentable %>
+              <%= link_to "Cancel", polymorphic_path([:admin, @documentable, :documents]), class: "btn btn-secondary" %>
+            <% else %>
+              <%= link_to "Cancel", admin_documents_path, class: "btn btn-secondary" %>
+            <% end %>
+            <%= form.submit "Upload Document", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Bootstrap form validation
+  const forms = document.querySelectorAll('.needs-validation');
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  });
+
+  // Dynamic help text for documentable selection
+  const typeSelect = document.getElementById('documentable_type_select');
+  const idInput = document.getElementById('documentable_id_input');
+  const helpText = document.getElementById('documentable_help');
+
+  if (typeSelect && idInput && helpText) {
+    typeSelect.addEventListener('change', function() {
+      const selectedType = this.value;
+      if (selectedType) {
+        idInput.style.display = 'block';
+        helpText.textContent = `Enter the ID of the ${selectedType.toLowerCase()} to link this document to.`;
+      } else {
+        idInput.value = '';
+        helpText.textContent = 'Leave blank to upload without linking to a specific record.';
+      }
+    });
+  }
+
+  // File preview and validation
+  const fileInput = document.querySelector('input[type="file"]');
+  if (fileInput) {
+    fileInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (file) {
+        // Check file size
+        if (file.size > 10 * 1024 * 1024) { // 10MB
+          alert('File size must be less than 10MB');
+          this.value = '';
+          return;
+        }
+
+        // Auto-fill title if empty
+        const titleInput = document.getElementById('document_title');
+        if (titleInput && !titleInput.value) {
+          const fileName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
+          titleInput.value = fileName;
+        }
+      }
+    });
+  }
+});
+</script>

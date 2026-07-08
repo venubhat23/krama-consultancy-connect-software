@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+  <!-- Dr WISE Admin -->
+  <head>
+    <title><%= content_for(:title) || "Krama Cons Business Forum" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="browser-extension-disable" content="true">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <!-- Apply theme immediately to prevent flash -->
+    <script>
+      (function() {
+        var t = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
+
+    <%= javascript_importmap_tags %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <!-- Enhanced Bootstrap & Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+
+    <!-- Chart.js with Date Adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+    <!-- Moment.js for timezone support -->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment-timezone@0.5.43/builds/moment-timezone-with-data.min.js"></script>
+
+    <!-- Chartkick -->
+    <script src="https://unpkg.com/chartkick@5.0.1/dist/chartkick.js"></script>
+
+    <!-- Configure timezone for India -->
+    <script>
+      // Set default timezone to India
+      if (typeof moment !== 'undefined') {
+        moment.tz.setDefault('Asia/Kolkata');
+      }
+    </script>
+
+    <!-- Enhanced Stylesheets -->
+    <%= stylesheet_link_tag "sidebar_fallback", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "layout_fix", "data-turbo-track": "reload" %>
+
+    <% if Rails.env.development? %>
+      <link rel="stylesheet" href="/application.css" data-turbo-track="reload">
+    <% else %>
+      <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <% end %>
+    <%= stylesheet_link_tag "auth", "data-turbo-track": "reload" if !user_signed_in? %>
+
+    <!-- Force cache refresh -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Enhanced DrWise Admin Header Styling -->
+    <style>
+      .drwise-header-title {
+        position: relative;
+        display: inline-block;
+      }
+
+      .drwise-header-text {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        font-size: 2.2rem !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.5px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        position: relative;
+        display: inline-block;
+        transition: all 0.3s ease;
+      }
+
+      .drwise-header-text::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        opacity: 0;
+        border-radius: 8px;
+        filter: blur(10px);
+        z-index: -1;
+        transition: opacity 0.3s ease;
+      }
+
+      .drwise-header-text:hover::before {
+        opacity: 0.2;
+      }
+
+      .drwise-header-text:hover {
+        transform: scale(1.05);
+        filter: brightness(1.1);
+      }
+
+      /* Header Layout Fixes */
+      .header {
+        width: 100%;
+        position: relative;
+        z-index: 1000;
+      }
+
+      .header .container-fluid {
+        width: 100%;
+        padding-left: 15px;
+        padding-right: 15px;
+      }
+
+      .header .d-flex.justify-content-between {
+        width: 100%;
+      }
+
+      /* Ensure Admin button stays at far right */
+      .header .d-flex.align-items-center:last-child {
+        margin-left: auto;
+      }
+
+      /* Header logo */
+      .header-logo {
+        height: 36px;
+        width: 36px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid rgba(102, 126, 234, 0.35);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+        flex-shrink: 0;
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+      .header-logo:hover {
+        box-shadow: 0 4px 14px rgba(102, 126, 234, 0.45);
+        transform: scale(1.08);
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .drwise-header-text {
+          font-size: 1.8rem !important;
+        }
+        .header-logo {
+          height: 30px;
+          width: 30px;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .drwise-header-text {
+          font-size: 1.5rem !important;
+        }
+        .header-logo {
+          height: 26px;
+          width: 26px;
+        }
+      }
+
+      /* Dark/Light mode toggle button */
+      .theme-toggle-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 2px solid #667eea;
+        background: transparent;
+        color: #667eea;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        margin-right: 0.75rem;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .theme-toggle-btn:hover {
+        background: #667eea;
+        color: white;
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+      }
+      .theme-toggle-btn .sun-icon,
+      .theme-toggle-btn .moon-icon {
+        position: absolute;
+        transition: all 0.35s cubic-bezier(0.25,0.8,0.25,1);
+      }
+      .theme-toggle-btn .sun-icon  { opacity:1; transform:rotate(0deg) scale(1); }
+      .theme-toggle-btn .moon-icon { opacity:0; transform:rotate(90deg) scale(0.5); }
+      [data-theme="dark"] .theme-toggle-btn {
+        border-color: #a78bfa;
+        color: #a78bfa;
+      }
+      [data-theme="dark"] .theme-toggle-btn:hover {
+        background: #a78bfa;
+        color: white;
+      }
+      [data-theme="dark"] .theme-toggle-btn .sun-icon  { opacity:0; transform:rotate(-90deg) scale(0.5); }
+      [data-theme="dark"] .theme-toggle-btn .moon-icon { opacity:1; transform:rotate(0deg) scale(1); }
+
+      /* Animation on page load */
+      @keyframes drwiseSlideIn {
+        0% {
+          opacity: 0;
+          transform: translateX(-30px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .drwise-header-text {
+        animation: drwiseSlideIn 0.6s ease-out;
+      }
+
+      /* Subtle glow effect */
+      @keyframes subtleGlow {
+        0%, 100% {
+          filter: brightness(1);
+        }
+        50% {
+          filter: brightness(1.1) drop-shadow(0 0 8px rgba(102, 126, 234, 0.3));
+        }
+      }
+
+      .drwise-header-text:hover {
+        animation: subtleGlow 2s ease-in-out infinite;
+      }
+    </style>
+  </head>
+
+  <body class="insurance-app">
+    <% if user_signed_in? %>
+      <!-- Enhanced Insurance-themed Header -->
+      <header class="header">
+        <div class="container-fluid h-100">
+          <div class="d-flex justify-content-between align-items-center h-100 px-3">
+            <!-- Left side: Toggle buttons and DrWise Admin -->
+            <div class="d-flex align-items-center">
+              <!-- Mobile Toggle -->
+              <button class="mobile-toggle d-md-none" type="button" data-bs-toggle="sidebar">
+                <i class="fas fa-bars"></i>
+              </button>
+
+              <!-- Desktop Sidebar Toggle -->
+              <button class="desktop-sidebar-toggle d-none d-md-block" type="button" id="desktopSidebarToggle">
+                <i class="fas fa-bars"></i>
+              </button>
+
+              <!-- Krama Consultancy Logo + Title -->
+              <img src="/logo.jpeg" alt="Krama Consultancy" class="header-logo ms-3" />
+              <div class="drwise-header-title ms-2">
+                <span class="drwise-header-text">Krama Consultancy</span>
+              </div>
+              <% if current_user&.forum %>
+                <span class="badge bg-primary-subtle text-primary ms-3" style="font-size: 0.85rem; font-weight: 600;">
+                  <i class="bi bi-diagram-3 me-1"></i><%= current_user.forum.name %>
+                </span>
+              <% end %>
+            </div>
+
+            <!-- Right side: Header Actions -->
+            <div class="d-flex align-items-center">
+              <!-- Dark/Light Mode Toggle -->
+              <button class="theme-toggle-btn" id="themeToggleBtn" type="button" title="Toggle dark/light mode" onclick="toggleTheme()">
+                <i class="fas fa-sun sun-icon"></i>
+                <i class="fas fa-moon moon-icon"></i>
+              </button>
+
+              <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                  <i class="fas fa-user-circle me-2"></i>
+                  <span class="d-none d-sm-inline">ADMIN</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><%= link_to admin_profile_path, class: "dropdown-item" do %><i class="fas fa-user me-2"></i>Profile<% end %></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><%= link_to destroy_user_session_path, class: "dropdown-item", data: { turbo_method: :delete } do %>
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                  <% end %></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Enhanced Insurance-themed Sidebar -->
+      <%= render 'layouts/sidebar' %>
+
+      <!-- Main Application Layout -->
+      <main class="main-content">
+        <div class="container-fluid">
+          <!-- Flash Messages - Slide-in Toast Notifications -->
+          <% if notice %>
+            <div id="toast-notification" class="toast-notification toast-success" style="position: fixed; top: 80px; right: 20px; z-index: 9999; width: 350px; background: #d1edda; border: 1px solid #c3e6cb; color: #155724; border-radius: 0.375rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); transform: translateX(100%); transition: transform 0.3s ease-in-out;">
+              <div class="toast-notification-content" style="padding: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-check-circle me-2" style="color: #155724;"></i>
+                  <span><%= notice %></span>
+                </div>
+                <button type="button" class="btn-close ms-3" onclick="closeToast()" style="background: none; border: none; color: #155724; cursor: pointer; font-size: 1.2rem;">&times;</button>
+              </div>
+            </div>
+          <% end %>
+
+          <% if alert && alert.present? && alert.strip != "" %>
+            <div id="toast-notification" class="toast-notification toast-danger" style="position: fixed; top: 80px; right: 20px; z-index: 9999; width: 350px; background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; border-radius: 0.375rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); transform: translateX(100%); transition: transform 0.3s ease-in-out;">
+              <div class="toast-notification-content" style="padding: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-exclamation-triangle me-2" style="color: #721c24;"></i>
+                  <span><%= alert %></span>
+                </div>
+                <button type="button" class="btn-close ms-3" onclick="closeToast()" style="background: none; border: none; color: #721c24; cursor: pointer; font-size: 1.2rem;">&times;</button>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- Main Content Area -->
+          <div class="content-area">
+            <%= yield %>
+          </div>
+
+        </div>
+      </main>
+    <% else %>
+      <!-- Authentication Layout -->
+      <div class="auth-wrapper">
+        <!-- Background pattern overlay -->
+        <div class="auth-pattern"></div>
+
+        <!-- Large floating shapes -->
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+
+        <% if notice %>
+          <div class="alert alert-success alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; max-width: 90%; width: 400px;">
+            <i class="bi bi-check-circle me-2"></i>
+            <%= notice %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <% end %>
+
+        <% if alert %>
+          <div class="alert alert-danger alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; max-width: 90%; width: 400px;">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <%= alert %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <% end %>
+
+        <%= yield %>
+      </div>
+    <% end %>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Global Modal Fix Script & Toast Notifications -->
+    <script>
+      // Sidebar Scroll Position Management
+      (function() {
+        const STORAGE_KEY = 'sidebarNavScrollPos';
+
+        function getSidebarNav() {
+          return document.querySelector('.sidebar-nav');
+        }
+
+        function savePos() {
+          const nav = getSidebarNav();
+          if (!nav) return;
+          sessionStorage.setItem(STORAGE_KEY, nav.scrollTop.toString());
+        }
+
+        function restorePos() {
+          const nav = getSidebarNav();
+          if (!nav) return;
+          const saved = sessionStorage.getItem(STORAGE_KEY);
+          if (!saved) return;
+          const pos = parseInt(saved, 10);
+          // Set immediately, then again after a frame to beat any layout reflows
+          nav.scrollTop = pos;
+          requestAnimationFrame(() => { nav.scrollTop = pos; });
+        }
+
+        function setup() {
+          const nav = getSidebarNav();
+          if (!nav) return;
+          nav.addEventListener('scroll', function() {
+            sessionStorage.setItem(STORAGE_KEY, nav.scrollTop.toString());
+          }, { passive: true });
+        }
+
+        // Export functions to window scope
+        window.saveSidebarScrollPosition    = savePos;
+        window.restoreSidebarScrollPosition = restorePos;
+        window.setupSidebarScrollTracking   = setup;
+      })();
+
+      // Global modal fix to ensure all modals work properly
+      document.addEventListener('DOMContentLoaded', function() {
+        // Configure default Bootstrap modal options
+        const defaultModalOptions = {
+          backdrop: true,
+          keyboard: true,
+          focus: true
+        };
+
+        // Fix any existing modals on page load
+        document.querySelectorAll('.modal').forEach(function(modalElement) {
+          // Clear any existing backdrop
+          const existingBackdrop = document.querySelector('.modal-backdrop');
+          if (existingBackdrop) {
+            existingBackdrop.remove();
+          }
+
+          // Ensure modal is properly initialized
+          let modalInstance = bootstrap.Modal.getInstance(modalElement);
+          if (!modalInstance) {
+            modalInstance = new bootstrap.Modal(modalElement, defaultModalOptions);
+          }
+        });
+
+        // Initialize toast notifications
+        initToastNotifications();
+
+        // Setup sidebar scroll tracking and restore position
+        setupSidebarScrollTracking();
+        restoreSidebarScrollPosition();
+      });
+
+      // Fix modals after Turbo navigation
+      document.addEventListener('turbo:load', function() {
+        // Clear any stray backdrops
+        document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
+          backdrop.remove();
+        });
+
+        // Remove modal-open class from body
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+
+        // Re-initialize modals
+        document.querySelectorAll('.modal').forEach(function(modalElement) {
+          let modalInstance = bootstrap.Modal.getInstance(modalElement);
+          if (modalInstance) {
+            modalInstance.dispose();
+          }
+          modalInstance = new bootstrap.Modal(modalElement, defaultModalOptions);
+        });
+
+        // Initialize toast notifications
+        initToastNotifications();
+
+        // Restore sidebar scroll position after page load
+        setupSidebarScrollTracking();
+        restoreSidebarScrollPosition();
+
+        // Re-initialize desktop sidebar toggle after Turbo navigation
+        initDesktopSidebarToggle();
+      });
+
+      // Save sidebar position before navigation
+      document.addEventListener('turbo:before-visit', saveSidebarScrollPosition);
+      document.addEventListener('turbo:before-fetch-request', saveSidebarScrollPosition);
+
+      document.addEventListener('turbo:before-render', function() {
+        saveSidebarScrollPosition();
+      });
+
+      // Handle Turbo frame updates
+      document.addEventListener('turbo:frame-load', function(event) {
+        // Don't reset scroll for frame updates
+        if (!event.target.id.includes('sidebar')) {
+          requestAnimationFrame(() => {
+            restoreSidebarScrollPosition();
+          });
+        }
+      });
+
+      window.addEventListener('beforeunload', saveSidebarScrollPosition);
+
+      // Desktop Sidebar Toggle Functionality
+      function initDesktopSidebarToggle() {
+        const desktopToggle = document.getElementById('desktopSidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const body = document.body;
+
+        if (!desktopToggle || !sidebar) return;
+
+        // Only apply collapsed state on desktop (not mobile)
+        function applyDesktopState() {
+          if (window.innerWidth >= 992) { // lg breakpoint
+            const savedState = localStorage.getItem('sidebarCollapsed');
+            if (savedState === 'true') {
+              sidebar.classList.add('collapsed');
+              body.classList.add('sidebar-collapsed');
+            } else {
+              // Ensure expanded by default on desktop
+              sidebar.classList.remove('collapsed');
+              body.classList.remove('sidebar-collapsed');
+            }
+          } else {
+            // On mobile, remove desktop states to avoid conflicts
+            sidebar.classList.remove('collapsed');
+            body.classList.remove('sidebar-collapsed');
+          }
+        }
+
+        // Apply state on load
+        applyDesktopState();
+
+        // Add click event listener for desktop toggle
+        desktopToggle.addEventListener('click', function() {
+          // Only work on desktop
+          if (window.innerWidth >= 992) {
+            const isCollapsed = sidebar.classList.contains('collapsed');
+
+            if (isCollapsed) {
+              // Expand sidebar
+              sidebar.classList.remove('collapsed');
+              body.classList.remove('sidebar-collapsed');
+              localStorage.setItem('sidebarCollapsed', 'false');
+            } else {
+              // Collapse sidebar
+              sidebar.classList.add('collapsed');
+              body.classList.add('sidebar-collapsed');
+              localStorage.setItem('sidebarCollapsed', 'true');
+            }
+          }
+        });
+
+        // Handle window resize to maintain proper behavior
+        window.addEventListener('resize', function() {
+          applyDesktopState();
+        });
+      }
+
+      // Initialize on DOM load
+      initDesktopSidebarToggle();
+
+      // ── Dark / Light Mode ──────────────────────────────────────────
+      (function() {
+        var savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      })();
+
+      function toggleTheme() {
+        var html = document.documentElement;
+        var current = html.getAttribute('data-theme') || 'light';
+        var next = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+      }
+
+      // Re-apply theme after Turbo navigation so the attribute persists
+      document.addEventListener('turbo:load', function() {
+        var saved = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', saved);
+      });
+
+      // Toast notification functions
+      function initToastNotifications() {
+        const toast = document.getElementById('toast-notification');
+        if (toast) {
+          // Slide in from right
+          setTimeout(function() {
+            toast.style.transform = 'translateX(0)';
+          }, 100);
+
+          // Auto-hide after 5 seconds
+          setTimeout(function() {
+            closeToast();
+          }, 5000);
+        }
+      }
+
+      function closeToast() {
+        const toast = document.getElementById('toast-notification');
+        if (toast) {
+          // Slide out to right
+          toast.style.transform = 'translateX(100%)';
+
+          // Remove from DOM after animation
+          setTimeout(function() {
+            if (toast.parentNode) {
+              toast.parentNode.removeChild(toast);
+            }
+          }, 300);
+        }
+      }
+
+      // Allow closing with Escape key
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+          closeToast();
+        }
+      });
+    </script>
+
+    <!-- Global Form Enhancement Script -->
+    <script>
+<%= File.read(Rails.root.join('app/assets/javascripts/form_enhancements.js')).html_safe %>
+    </script>
+
+    <!-- Fix: Download dropdowns clipped by overflow:hidden / transform on ancestor cards -->
+    <script>
+      (function() {
+        function initDownloadDropdowns() {
+          document.querySelectorAll('.download-dropdown').forEach(function(wrapper) {
+            if (wrapper.dataset.ddInit) return; // already wired up
+            wrapper.dataset.ddInit = '1';
+
+            var btn  = wrapper.querySelector('[data-bs-toggle="dropdown"]');
+            var menu = wrapper.querySelector('.dropdown-menu');
+            if (!btn || !menu) return;
+
+            // Teleport menu to <body> so it escapes any overflow:hidden or transform ancestors
+            menu.style.position = 'fixed';
+            menu.style.zIndex   = '9999';
+            menu.style.minWidth = '180px';
+            document.body.appendChild(menu);
+
+            function reposition() {
+              var rect    = btn.getBoundingClientRect();
+              var menuW   = menu.offsetWidth || 200;
+              var left    = Math.max(8, rect.right - menuW);
+              menu.style.top  = (rect.bottom + 4) + 'px';
+              menu.style.left = left + 'px';
+            }
+
+            // Take over toggle — remove Bootstrap's auto-init attribute
+            btn.removeAttribute('data-bs-toggle');
+            btn.setAttribute('data-download-btn', '1');
+
+            btn.addEventListener('click', function(e) {
+              e.stopPropagation();
+              var open = menu.classList.contains('show');
+
+              // Close any other teleported download menus
+              document.querySelectorAll('body > .download-dropdown-menu.show').forEach(function(m) {
+                m.classList.remove('show');
+              });
+
+              if (!open) {
+                menu.classList.add('download-dropdown-menu'); // marker class
+                reposition();
+                menu.classList.add('show');
+                btn.setAttribute('aria-expanded', 'true');
+              } else {
+                menu.classList.remove('show');
+                btn.setAttribute('aria-expanded', 'false');
+              }
+            });
+
+            // Close on outside click
+            document.addEventListener('click', function() {
+              if (menu.classList.contains('show')) {
+                menu.classList.remove('show');
+                btn.setAttribute('aria-expanded', 'false');
+              }
+            });
+
+            // Reposition on scroll / resize
+            window.addEventListener('scroll', function() {
+              if (menu.classList.contains('show')) reposition();
+            }, { passive: true, capture: true });
+
+            window.addEventListener('resize', function() {
+              if (menu.classList.contains('show')) reposition();
+            }, { passive: true });
+          });
+        }
+
+        document.addEventListener('DOMContentLoaded', initDownloadDropdowns);
+        document.addEventListener('turbo:load', initDownloadDropdowns);
+      }());
+    </script>
+  </body>
+</html>

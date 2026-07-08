@@ -1,0 +1,350 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Payout Reports</h2>
+    <p class="text-muted mb-0">Comprehensive payout analytics and reports</p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to admin_payouts_path(format: :csv, date_range: @date_range, policy_type: @policy_type, recipient_type: @recipient_type),
+        class: "btn btn-success" do %>
+      <i class="bi bi-download me-1"></i>
+      Export CSV
+    <% end %>
+    <%= link_to admin_payouts_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Payouts
+    <% end %>
+  </div>
+</div>
+
+<!-- Report Filters -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">Report Filters</h5>
+  </div>
+  <div class="card-body">
+    <%= form_tag reports_admin_payouts_path, method: :get, local: true do %>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <%= label_tag :date_range, "Date Range", class: "form-label" %>
+          <%= select_tag :date_range,
+              options_for_select([
+                ['This Month', 'this_month'],
+                ['Last Month', 'last_month'],
+                ['This Year', 'this_year'],
+                ['Last Year', 'last_year'],
+                ['All Time', 'all_time']
+              ], @date_range),
+              class: "form-control" %>
+        </div>
+        <div class="col-md-3">
+          <%= label_tag :policy_type, "Policy Type", class: "form-label" %>
+          <%= select_tag :policy_type,
+              options_for_select([
+                ['All Types', 'all'],
+                ['Health Insurance', 'health'],
+                ['Life Insurance', 'life'],
+                ['Motor Insurance', 'motor'],
+                ['General Insurance', 'other']
+              ], @policy_type),
+              class: "form-control" %>
+        </div>
+        <div class="col-md-3">
+          <%= label_tag :recipient_type, "Recipient Type", class: "form-label" %>
+          <%= select_tag :recipient_type,
+              options_for_select([
+                ['All Recipients', 'all'],
+                ['Affiliate', 'sub_agent'],
+                ['Ambassador', 'distributor'],
+                ['Investor', 'investor'],
+                ['Agent', 'agent'],
+                ['Company', 'company']
+              ], @recipient_type),
+              class: "form-control" %>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <%= submit_tag "Generate Report", class: "btn btn-primary" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Payouts</h6>
+            <h3 class="mb-0 text-primary"><%= number_with_delimiter(@report_data[:summary][:total_payouts]) %></h3>
+          </div>
+          <div class="icon-shape bg-primary-soft text-primary">
+            <i class="bi bi-list-check"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Total Amount</h6>
+            <h3 class="mb-0 text-success"><%= indian_currency(@report_data[:summary][:total_amount]) %></h3>
+          </div>
+          <div class="icon-shape bg-success-soft text-success">
+            <i class="bi bi-cash-coin"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Paid Amount</h6>
+            <h3 class="mb-0 text-info"><%= indian_currency(@report_data[:summary][:paid_amount]) %></h3>
+          </div>
+          <div class="icon-shape bg-info-soft text-info">
+            <i class="bi bi-check-circle-fill"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Pending Amount</h6>
+            <h3 class="mb-0 text-warning"><%= indian_currency(@report_data[:summary][:pending_amount]) %></h3>
+          </div>
+          <div class="icon-shape bg-warning-soft text-warning">
+            <i class="bi bi-clock-fill"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Breakdown Charts -->
+<div class="row mb-4">
+  <!-- Status Breakdown -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">By Status</h6>
+      </div>
+      <div class="card-body">
+        <% if @report_data[:breakdowns][:by_status].any? %>
+          <% @report_data[:breakdowns][:by_status].each do |status, amount| %>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <span class="badge bg-<%=
+                  case status
+                  when 'pending' then 'warning'
+                  when 'processing' then 'info'
+                  when 'paid' then 'success'
+                  when 'cancelled' then 'danger'
+                  else 'secondary'
+                  end
+                %>">
+                  <%= status.humanize %>
+                </span>
+              </div>
+              <strong><%= indian_currency(amount) %></strong>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-center text-muted py-3">
+            <i class="bi bi-pie-chart display-6"></i>
+            <p class="mb-0 mt-2">No data available</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recipient Breakdown -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">By Recipient</h6>
+      </div>
+      <div class="card-body">
+        <% if @report_data[:breakdowns][:by_recipient].any? %>
+          <% @report_data[:breakdowns][:by_recipient].each do |recipient, amount| %>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span><%= recipient.humanize %></span>
+              <strong><%= indian_currency(amount) %></strong>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-center text-muted py-3">
+            <i class="bi bi-people display-6"></i>
+            <p class="mb-0 mt-2">No data available</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Policy Type Breakdown -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">By Policy Type</h6>
+      </div>
+      <div class="card-body">
+        <% if @report_data[:breakdowns][:by_policy_type].any? %>
+          <% @report_data[:breakdowns][:by_policy_type].each do |policy_type, amount| %>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span><%= policy_type.humanize %></span>
+              <strong><%= indian_currency(amount) %></strong>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-center text-muted py-3">
+            <i class="bi bi-file-earmark-text display-6"></i>
+            <p class="mb-0 mt-2">No data available</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detailed Report Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Detailed Report</h5>
+    <span class="badge bg-light text-dark"><%= @report_data[:details].count %> records</span>
+  </div>
+  <div class="card-body">
+    <% if @report_data[:details].any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Payout ID</th>
+              <th>Policy Details</th>
+              <th>Recipient</th>
+              <th>Amount</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Payment Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @report_data[:details].limit(50).each do |payout| %>
+              <tr>
+                <td>
+                  <%= link_to "##{payout.id}", admin_payout_path(payout), class: "text-decoration-none" %>
+                </td>
+                <td>
+                  <div>
+                    <strong><%= payout.policy_type.humanize %> Policy</strong>
+                    <br>
+                    <small class="text-muted">Policy #<%= payout.policy_id %></small>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-secondary"><%= payout.payout_to.humanize %></span>
+                </td>
+                <td>
+                  <strong class="text-success"><%= indian_currency(payout.payout_amount) %></strong>
+                </td>
+                <td>
+                  <%= payout.payout_date&.strftime("%b %d, %Y") || '-' %>
+                </td>
+                <td>
+                  <span class="badge bg-<%=
+                    case payout.status
+                    when 'pending' then 'warning'
+                    when 'processing' then 'info'
+                    when 'paid' then 'success'
+                    when 'cancelled' then 'danger'
+                    else 'secondary'
+                    end
+                  %>">
+                    <%= payout.status.humanize %>
+                  </span>
+                </td>
+                <td>
+                  <% if payout.paid? && payout.payment_mode.present? %>
+                    <div>
+                      <small class="text-muted d-block"><%= payout.payment_mode.humanize %></small>
+                      <% if payout.transaction_id.present? %>
+                        <small class="text-muted">ID: <%= payout.transaction_id %></small>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <span class="text-muted">-</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <% if @report_data[:details].count > 50 %>
+        <div class="mt-3 text-center">
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-1"></i>
+            Showing first 50 records of <%= @report_data[:details].count %> total.
+            <%= link_to "Export full report as CSV", admin_payouts_path(format: :csv, date_range: @date_range, policy_type: @policy_type, recipient_type: @recipient_type), class: "alert-link" %>
+            for complete data.
+          </div>
+        </div>
+      <% end %>
+
+    <% else %>
+      <div class="text-center py-5">
+        <div class="mb-3">
+          <i class="bi bi-graph-up display-4 text-muted"></i>
+        </div>
+        <h5 class="text-muted">No Data Available</h5>
+        <p class="text-muted mb-0">No payouts found for the selected criteria. Try adjusting your filters.</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+.icon-shape {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.bg-primary-soft {
+  background-color: rgba(13, 110, 253, 0.1);
+}
+
+.bg-success-soft {
+  background-color: rgba(25, 135, 84, 0.1);
+}
+
+.bg-info-soft {
+  background-color: rgba(13, 202, 240, 0.1);
+}
+
+.bg-warning-soft {
+  background-color: rgba(255, 193, 7, 0.1);
+}
+</style>

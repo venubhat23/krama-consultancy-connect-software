@@ -1,0 +1,581 @@
+<!-- Success Message Container -->
+<div id="successMessageContainer"></div>
+
+<!-- Page Header -->
+<div class="mb-4">
+  <h2 class="mb-1">Generate Lead Report</h2>
+  <p class="text-muted mb-0">Create a custom lead report with filters and save it for later reference</p>
+</div>
+
+<!-- Report Configuration Form -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <%= form_with url: admin_reports_lead_reports_path, local: true, id: "report_form" do |form| %>
+
+      <!-- Report Name -->
+      <div class="mb-4">
+        <%= form.label :report_name, "Report Name", class: "form-label" %>
+        <%= form.text_field :report_name,
+                           value: "Lead Report #{Date.current.strftime('%d %b %Y')}",
+                           class: "form-control",
+                           placeholder: "Enter report name" %>
+        <small class="form-text text-muted">
+          Give your report a descriptive name for easy identification
+        </small>
+      </div>
+
+      <div class="row">
+        <!-- Start Date -->
+        <div class="col-md-6 mb-4">
+          <%= form.label :start_date, "Start Date", class: "form-label" %>
+          <%= form.date_field :start_date,
+                             value: 1.month.ago.to_date,
+                             class: "form-control",
+                             min: "1900-01-01",
+                             max: "2099-12-31" %>
+        </div>
+
+        <!-- End Date -->
+        <div class="col-md-6 mb-4">
+          <%= form.label :end_date, "End Date", class: "form-label" %>
+          <%= form.date_field :end_date,
+                             value: Date.current,
+                             class: "form-control",
+                             min: "1900-01-01",
+                             max: "2099-12-31" %>
+        </div>
+      </div>
+
+      <!-- Quick Date Range (Optional) -->
+      <div class="mb-4">
+        <%= form.label :quick_range, "Quick Date Range", class: "form-label" %>
+        <select id="quick_range" class="form-select">
+          <option value="">Custom Range</option>
+          <option value="today">Today</option>
+          <option value="this_week">This Week</option>
+          <option value="this_month">This Month</option>
+          <option value="last_month">Last Month</option>
+          <option value="last_3_months">Last 3 Months</option>
+          <option value="this_year">This Year</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <!-- Lead Stage Filter -->
+        <div class="col-md-6 mb-4">
+          <%= form.label :current_stage, "Lead Stage", class: "form-label" %>
+          <%= form.select :current_stage,
+                         options_for_select([
+                           ['All Stages', ''],
+                           ['Lead Generated', 'lead_generated'],
+                           ['Consultation Scheduled', 'consultation_scheduled'],
+                           ['One On One', 'one_on_one'],
+                           ['Follow Up', 'follow_up'],
+                           ['Follow Up Successful', 'follow_up_successful'],
+                           ['Follow Up Unsuccessful', 'follow_up_unsuccessful'],
+                           ['Not Interested', 'not_interested'],
+                           ['Converted', 'converted'],
+                           ['Re Follow Up', 're_follow_up'],
+                           ['Lead Closed', 'lead_closed']
+                         ]),
+                         {},
+                         { class: "form-select" } %>
+        </div>
+
+        <!-- Product Category Filter -->
+        <div class="col-md-6 mb-4">
+          <%= form.label :product_category, "Product Category", class: "form-label" %>
+          <%= form.select :product_category,
+                         options_for_select([
+                           ['All Categories', ''],
+                           ['Insurance', 'insurance'],
+                           ['Investments', 'investments'],
+                           ['Loans', 'loans'],
+                           ['Taxation', 'taxation']
+                         ]),
+                         {},
+                         { class: "form-select" } %>
+        </div>
+      </div>
+
+
+      <!-- Export Format Selection -->
+      <div class="card bg-light border-0 mb-4">
+        <div class="card-body">
+          <h6 class="card-title mb-3">
+            <i class="bi bi-download me-2"></i>Export Options
+          </h6>
+          <p class="text-muted small mb-3">Choose how you want to save and export this report</p>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-check mb-2">
+                <%= form.check_box :save_to_database, { class: "form-check-input", checked: true }, "1", "0" %>
+                <%= form.label :save_to_database, class: "form-check-label" do %>
+                  <i class="bi bi-database me-1"></i>Save to Database
+                  <small class="text-muted d-block">Store report for future reference</small>
+                <% end %>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Download Format:</label>
+              <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="download_format" id="format_none" value="none" checked>
+                <label class="btn btn-outline-secondary" for="format_none">
+                  <i class="bi bi-x-circle me-1"></i>No Download
+                </label>
+
+                <input type="radio" class="btn-check" name="download_format" id="format_csv" value="csv">
+                <label class="btn btn-outline-success" for="format_csv">
+                  <i class="bi bi-file-earmark-excel me-1"></i>CSV
+                </label>
+
+                <input type="radio" class="btn-check" name="download_format" id="format_preview" value="preview">
+                <label class="btn btn-outline-info" for="format_preview">
+                  <i class="bi bi-eye me-1"></i>Preview Only
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="d-flex gap-2">
+        <button type="button" id="preview_btn" class="btn btn-outline-primary">
+          <i class="bi bi-eye me-1"></i>Preview
+        </button>
+        <button type="submit" name="commit" value="generate" class="btn btn-success">
+          <i class="bi bi-check-circle me-1"></i>Generate Report
+        </button>
+        <%= link_to "Cancel", admin_reports_lead_reports_path, class: "btn btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Progress Bar Overlay -->
+<div id="progressOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 999999;">
+  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 50px rgba(0,0,0,0.3); min-width: 400px;">
+    <div class="text-center">
+      <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <h5 id="progressTitle" class="mb-3">Processing Report...</h5>
+      <p id="progressMessage" class="text-muted mb-4">Please wait while we generate your report</p>
+    </div>
+    <div class="progress" style="height: 25px;">
+      <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-gradient"
+           role="progressbar"
+           style="width: 0%; background: linear-gradient(90deg, #3b82f6, #8b5cf6);"
+           aria-valuenow="0"
+           aria-valuemin="0"
+           aria-valuemax="100">
+        <span id="progressText" class="fw-bold" style="color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); font-size: 14px;">0%</span>
+      </div>
+    </div>
+    <div class="mt-3 text-center">
+      <small id="progressStatus" class="text-muted">Initializing...</small>
+    </div>
+  </div>
+</div>
+
+<!-- Report Preview Section -->
+<div id="preview_section" class="mt-4" style="display: none;">
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-0">
+      <h5 class="mb-0">Report Preview</h5>
+    </div>
+    <div class="card-body p-0">
+      <div id="preview_content">
+        <!-- Preview content will be loaded here via AJAX -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .progress {
+    background-color: #f0f0f0;
+    border-radius: 15px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    border-radius: 15px;
+    transition: width 0.3s ease;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .progress-bar-animated {
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  #progressText {
+    color: #000000 !important; /* Black color */
+    text-shadow: 1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9) !important;
+    font-size: 18px !important;
+    font-weight: 900 !important;
+    letter-spacing: 1px;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const quickRange = document.getElementById('quick_range');
+  const startDate = document.getElementById('start_date');
+  const endDate = document.getElementById('end_date');
+  const previewBtn = document.getElementById('preview_btn');
+  const previewSection = document.getElementById('preview_section');
+  const previewContent = document.getElementById('preview_content');
+  const reportForm = document.getElementById('report_form');
+  const progressOverlay = document.getElementById('progressOverlay');
+
+  // Show/hide progress overlay functions
+  function showProgressOverlay() {
+    progressOverlay.style.display = 'block';
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+  }
+
+  function hideProgressOverlay() {
+    progressOverlay.style.display = 'none';
+    document.body.style.overflow = ''; // Re-enable scrolling
+  }
+
+  // Progress simulation function
+  function simulateProgress(callback, isPreview = false) {
+    let progress = 0;
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressTitle = document.getElementById('progressTitle');
+    const progressMessage = document.getElementById('progressMessage');
+
+    // Set appropriate messages
+    if (isPreview) {
+      progressTitle.textContent = 'Generating Preview...';
+      progressMessage.textContent = 'Loading lead data for preview';
+    } else {
+      progressTitle.textContent = 'Generating Report...';
+      progressMessage.textContent = 'Processing lead data and preparing download';
+    }
+
+    const statuses = isPreview ?
+      ['Fetching leads...', 'Loading lead stages...', 'Calculating totals...', 'Generating preview...', 'Almost done...'] :
+      ['Validating data...', 'Processing leads...', 'Calculating statistics...', 'Saving to database...', 'Finalizing...'];
+
+    const interval = setInterval(() => {
+      if (progress < 90) {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+      }
+
+      progressBar.style.width = progress + '%';
+      progressText.textContent = Math.round(progress) + '%';
+
+      // Update status message based on progress
+      if (progress < 20) progressStatus.textContent = statuses[0];
+      else if (progress < 40) progressStatus.textContent = statuses[1];
+      else if (progress < 60) progressStatus.textContent = statuses[2];
+      else if (progress < 80) progressStatus.textContent = statuses[3];
+      else progressStatus.textContent = statuses[4];
+    }, 300);
+
+    // Execute callback and complete progress
+    callback().finally(() => {
+      clearInterval(interval);
+      progressBar.style.width = '100%';
+      progressText.textContent = '100%';
+      progressStatus.textContent = 'Complete!';
+
+      // Show backend processing message after 100%
+      if (!isPreview) {
+        setTimeout(() => {
+          progressTitle.textContent = 'Processing Report in Backend...';
+          progressMessage.textContent = 'Please wait while we finalize and prepare your download';
+          progressStatus.textContent = 'Backend processing in progress...';
+
+          // Show download initiation after backend processing
+          setTimeout(() => {
+            progressTitle.textContent = 'Download Ready!';
+            progressMessage.textContent = 'Your report is ready and download will start shortly';
+            progressStatus.textContent = 'Download starting...';
+
+            // Hide modal and redirect after download
+            setTimeout(() => {
+              hideProgressOverlay();
+
+              // Show final success message and redirect
+              const container = document.getElementById('successMessageContainer');
+              container.innerHTML = `
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                  <i class="bi bi-check-circle-fill me-2"></i>
+                  ✅ Report generated successfully! Redirecting to reports list...
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              `;
+
+              // Redirect to index page after 2 seconds
+              setTimeout(() => {
+                window.location.href = '<%= admin_reports_lead_reports_path %>';
+              }, 2000);
+
+              // Reset progress bar for next use
+              progressBar.style.width = '0%';
+              progressText.textContent = '0%';
+              progressStatus.textContent = 'Initializing...';
+            }, 1500);
+          }, 1500);
+        }, 800);
+      } else {
+        // For preview, hide normally
+        setTimeout(() => {
+          hideProgressOverlay();
+          progressBar.style.width = '0%';
+          progressText.textContent = '0%';
+          progressStatus.textContent = 'Initializing...';
+        }, 500);
+      }
+    });
+  }
+
+  // Quick date range selection
+  quickRange.addEventListener('change', function() {
+    const today = new Date();
+    let start, end;
+
+    switch(this.value) {
+      case 'today':
+        start = end = today;
+        break;
+      case 'this_week':
+        start = new Date(today.setDate(today.getDate() - today.getDay()));
+        end = new Date();
+        break;
+      case 'this_month':
+        start = new Date(today.getFullYear(), today.getMonth(), 1);
+        end = new Date();
+        break;
+      case 'last_month':
+        start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        end = new Date(today.getFullYear(), today.getMonth(), 0);
+        break;
+      case 'last_3_months':
+        start = new Date(today.setMonth(today.getMonth() - 3));
+        end = new Date();
+        break;
+      case 'this_year':
+        start = new Date(today.getFullYear(), 0, 1);
+        end = new Date();
+        break;
+      default:
+        return;
+    }
+
+    startDate.value = formatDate(start);
+    endDate.value = formatDate(end);
+  });
+
+  // Preview functionality with progress bar
+  previewBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    const formData = new FormData(reportForm);
+
+    // Add preview parameter
+    formData.append('download_format', 'preview');
+
+    // Show progress overlay
+    showProgressOverlay();
+
+    // Show preview section
+    previewSection.style.display = 'block';
+
+    // Simulate progress and make request
+    simulateProgress(() => {
+      return fetch('<%= preview_admin_reports_lead_reports_path %>', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
+          'Accept': 'text/html'
+        }
+      })
+      .then(response => response.text())
+      .then(html => {
+        previewContent.innerHTML = html;
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        previewContent.innerHTML = '<div class="alert alert-danger m-3">Failed to load preview. Please try again.</div>';
+      });
+    }, true);
+  });
+
+  // Generate report functionality with progress bar
+  reportForm.addEventListener('submit', function(e) {
+    if (e.submitter && e.submitter.value === 'generate') {
+      const downloadFormat = document.querySelector('input[name="download_format"]:checked').value;
+      const saveToDb = document.querySelector('input[name="save_to_database"]').checked;
+
+      // Always prevent default and use AJAX
+      e.preventDefault();
+
+      // Show progress overlay
+      showProgressOverlay();
+
+      // Update progress messages based on format
+      const progressTitle = document.getElementById('progressTitle');
+      const progressMessage = document.getElementById('progressMessage');
+
+      if (downloadFormat === 'csv') {
+        progressTitle.textContent = 'Generating CSV Report...';
+        progressMessage.textContent = 'Processing lead data and preparing CSV download';
+      } else {
+        progressTitle.textContent = 'Generating Report...';
+        progressMessage.textContent = 'Processing lead data and saving to database';
+      }
+
+      // Start progress animation that stops at 90%
+      let progress = 0;
+      const progressBar = document.getElementById('progressBar');
+      const progressText = document.getElementById('progressText');
+      const progressStatus = document.getElementById('progressStatus');
+
+      const interval = setInterval(() => {
+        if (progress < 90) {
+          progress += Math.random() * 15;
+          if (progress > 90) progress = 90;
+        }
+
+        progressBar.style.width = progress + '%';
+        progressText.textContent = Math.round(progress) + '%';
+
+        // Update status message based on progress
+        if (progress < 20) progressStatus.textContent = 'Validating data...';
+        else if (progress < 40) progressStatus.textContent = 'Processing leads...';
+        else if (progress < 60) progressStatus.textContent = 'Calculating statistics...';
+        else if (progress < 80) progressStatus.textContent = 'Saving to database...';
+        else progressStatus.textContent = 'Finalizing...';
+      }, 300);
+
+      // Submit form via AJAX for both CSV and database-only
+      const formData = new FormData(reportForm);
+
+      fetch(reportForm.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          if (downloadFormat === 'csv') {
+            // For CSV downloads, handle the blob response
+            return response.blob().then(blob => {
+              // Create download link
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.style.display = 'none';
+              a.href = url;
+              a.download = `lead-report-${new Date().toISOString().slice(0,10)}.csv`;
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+              document.body.removeChild(a);
+
+              // Backend completed successfully - show completion
+              completeProgress(interval, progressBar, progressText, progressStatus, progressTitle, progressMessage, downloadFormat);
+            });
+          } else {
+            // For database-only, just complete
+            completeProgress(interval, progressBar, progressText, progressStatus, progressTitle, progressMessage, downloadFormat);
+          }
+        } else {
+          throw new Error('Report generation failed');
+        }
+      })
+      .catch(error => {
+        clearInterval(interval);
+        progressTitle.textContent = 'Error!';
+        progressMessage.textContent = 'Report generation failed. Please try again.';
+        progressStatus.textContent = 'Failed';
+
+        setTimeout(() => {
+          hideProgressOverlay();
+        }, 2000);
+      });
+    }
+  });
+
+  // Function to complete progress animation and redirect
+  function completeProgress(interval, progressBar, progressText, progressStatus, progressTitle, progressMessage, downloadFormat) {
+    clearInterval(interval);
+
+    // Jump to 100%
+    progressBar.style.width = '100%';
+    progressText.textContent = '100%';
+    progressStatus.textContent = 'Complete!';
+
+    // Show success message
+    setTimeout(() => {
+      progressTitle.textContent = 'Success!';
+      progressMessage.textContent = downloadFormat === 'csv' ?
+        'Report generated and CSV downloaded successfully!' :
+        'Report generated and saved successfully!';
+
+      // Redirect to index page
+      setTimeout(() => {
+        window.location.href = '<%= admin_reports_lead_reports_path %>';
+      }, 1500);
+    }, 800);
+  }
+
+  // Function to show success message
+  function showSuccessMessage(format, savedToDb) {
+    const container = document.getElementById('successMessageContainer');
+    let message = '';
+
+    if (format === 'csv') {
+      message = savedToDb ?
+        '✅ Success! Report saved to database and CSV file downloaded successfully!' :
+        '✅ CSV file downloaded successfully!';
+    }
+
+    if (message) {
+      container.innerHTML = `
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+          <i class="bi bi-check-circle-fill me-2"></i>
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      `;
+
+      // Auto-hide after 10 seconds
+      setTimeout(() => {
+        const alert = container.querySelector('.alert');
+        if (alert) {
+          alert.classList.remove('show');
+          setTimeout(() => container.innerHTML = '', 500);
+        }
+      }, 10000);
+    }
+  }
+
+  function formatDate(date) {
+    const d = new Date(date);
+    const month = ('0' + (d.getMonth() + 1)).slice(-2);
+    const day = ('0' + d.getDate()).slice(-2);
+    return d.getFullYear() + '-' + month + '-' + day;
+  }
+});
+</script>

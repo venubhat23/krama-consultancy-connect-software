@@ -1,0 +1,82 @@
+<% content_for :page_title, "Commission Details - #{@life_insurance.policy_number}" %>
+
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h1 class="h3 mb-0 text-gray-800">Commission Details</h1>
+        <p class="text-muted mt-1">Track commission breakdown and payments</p>
+      </div>
+      <div>
+        <%= link_to admin_life_insurances_path, class: "btn btn-outline-primary" do %>
+          Back to Life Insurances
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h6 class="m-0 font-weight-bold text-primary">Policy Commission Breakdown</h6>
+  </div>
+  <div class="card-body">
+    <!-- Policy Summary -->
+    <div class="policy-summary mb-4 p-3" style="background-color: #f8f9fa; border-radius: 8px;">
+      <div class="row">
+        <div class="col-md-8">
+          <div class="fw-bold fs-5 text-primary mb-1"><%= @life_insurance.policy_number %></div>
+          <div class="text-muted mb-1">Life</div>
+          <div class="fw-bold mb-1"><%= @life_insurance.customer&.display_name %></div>
+          <div class="text-muted mb-1"><%= @life_insurance.insurance_company_name %></div>
+          <% if @life_insurance.lead_id.present? %>
+            <div class="text-muted mb-2">Lead: <%= @life_insurance.lead_id %></div>
+          <% end %>
+          <div class="fw-bold text-success fs-5"><%= indian_currency(@life_insurance.sum_insured || 0) %></div>
+          <div class="fw-bold text-primary fs-5"><%= indian_currency(@life_insurance.total_premium || 0) %></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Commission Breakdown -->
+    <div class="commission-breakdown">
+      <!-- Main Agent Commission -->
+      <div class="commission-item d-flex justify-content-between align-items-center py-2 border-bottom">
+        <div class="d-flex align-items-center">
+          <span class="fw-bold">Main Agent: <%= indian_currency(@life_insurance.main_income_amount || 0) %></span>
+          <span class="text-muted ms-2">(<%= (@life_insurance.main_income_percentage || 0).round(1) %>%)</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <% if @life_insurance.main_agent_commission_received %>
+            <span class="badge bg-success">Paid</span>
+            <span class="text-muted small">
+              <%= @life_insurance.main_agent_commission_paid_date&.strftime('%b %d') || 'Date not set' %>
+            </span>
+          <% else %>
+            <span class="badge bg-warning">Pending</span>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Affiliate Commission -->
+      <div class="commission-item d-flex justify-content-between align-items-center py-2 border-bottom">
+        <span>Affiliate: <%= indian_currency(@life_insurance.sub_agent_commission_amount || 0) %> (<%= (@life_insurance.sub_agent_commission_percentage || 0).round(1) %>%)</span>
+      </div>
+
+      <!-- Ambassador Commission -->
+      <div class="commission-item d-flex justify-content-between align-items-center py-2 border-bottom">
+        <span>Ambassador: <%= indian_currency(@life_insurance.ambassador_commission_amount || 0) %> (<%= (@life_insurance.ambassador_commission_percentage || 0).round(1) %>%)</span>
+      </div>
+
+      <!-- Investor Commission -->
+      <div class="commission-item d-flex justify-content-between align-items-center py-2 border-bottom">
+        <span>Investor: <%= indian_currency(@life_insurance.investor_commission_amount || 0) %> (<%= (@life_insurance.investor_commission_percentage || 0).round(1) %>%)</span>
+      </div>
+
+      <!-- Company Expense -->
+      <div class="commission-item d-flex justify-content-between align-items-center py-2">
+        <span>Company: <%= indian_currency((@life_insurance.total_premium || 0) * (@life_insurance.company_expenses_percentage || 0) / 100) %> (<%= (@life_insurance.company_expenses_percentage || 0).round(1) %>%)</span>
+      </div>
+    </div>
+  </div>
+</div>

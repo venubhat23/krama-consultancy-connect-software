@@ -1,0 +1,2120 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">
+      <% if session[:branch_out_mode] && session[:source_lead_id] %>
+        <i class="bi bi-diagram-2 text-success me-2"></i>Branch Out - Add New Lead
+      <% elsif session[:branch_out_mode] && session[:source_customer_id] %>
+        <i class="bi bi-person-plus text-primary me-2"></i>New Lead from Customer
+      <% else %>
+        Add New Lead
+      <% end %>
+    </h2>
+    <% if session[:branch_out_mode] && session[:source_lead_id] %>
+      <% source_lead = Lead.find_by(id: session[:source_lead_id]) %>
+      <% if source_lead %>
+        <small class="text-muted">
+          <i class="bi bi-info-circle me-1"></i>
+          Branching from Lead ID: <strong><%= source_lead.lead_id %></strong>
+          (<%= source_lead.product_category&.humanize %>/<%= source_lead.product_subcategory&.humanize %>)
+        </small>
+      <% end %>
+    <% elsif session[:branch_out_mode] && session[:source_customer_id] %>
+      <% source_customer = Customer.find_by(id: session[:source_customer_id]) %>
+      <% if source_customer %>
+        <small class="text-muted">
+          <i class="bi bi-info-circle me-1"></i>
+          Creating lead for existing customer: <strong><%= source_customer.display_name %></strong>
+          (Customer ID: <%= source_customer.id %>)
+        </small>
+      <% end %>
+    <% end %>
+  </div>
+  <div>
+    <%= link_to admin_leads_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Leads
+    <% end %>
+  </div>
+</div>
+
+<% if session[:branch_out_mode] && session[:source_lead_id] %>
+  <!-- Branch Out Info Alert -->
+  <div class="alert alert-info d-flex align-items-center mb-4">
+    <i class="bi bi-diagram-2 me-3 fs-4"></i>
+    <div>
+      <h6 class="mb-1"><strong>Branch Out Mode</strong></h6>
+      <p class="mb-0">You are creating a new lead for a different policy using information from an existing lead. Customer details have been pre-filled for you. Please select the appropriate product category and subcategory for the new policy.</p>
+    </div>
+  </div>
+<% elsif session[:branch_out_mode] && session[:source_customer_id] %>
+  <!-- Customer Branch Out Info Alert -->
+  <div class="alert alert-primary d-flex align-items-center mb-4">
+    <i class="bi bi-person-plus me-3 fs-4"></i>
+    <div>
+      <h6 class="mb-1"><strong>Creating Lead from Customer</strong></h6>
+      <p class="mb-0">You are creating a new lead for an existing customer. All customer details have been pre-filled from their profile. Please select the appropriate product category and subcategory for this new lead.</p>
+    </div>
+  </div>
+<% end %>
+
+<%= form_with model: [:admin, @lead || Lead.new], local: true, class: "needs-validation", novalidate: true do |form| %>
+  <!-- Hidden fields for branch out -->
+  <% if session[:branch_out_mode] %>
+    <%= form.hidden_field :is_branch_out, value: true %>
+    <% if session[:source_lead_id] %>
+      <%= form.hidden_field :parent_lead_id, value: session[:source_lead_id] %>
+    <% elsif session[:source_customer_id] %>
+      <%= form.hidden_field :converted_customer_id, value: session[:source_customer_id] %>
+    <% end %>
+  <% end %>
+
+  <!-- 1. Customer Type Selection - Compact Design -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+      <div class="customer-type-compact">
+        <!-- Hidden radio buttons for form submission -->
+        <%= form.radio_button :customer_type, 'individual',
+            class: "d-none",
+            id: "customer_type_individual",
+            required: true,
+            checked: @lead&.customer_type == 'individual' || @lead&.customer_type.nil? %>
+        <%= form.radio_button :customer_type, 'corporate',
+            class: "d-none",
+            id: "customer_type_corporate",
+            required: true,
+            checked: @lead&.customer_type == 'corporate' %>
+
+        <!-- Compact Pill Toggle -->
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-person-badge fs-5 text-primary me-2"></i>
+            <span class="fw-semibold">Customer Type:</span>
+          </div>
+
+          <div class="pill-toggle">
+            <div class="pill-slider <%= @lead&.customer_type == 'corporate' ? 'corporate' : '' %>"></div>
+            <button type="button" class="pill-option individual <%= @lead&.customer_type != 'corporate' ? 'active' : '' %>" data-type="individual">
+              <i class="bi bi-person me-1"></i>
+              Individual
+            </button>
+            <button type="button" class="pill-option corporate <%= @lead&.customer_type == 'corporate' ? 'active' : '' %>" data-type="corporate">
+              <i class="bi bi-building me-1"></i>
+              Corporate
+            </button>
+          </div>
+
+          <div class="selected-type-info">
+            <span class="badge-type individual-badge <%= @lead&.customer_type != 'corporate' ? 'show' : '' %>">
+              <i class="bi bi-person-check"></i> Personal Account
+            </span>
+            <span class="badge-type corporate-badge <%= @lead&.customer_type == 'corporate' ? 'show' : '' %>">
+              <i class="bi bi-briefcase"></i> Business Account
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Basic Contact Information -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-telephone me-2 text-primary"></i>
+      <h5 class="mb-0">Contact Information</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <%= form.label :contact_number, "Contact Number *", class: "form-label" %>
+          <%= form.telephone_field :contact_number, class: "form-control", placeholder: "9876543210 or +91 9876543210", required: true, id: "contact_number_field" %>
+          <div class="invalid-feedback" id="contact_number_error">
+            Mobile number must be 10 digits starting with 6, 7, 8, or 9
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <%= form.label :email, "Email Address", class: "form-label" %>
+          <%= form.email_field :email, class: "form-control", placeholder: "name@email.com" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Individual Customer Details -->
+  <div id="individual_sections" style="display: <%= @lead&.customer_type == 'individual' ? 'block' : 'none' %>;">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0 d-flex align-items-center">
+        <i class="bi bi-person-circle me-2 text-primary"></i>
+        <h5 class="mb-0">Individual Customer Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <%= form.label :first_name, "First Name *", class: "form-label" %>
+            <%= form.text_field :first_name, class: "form-control", placeholder: "Enter first name" %>
+          </div>
+          <div class="col-md-4 mb-3">
+            <%= form.label :middle_name, "Middle Name", class: "form-label" %>
+            <%= form.text_field :middle_name, class: "form-control", placeholder: "Enter middle name" %>
+          </div>
+          <div class="col-md-4 mb-3">
+            <%= form.label :last_name, "Last Name *", class: "form-label" %>
+            <%= form.text_field :last_name, class: "form-control", placeholder: "Enter last name" %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :birth_date, "Date of Birth", class: "form-label" %>
+            <%= form.date_field :birth_date, class: "form-control", min: "1900-01-01", max: "2099-12-31" %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :gender, "Gender", class: "form-label" %>
+            <%= form.select :gender, options_for_select([
+              ['Select Gender', ''],
+              ['Male', 'male'],
+              ['Female', 'female'],
+              ['Other', 'other']
+            ], @lead&.gender), {}, { class: "form-select" } %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :marital_status, "Marital Status", class: "form-label" %>
+            <%= form.select :marital_status, options_for_select([
+              ['Select Status', ''],
+              ['Single', 'single'],
+              ['Married', 'married'],
+              ['Divorced', 'divorced'],
+              ['Widowed', 'widowed']
+            ], @lead&.marital_status), {}, { class: "form-select" } %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :pan_no, "PAN Number", class: "form-label" %>
+            <%= form.text_field :pan_no, class: "form-control", placeholder: "ABCDE1234F", pattern: "[A-Z]{5}[0-9]{4}[A-Z]{1}" %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :birth_place, "Birth Place", class: "form-label" %>
+            <%= form.text_field :birth_place, class: "form-control", placeholder: "Enter birth place" %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :height, "Height", class: "form-label" %>
+            <%= form.select :height, options_for_select([
+              ['Select Height', ''],
+              ['3.0 feet', 3.0], ['3.1 feet', 3.08], ['3.2 feet', 3.17], ['3.3 feet', 3.25], ['3.4 feet', 3.33], ['3.5 feet', 3.42], ['3.6 feet', 3.5], ['3.7 feet', 3.58], ['3.8 feet', 3.67], ['3.9 feet', 3.75], ['3.10 feet', 3.83], ['3.11 feet', 3.92],
+              ['4.0 feet', 4.0], ['4.1 feet', 4.08], ['4.2 feet', 4.17], ['4.3 feet', 4.25], ['4.4 feet', 4.33], ['4.5 feet', 4.42], ['4.6 feet', 4.5], ['4.7 feet', 4.58], ['4.8 feet', 4.67], ['4.9 feet', 4.75], ['4.10 feet', 4.83], ['4.11 feet', 4.92],
+              ['5.0 feet', 5.0], ['5.1 feet', 5.08], ['5.2 feet', 5.17], ['5.3 feet', 5.25], ['5.4 feet', 5.33], ['5.5 feet', 5.42], ['5.6 feet', 5.5], ['5.7 feet', 5.58], ['5.8 feet', 5.67], ['5.9 feet', 5.75], ['5.10 feet', 5.83], ['5.11 feet', 5.92],
+              ['6.0 feet', 6.0], ['6.1 feet', 6.08], ['6.2 feet', 6.17], ['6.3 feet', 6.25], ['6.4 feet', 6.33], ['6.5 feet', 6.42], ['6.6 feet', 6.5], ['6.7 feet', 6.58], ['6.8 feet', 6.67], ['6.9 feet', 6.75], ['6.10 feet', 6.83], ['6.11 feet', 6.92],
+              ['7.0 feet', 7.0], ['7.1 feet', 7.08], ['7.2 feet', 7.17], ['7.3 feet', 7.25], ['7.4 feet', 7.33], ['7.5 feet', 7.42], ['7.6 feet', 7.5], ['7.7 feet', 7.58], ['7.8 feet', 7.67], ['7.9 feet', 7.75], ['7.10 feet', 7.83], ['7.11 feet', 7.92],
+              ['8.0 feet', 8.0], ['8.1 feet', 8.08], ['8.2 feet', 8.17], ['8.3 feet', 8.25], ['8.4 feet', 8.33], ['8.5 feet', 8.42], ['8.6 feet', 8.5], ['8.7 feet', 8.58], ['8.8 feet', 8.67], ['8.9 feet', 8.75], ['8.10 feet', 8.83], ['8.11 feet', 8.92]
+            ], @lead&.height), {}, { class: "form-select" } %>
+            <div class="form-text">Select height from the dropdown</div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :weight, "Weight (Kg)", class: "form-label" %>
+            <%= form.number_field :weight, class: "form-control", placeholder: "70", step: 0.1, min: 10, max: 300 %>
+            <div class="form-text">Range: 10 - 300 kg</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Individual Customer Advanced Details -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0 d-flex align-items-center">
+        <i class="bi bi-gear me-2 text-info"></i>
+        <h5 class="mb-0">Advance Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <%= form.label :education, "Education", class: "form-label" %>
+            <%= form.text_field :education, class: "form-control", placeholder: "Enter education" %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :business_job, "Business/Job", class: "form-label" %>
+            <%= form.select :business_job, options_for_select([
+              ['Select Business/Job', ''],
+              ['Salaried', 'salaried'],
+              ['Self Employed', 'self_employed'],
+              ['Business', 'business'],
+              ['Professional', 'professional'],
+              ['Student', 'student'],
+              ['Retired', 'retired'],
+              ['Unemployed', 'unemployed'],
+              ['Other', 'other']
+            ], @lead&.business_job), {}, { class: "form-select" } %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :business_name, "Name of Business/Job", class: "form-label" %>
+            <%= form.text_field :business_name, class: "form-control", placeholder: "Enter business/job name" %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :job_name, "Job Name", class: "form-label" %>
+            <%= form.text_field :job_name, class: "form-control", placeholder: "Enter job name" %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :occupation, "Occupation", class: "form-label" %>
+            <%= form.text_field :occupation, class: "form-control", placeholder: "Enter occupation" %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :type_of_duty, "Type of Duty", class: "form-label" %>
+            <%= form.text_field :type_of_duty, class: "form-control", placeholder: "Enter type of duty" %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :annual_income, "Annual Income", class: "form-label" %>
+            <%= form.number_field :annual_income, class: "form-control", placeholder: "Enter annual income", step: 0.01, min: 0 %>
+          </div>
+          <div class="col-md-12 mb-3">
+            <%= form.label :additional_information, "Additional Information", class: "form-label" %>
+            <%= form.text_area :additional_information, class: "form-control", rows: 3, placeholder: "Enter additional notes" %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Corporate Customer Details -->
+  <div id="corporate_sections" style="display: <%= @lead&.customer_type == 'corporate' ? 'block' : 'none' %>;">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0 d-flex align-items-center">
+        <i class="bi bi-building me-2 text-success"></i>
+        <h5 class="mb-0">Corporate Customer Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <%= form.label :company_name, "Company Name *", class: "form-label" %>
+            <%= form.text_field :company_name, class: "form-control", placeholder: "Enter company name" %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :pan_no, "PAN Number", class: "form-label" %>
+            <%= form.text_field :pan_no, class: "form-control", placeholder: "ABCDE1234F", pattern: "[A-Z]{5}[0-9]{4}[A-Z]{1}" %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :gst_no, "GST Number", class: "form-label" %>
+            <%= form.text_field :gst_no, class: "form-control", placeholder: "22AAAAA0000A1Z5", pattern: "[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z0-9A-Z]{1}[0-9A-Z]{1}" %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Product Information (shown after customer type selected) -->
+  <div id="product_section" style="display: <%= @lead&.customer_type.present? ? 'block' : 'none' %>;">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0 d-flex align-items-center">
+        <i class="bi bi-briefcase me-2 text-primary"></i>
+        <h5 class="mb-0">Product Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <%= form.label :product_category, "Product Category *", class: "form-label" %>
+            <%= form.select :product_category, options_for_select([
+              ['Select Category', ''],
+              ['Insurance', 'insurance'],
+              ['Investments', 'investments'],
+              ['Loans', 'loans'],
+              ['Taxation', 'taxation'],
+              ['Travel', 'travel'],
+              ['Credit Card', 'credit_card']
+            ], @lead&.product_category), {}, { class: "form-select searchable-select", required: true, id: "product_category", data: { placeholder: "Search and select category..." } } %>
+          </div>
+          <div class="col-md-6 mb-3">
+            <%= form.label :product_subcategory, "Product Type *", class: "form-label" %>
+            <%= form.select :product_subcategory, options_for_select([
+              ['Select Product Type', '']
+            ]), {}, { class: "form-select searchable-select", required: true, id: "product_subcategory", disabled: true, data: { placeholder: "Search and select product type..." } } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Name field will be auto-generated from first_name and last_name -->
+
+  <!-- 6. Address Information -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-geo-alt me-2 text-primary"></i>
+      <h5 class="mb-0">Address Information</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-12 mb-3">
+          <%= form.label :address, "Address", class: "form-label" %>
+          <%= form.text_area :address, class: "form-control", rows: 2, placeholder: "Complete address" %>
+        </div>
+        <div class="col-md-6 mb-3">
+          <%= form.label :state, "State", class: "form-label" %>
+          <%= form.select :state,
+              options_for_select(LocationData.states_for_select, @lead&.state),
+              { prompt: 'Search and select state...' },
+              { class: "form-select searchable-select", id: "lead_state", data: { placeholder: "Type to search states..." } } %>
+        </div>
+        <div class="col-md-6 mb-3">
+          <%= form.label :city, "City", class: "form-label" %>
+          <%= form.select :city,
+              options_for_select([], @lead&.city),
+              { prompt: 'Search and select city...' },
+              { class: "form-select searchable-select", id: "lead_city", disabled: true, data: { placeholder: "Type to search cities..." } } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Lead Details -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex align-items-center">
+      <i class="bi bi-info-circle me-2 text-primary"></i>
+      <h5 class="mb-0">Lead Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <!-- Direct/Referred Selection -->
+        <div class="col-md-6 mb-3">
+          <div class="form-check mt-2">
+            <%= form.check_box :is_direct, { class: "form-check-input", checked: @lead&.is_direct.nil? ? true : @lead.is_direct, id: "is_direct_checkbox" } %>
+            <%= form.label :is_direct, "Direct Lead", class: "form-check-label fw-bold" %>
+            <small class="form-text text-muted d-block">Check if this is a direct lead, uncheck if referred</small>
+          </div>
+        </div>
+
+        <!-- Affiliate Selection (hidden by default) -->
+        <div class="col-md-6 mb-3" id="affiliate_selection" style="display: <%= @lead&.is_direct == false ? 'block' : 'none' %>;">
+          <%= form.label :affiliate_id, "Select Affiliate *", class: "form-label" %>
+          <%= form.select :affiliate_id, options_for_select([
+            ['Select Affiliate', '']
+          ] + SubAgent.active.collect { |agent| [agent.display_name, agent.id] }, @lead&.affiliate_id),
+          { include_blank: false },
+          { class: "form-select searchable-select", id: "affiliate_dropdown", data: { placeholder: "Search and select affiliate...", search_url: "/admin/leads/search_sub_agents" } } %>
+        </div>
+
+        <div class="col-md-6 mb-3" id="referred_by_field" style="display: <%= @lead&.is_direct == false ? 'block' : 'none' %>;">
+          <%= form.label :referred_by, "Referred By", class: "form-label" %>
+          <%= form.text_field :referred_by, class: "form-control", placeholder: "Agent name or source" %>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <%= form.label :current_stage, "Current Stage *", class: "form-label" %>
+          <%= form.select :current_stage, options_for_select([
+            ['🟢 Lead Generated', 'lead_generated'],
+            ['📅 Consultation Scheduled', 'consultation_scheduled'],
+            ['🤝 One-on-One Discussion', 'one_on_one'],
+            ['🔁 Follow-Up', 'follow_up'],
+            ['✅ Follow-Up Successful', 'follow_up_successful'],
+            ['❌ Follow-Up Unsuccessful', 'follow_up_unsuccessful'],
+            ['🚫 Not Interested', 'not_interested'],
+            ['🔄 Re-Follow Up', 're_follow_up'],
+            ['👤 Convert to Customer', 'converted'],
+            ['📁 Lead Close - Follow-Up Unsuccessful', 'lead_closed']
+          ], @lead&.current_stage || 'lead_generated'), {}, { class: "form-select searchable-select", required: true, data: { placeholder: "Search and select stage..." } } %>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <%= form.label :created_date, "Lead Date", class: "form-label" %>
+          <%= form.date_field :created_date, class: "form-control", value: Date.current.strftime("%Y-%m-%d"), min: "1900-01-01", max: "2099-12-31" %>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <%= form.label :lead_source, "Lead Source *", class: "form-label" %>
+          <%= form.select :lead_source, options_for_select([
+            ['Select Source', ''],
+            ['Online', 'online'],
+            ['Offline', 'offline'],
+            ['Agent Referral', 'agent_referral'],
+            ['Walk In', 'walk_in'],
+            ['Tele Calling', 'tele_calling'],
+            ['Campaign', 'campaign']
+          ], @lead&.lead_source), {}, { class: "form-select searchable-select", required: true, data: { placeholder: "Search and select lead source..." } } %>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <%= form.label :call_disposition, "Call Disposition", class: "form-label" %>
+          <%= form.select :call_disposition, options_for_select([
+            ['Select Disposition', ''],
+            ['📞 Interested', 'interested'],
+            ['❌ Not Interested', 'not_interested'],
+            ['📞 Call Back Later', 'call_back'],
+            ['📝 Follow Up Required', 'follow_up'],
+            ['📵 Number Not Reachable', 'not_reachable'],
+            ['☎️ Wrong Number', 'wrong_number'],
+            ['🚫 Do Not Call', 'do_not_call']
+          ], @lead&.call_disposition), {}, { class: "form-select searchable-select", data: { placeholder: "Search and select call disposition..." } } %>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <%= form.label :referral_amount, "Referral Amount", class: "form-label" %>
+          <%= form.number_field :referral_amount, class: "form-control", step: 0.01, placeholder: "0.00" %>
+        </div>
+
+        <div class="col-md-12 mb-3">
+          <%= form.label :notes, "Notes", class: "form-label" %>
+          <%= form.text_area :notes, class: "form-control", rows: 4, placeholder: "Additional notes about the lead..." %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. Submit Actions -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body text-center py-4">
+      <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <%= form.submit "✨ Create Lead", class: "btn btn-primary btn-lg px-5" %>
+        <%= form.submit "🔄 Create & Add Another", class: "btn btn-outline-primary btn-lg px-4", name: "create_and_new" %>
+        <%= link_to admin_leads_path, class: "btn btn-outline-secondary btn-lg px-4" do %>
+          <i class="bi bi-arrow-left me-2"></i>Cancel
+        <% end %>
+      </div>
+      <div class="mt-3">
+        <small class="text-muted">
+          <i class="bi bi-info-circle me-1"></i>
+          All fields marked with * are required
+        </small>
+      </div>
+    </div>
+  </div>
+
+<% end %>
+
+<!-- Customer Form Style -->
+<style>
+/* Compact Pill Toggle Design */
+.customer-type-compact {
+  padding: 0.5rem 0;
+}
+
+.pill-toggle {
+  position: relative;
+  display: inline-flex;
+  background: #f0f4f8;
+  border-radius: 50px;
+  padding: 4px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.pill-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 50px;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  z-index: 1;
+}
+
+.pill-slider.corporate {
+  left: calc(50%);
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.pill-option {
+  position: relative;
+  z-index: 2;
+  padding: 8px 24px;
+  border: none;
+  background: none;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-width: 120px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pill-option:hover {
+  color: #475569;
+}
+
+.pill-option.active {
+  color: white;
+}
+
+.pill-option i {
+  font-size: 14px;
+}
+
+/* Selected Type Badge */
+.selected-type-info {
+  display: flex;
+  align-items: center;
+}
+
+.badge-type {
+  display: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-type.show {
+  display: inline-flex;
+  animation: slideIn 0.3s ease;
+}
+
+.individual-badge {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
+
+.corporate-badge {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .customer-type-compact .d-flex {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 1rem !important;
+  }
+
+  .pill-toggle {
+    width: 100%;
+  }
+
+  .pill-option {
+    flex: 1;
+  }
+
+  .selected-type-info {
+    justify-content: center;
+  }
+}
+
+/* Form Cards */
+.card {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  margin-bottom: 2rem;
+}
+
+.card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+.card-header {
+  background: transparent;
+  border: none;
+  padding: 1.5rem 1.5rem 0.5rem;
+}
+
+.card-header h5 {
+  font-weight: 600;
+  color: #374151;
+  font-size: 1.125rem;
+}
+
+.card-body {
+  padding: 1rem 1.5rem 1.5rem;
+}
+
+/* Form Controls */
+.form-label {
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.form-control, .form-select {
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  background-color: #ffffff;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  background-color: #ffffff;
+}
+
+/* Buttons */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  padding: 0.75rem 1.5rem;
+}
+
+.btn-primary {
+  background-color: #667eea;
+  border-color: #667eea;
+}
+
+.btn-primary:hover {
+  background-color: #5a67d8;
+  border-color: #5a67d8;
+  transform: translateY(-1px);
+}
+
+.btn-outline-primary {
+  color: #667eea;
+  border-color: #667eea;
+}
+
+.btn-outline-primary:hover {
+  background-color: #667eea;
+  border-color: #667eea;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.btn-outline-secondary:hover {
+  transform: translateY(-1px);
+}
+
+/* Section Animations */
+#individual_sections, #corporate_sections, #product_section {
+  animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom checkbox styling */
+.form-check-input:checked {
+  background-color: #667eea;
+  border-color: #667eea;
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+}
+
+/* Icon colors */
+.text-primary {
+  color: #667eea !important;
+}
+
+.text-success {
+  color: #10b981 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 1rem;
+  }
+
+  .d-flex.gap-3.flex-wrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .d-flex.gap-3.flex-wrap .btn {
+    margin-bottom: 0.5rem;
+  }
+}
+</style>
+
+<!-- jQuery and Select2 for searchable dropdowns -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Custom Select2 styling -->
+<style>
+  .select2-container--bootstrap-5 .select2-selection--single {
+    height: 38px;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  .select2-container--bootstrap-5 .select2-selection--single:focus-within {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+  .select2-container--bootstrap-5 .select2-selection__rendered {
+    color: #495057;
+    padding-left: 12px;
+    padding-right: 20px;
+    line-height: 36px;
+  }
+  .select2-container--bootstrap-5 .select2-results__option {
+    padding: 8px 12px;
+  }
+  .select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: #0d6efd;
+    color: white;
+  }
+  .select2-dropdown {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  .select2-results__options {
+    max-height: 400px !important;
+    min-height: 200px;
+    overflow-y: auto;
+  }
+  .select2-search__field {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 6px 12px;
+  }
+</style>
+
+<!-- Include Location Data and Form Enhancements -->
+<script>
+<%= File.read(Rails.root.join('app/assets/javascripts/location_data.js')).html_safe %>
+</script>
+<script>
+<%= File.read(Rails.root.join('app/assets/javascripts/form_enhancements.js')).html_safe %>
+</script>
+
+<!-- Form Validation Script -->
+<script>
+// Global function to handle branch out from existing lead
+function branchOutFromLead(sourceLeadId) {
+  console.log('branchOutFromLead called with sourceLeadId:', sourceLeadId);
+
+  if (!sourceLeadId) {
+    alert('Invalid lead ID');
+    return;
+  }
+
+  // Show confirmation dialog
+  if (!confirm('This will copy all customer information from the existing lead and create a new lead for a different policy. Continue?')) {
+    return;
+  }
+
+  console.log('Creating form to submit branch out request');
+
+  // Create a form and submit it to trigger branch out
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/admin/leads/branch_out';
+  form.style.display = 'none';
+
+  // Add CSRF token
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  if (csrfToken) {
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'authenticity_token';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+  }
+
+  // Add source lead ID
+  const leadIdInput = document.createElement('input');
+  leadIdInput.type = 'hidden';
+  leadIdInput.name = 'source_lead_id';
+  leadIdInput.value = sourceLeadId;
+  form.appendChild(leadIdInput);
+
+  // Submit form
+  document.body.appendChild(form);
+  form.submit();
+}
+
+// Global function to handle branch out from existing customer
+function branchOutFromCustomer(customerId, customerName) {
+  console.log('branchOutFromCustomer called with customerId:', customerId, 'customerName:', customerName);
+
+  if (!customerId) {
+    alert('Invalid customer ID');
+    return;
+  }
+
+  // Show confirmation dialog
+  if (!confirm(`This will create a new lead for ${customerName} with their existing information pre-filled. Continue?`)) {
+    return;
+  }
+
+  console.log('Creating form to submit customer branch out request');
+
+  // Create a form and submit it to trigger branch out from customer
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/admin/leads/branch_out_from_customer';
+  form.style.display = 'none';
+
+  // Add CSRF token
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  if (csrfToken) {
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'authenticity_token';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+  }
+
+  // Add source customer ID
+  const customerIdInput = document.createElement('input');
+  customerIdInput.type = 'hidden';
+  customerIdInput.name = 'source_customer_id';
+  customerIdInput.value = customerId;
+  form.appendChild(customerIdInput);
+
+  // Submit form
+  document.body.appendChild(form);
+  form.submit();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form');
+  const nameField = form.querySelector('[name="lead[name]"]');
+  const phoneField = form.querySelector('[name="lead[contact_number]"]');
+  const productCategoryField = document.getElementById('product_category');
+  const productSubcategoryField = document.getElementById('product_subcategory');
+  const customerTypeRadios = document.querySelectorAll('input[name="lead[customer_type]"]');
+  const directCheckbox = document.getElementById('is_direct_checkbox');
+  const affiliateSelection = document.getElementById('affiliate_selection');
+  const affiliateDropdown = document.getElementById('affiliate_dropdown');
+  const referredByField = document.getElementById('referred_by_field');
+
+  // Debug: Check if radio buttons are found
+  console.log('Customer type radio buttons found:', customerTypeRadios.length);
+
+  // Initialize Select2 for searchable affiliate dropdown
+  function initializeAffiliateSelect2() {
+    if (affiliateDropdown && typeof $ !== 'undefined' && $.fn.select2) {
+      $(affiliateDropdown).select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select affiliate...',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('body'),
+        minimumInputLength: 0, // Allow opening without typing
+        ajax: {
+          url: '/admin/leads/search_sub_agents',
+          dataType: 'json',
+          delay: 250,
+          data: function (params) {
+            return {
+              q: params.term || '', // Send empty query to get default results
+              limit: params.term ? 20 : 10 // Show fewer results when no search term
+            };
+          },
+          processResults: function (data) {
+            return {
+              results: data.results || []
+            };
+          },
+          cache: true
+        },
+        templateResult: function(option) {
+          if (option.loading) return option.text;
+          if (!option.id || option.id === '') {
+            return option.text;
+          }
+
+          // Enhanced template with avatar
+          var initials = option.text.split(' ').map(function(name) {
+            return name.charAt(0).toUpperCase();
+          }).join('').substring(0, 2);
+
+          var $option = $(
+            '<div class="affiliate-option d-flex align-items-center">' +
+              '<div class="affiliate-avatar bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 12px; font-weight: bold;">' +
+                initials +
+              '</div>' +
+              '<div class="affiliate-details">' +
+                '<div class="affiliate-name" style="font-weight: 500;">' + option.text + '</div>' +
+                '<small class="text-muted">ID: #' + option.id + '</small>' +
+              '</div>' +
+            '</div>'
+          );
+          return $option;
+        },
+        templateSelection: function(option) {
+          return option.text || 'Search and select affiliate...';
+        },
+        escapeMarkup: function(markup) {
+          return markup;
+        }
+      });
+    }
+  }
+
+  // Initialize Select2 when affiliate dropdown becomes visible
+  function handleAffiliateDropdownVisibility() {
+    if (affiliateSelection && affiliateSelection.style.display !== 'none') {
+      setTimeout(() => {
+        initializeAffiliateSelect2();
+      }, 100);
+    }
+  }
+
+  // Customer type conditional sections
+  const individualSections = document.getElementById('individual_sections');
+  const corporateSections = document.getElementById('corporate_sections');
+  const productSection = document.getElementById('product_section');
+
+  // Debug: Check if elements are found
+  console.log('Individual sections element:', individualSections);
+  console.log('Corporate sections element:', corporateSections);
+
+  // Product subcategory options
+  const subcategoryOptions = {
+    'insurance': [
+      ['Life Insurance', 'life'],
+      ['Health Insurance', 'health'],
+      ['Motor Insurance', 'motor'],
+      ['General Insurance', 'general'],
+      ['Travel Insurance', 'travel'],
+      ['Other', 'other']
+    ],
+    'investments': [
+      ['Mutual Fund', 'mutual_fund'],
+      ['Fixed Deposit (FD)', 'fd'],
+      ['Other', 'other']
+    ],
+    'loans': [
+      ['Personal Loan', 'personal'],
+      ['Home Loan', 'home'],
+      ['Mortgage Loan', 'mortgage'],
+      ['Business Loan', 'business']
+    ],
+    'taxation': [
+      ['ITR', 'itr'],
+      ['Tax Planning', 'tax_planning']
+    ],
+    'travel': [
+      ['Domestic', 'domestic'],
+      ['International', 'international']
+    ],
+    'credit_card': [
+      ['Rewards Card', 'rewards'],
+      ['Business Card', 'business'],
+      ['Travel Card', 'travel']
+    ]
+  };
+
+  // Customer checking
+  phoneField.addEventListener('blur', function() {
+    // Check for existing customer (mobile formatting is now handled by FormEnhancements)
+    checkExistingCustomer();
+  });
+
+  // Email field customer checking
+  const emailField = form.querySelector('[name="lead[email]"]');
+  if (emailField) {
+    emailField.addEventListener('blur', checkExistingCustomer);
+  }
+
+  // Function to check for existing customers
+  function checkExistingCustomer() {
+    const contactNumber = phoneField.value.trim();
+    const email = emailField ? emailField.value.trim() : '';
+
+    // Only check if we have contact number or email
+    if (!contactNumber && !email) return;
+
+    // Show loading indicator
+    showLoadingIndicator();
+
+    console.log('Checking existing customer for:', { contactNumber, email });
+
+    // Make API call to check existing customer
+    fetch('/admin/leads/check_existing_customer?' + new URLSearchParams({
+      contact_number: contactNumber,
+      email: email
+    }))
+    .then(response => response.json())
+    .then(data => {
+      console.log('API Response:', data);
+      hideLoadingIndicator();
+
+      if ((data.exists && data.customers.length > 0) || (data.has_existing_leads && data.leads.length > 0)) {
+        console.log('Showing existing customer warning for:', { customers: data.customers, leads: data.leads });
+        showExistingCustomerWarning(data.customers || [], data.leads || []);
+      } else {
+        console.log('No existing customers or leads found');
+        hideExistingCustomerWarning();
+      }
+    })
+    .catch(error => {
+      console.error('Error checking existing customer:', error);
+      hideLoadingIndicator();
+      hideExistingCustomerWarning();
+    });
+  }
+
+  // Function to show loading indicator
+  function showLoadingIndicator() {
+    hideExistingCustomerWarning(); // Hide any existing warnings
+
+    const indicator = document.getElementById('customer-check-loading');
+    if (indicator) {
+      indicator.style.display = 'block';
+    } else {
+      // Create loading indicator if it doesn't exist
+      const loadingDiv = document.createElement('div');
+      loadingDiv.id = 'customer-check-loading';
+      loadingDiv.className = 'alert alert-info mt-2';
+      loadingDiv.innerHTML = '<i class="bi bi-clock-history me-2"></i>Checking for existing customers...';
+
+      // Insert after contact information card
+      const contactCard = document.querySelector('.card:has([name="lead[contact_number]"])');
+      if (contactCard) {
+        contactCard.insertAdjacentElement('afterend', loadingDiv);
+      }
+    }
+  }
+
+  // Function to hide loading indicator
+  function hideLoadingIndicator() {
+    const indicator = document.getElementById('customer-check-loading');
+    if (indicator) {
+      indicator.style.display = 'none';
+    }
+  }
+
+  // Function to show existing customer warning
+  function showExistingCustomerWarning(customers, leads) {
+    console.log('showExistingCustomerWarning called with:', { customers, leads });
+    hideLoadingIndicator();
+
+    let warningDiv = document.getElementById('existing-customer-warning');
+    if (!warningDiv) {
+      // Create warning div if it doesn't exist
+      warningDiv = document.createElement('div');
+      warningDiv.id = 'existing-customer-warning';
+      warningDiv.className = 'alert alert-warning mt-2';
+
+      // Find contact information card using a more compatible selector
+      const contactNumberField = document.querySelector('[name="lead[contact_number]"]');
+      const contactCard = contactNumberField ? contactNumberField.closest('.card') : null;
+
+      if (contactCard) {
+        console.log('Found contact card, inserting warning after it');
+        contactCard.insertAdjacentElement('afterend', warningDiv);
+      } else {
+        console.log('Contact card not found, appending to form');
+        // Fallback: insert after the contact number field itself
+        if (contactNumberField) {
+          contactNumberField.closest('.card-body')?.appendChild(warningDiv);
+        }
+      }
+    }
+
+    // Build warning message
+    let warningHtml = '<div class="d-flex align-items-start">';
+    warningHtml += '<i class="bi bi-exclamation-triangle-fill me-2 text-warning fs-5"></i>';
+    warningHtml += '<div class="flex-grow-1">';
+
+    // Show existing customers if any
+    if (customers && customers.length > 0) {
+      warningHtml += '<h6 class="mb-2"><strong>Existing Customer Found!</strong></h6>';
+      warningHtml += '<p class="mb-2">We found existing customer(s) with matching information:</p>';
+
+      customers.forEach(customer => {
+        warningHtml += '<div class="border rounded p-2 mb-2 bg-light">';
+        warningHtml += '<div class="d-flex justify-content-between align-items-start">';
+        warningHtml += '<div class="flex-grow-1">';
+        warningHtml += `<div class="fw-bold">${customer.name}</div>`;
+        warningHtml += `<small class="text-muted">`;
+        warningHtml += `Mobile: ${customer.mobile || 'N/A'} | Email: ${customer.email || 'N/A'}`;
+        warningHtml += `<br>Match Type: ${customer.match_type.charAt(0).toUpperCase() + customer.match_type.slice(1)}`;
+        warningHtml += `</small>`;
+        warningHtml += '</div>';
+        warningHtml += `<button type="button" class="btn btn-primary btn-sm ms-2" onclick="branchOutFromCustomer(${customer.id}, '${customer.name}')" title="Create new lead for this customer">`;
+        warningHtml += '<i class="bi bi-plus-circle"></i> New Lead';
+        warningHtml += '</button>';
+        warningHtml += '</div>';
+        warningHtml += '</div>';
+      });
+
+      warningHtml += '<p class="mb-2 small"><strong>Note:</strong> Please verify if this is a duplicate before creating a new lead.</p>';
+    }
+
+    // Show existing leads if any
+    if (leads && leads.length > 0) {
+      warningHtml += '<h6 class="mb-2"><strong>Existing Lead Found!</strong></h6>';
+      warningHtml += '<p class="mb-2">We found existing lead(s) with matching information:</p>';
+
+      leads.forEach((lead, index) => {
+        warningHtml += '<div class="border rounded p-2 mb-2 bg-info bg-opacity-10">';
+        warningHtml += `<div class="d-flex justify-content-between align-items-start">`;
+        warningHtml += `<div class="flex-grow-1">`;
+        warningHtml += `<div class="fw-bold">Lead ID: ${lead.lead_id}</div>`;
+        warningHtml += `<div>${lead.name}</div>`;
+        warningHtml += `<small class="text-muted">`;
+        warningHtml += `Mobile: ${lead.contact_number || 'N/A'} | Email: ${lead.email || 'N/A'}`;
+        warningHtml += `<br>Product: ${lead.product_category}/${lead.product_subcategory} | Stage: ${lead.current_stage}`;
+        // Format match type for better display
+        let matchTypeText = lead.match_type;
+        if (lead.match_type === 'mobile_exact') {
+          matchTypeText = 'Mobile (Exact Match)';
+        } else if (lead.match_type === 'mobile_partial') {
+          matchTypeText = 'Mobile (Partial Match)';
+        } else if (lead.match_type === 'mobile') {
+          matchTypeText = 'Mobile';
+        } else if (lead.match_type === 'email') {
+          matchTypeText = 'Email';
+        } else if (lead.match_type === 'customer_associated') {
+          matchTypeText = 'Associated with Customer: ' + (lead.associated_customer_name || 'Unknown');
+        }
+        warningHtml += `<br>Match Type: ${matchTypeText}`;
+        warningHtml += `</small>`;
+        warningHtml += `</div>`;
+        warningHtml += `<button type="button" class="btn btn-success btn-sm ms-2" onclick="branchOutFromLead(${lead.id})" title="Branch out from this lead">`;
+        warningHtml += '<i class="bi bi-diagram-2"></i>';
+        warningHtml += '</button>';
+        warningHtml += `</div>`;
+        warningHtml += '</div>';
+      });
+
+      warningHtml += '<div class="mt-3 p-2 bg-light rounded">';
+      warningHtml += '<p class="mb-2 small"><strong><i class="bi bi-info-circle me-1"></i>Same customer, different policy?</strong></p>';
+      warningHtml += '<p class="mb-2 small text-muted">Click the "Branch Out" button next to any existing lead to create a new lead for the same customer with a different policy type.</p>';
+      warningHtml += '</div>';
+    }
+
+    warningHtml += '</div></div>';
+
+    warningDiv.innerHTML = warningHtml;
+    warningDiv.style.display = 'block';
+  }
+
+  // Function to hide existing customer warning
+  function hideExistingCustomerWarning() {
+    const warningDiv = document.getElementById('existing-customer-warning');
+    if (warningDiv) {
+      warningDiv.style.display = 'none';
+    }
+  }
+
+
+  // Native HTML5 date picker is now used - no additional formatting needed
+
+  // Initialize form state on page load (for validation errors)
+  function initializeFormState() {
+    const selectedCustomerType = document.querySelector('input[name="lead[customer_type]"]:checked');
+
+    // Disable all section inputs initially
+    const individualInputs = form.querySelectorAll('#individual_sections input, #individual_sections select, #individual_sections textarea');
+    const corporateInputs = form.querySelectorAll('#corporate_sections input, #corporate_sections select, #corporate_sections textarea');
+
+    if (selectedCustomerType) {
+      const selectedType = selectedCustomerType.value;
+
+      // Show appropriate sections
+      if (selectedType === 'individual') {
+        individualSections.style.display = 'block';
+        corporateSections.style.display = 'none';
+        productSection.style.display = 'block';
+
+        // Enable individual inputs and disable corporate inputs
+        individualInputs.forEach(input => input.disabled = false);
+        corporateInputs.forEach(input => {
+          input.disabled = true;
+          input.removeAttribute('required');
+        });
+
+        // Set required fields for individual
+        const firstNameField = form.querySelector('[name="lead[first_name]"]');
+        const lastNameField = form.querySelector('[name="lead[last_name]"]');
+        const companyNameField = form.querySelector('[name="lead[company_name]"]');
+
+        if (firstNameField) firstNameField.setAttribute('required', 'required');
+        if (lastNameField) lastNameField.setAttribute('required', 'required');
+        if (companyNameField) companyNameField.removeAttribute('required');
+      } else if (selectedType === 'corporate') {
+        individualSections.style.display = 'none';
+        corporateSections.style.display = 'block';
+        productSection.style.display = 'block';
+
+        // Enable corporate inputs and disable individual inputs
+        corporateInputs.forEach(input => input.disabled = false);
+        individualInputs.forEach(input => {
+          input.disabled = true;
+          input.removeAttribute('required');
+        });
+
+        // Set required fields for corporate
+        const companyNameField = form.querySelector('[name="lead[company_name]"]');
+        const firstNameField = form.querySelector('[name="lead[first_name]"]');
+        const lastNameField = form.querySelector('[name="lead[last_name]"]');
+
+        if (companyNameField) companyNameField.setAttribute('required', 'required');
+        if (firstNameField) firstNameField.removeAttribute('required');
+        if (lastNameField) lastNameField.removeAttribute('required');
+      }
+    } else {
+      // Default to individual if nothing selected
+      individualSections.style.display = 'block';
+      corporateSections.style.display = 'none';
+      productSection.style.display = 'block';
+
+      // Enable individual inputs and disable corporate inputs
+      individualInputs.forEach(input => input.disabled = false);
+      corporateInputs.forEach(input => {
+        input.disabled = true;
+        input.removeAttribute('required');
+      });
+
+      // Set default required fields
+      const firstNameField = form.querySelector('[name="lead[first_name]"]');
+      const lastNameField = form.querySelector('[name="lead[last_name]"]');
+      const companyNameField = form.querySelector('[name="lead[company_name]"]');
+
+      if (firstNameField) firstNameField.setAttribute('required', 'required');
+      if (lastNameField) lastNameField.setAttribute('required', 'required');
+      if (companyNameField) companyNameField.removeAttribute('required');
+    }
+
+    // Store initial values of important fields to prevent accidental clearing
+    preserveImportantFieldValues();
+
+    // Initialize product subcategory dropdown
+    initializeProductSubcategory();
+
+    // Handle affiliate selection visibility on page load
+    if (!directCheckbox.checked) {
+      affiliateSelection.style.display = 'block';
+      referredByField.style.display = 'block';
+      affiliateDropdown.setAttribute('required', 'required');
+      handleAffiliateDropdownVisibility();
+    }
+  }
+
+  // Function to preserve important field values
+  function preserveImportantFieldValues() {
+    const importantFields = ['pan_no', 'gst_no', 'email', 'contact_number'];
+    window.preservedFieldValues = window.preservedFieldValues || {};
+
+    importantFields.forEach(fieldName => {
+      const field = form.querySelector(`[name="lead[${fieldName}]"]`);
+      if (field && field.value.trim()) {
+        window.preservedFieldValues[fieldName] = field.value.trim();
+      }
+    });
+  }
+
+  // Function to restore preserved field values
+  function restoreImportantFieldValues() {
+    if (window.preservedFieldValues) {
+      Object.entries(window.preservedFieldValues).forEach(([fieldName, value]) => {
+        const field = form.querySelector(`[name="lead[${fieldName}]"]`);
+        if (field && !field.value.trim() && value) {
+          field.value = value;
+        }
+      });
+    }
+  }
+
+  // Handle product subcategory on page load
+  function initializeProductSubcategory() {
+    const currentCategory = productCategoryField.value;
+    if (currentCategory && subcategoryOptions[currentCategory]) {
+      // Enable and populate subcategory dropdown
+      productSubcategoryField.disabled = false;
+
+      // Keep existing options but ensure current value is preserved
+      const currentSubcategory = productSubcategoryField.value;
+      productSubcategoryField.innerHTML = '<option value="">Select Product Type</option>';
+
+      subcategoryOptions[currentCategory].forEach(function(option) {
+        const optionElement = document.createElement('option');
+        optionElement.value = option[1];
+        optionElement.textContent = option[0];
+        if (option[1] === currentSubcategory) {
+          optionElement.selected = true;
+        }
+        productSubcategoryField.appendChild(optionElement);
+      });
+    }
+  }
+
+  // Initialize form state on page load
+  initializeFormState();
+
+  // Initialize all searchable dropdowns including Product Category
+  function initializeProductCategoryDropdown() {
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+      const $productCategory = $('#product_category');
+      const $productSubcategory = $('#product_subcategory');
+
+      // Destroy existing Select2 instances first
+      if ($productCategory.hasClass('select2-hidden-accessible')) {
+        $productCategory.select2('destroy');
+      }
+      if ($productSubcategory.hasClass('select2-hidden-accessible')) {
+        $productSubcategory.select2('destroy');
+      }
+
+      // Initialize Product Category dropdown
+      $productCategory.select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select category...',
+        allowClear: true,
+        width: '100%',
+        minimumResultsForSearch: 0,
+        dropdownParent: $('body')
+      });
+
+      // Initialize Product Subcategory dropdown
+      $productSubcategory.select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select product type...',
+        allowClear: true,
+        width: '100%',
+        minimumResultsForSearch: 0,
+        dropdownParent: $('body')
+      });
+
+      console.log('Product dropdowns initialized successfully');
+    }
+  }
+
+  setTimeout(() => {
+    initializeSearchableDropdowns();
+    initializeProductCategoryDropdown();
+  }, 100);
+
+  // Get pill toggle elements early for use in initialization
+  const pillOptions = document.querySelectorAll('.pill-option');
+  const pillSlider = document.querySelector('.pill-slider');
+  const individualBadge = document.querySelector('.individual-badge');
+  const corporateBadge = document.querySelector('.corporate-badge');
+
+  // Initialize customer type based on prefilled data or set default
+  const selectedRadio = document.querySelector('input[name="lead[customer_type]"]:checked');
+  if (selectedRadio) {
+    // Update visual elements for prefilled data
+    const selectedType = selectedRadio.value;
+    console.log('Initializing with prefilled customer type:', selectedType);
+
+    // Update pill toggle visuals
+    pillOptions.forEach(opt => opt.classList.remove('active'));
+    const correspondingPill = document.querySelector(`.pill-option[data-type="${selectedType}"]`);
+    if (correspondingPill) {
+      correspondingPill.classList.add('active');
+    }
+
+    // Update slider position
+    if (pillSlider) {
+      if (selectedType === 'corporate') {
+        pillSlider.classList.add('corporate');
+      } else {
+        pillSlider.classList.remove('corporate');
+      }
+    }
+
+    // Update badges
+    if (individualBadge && corporateBadge) {
+      if (selectedType === 'individual') {
+        individualBadge.classList.add('show');
+        corporateBadge.classList.remove('show');
+      } else {
+        corporateBadge.classList.add('show');
+        individualBadge.classList.remove('show');
+      }
+    }
+  } else {
+    // Set Individual as default if no customer type is selected
+    const individualRadio = document.getElementById('customer_type_individual');
+    if (individualRadio) {
+      individualRadio.checked = true;
+      const changeEvent = new Event('change', { bubbles: true });
+      individualRadio.dispatchEvent(changeEvent);
+    }
+  }
+
+  // Debug: Check if elements exist
+  console.log('productCategoryField:', productCategoryField);
+  console.log('productSubcategoryField:', productSubcategoryField);
+  console.log('Current category value:', productCategoryField ? productCategoryField.value : 'not found');
+  console.log('subcategoryOptions:', subcategoryOptions);
+
+  // Handle customer type pill toggle click
+  pillOptions.forEach(option => {
+    option.addEventListener('click', function(e) {
+      e.preventDefault();
+      const selectedType = this.dataset.type;
+      console.log('Pill toggle clicked, switching to:', selectedType);
+
+      // Update visual state
+      pillOptions.forEach(opt => opt.classList.remove('active'));
+      this.classList.add('active');
+
+      // Update slider position
+      if (pillSlider) {
+        if (selectedType === 'corporate') {
+          pillSlider.classList.add('corporate');
+        } else {
+          pillSlider.classList.remove('corporate');
+        }
+      }
+
+      // Update badges
+      if (individualBadge && corporateBadge) {
+        if (selectedType === 'individual') {
+          individualBadge.classList.add('show');
+          corporateBadge.classList.remove('show');
+        } else {
+          corporateBadge.classList.add('show');
+          individualBadge.classList.remove('show');
+        }
+      }
+
+      // Check the corresponding radio button
+      const radioButton = document.getElementById('customer_type_' + selectedType);
+      if (radioButton) {
+        radioButton.checked = true;
+        // Trigger change event to handle form sections
+        const changeEvent = new Event('change', { bubbles: true });
+        radioButton.dispatchEvent(changeEvent);
+      }
+    });
+  });
+
+  // Handle customer type change with radio buttons (for form submission)
+  customerTypeRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+      console.log('Customer type changed to:', this.value);
+      if (this.checked) {
+        const selectedType = this.value;
+        console.log('Showing section for:', selectedType);
+
+        // Preserve important field values before making changes
+        preserveImportantFieldValues();
+
+        // Hide all customer type specific sections
+        individualSections.style.display = 'none';
+        corporateSections.style.display = 'none';
+        productSection.style.display = 'block'; // Always show product section after type selection
+
+        // Disable all fields in hidden sections to prevent them from being submitted
+        const individualInputs = form.querySelectorAll('#individual_sections input, #individual_sections select, #individual_sections textarea');
+        const corporateInputs = form.querySelectorAll('#corporate_sections input, #corporate_sections select, #corporate_sections textarea');
+
+        // First disable all section-specific inputs
+        individualInputs.forEach(input => {
+          input.disabled = true;
+        });
+
+        corporateInputs.forEach(input => {
+          input.disabled = true;
+          input.removeAttribute('required');
+        });
+
+        if (selectedType === 'individual') {
+          if (individualSections) {
+            individualSections.style.display = 'block';
+            console.log('Individual sections displayed');
+
+            // Enable all inputs in the individual section
+            individualInputs.forEach(input => {
+              input.disabled = false;
+            });
+
+            // Set required fields for individual
+            const firstNameField = form.querySelector('[name="lead[first_name]"]');
+            const lastNameField = form.querySelector('[name="lead[last_name]"]');
+            if (firstNameField) firstNameField.setAttribute('required', 'required');
+            if (lastNameField) lastNameField.setAttribute('required', 'required');
+
+            // Remove required from corporate fields
+            const companyNameField = form.querySelector('[name="lead[company_name]"]');
+            if (companyNameField) companyNameField.removeAttribute('required');
+          } else {
+            console.error('Individual sections element not found!');
+          }
+
+          // Update the hidden name field with a default value
+          nameField.value = 'Individual Customer';
+        } else if (selectedType === 'corporate') {
+          corporateSections.style.display = 'block';
+
+          // Enable all inputs in the corporate section
+          corporateInputs.forEach(input => {
+            input.disabled = false;
+          });
+
+          // Set required field for corporate
+          const companyNameField = form.querySelector('[name="lead[company_name]"]');
+          if (companyNameField) companyNameField.setAttribute('required', 'required');
+
+          // Remove required from individual fields
+          const firstNameField = form.querySelector('[name="lead[first_name]"]');
+          const lastNameField = form.querySelector('[name="lead[last_name]"]');
+          if (firstNameField) firstNameField.removeAttribute('required');
+          if (lastNameField) lastNameField.removeAttribute('required');
+
+          // Update the hidden name field with a default value
+          nameField.value = 'Corporate Customer';
+        }
+
+        // Restore preserved important field values after clearing
+        setTimeout(() => {
+          restoreImportantFieldValues();
+        }, 10);
+      }
+    });
+  });
+
+  // Auto-update name field for individual customers
+  const firstNameField = form.querySelector('[name="lead[first_name]"]');
+  const middleNameField = form.querySelector('[name="lead[middle_name]"]');
+  const lastNameField = form.querySelector('[name="lead[last_name]"]');
+  const companyNameField = form.querySelector('[name="lead[company_name]"]');
+
+  function updateNameField() {
+    const selectedCustomerType = document.querySelector('input[name="lead[customer_type]"]:checked')?.value;
+
+    if (selectedCustomerType === 'individual') {
+      const firstName = firstNameField?.value || '';
+      const middleName = middleNameField?.value || '';
+      const lastName = lastNameField?.value || '';
+      nameField.value = `${firstName} ${middleName} ${lastName}`.trim().replace(/\s+/g, ' ');
+    } else if (selectedCustomerType === 'corporate') {
+      nameField.value = companyNameField?.value || 'Corporate Customer';
+    }
+  }
+
+  if (firstNameField) firstNameField.addEventListener('input', updateNameField);
+  if (middleNameField) middleNameField.addEventListener('input', updateNameField);
+  if (lastNameField) lastNameField.addEventListener('input', updateNameField);
+  if (companyNameField) companyNameField.addEventListener('input', updateNameField);
+
+  // Add listeners to preserve important field values when they change
+  const importantFieldSelectors = ['[name="lead[pan_no]"]', '[name="lead[gst_no]"]', '[name="lead[email]"]', '[name="lead[contact_number]"]'];
+  importantFieldSelectors.forEach(selector => {
+    const field = form.querySelector(selector);
+    if (field) {
+      field.addEventListener('input', preserveImportantFieldValues);
+      field.addEventListener('blur', preserveImportantFieldValues);
+    }
+  });
+
+  // Mobile number cleaning and validation
+  function cleanMobileNumber(value) {
+    if (!value) return '';
+
+    // Remove all non-digit characters
+    let cleanNumber = value.replace(/\D/g, '');
+
+    // Only remove 91 prefix if:
+    // 1. Number has exactly 12 digits AND starts with 91
+    // 2. After removing 91, the remaining number starts with 6, 7, 8, or 9
+    if (cleanNumber.length === 12 && cleanNumber.startsWith('91')) {
+      const remainingNumber = cleanNumber.substring(2);
+      if (/^[6789]/.test(remainingNumber)) {
+        cleanNumber = remainingNumber;
+      }
+    }
+
+    return cleanNumber;
+  }
+
+  function validateMobileNumber(input) {
+    const cleanedValue = cleanMobileNumber(input.value.trim());
+    const errorDiv = document.getElementById('contact_number_error');
+    const mobilePattern = /^[6789]\d{9}$/;
+    const invalidPattern = /^91\d{8}$/; // Looks like incomplete +91 number
+
+    if (cleanedValue === '') {
+      input.classList.remove('is-invalid', 'is-valid');
+      if (errorDiv) errorDiv.style.display = 'none';
+      return true; // Empty is valid (required validation will handle it)
+    }
+
+    // Check for numbers that look like they should have had 91 prefix removed
+    if (invalidPattern.test(cleanedValue)) {
+      input.classList.add('is-invalid');
+      input.classList.remove('is-valid');
+      if (errorDiv) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Invalid mobile number format. Did you mean to add +91 before a valid mobile number?';
+      }
+      return false;
+    }
+
+    if (!mobilePattern.test(cleanedValue)) {
+      input.classList.add('is-invalid');
+      input.classList.remove('is-valid');
+      if (errorDiv) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Mobile number must be 10 digits starting with 6, 7, 8, or 9';
+      }
+      return false;
+    } else {
+      input.classList.add('is-valid');
+      input.classList.remove('is-invalid');
+      if (errorDiv) errorDiv.style.display = 'none';
+      return true;
+    }
+  }
+
+  // Add mobile number validation event listeners
+  const contactNumberField = document.getElementById('contact_number_field');
+  if (contactNumberField) {
+    // Real-time validation on input
+    contactNumberField.addEventListener('input', function() {
+      const cleanedNumber = cleanMobileNumber(this.value);
+
+      // Update field value with cleaned number (but allow user to continue typing)
+      if (cleanedNumber.length <= 10) {
+        this.value = cleanedNumber;
+      } else {
+        // If more than 10 digits, keep only first 10
+        this.value = cleanedNumber.substring(0, 10);
+      }
+
+      validateMobileNumber(this);
+    });
+
+    // Clean and validate on blur
+    contactNumberField.addEventListener('blur', function() {
+      const cleanedNumber = cleanMobileNumber(this.value);
+      this.value = cleanedNumber;
+      validateMobileNumber(this);
+    });
+  }
+
+  // Progress tracking
+  function updateProgress() {
+    const allInputs = form.querySelectorAll('input[required], select[required]');
+    const filledInputs = Array.from(allInputs).filter(input => {
+      if (input.type === 'checkbox') return input.checked;
+      return input.value.trim() !== '';
+    });
+
+    const progress = (filledInputs.length / allInputs.length) * 100;
+    const progressBar = document.getElementById('formProgress');
+    if (progressBar) {
+      progressBar.style.width = progress + '%';
+    }
+  }
+
+  // Add progress tracking to all form inputs
+  const allFormInputs = form.querySelectorAll('input, select, textarea');
+  allFormInputs.forEach(input => {
+    input.addEventListener('input', updateProgress);
+    input.addEventListener('change', updateProgress);
+  });
+
+  // Handle product category change
+  function handleProductCategoryChange(selectedCategory) {
+    console.log('Product category changed to:', selectedCategory);
+
+    try {
+      const subcategorySelect = productSubcategoryField;
+      if (!subcategorySelect) {
+        console.error('Product subcategory field not found');
+        return;
+      }
+
+      const $subcategorySelect = $(subcategorySelect);
+
+      // Destroy Select2 if it exists
+      if ($subcategorySelect.hasClass('select2-hidden-accessible')) {
+        $subcategorySelect.select2('destroy');
+      }
+
+      // Clear existing options
+      subcategorySelect.innerHTML = '<option value="">Select Product Type</option>';
+
+      if (selectedCategory && subcategoryOptions[selectedCategory]) {
+        console.log('Found subcategory options for:', selectedCategory, subcategoryOptions[selectedCategory]);
+
+        // Enable the subcategory dropdown
+        subcategorySelect.disabled = false;
+
+        // Add new options
+        subcategoryOptions[selectedCategory].forEach(function(option) {
+          const optionElement = document.createElement('option');
+          optionElement.value = option[1];
+          optionElement.textContent = option[0];
+          subcategorySelect.appendChild(optionElement);
+        });
+
+        console.log('Added', subcategoryOptions[selectedCategory].length, 'subcategory options');
+
+        // Reinitialize Select2 for the subcategory dropdown
+        setTimeout(() => {
+          if (typeof $ !== 'undefined' && $.fn.select2) {
+            $subcategorySelect.select2({
+              theme: 'bootstrap-5',
+              placeholder: 'Search and select product type...',
+              allowClear: true,
+              width: '100%',
+              minimumResultsForSearch: 0,
+              dropdownParent: $('body')
+            });
+          }
+        }, 50);
+      } else {
+        console.log('No subcategory options found for:', selectedCategory);
+        // Disable the subcategory dropdown
+        subcategorySelect.disabled = true;
+      }
+    } catch (error) {
+      console.error('Error in handleProductCategoryChange:', error);
+    }
+  }
+
+  // Attach event listeners for both native change and Select2 change
+  productCategoryField.addEventListener('change', function() {
+    handleProductCategoryChange(this.value);
+  });
+
+  // Also handle Select2 change event
+  $(document).on('select2:select', '#product_category', function (e) {
+    const selectedValue = e.params.data.id;
+    console.log('Product Category selected via Select2:', selectedValue);
+    handleProductCategoryChange(selectedValue);
+  });
+
+  // Handle Select2 clear event
+  $(document).on('select2:clear', '#product_category', function (e) {
+    console.log('Product Category cleared via Select2');
+    handleProductCategoryChange('');
+  });
+
+  // Force initialization of product subcategory dropdown
+  function forceInitializeProductDropdown() {
+    console.log('Force initializing product subcategory...');
+
+    try {
+      // Check if Insurance is selected and populate accordingly
+      if (productCategoryField && productSubcategoryField) {
+        const currentCategory = productCategoryField.value;
+        console.log('Current category:', currentCategory);
+
+        if (currentCategory) {
+          handleProductCategoryChange(currentCategory);
+        } else {
+          // If nothing is selected, try to detect if Insurance is pre-selected
+          const insuranceOption = productCategoryField.querySelector('option[value="insurance"][selected]');
+          if (insuranceOption || productCategoryField.value === 'insurance') {
+            console.log('Insurance appears to be selected, forcing subcategory load...');
+            handleProductCategoryChange('insurance');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error in forceInitializeProductDropdown:', error);
+    }
+  }
+
+  // Initialize immediately
+  forceInitializeProductDropdown();
+
+  // Also initialize with delay in case DOM isn't ready
+  setTimeout(forceInitializeProductDropdown, 100);
+  setTimeout(forceInitializeProductDropdown, 500);
+
+  // Handle direct/referred toggle
+  directCheckbox.addEventListener('change', function() {
+    if (this.checked) {
+      // Direct lead - hide affiliate selection and referred by field, clear values
+      affiliateSelection.style.display = 'none';
+      referredByField.style.display = 'none';
+
+      // Destroy Select2 before clearing value
+      if (typeof $ !== 'undefined' && $.fn.select2 && $(affiliateDropdown).hasClass('select2-hidden-accessible')) {
+        $(affiliateDropdown).select2('destroy');
+      }
+      affiliateDropdown.value = '';
+      affiliateDropdown.removeAttribute('required');
+      form.querySelector('[name="lead[referred_by]"]').value = '';
+    } else {
+      // Referred lead - show both affiliate selection and referred by field
+      affiliateSelection.style.display = 'block';
+      referredByField.style.display = 'block';
+      affiliateDropdown.setAttribute('required', 'required');
+
+      // Initialize Select2 when dropdown becomes visible
+      handleAffiliateDropdownVisibility();
+    }
+  });
+
+  // Simple State-City Dropdown for Lead Form
+  const leadStateSelect = document.getElementById('lead_state');
+  const leadCitySelect = document.getElementById('lead_city');
+
+  // Use global location data or API fallback
+  let leadCitiesData = {};
+
+  if (window.LocationData && window.LocationData.states) {
+    leadCitiesData = Object.keys(window.LocationData.states).reduce((acc, key) => {
+      acc[key] = window.LocationData.states[key].cities;
+      return acc;
+    }, {});
+  }
+
+  function loadLeadCitiesForState(stateValue) {
+    console.log('Loading cities for lead form:', stateValue);
+
+    if (!stateValue) {
+      leadCitySelect.innerHTML = '<option value="">Select State First</option>';
+      leadCitySelect.disabled = true;
+      return;
+    }
+
+    // Get cities for this state from local data first
+    let cities = leadCitiesData[stateValue] || [];
+
+    if (cities.length > 0) {
+      // Use local data if available
+      populateCityDropdown(cities);
+    } else {
+      // Fallback to API call
+      fetch(`/api/cities?state=${stateValue}`)
+        .then(response => response.json())
+        .then(data => {
+          cities = data.cities || [];
+          populateCityDropdown(cities);
+        })
+        .catch(error => {
+          console.error('Error loading cities:', error);
+          leadCitySelect.innerHTML = '<option value="">Error loading cities</option>';
+          leadCitySelect.disabled = true;
+        });
+    }
+  }
+
+  function populateCityDropdown(cities) {
+    // First destroy Select2 if it exists
+    const $leadCitySelect = $(leadCitySelect);
+    if ($leadCitySelect.hasClass('select2-hidden-accessible')) {
+      $leadCitySelect.select2('destroy');
+    }
+
+    // Clear dropdown and add cities
+    leadCitySelect.innerHTML = '<option value="">Select City</option>';
+
+    cities.forEach(city => {
+      const option = document.createElement('option');
+      option.value = city;
+      option.textContent = city;
+      leadCitySelect.appendChild(option);
+    });
+
+    leadCitySelect.disabled = false;
+    console.log(`Loaded ${cities.length} cities for leads form`);
+
+    // Reinitialize Select2
+    setTimeout(() => {
+      $leadCitySelect.select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select city...',
+        allowClear: false, // Changed to false to prevent clearing
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+
+      // Add change event handler to ensure value is properly set
+      $leadCitySelect.on('select2:select', function(e) {
+        const selectedCity = e.params.data.id;
+        leadCitySelect.value = selectedCity;
+        console.log('City selected via Select2:', selectedCity);
+      });
+    }, 50);
+  }
+
+  // Initialize all searchable dropdowns with Select2
+  function initializeSearchableDropdowns() {
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+      // Initialize all dropdowns with searchable-select class
+      $('.searchable-select').each(function() {
+        const $element = $(this);
+        const placeholder = $element.data('placeholder') || 'Search and select...';
+
+        // Skip if already initialized
+        if ($element.hasClass('select2-hidden-accessible')) {
+          return;
+        }
+
+        $element.select2({
+          theme: 'bootstrap-5',
+          placeholder: placeholder,
+          allowClear: true,
+          width: '100%',
+          minimumResultsForSearch: 0,
+          dropdownParent: $('body')
+        });
+      });
+    }
+  }
+
+  // Setup lead form state-city functionality
+  if (leadStateSelect && leadCitySelect) {
+    // Initialize state dropdown with Select2
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+      $(leadStateSelect).select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select state...',
+        allowClear: false, // Changed to prevent clearing
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+
+      $(leadCitySelect).select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search and select city...',
+        allowClear: false, // Changed to prevent clearing
+        width: '100%',
+        minimumResultsForSearch: 0
+      });
+
+      // Add change event handler to ensure state value is properly set
+      $(leadStateSelect).on('select2:select', function(e) {
+        const selectedState = e.params.data.id;
+        leadStateSelect.value = selectedState;
+        console.log('State selected via Select2:', selectedState);
+        loadLeadCitiesForState(selectedState);
+      });
+
+      // Add change event handler for city to ensure value is properly set
+      $(leadCitySelect).on('select2:select', function(e) {
+        const selectedCity = e.params.data.id;
+        leadCitySelect.value = selectedCity;
+        console.log('City selected via Select2:', selectedCity);
+      });
+    }
+
+    leadStateSelect.addEventListener('change', function() {
+      loadLeadCitiesForState(this.value);
+    });
+
+    // Load cities if state is pre-selected
+    if (leadStateSelect.value) {
+      loadLeadCitiesForState(leadStateSelect.value);
+    }
+  }
+
+  // Form validation
+  form.addEventListener('submit', function(e) {
+    // Restore important field values before validation and submission
+    restoreImportantFieldValues();
+
+    // Ensure Select2 values are properly synced to underlying select elements
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+      // Sync city value from Select2
+      const $citySelect = $('#lead_city');
+      if ($citySelect.hasClass('select2-hidden-accessible')) {
+        const cityValue = $citySelect.val();
+        if (cityValue) {
+          leadCitySelect.value = cityValue;
+          console.log('City value synced:', cityValue);
+        }
+      }
+
+      // Sync state value from Select2
+      const $stateSelect = $('#lead_state');
+      if ($stateSelect.hasClass('select2-hidden-accessible')) {
+        const stateValue = $stateSelect.val();
+        if (stateValue) {
+          leadStateSelect.value = stateValue;
+          console.log('State value synced:', stateValue);
+        }
+      }
+    }
+
+    let isValid = true;
+    const errors = [];
+
+    // Validate name
+    if (nameField.value.trim().length < 2) {
+      errors.push('Lead name must be at least 2 characters long');
+      isValid = false;
+    }
+
+    // Validate mobile number format
+    if (phoneField.value.trim() && !validateMobileNumber(phoneField)) {
+      errors.push('Mobile number must be 10 digits starting with 6, 7, 8, or 9');
+      isValid = false;
+    }
+
+    // Validate product category selection
+    if (!productCategoryField.value) {
+      errors.push('Please select a product category');
+      isValid = false;
+    }
+
+    // Validate product subcategory selection
+    if (!productSubcategoryField.value) {
+      errors.push('Please select a product type');
+      isValid = false;
+    }
+
+    // Validate customer type selection
+    const selectedCustomerType = document.querySelector('input[name="lead[customer_type]"]:checked');
+    if (!selectedCustomerType) {
+      errors.push('Please select a customer type');
+      isValid = false;
+    }
+
+    // Validate affiliate selection for referred leads
+    if (!directCheckbox.checked && !affiliateDropdown.value) {
+      errors.push('Please select an affiliate for referred leads');
+      isValid = false;
+    }
+
+    // Native date field validation - HTML5 date input handles format validation
+    const dateField = form.querySelector('[name="lead[created_date]"]');
+    if (dateField && !dateField.value) {
+      errors.push('Please select a lead date');
+      isValid = false;
+    }
+
+    // Debug logging for city and state values
+    console.log('Final form submission - City value:', leadCitySelect.value);
+    console.log('Final form submission - State value:', leadStateSelect.value);
+
+    if (!isValid) {
+      e.preventDefault();
+      alert('Please fix the following errors:\n' + errors.join('\n'));
+    }
+  });
+
+  // Final attempt to initialize product dropdown after everything is loaded
+  setTimeout(() => {
+    console.log('Final initialization attempt after full page load...');
+    const productCategory = document.getElementById('product_category');
+    const productSubcategory = document.getElementById('product_subcategory');
+
+    if (productCategory && productSubcategory && productCategory.value) {
+      console.log('Found category:', productCategory.value);
+      console.log('Current subcategory options count:', productSubcategory.options.length);
+
+      if (productCategory.value === 'insurance' && productSubcategory.options.length <= 1) {
+        console.log('Insurance detected but subcategory empty, forcing population...');
+        handleProductCategoryChange('insurance');
+      }
+    }
+  }, 1000);
+
+});
+</script>

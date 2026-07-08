@@ -1,0 +1,452 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Create New User/Agent</h2>
+    <p class="text-muted mb-0">Add a new administrator, agent, or user to the system</p>
+  </div>
+  <div>
+    <%= link_to admin_users_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Users
+    <% end %>
+  </div>
+</div>
+
+<%= form_with model: [:admin, @user], local: true, multipart: true, class: "row", data: { turbo: false } do |form| %>
+  <!-- Personal Details Section -->
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">
+          <i class="bi bi-person me-2 text-primary"></i>
+          Personal Details
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <!-- First Name -->
+          <div class="col-md-4">
+            <%= form.label :first_name, "First Name *", class: "form-label fw-semibold" %>
+            <%= form.text_field :first_name,
+                class: "form-control #{'is-invalid' if @user.errors[:first_name].any?}",
+                placeholder: "First name" %>
+            <% if @user.errors[:first_name].any? %>
+              <div class="invalid-feedback">
+                <%= @user.errors[:first_name].first %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- Middle Name -->
+          <div class="col-md-4">
+            <%= form.label :middle_name, "Middle Name", class: "form-label fw-semibold" %>
+            <%= form.text_field :middle_name,
+                class: "form-control",
+                placeholder: "Middle name" %>
+          </div>
+
+          <!-- Last Name -->
+          <div class="col-md-4">
+            <%= form.label :last_name, "Last Name *", class: "form-label fw-semibold" %>
+            <%= form.text_field :last_name,
+                class: "form-control #{'is-invalid' if @user.errors[:last_name].any?}",
+                placeholder: "Last name" %>
+            <% if @user.errors[:last_name].any? %>
+              <div class="invalid-feedback">
+                <%= @user.errors[:last_name].first %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- Mobile -->
+          <div class="col-md-6">
+            <%= form.label :mobile, "Mobile No. *", class: "form-label fw-semibold" %>
+            <%= form.text_field :mobile,
+                class: "form-control #{'is-invalid' if @user.errors[:mobile].any?}",
+                placeholder: "Mobile number",
+                type: "tel" %>
+            <% if @user.errors[:mobile].any? %>
+              <div class="invalid-feedback">
+                <%= @user.errors[:mobile].first %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- Email -->
+          <div class="col-md-6">
+            <%= form.label :email, "Email *", class: "form-label fw-semibold" %>
+            <%= form.email_field :email,
+                class: "form-control #{'is-invalid' if @user.errors[:email].any?}",
+                placeholder: "Email address" %>
+            <% if @user.errors[:email].any? %>
+              <div class="invalid-feedback">
+                <%= @user.errors[:email].first %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- User Type & Role -->
+          <div class="col-md-6">
+            <%= form.label :user_type, "User Type *", class: "form-label fw-semibold" %>
+            <%= form.select :user_type,
+                options_for_select([
+                  ['Select User Type', ''],
+                  ['Administrator', 'admin'],
+                  ['Agent', 'agent'],
+                  ['Affiliate', 'sub_agent']
+                ], @user.user_type),
+                {},
+                { class: "form-select #{'is-invalid' if @user.errors[:user_type].any?}" } %>
+            <% if @user.errors[:user_type].any? %>
+              <div class="invalid-feedback">
+                <%= @user.errors[:user_type].first %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- Role -->
+          <div class="col-md-6">
+            <%= form.label :role, "Role", class: "form-label fw-semibold" %>
+            <%= form.select :role,
+                options_for_select([
+                  ['Select Role', ''],
+                  ['Super Admin', 'super_admin'],
+                  ['Admin', 'admin_role'],
+                  ['Manager', 'manager'],
+                  ['Agent', 'agent_role']
+                ], @user.role),
+                {},
+                { class: "form-select" } %>
+          </div>
+
+          <!-- State -->
+          <div class="col-md-6">
+            <%= form.label :state, "State", class: "form-label fw-semibold" %>
+            <%= form.text_field :state,
+                class: "form-control",
+                placeholder: "State" %>
+          </div>
+
+          <!-- City -->
+          <div class="col-md-6">
+            <%= form.label :city, "City", class: "form-label fw-semibold" %>
+            <%= form.text_field :city,
+                class: "form-control",
+                placeholder: "City" %>
+          </div>
+
+          <!-- Birth Date -->
+          <div class="col-md-4">
+            <%= form.label :date_of_birth, "Birth Date", class: "form-label fw-semibold" %>
+            <%= form.date_field :date_of_birth,
+                class: "form-control",
+                placeholder: "DD-MM-YYYY",
+                min: "1900-01-01",
+                max: "2099-12-31" %>
+          </div>
+
+          <!-- Gender -->
+          <div class="col-md-4">
+            <%= form.label :gender, "Gender", class: "form-label fw-semibold" %>
+            <%= form.select :gender,
+                options_for_select([
+                  ['Select Gender', ''],
+                  ['Male', 'male'],
+                  ['Female', 'female'],
+                  ['Other', 'other']
+                ], @user.gender),
+                {},
+                { class: "form-select" } %>
+          </div>
+
+          <!-- Status -->
+          <div class="col-md-4">
+            <%= form.label :status, "Status", class: "form-label fw-semibold" %>
+            <%= form.select :status,
+                options_for_select([
+                  ['Active', true],
+                  ['Inactive', false]
+                ], @user.status),
+                {},
+                { class: "form-select" } %>
+          </div>
+
+          <!-- PAN No -->
+          <div class="col-md-6">
+            <%= form.label :pan_number, "PAN No.", class: "form-label fw-semibold" %>
+            <%= form.text_field :pan_number,
+                class: "form-control",
+                placeholder: "PAN Number",
+                style: "text-transform: uppercase;" %>
+          </div>
+
+          <!-- GST No -->
+          <div class="col-md-6">
+            <%= form.label :gst_number, "GST No.", class: "form-label fw-semibold" %>
+            <%= form.text_field :gst_number,
+                class: "form-control",
+                placeholder: "GST Number" %>
+          </div>
+
+          <!-- Company Name -->
+          <div class="col-12">
+            <%= form.label :company_name, "Company Name", class: "form-label fw-semibold" %>
+            <%= form.text_field :company_name,
+                class: "form-control",
+                placeholder: "Company Name" %>
+          </div>
+
+          <!-- Address -->
+          <div class="col-12">
+            <%= form.label :address, "Address", class: "form-label fw-semibold" %>
+            <%= form.text_area :address,
+                class: "form-control",
+                rows: 3,
+                placeholder: "Full address" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bank Details Section -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">
+          <i class="bi bi-bank me-2 text-success"></i>
+          Bank Details
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <!-- Bank Name -->
+          <div class="col-md-6">
+            <%= form.label :bank_name, "Bank Name", class: "form-label fw-semibold" %>
+            <%= form.text_field :bank_name,
+                class: "form-control",
+                placeholder: "Bank Name" %>
+          </div>
+
+          <!-- Account No -->
+          <div class="col-md-6">
+            <%= form.label :account_no, "Account No.", class: "form-label fw-semibold" %>
+            <%= form.text_field :account_no,
+                class: "form-control",
+                placeholder: "Account Number" %>
+          </div>
+
+          <!-- IFSC Code -->
+          <div class="col-md-4">
+            <%= form.label :ifsc_code, "IFSC Code", class: "form-label fw-semibold" %>
+            <%= form.text_field :ifsc_code,
+                class: "form-control",
+                placeholder: "IFSC Code",
+                style: "text-transform: uppercase;" %>
+          </div>
+
+          <!-- Account Holder Name -->
+          <div class="col-md-4">
+            <%= form.label :account_holder_name, "Account Holder Name", class: "form-label fw-semibold" %>
+            <%= form.text_field :account_holder_name,
+                class: "form-control",
+                placeholder: "Account Holder Name" %>
+          </div>
+
+          <!-- Account Type -->
+          <div class="col-md-4">
+            <%= form.label :account_type, "Account Type", class: "form-label fw-semibold" %>
+            <%= form.select :account_type,
+                options_for_select([
+                  ['Select Account Type', ''],
+                  ['Savings', 'savings'],
+                  ['Current', 'current'],
+                  ['Business', 'business']
+                ]),
+                {},
+                { class: "form-select" } %>
+          </div>
+
+          <!-- UPI ID -->
+          <div class="col-12">
+            <%= form.label :upi_id, "UPI ID", class: "form-label fw-semibold" %>
+            <%= form.text_field :upi_id,
+                class: "form-control",
+                placeholder: "UPI ID (e.g., user@paytm)" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Authentication Section -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">
+          <i class="bi bi-key me-2 text-warning"></i>
+          Authentication
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <!-- Password -->
+          <div class="col-md-6">
+            <%= form.label :password, "Password", class: "form-label fw-semibold" %>
+            <%= form.password_field :password,
+                class: "form-control #{'is-invalid' if @user.errors[:password].any?}",
+                placeholder: "Password" %>
+            <% if @user.errors[:password].any? %>
+              <div class="invalid-feedback">
+                <%= @user.errors[:password].first %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- Password Confirmation -->
+          <div class="col-md-6">
+            <%= form.label :password_confirmation, "Confirm Password", class: "form-label fw-semibold" %>
+            <%= form.password_field :password_confirmation,
+                class: "form-control",
+                placeholder: "Confirm Password" %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Sidebar for Documents -->
+  <div class="col-lg-4">
+    <!-- Documents & QR Code Section -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">
+          <i class="bi bi-file-earmark me-2 text-info"></i>
+          Documents & QR Code
+        </h5>
+      </div>
+      <div class="card-body">
+        <!-- Profile Image -->
+        <div class="mb-4">
+          <%= form.label :profile_images, "Upload Profile Image", class: "form-label fw-semibold" %>
+          <div class="upload-area border border-2 border-dashed rounded-3 p-4 text-center">
+            <%= form.file_field :profile_images,
+                multiple: true,
+                accept: "image/*",
+                class: "form-control d-none",
+                id: "profile_images" %>
+            <label for="profile_images" class="d-block text-muted mb-2" style="cursor: pointer;">
+              <i class="bi bi-cloud-upload fs-1 d-block mb-2"></i>
+              <strong>Click to upload or drag and drop</strong>
+              <div class="small">PNG, JPG, GIF up to 10MB</div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Documents -->
+        <div class="mb-4">
+          <%= form.label :documents, "Upload Documents", class: "form-label fw-semibold" %>
+
+          <!-- Document Type Selection -->
+          <div class="mb-3">
+            <label class="form-label">Document Type</label>
+            <select class="form-select" id="document_type">
+              <option value="">Select Document Type</option>
+              <option value="aadhar">Aadhar Card</option>
+              <option value="pan">PAN Card</option>
+              <option value="passport">Passport</option>
+              <option value="driving_license">Driving License</option>
+              <option value="voter_id">Voter ID</option>
+              <option value="bank_statement">Bank Statement</option>
+              <option value="salary_slip">Salary Slip</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <!-- Document Upload -->
+          <div class="upload-area border border-2 border-dashed rounded-3 p-4 text-center">
+            <%= form.file_field :documents,
+                multiple: true,
+                accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
+                class: "form-control d-none",
+                id: "documents" %>
+            <label for="documents" class="d-block text-muted mb-2" style="cursor: pointer;">
+              <i class="bi bi-file-earmark-text fs-1 d-block mb-2"></i>
+              <strong>Click to upload documents</strong>
+              <div class="small">PDF, DOC, JPG up to 10MB each</div>
+            </label>
+          </div>
+          <div class="form-text">Multiple files can be uploaded</div>
+        </div>
+
+        <!-- QR Code Section (Placeholder) -->
+        <div class="text-center">
+          <h6 class="fw-semibold">Agent QR Code</h6>
+          <div class="border rounded-3 p-3 bg-light">
+            <div class="placeholder-glow">
+              <div class="placeholder col-12" style="height: 120px;"></div>
+            </div>
+            <small class="text-muted">QR code will be generated after user creation</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <%= form.submit "Create User", class: "btn btn-primary btn-lg" %>
+          <%= link_to "Cancel", admin_users_path, class: "btn btn-outline-secondary" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Display Errors -->
+  <% if @user.errors.any? %>
+    <div class="col-12">
+      <div class="alert alert-danger">
+        <h6>Please fix the following errors:</h6>
+        <ul class="mb-0">
+          <% @user.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+<style>
+  .upload-area:hover {
+    background-color: #f8f9fa;
+    border-color: #0d6efd !important;
+  }
+
+  .placeholder {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+  }
+
+  @keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+</style>
+
+<script>
+  // Handle file upload display
+  document.getElementById('profile_images').addEventListener('change', function(e) {
+    const label = e.target.nextElementSibling;
+    const fileCount = e.target.files.length;
+    if (fileCount > 0) {
+      label.innerHTML = `<i class="bi bi-check-circle-fill text-success fs-1 d-block mb-2"></i><strong>${fileCount} file(s) selected</strong>`;
+    }
+  });
+
+  document.getElementById('documents').addEventListener('change', function(e) {
+    const label = e.target.nextElementSibling;
+    const fileCount = e.target.files.length;
+    if (fileCount > 0) {
+      label.innerHTML = `<i class="bi bi-check-circle-fill text-success fs-1 d-block mb-2"></i><strong>${fileCount} document(s) selected</strong>`;
+    }
+  });
+</script>

@@ -1,0 +1,475 @@
+<!-- Custom Styles -->
+<style>
+  .list-group-item-action:hover {
+    background-color: #f8f9fa;
+    transform: translateX(5px);
+    transition: all 0.3s ease;
+  }
+
+  .card {
+    border: none !important;
+    transition: transform 0.2s;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+  }
+
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  }
+</style>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">System Settings</h2>
+    <p class="text-muted">Configure system-wide settings and preferences</p>
+  </div>
+  <div>
+    <%= link_to admin_settings_user_roles_path, class: "btn btn-primary" do %>
+      <i class="bi bi-person-gear me-1"></i>
+      User Roles
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">User Roles</h6>
+            <h3 class="mb-0 text-primary"><%= UserRole.count %></h3>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-person-badge text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Permission Roles</h6>
+            <h3 class="mb-0 text-success"><%= Role.count %></h3>
+          </div>
+          <div class="bg-success bg-opacity-10 rounded p-3">
+            <i class="bi bi-shield-check text-success fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Active Users</h6>
+            <h3 class="mb-0 text-info"><%= User.where(status: true).count %></h3>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <i class="bi bi-people text-info fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Permissions</h6>
+            <h3 class="mb-0 text-warning"><%= Permission.count %></h3>
+          </div>
+          <div class="bg-warning bg-opacity-10 rounded p-3">
+            <i class="bi bi-key text-warning fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="row">
+  <div class="col-12">
+    <!-- Application Settings Card -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">Application Settings</h5>
+      </div>
+      <div class="card-body">
+        <!-- Pagination Settings -->
+        <div class="mb-4">
+          <h6 class="text-muted mb-3">Display Settings</h6>
+          <%= form_with url: admin_settings_system_path, method: :patch, local: true do |form| %>
+            <div class="row align-items-end">
+              <div class="col-md-6">
+                <label for="default_pagination_per_page" class="form-label">
+                  <i class="bi bi-list-ol me-1"></i>
+                  Items Per Page
+                </label>
+                <%= form.number_field :default_pagination_per_page,
+                      value: @default_pagination_per_page,
+                      min: 5,
+                      max: 100,
+                      class: "form-control",
+                      placeholder: "Enter number (e.g., 10)" %>
+                <div class="form-text">Number of items to display per page (5-100)</div>
+              </div>
+              <div class="col-md-3">
+                <%= form.submit "Update", class: "btn btn-primary" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Forum Platform Settings -->
+        <div class="mb-4">
+          <h6 class="text-muted mb-3">Forum Platform Settings</h6>
+          <%= form_with url: admin_settings_system_path, method: :patch, local: true do |form| %>
+            <div class="row align-items-end">
+              <div class="col-md-6">
+                <label for="default_business_plan_key" class="form-label">
+                  <i class="bi bi-diagram-3 me-1"></i>
+                  Default Business Plan for New Forums
+                </label>
+                <%= form.select :default_business_plan_key,
+                      options_for_select(BusinessPlan.ordered.pluck(:name, :key), @default_business_plan_key),
+                      {},
+                      class: "form-select" %>
+                <div class="form-text">Applied when a forum request is approved without picking a plan</div>
+              </div>
+              <div class="col-md-3">
+                <%= form.submit "Update", class: "btn btn-primary" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Commission Settings -->
+        <div class="mb-4">
+          <h6 class="text-muted mb-3">Default Commission Settings</h6>
+          <%= form_with url: admin_settings_system_path, method: :patch, local: true do |form| %>
+            <div class="bg-light rounded p-3">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="default_main_agent_commission" class="form-label">
+                    Main Agent Commission (%)
+                  </label>
+                  <%= form.number_field :default_main_agent_commission,
+                        value: @default_main_agent_commission,
+                        step: 0.01,
+                        min: 0,
+                        max: 100,
+                        class: "form-control",
+                        placeholder: "e.g., 5.00" %>
+                  <div class="form-text">Default commission percentage for main agents</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="default_affiliate_commission" class="form-label">
+                    Affiliate Commission (%)
+                  </label>
+                  <%= form.number_field :default_affiliate_commission,
+                        value: @default_affiliate_commission,
+                        step: 0.01,
+                        min: 0,
+                        max: 100,
+                        class: "form-control",
+                        placeholder: "e.g., 2.00" %>
+                  <div class="form-text">Default commission percentage for affiliates</div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="default_ambassador_commission" class="form-label">
+                    Ambassador Commission (%)
+                  </label>
+                  <%= form.number_field :default_ambassador_commission,
+                        value: @default_ambassador_commission,
+                        step: 0.01,
+                        min: 0,
+                        max: 100,
+                        class: "form-control",
+                        placeholder: "e.g., 3.00" %>
+                  <div class="form-text">Default commission percentage for ambassadors</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="default_company_expenses" class="form-label">
+                    Company Expenses (%)
+                  </label>
+                  <%= form.number_field :default_company_expenses,
+                        value: @default_company_expenses,
+                        step: 0.01,
+                        min: 0,
+                        max: 100,
+                        class: "form-control",
+                        placeholder: "e.g., 2.00" %>
+                  <div class="form-text">Default company expenses percentage</div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12">
+                  <%= form.hidden_field :commission_settings_update, value: "true" %>
+                  <%= form.submit "Update Commission Settings", class: "btn btn-primary" %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Investment Amount Settings -->
+        <div class="mb-4">
+          <h6 class="text-muted mb-3">Investment Amount Configuration</h6>
+          <%= form_with url: admin_settings_system_path, method: :patch, local: true do |form| %>
+            <div class="bg-light rounded p-3">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="investment_amount" class="form-label">
+                    <i class="bi bi-piggy-bank me-1"></i>
+                    Total Investment Amount (Rs.)
+                  </label>
+                  <%= form.number_field :investment_amount,
+                        value: @investment_amount,
+                        step: 0.01,
+                        min: 0,
+                        class: "form-control",
+                        placeholder: "e.g., 1000000.00" %>
+                  <div class="form-text">Configure the total investment amount available for distribution</div>
+                </div>
+                <div class="col-md-6 mb-3 d-flex align-items-end">
+                  <%= form.hidden_field :investment_amount_update, value: "true" %>
+                  <%= form.submit "Update Investment Amount", class: "btn btn-primary" %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Terms and Conditions Settings -->
+        <div class="mb-4">
+          <h6 class="text-muted mb-3">Terms and Conditions</h6>
+          <%= form_with url: admin_settings_system_path, method: :patch, local: true do |form| %>
+            <div class="bg-light rounded p-3">
+              <div class="row">
+                <div class="col-12 mb-3">
+                  <label for="terms_and_conditions" class="form-label">
+                    <i class="bi bi-file-text me-1"></i>
+                    Terms and Conditions Content
+                  </label>
+                  <%= form.text_area :terms_and_conditions,
+                        value: @terms_and_conditions,
+                        class: "form-control",
+                        rows: 10,
+                        placeholder: "Enter your terms and conditions content here..." %>
+                  <div class="form-text">Configure the terms and conditions that will be displayed to users</div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12">
+                  <%= form.hidden_field :terms_and_conditions_update, value: "true" %>
+                  <%= form.submit "Update Terms and Conditions", class: "btn btn-primary" %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Company Information Section -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-transparent border-0 d-flex align-items-center gap-2">
+        <i class="bi bi-building-fill text-primary fs-5"></i>
+        <h5 class="mb-0">Company Information</h5>
+        <small class="text-muted ms-2">Used in mobile app "Contact Us" and API responses</small>
+      </div>
+      <div class="card-body">
+        <%= form_with url: admin_settings_system_path, method: :patch, local: true do |form| %>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Company Name</label>
+              <input type="text" name="company_name" class="form-control" value="<%= @company_info[:name] %>" placeholder="e.g. Drwise Admin">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Mobile / Support Number</label>
+              <input type="text" name="company_mobile" class="form-control" value="<%= @company_info[:mobile] %>" placeholder="+91XXXXXXXXXX">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Support Email</label>
+              <input type="email" name="company_email" class="form-control" value="<%= @company_info[:email] %>" placeholder="support@example.com">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Website</label>
+              <input type="text" name="company_website" class="form-control" value="<%= @company_info[:website] %>" placeholder="www.example.com">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Address</label>
+              <textarea name="company_address" class="form-control" rows="2" placeholder="Full company address"><%= @company_info[:address] %></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Support Hours</label>
+              <input type="text" name="support_hours" class="form-control" value="<%= @company_info[:support_hours] %>" placeholder="e.g. Monday to Friday: 9:00 AM - 6:00 PM">
+            </div>
+            <div class="col-12">
+              <input type="hidden" name="company_info_update" value="true">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-floppy me-1"></i>Update Company Information
+              </button>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- System Information Section -->
+<div class="row">
+  <div class="col-lg-6 mb-4">
+    <!-- System Information Card -->
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">System Information</h5>
+      </div>
+      <div class="card-body">
+
+        <div class="table-responsive">
+          <table class="table table-borderless mb-0">
+            <tbody>
+              <tr>
+                <td class="text-muted" width="40%">Application Name</td>
+                <td class="fw-medium"><%= @system_settings[:app_name] %></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Version</td>
+                <td><span class="badge bg-primary"><%= @system_settings[:version] %></span></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Maintenance Mode</td>
+                <td>
+                  <% if @system_settings[:maintenance_mode] %>
+                    <span class="badge bg-warning">Enabled</span>
+                  <% else %>
+                    <span class="badge bg-success">Disabled</span>
+                  <% end %>
+                </td>
+              </tr>
+              <tr>
+                <td class="text-muted">Email Notifications</td>
+                <td>
+                  <% if @system_settings[:email_notifications] %>
+                    <span class="badge bg-success">Enabled</span>
+                  <% else %>
+                    <span class="badge bg-secondary">Disabled</span>
+                  <% end %>
+                </td>
+              </tr>
+              <tr>
+                <td class="text-muted">Backup Frequency</td>
+                <td class="fw-medium"><%= @system_settings[:backup_frequency] %></td>
+              </tr>
+              <tr>
+                <td class="text-muted">Session Timeout</td>
+                <td class="fw-medium"><%= @system_settings[:session_timeout] %> minutes</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Additional Settings Card -->
+  <div class="col-lg-6 mb-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-transparent border-0">
+        <h5 class="mb-0">Additional Settings</h5>
+      </div>
+      <div class="card-body">
+        <div class="list-group list-group-flush">
+          <%= link_to admin_settings_user_roles_path, class: "list-group-item list-group-item-action d-flex align-items-center" do %>
+            <div class="bg-primary bg-opacity-10 rounded p-2 me-3">
+              <i class="bi bi-person-gear text-primary fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+              <h6 class="mb-1">User Roles Management</h6>
+              <small class="text-muted">Configure user roles and their permissions</small>
+            </div>
+            <i class="bi bi-chevron-right text-muted"></i>
+          <% end %>
+
+          <%= link_to admin_roles_path, class: "list-group-item list-group-item-action d-flex align-items-center" do %>
+            <div class="bg-success bg-opacity-10 rounded p-2 me-3">
+              <i class="bi bi-shield-check text-success fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+              <h6 class="mb-1">Roles & Permissions</h6>
+              <small class="text-muted">Manage system roles and access controls</small>
+            </div>
+            <i class="bi bi-chevron-right text-muted"></i>
+          <% end %>
+
+          <div class="list-group-item d-flex align-items-center opacity-50">
+            <div class="bg-info bg-opacity-10 rounded p-2 me-3">
+              <i class="bi bi-envelope text-info fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+              <h6 class="mb-1">Email Configuration</h6>
+              <small class="text-muted">Coming soon - Configure email settings</small>
+            </div>
+          </div>
+
+          <div class="list-group-item d-flex align-items-center opacity-50">
+            <div class="bg-warning bg-opacity-10 rounded p-2 me-3">
+              <i class="bi bi-database text-warning fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+              <h6 class="mb-1">Backup & Recovery</h6>
+              <small class="text-muted">Coming soon - Manage system backups</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,15 @@
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Create New Payout</h2>
+    <p class="text-muted mb-0">Create a new commission payout for agent, customer, distributor, or investor</p>
+  </div>
+  <div>
+    <%= link_to admin_payouts_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to Payouts
+    <% end %>
+  </div>
+</div>
+
+<%= render 'form' %>

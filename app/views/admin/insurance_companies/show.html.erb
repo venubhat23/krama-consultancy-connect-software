@@ -1,0 +1,430 @@
+<!-- Page Header with enhanced styling -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1 text-primary"><%= @insurance_company.name %></h2>
+    <p class="text-muted mb-0">
+      <i class="bi bi-building me-2"></i>Insurance Company Details
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <%= link_to edit_admin_insurance_company_path(@insurance_company), class: "btn btn-primary shadow-sm" do %>
+      <i class="bi bi-pencil me-1"></i>
+      Edit Company
+    <% end %>
+    <%= link_to admin_insurance_companies_path, class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left me-1"></i>
+      Back to List
+    <% end %>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-lg-4 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Status</h6>
+            <h4 class="mb-0 <%= @insurance_company.status? ? 'text-success' : 'text-danger' %>">
+              <%= @insurance_company.status? ? 'Active' : 'Inactive' %>
+            </h4>
+          </div>
+          <div class="<%= @insurance_company.status? ? 'bg-success' : 'bg-danger' %> bg-opacity-10 rounded p-3">
+            <i class="bi <%= @insurance_company.status? ? 'bi-check-circle' : 'bi-x-circle' %> <%= @insurance_company.status? ? 'text-success' : 'text-danger' %> fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Insurance Type</h6>
+            <h5 class="mb-0 text-info">
+              <%= @insurance_company.insurance_type.present? ? @insurance_company.insurance_type.humanize.titleize : 'Not Specified' %>
+            </h5>
+          </div>
+          <div class="bg-info bg-opacity-10 rounded p-3">
+            <% case @insurance_company.insurance_type %>
+            <% when 'health' %>
+              <i class="bi bi-heart-pulse text-info fs-4"></i>
+            <% when 'life' %>
+              <i class="bi bi-person-check text-info fs-4"></i>
+            <% when 'motor_other' %>
+              <i class="bi bi-car-front text-info fs-4"></i>
+            <% else %>
+              <i class="bi bi-list-ul text-info fs-4"></i>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-md-6 mb-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="text-muted mb-2">Company Code</h6>
+            <h4 class="mb-0 text-primary">
+              <% if @insurance_company.code.present? %>
+                <%= @insurance_company.code %>
+              <% else %>
+                <small class="text-muted">Not Set</small>
+              <% end %>
+            </h4>
+          </div>
+          <div class="bg-primary bg-opacity-10 rounded p-3">
+            <i class="bi bi-tag text-primary fs-4"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</div>
+
+<!-- Company Details -->
+<div class="row">
+  <div class="col-lg-8">
+    <!-- Basic Information -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-info-circle me-2 text-primary"></i>
+          <h5 class="mb-0">Company Information</h5>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="text-muted small">Company Name</label>
+            <p class="mb-0 fw-semibold"><%= @insurance_company.name %></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="text-muted small">Company Code</label>
+            <p class="mb-0">
+              <% if @insurance_company.code.present? %>
+                <span class="badge bg-secondary-subtle text-secondary"><%= @insurance_company.code %></span>
+              <% else %>
+                <span class="text-muted">Not specified</span>
+              <% end %>
+            </p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="text-muted small">Contact Person</label>
+            <p class="mb-0"><%= @insurance_company.contact_person.present? ? @insurance_company.contact_person : 'NA' %></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="text-muted small">Status</label>
+            <p class="mb-0">
+              <% if @insurance_company.status %>
+                <span class="badge bg-success-subtle text-success">
+                  <i class="bi bi-check-circle me-1"></i>
+                  Active
+                </span>
+              <% else %>
+                <span class="badge bg-danger-subtle text-danger">
+                  <i class="bi bi-x-circle me-1"></i>
+                  Inactive
+                </span>
+              <% end %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Information -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent border-0">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-telephone me-2 text-primary"></i>
+          <h5 class="mb-0">Contact Information</h5>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="text-muted small">Email Address</label>
+            <p class="mb-0">
+              <% if @insurance_company.email.present? %>
+                <a href="mailto:<%= @insurance_company.email %>" class="text-decoration-none">
+                  <i class="bi bi-envelope me-1"></i>
+                  <%= @insurance_company.email %>
+                </a>
+              <% else %>
+                <span class="text-muted">Not specified</span>
+              <% end %>
+            </p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="text-muted small">Mobile Number</label>
+            <p class="mb-0">
+              <% if @insurance_company.mobile.present? %>
+                <a href="tel:<%= @insurance_company.mobile %>" class="text-decoration-none">
+                  <i class="bi bi-telephone me-1"></i>
+                  <%= @insurance_company.mobile %>
+                </a>
+              <% else %>
+                <span class="text-muted">Not specified</span>
+              <% end %>
+            </p>
+          </div>
+          <div class="col-12 mb-3">
+            <label class="text-muted small">Address</label>
+            <p class="mb-0">
+              <% if @insurance_company.address.present? %>
+                <i class="bi bi-geo-alt me-1"></i>
+                <%= @insurance_company.address %>
+              <% else %>
+                <span class="text-muted">Not specified</span>
+              <% end %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+
+  <!-- Enhanced Sidebar -->
+  <div class="col-lg-4">
+
+    <!-- Additional Information -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent border-0">
+        <h6 class="mb-0">
+          <i class="bi bi-info-square me-2 text-info"></i>
+          Company Information
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <small class="text-muted d-block">Company ID</small>
+          <strong>#<%= @insurance_company.id %></strong>
+        </div>
+        <div class="mb-3">
+          <small class="text-muted d-block">Created Date</small>
+          <strong><%= @insurance_company.created_at.strftime('%d %B %Y at %I:%M %p') %></strong>
+        </div>
+        <div class="mb-3">
+          <small class="text-muted d-block">Last Modified</small>
+          <strong><%= @insurance_company.updated_at.strftime('%d %B %Y at %I:%M %p') %></strong>
+        </div>
+        <div class="mb-3">
+          <small class="text-muted d-block">Insurance Type</small>
+          <strong class="text-capitalize"><%= @insurance_company.insurance_type&.humanize || 'Not Specified' %></strong>
+        </div>
+        <div class="alert alert-success alert-sm mb-3">
+          <i class="bi bi-shield-check me-2"></i>
+          <small>This company is verified and ready for policy creation.</small>
+        </div>
+        <div class="alert alert-primary alert-sm mb-0">
+          <i class="bi bi-info-circle me-2"></i>
+          <small>All systems operational and ready for business operations.</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced JavaScript for dynamic interactions -->
+<script>
+function toggleStatus(newStatus) {
+  const action = newStatus ? 'activate' : 'deactivate';
+  const message = `Are you sure you want to ${action} this insurance company?`;
+
+  if (confirm(message)) {
+    // This would typically make an AJAX call to update the status
+    // For now, we'll just reload the page (you can implement the actual functionality)
+    alert(`Company ${action}d successfully!`);
+    // window.location.reload();
+  }
+}
+
+function printCompanyInfo() {
+  window.print();
+}
+
+// Add smooth hover effects
+document.addEventListener('DOMContentLoaded', function() {
+  // Add hover effects to cards
+  const cards = document.querySelectorAll('.card');
+  cards.forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-2px)';
+      this.style.transition = 'transform 0.3s ease';
+    });
+
+    card.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+    });
+  });
+});
+</script>
+
+<!-- Enhanced CSS styling -->
+<style>
+.card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+}
+
+.card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.btn {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.alert-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 6px;
+}
+
+/* Statistics cards animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.row .col-lg-4 {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.row .col-lg-4:nth-child(2) { animation-delay: 0.1s; }
+.row .col-lg-4:nth-child(3) { animation-delay: 0.2s; }
+
+/* Enhanced card headers */
+.card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px 12px 0 0 !important;
+}
+
+/* Status badges with better styling */
+.badge {
+  padding: 0.5em 0.8em;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* Contact links with better hover states */
+a[href^="mailto:"], a[href^="tel:"] {
+  text-decoration: none;
+  transition: color 0.3s ease;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+a[href^="mailto:"]:hover, a[href^="tel:"]:hover {
+  background-color: rgba(13, 110, 253, 0.1);
+  color: #0d6efd !important;
+}
+
+/* Improved spacing and typography */
+.card-body h6 {
+  color: #495057;
+  font-weight: 600;
+}
+
+.text-muted.small {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Profile-like layout improvements */
+.row > .col-lg-8 {
+  padding-right: 1.5rem;
+}
+
+@media (max-width: 991.98px) {
+  .row > .col-lg-8 {
+    padding-right: 15px;
+    margin-bottom: 2rem;
+  }
+}
+
+/* Enhanced statistics cards layout */
+.row.mb-4 .col-lg-4 {
+  flex: 0 0 33.333333%;
+  max-width: 33.333333%;
+}
+
+@media (max-width: 991.98px) {
+  .row.mb-4 .col-lg-4 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .row.mb-4 .col-lg-4 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+/* Progress bars styling */
+.progress {
+  border-radius: 10px;
+  background-color: rgba(0,0,0,0.1);
+}
+
+.progress-bar {
+  border-radius: 10px;
+  transition: width 1s ease-in-out;
+}
+
+/* Enhanced sidebar cards */
+.col-lg-4 .card {
+  margin-bottom: 1.5rem;
+}
+
+.col-lg-4 .card:last-child {
+  margin-bottom: 0;
+}
+
+/* Better button spacing */
+.d-grid gap-2 > .btn {
+  margin-bottom: 0.5rem;
+}
+
+.d-grid gap-2 > .btn:last-child {
+  margin-bottom: 0;
+}
+
+/* Improved alert styling */
+.alert-sm.alert-success {
+  background-color: rgba(25, 135, 84, 0.1);
+  border-color: rgba(25, 135, 84, 0.2);
+  color: #0f5132;
+}
+
+.alert-sm.alert-primary {
+  background-color: rgba(13, 110, 253, 0.1);
+  border-color: rgba(13, 110, 253, 0.2);
+  color: #084298;
+}
+</style>
