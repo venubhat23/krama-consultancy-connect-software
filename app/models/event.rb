@@ -22,6 +22,22 @@ class Event < ApplicationRecord
   end
 
   def registration_count
-    event_registrations.count
+    event_registrations.going.count
+  end
+
+  def not_going_count
+    event_registrations.not_going.count
+  end
+
+  def upcoming?
+    starts_at >= Time.current
+  end
+
+  # Upcoming events in scope for a user that they haven't RSVP'd to yet.
+  def self.pending_rsvp_for(user)
+    where(forum_id: user.forum_id, chapter_id: [user.chapter_id, nil])
+      .upcoming
+      .where.not(id: user.event_registrations.select(:event_id))
+      .order(:starts_at)
   end
 end

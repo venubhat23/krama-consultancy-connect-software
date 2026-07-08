@@ -8,16 +8,22 @@
     <% if @events.any? %>
       <div class="table-responsive">
         <table class="table table-hover mb-0">
-          <thead class="bg-light"><tr><th class="border-0">Event</th><th class="border-0">Scope</th><th class="border-0">Date</th><th class="border-0">Registrations</th><th class="border-0">Actions</th></tr></thead>
+          <thead class="bg-light"><tr><th class="border-0">Event</th><th class="border-0">Scope</th><th class="border-0">Date</th><th class="border-0">Attending</th><th class="border-0">Actions</th></tr></thead>
           <tbody>
             <% @events.each do |event| %>
               <tr>
                 <td><%= link_to event.title, forum_portal_event_path(event), class: "text-decoration-none fw-medium" %></td>
                 <td><%= event.chapter&.name || "Whole Forum" %></td>
                 <td><%= event.starts_at.strftime("%b %d, %Y %I:%M %p") %></td>
-                <td><%= event.registration_count %></td>
+                <td>
+                  <span class="badge bg-success"><%= event.registration_count %> going</span>
+                  <% if event.not_going_count.positive? %>
+                    <span class="badge bg-secondary"><%= event.not_going_count %> declined</span>
+                  <% end %>
+                </td>
                 <td>
                   <div class="d-flex gap-1">
+                    <%= link_to forum_portal_event_path(event), class: "btn btn-sm btn-outline-secondary", target: "_blank", rel: "noopener", title: "View attendees in a new tab" do %><i class="bi bi-people"></i><% end %>
                     <%= link_to edit_forum_portal_event_path(event), class: "btn btn-sm btn-outline-primary" do %><i class="bi bi-pencil"></i><% end %>
                     <%= button_to forum_portal_event_path(event), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete #{event.title}?" } } do %><i class="bi bi-trash"></i><% end %>
                   </div>

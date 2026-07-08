@@ -7,22 +7,33 @@
 </div>
 
 <div class="card border-0 shadow-sm">
-  <div class="card-header bg-transparent border-0"><h5 class="mb-0">Registrations & Attendance</h5></div>
+  <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Who's Attending</h5>
+    <div class="d-flex gap-2">
+      <span class="badge bg-success"><%= @event.registration_count %> going</span>
+      <span class="badge bg-secondary"><%= @event.not_going_count %> declined</span>
+    </div>
+  </div>
   <div class="card-body p-0">
     <% if @registrations.any? %>
       <div class="table-responsive">
         <table class="table table-hover mb-0">
-          <thead class="bg-light"><tr><th class="border-0">Member</th><th class="border-0">Attended</th><th class="border-0">Actions</th></tr></thead>
+          <thead class="bg-light"><tr><th class="border-0">Member</th><th class="border-0">RSVP</th><th class="border-0">Attended</th><th class="border-0">Actions</th></tr></thead>
           <tbody>
             <% @registrations.each do |reg| %>
               <tr>
                 <td><%= reg.user.full_name %></td>
                 <td>
+                  <span class="badge bg-<%= reg.going? ? 'success' : 'secondary' %>"><%= reg.going? ? "Going" : "Declined" %></span>
+                </td>
+                <td>
                   <span class="badge bg-<%= reg.attended? ? 'success' : 'secondary' %>"><%= reg.attended? ? "Present" : "Not marked" %></span>
                 </td>
                 <td>
-                  <%= button_to toggle_attendance_forum_portal_event_path(@event, registration_id: reg.id), method: :patch, class: "btn btn-sm btn-outline-primary" do %>
-                    <%= reg.attended? ? "Unmark" : "Mark Present" %>
+                  <% if reg.going? %>
+                    <%= button_to toggle_attendance_forum_portal_event_path(@event, registration_id: reg.id), method: :patch, class: "btn btn-sm btn-outline-primary" do %>
+                      <%= reg.attended? ? "Unmark" : "Mark Present" %>
+                    <% end %>
                   <% end %>
                 </td>
               </tr>
@@ -31,7 +42,7 @@
         </table>
       </div>
     <% else %>
-      <div class="text-center py-4 text-muted">No registrations yet.</div>
+      <div class="text-center py-4 text-muted">No responses yet.</div>
     <% end %>
   </div>
 </div>

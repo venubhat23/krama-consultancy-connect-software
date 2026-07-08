@@ -3,6 +3,7 @@ module BannersHelper
   def display_banners(location)
     # Disable sidebar banners completely
     return if location == 'sidebar'
+    return unless Banner.table_exists?
 
     banners = Banner.active
                     .current
@@ -16,6 +17,8 @@ module BannersHelper
         render_banner(banner)
       end.join.html_safe
     end
+  rescue ActiveRecord::StatementInvalid
+    nil
   end
 
   # Render sidebar ad banners with special styling

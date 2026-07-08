@@ -64,6 +64,7 @@ Rails.application.routes.draw do
       member do
         post :register
         post :mark_attendance
+        post :rsvp
       end
     end
     resources :announcements, only: [:index]

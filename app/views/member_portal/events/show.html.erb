@@ -3,13 +3,15 @@
     <h2 class="mb-1"><%= @event.title %></h2>
     <p class="text-muted mb-0"><%= @event.starts_at.strftime("%b %d, %Y %I:%M %p") %> · <%= @event.venue %></p>
   </div>
-  <div class="d-flex gap-2">
-    <% if @registration.nil? %>
-      <%= button_to "Register", register_member_portal_event_path(@event), method: :post, class: "btn btn-primary" %>
-    <% elsif !@registration.attended? %>
-      <%= button_to "Mark My Attendance", mark_attendance_member_portal_event_path(@event), method: :post, class: "btn btn-success" %>
-    <% else %>
+  <div class="d-flex gap-2 align-items-center">
+    <% if @event.upcoming? %>
+      <%= button_to "Yes, I'm attending", rsvp_member_portal_event_path(@event, attending: true), method: :post, class: "btn btn-sm #{@registration&.going? ? 'btn-success' : 'btn-outline-success'}" %>
+      <%= button_to "Can't make it", rsvp_member_portal_event_path(@event, attending: false), method: :post, class: "btn btn-sm #{@registration&.not_going? ? 'btn-secondary' : 'btn-outline-secondary'}" %>
+    <% end %>
+    <% if @registration&.attended? %>
       <span class="badge bg-success fs-6">✓ Attended</span>
+    <% elsif @registration&.going? %>
+      <%= button_to "Mark My Attendance", mark_attendance_member_portal_event_path(@event), method: :post, class: "btn btn-success" %>
     <% end %>
   </div>
 </div>
