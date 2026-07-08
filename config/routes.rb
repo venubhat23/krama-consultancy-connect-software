@@ -50,6 +50,7 @@ Rails.application.routes.draw do
     resources :events do
       member do
         patch 'registrations/:registration_id/attendance', action: :toggle_attendance, as: :toggle_attendance
+        post 'invite_guest'
       end
     end
     resources :support_tickets, only: [:index, :show, :create] do

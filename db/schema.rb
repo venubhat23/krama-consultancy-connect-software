@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_08_140001) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_08_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -550,14 +550,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_140001) do
 
   create_table "event_registrations", force: :cascade do |t|
     t.bigint "event_id", null: false
-    t.bigint "user_id", null: false
+    t.bigint "user_id"
     t.boolean "attended", default: false, null: false
     t.datetime "attended_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "rsvp_status", default: 0, null: false
+    t.string "guest_name"
+    t.string "guest_email"
+    t.bigint "invited_by_id"
     t.index ["event_id", "user_id"], name: "index_event_registrations_on_event_id_and_user_id", unique: true
     t.index ["event_id"], name: "index_event_registrations_on_event_id"
+    t.index ["invited_by_id"], name: "index_event_registrations_on_invited_by_id"
     t.index ["rsvp_status"], name: "index_event_registrations_on_rsvp_status"
     t.index ["user_id"], name: "index_event_registrations_on_user_id"
   end
@@ -1982,6 +1986,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_140001) do
   add_foreign_key "chapters", "forums"
   add_foreign_key "event_registrations", "events"
   add_foreign_key "event_registrations", "users"
+  add_foreign_key "event_registrations", "users", column: "invited_by_id"
   add_foreign_key "events", "chapters"
   add_foreign_key "events", "forums"
   add_foreign_key "forum_requests", "business_plans"
