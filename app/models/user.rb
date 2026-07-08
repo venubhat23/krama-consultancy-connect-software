@@ -88,6 +88,7 @@ class User < ApplicationRecord
   # Note: role validation can be added later when roles are set up
 
   # Enums
+  attribute :user_type, :string
   enum :user_type, { admin: 'admin', agent: 'agent', sub_agent: 'sub_agent', customer: 'customer', ambassador: 'ambassador', investor: 'investor', forum_admin: 'forum_admin', chapter_admin: 'chapter_admin', member: 'member' }
 
   # Callbacks
