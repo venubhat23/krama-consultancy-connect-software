@@ -246,7 +246,7 @@ html, body {
 }
 
 .simple-title {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 800;
   color: #2d3748;
   margin-bottom: 12px;
@@ -256,8 +256,9 @@ html, body {
   background-clip: text;
   background-size: 200% 200%;
   animation: titleGlow 4s ease-in-out infinite;
-  letter-spacing: -0.8px;
+  letter-spacing: -0.6px;
   text-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+  white-space: nowrap;
   position: relative;
 }
 
@@ -456,7 +457,8 @@ html, body {
   }
 
   .simple-title {
-    font-size: 24px;
+    font-size: 20px;
+    white-space: normal;
   }
 
   .simple-logo {

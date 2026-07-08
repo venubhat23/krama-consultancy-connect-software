@@ -40,7 +40,7 @@
                   <span class="badge bg-info-subtle text-info">Unlimited</span>
                 <% end %>
               </td>
-              <td><span class="badge bg-<%= forum.active? ? 'success' : 'warning' %>"><%= forum.status.humanize %></span></td>
+              <td><span class="badge bg-<%= forum.active? ? 'success' : 'warning' %>"><%= (forum.status || "unknown").humanize %></span></td>
             </tr>
           <% end %>
         </tbody>

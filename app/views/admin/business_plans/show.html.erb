@@ -24,7 +24,7 @@
               <tr>
                 <td><%= link_to forum.name, admin_forum_path(forum) %></td>
                 <td>
-                  <span class="badge bg-<%= forum.active? ? 'success' : 'secondary' %>"><%= forum.status.humanize %></span>
+                  <span class="badge bg-<%= forum.active? ? 'success' : 'secondary' %>"><%= (forum.status || "unknown").humanize %></span>
                 </td>
               </tr>
             <% end %>

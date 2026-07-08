@@ -31,13 +31,13 @@
                   <h6 class="mb-0 fw-medium"><%= link_to forum.name, admin_forum_path(forum), class: "text-decoration-none" %></h6>
                   <small class="text-muted"><%= forum.slug %></small>
                 </td>
-                <td><span class="badge bg-primary-subtle text-primary"><%= forum.business_plan.name %></span></td>
+                <td><span class="badge bg-primary-subtle text-primary"><%= forum.business_plan&.name || "—" %></span></td>
                 <td><%= @admin_by_forum[forum.id]&.email || "—" %></td>
                 <td><%= @chapter_counts[forum.id] || 0 %></td>
                 <td><%= @member_counts[forum.id] || 0 %></td>
                 <td>
                   <span class="badge bg-<%= forum.active? ? 'success' : 'warning' %>">
-                    <i class="bi bi-<%= forum.active? ? 'check-circle' : 'pause-circle' %> me-1"></i><%= forum.status.humanize %>
+                    <i class="bi bi-<%= forum.active? ? 'check-circle' : 'pause-circle' %> me-1"></i><%= (forum.status || "unknown").humanize %>
                   </span>
                 </td>
                 <td>
