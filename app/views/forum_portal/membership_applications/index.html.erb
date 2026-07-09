@@ -1,0 +1,76 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Membership Pipeline</h2>
+    <p class="text-muted mb-0">Track prospects from invite through to member, event-led or direct.</p>
+  </div>
+  <%= link_to new_forum_portal_membership_application_path, class: "btn btn-primary" do %>
+    <i class="bi bi-person-plus-fill me-1"></i>Invite Someone
+  <% end %>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-4">
+  <% total = @status_counts.values.sum %>
+  <%= link_to forum_portal_membership_applications_path, class: "btn btn-sm #{'btn-primary' unless params[:status].present?} #{'btn-outline-secondary' if params[:status].present?}" do %>
+    All <span class="badge bg-light text-dark ms-1"><%= total %></span>
+  <% end %>
+  <% MembershipApplication.statuses.each_key do |status| %>
+    <% count = @status_counts[status] || 0 %>
+    <% next if count.zero? && params[:status] != status %>
+    <%= link_to forum_portal_membership_applications_path(status: status), class: "btn btn-sm #{params[:status] == status ? 'btn-primary' : 'btn-outline-secondary'}" do %>
+      <%= status.humanize %> <span class="badge bg-light text-dark ms-1"><%= count %></span>
+    <% end %>
+  <% end %>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <% if @applications.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Name</th>
+              <th class="border-0">Chapter</th>
+              <th class="border-0">Source</th>
+              <th class="border-0">Stage</th>
+              <th class="border-0">Invited</th>
+              <th class="border-0"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @applications.each do |app| %>
+              <tr>
+                <td>
+                  <h6 class="mb-0 fw-medium"><%= app.name %></h6>
+                  <small class="text-muted"><%= app.email %></small>
+                </td>
+                <td><%= app.chapter&.name || "—" %></td>
+                <td>
+                  <% if app.event_led? %>
+                    <span class="badge bg-primary-subtle text-primary"><i class="bi bi-calendar-event me-1"></i><%= app.event&.title || "Event" %></span>
+                  <% else %>
+                    <span class="badge bg-info-subtle text-info"><i class="bi bi-send me-1"></i>Direct Invite</span>
+                  <% end %>
+                </td>
+                <td>
+                  <span class="badge bg-<%= membership_status_color(app.status) %>"><%= app.status.humanize %></span>
+                </td>
+                <td><small class="text-muted"><%= app.created_at.strftime("%b %d, %Y") %></small></td>
+                <td><%= link_to "View", forum_portal_membership_application_path(app), class: "btn btn-sm btn-outline-primary" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer bg-transparent border-0">
+        <%= render "shared/pagination", records: @applications %>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <i class="bi bi-person-lines-fill fs-1 text-muted d-block mb-3"></i>
+        <h5 class="text-muted">No applications yet</h5>
+        <p class="text-muted">Invite someone from an event's attendee list, or start a direct invite above.</p>
+      </div>
+    <% end %>
+  </div>
+</div>

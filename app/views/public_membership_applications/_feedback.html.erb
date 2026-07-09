@@ -1,0 +1,20 @@
+<div class="text-center mb-4">
+  <i class="bi bi-chat-heart display-4" style="color: #667eea;"></i>
+  <h3 class="mt-3">Thanks for coming, <%= application.name.split.first %>!</h3>
+  <p class="text-muted">We'd love to hear what you thought.</p>
+</div>
+
+<%= form_with url: submit_feedback_public_membership_application_path(application.token), method: :post, local: true do |f| %>
+  <div class="mb-3 text-center">
+    <label class="form-label d-block">How was it?</label>
+    <select name="feedback_rating" class="form-select" style="max-width: 220px; margin: 0 auto;" required>
+      <option value="">Select a rating</option>
+      <% (1..5).each { |n| %><option value="<%= n %>"><%= n %> star<%= "s" if n > 1 %></option><% } %>
+    </select>
+  </div>
+  <div class="mb-4">
+    <label class="form-label">Anything you'd like to share?</label>
+    <%= text_area_tag :feedback_comment, nil, class: "form-control", rows: 3 %>
+  </div>
+  <%= f.submit "Submit Feedback", class: "btn btn-primary btn-lg w-100" %>
+<% end %>

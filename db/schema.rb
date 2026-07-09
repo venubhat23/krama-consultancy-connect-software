@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_08_160000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_08_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -1132,6 +1132,51 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_160000) do
     t.index ["customer_id"], name: "index_loans_on_customer_id"
   end
 
+  create_table "membership_applications", force: :cascade do |t|
+    t.bigint "forum_id", null: false
+    t.bigint "chapter_id"
+    t.bigint "event_id"
+    t.bigint "invited_by_id"
+    t.bigint "reviewed_by_id"
+    t.bigint "user_id"
+    t.string "name", null: false
+    t.string "email", null: false
+    t.string "phone"
+    t.string "company_name"
+    t.string "designation"
+    t.string "pan_number"
+    t.string "gst_number"
+    t.text "business_address"
+    t.integer "source", default: 0, null: false
+    t.integer "status", default: 0, null: false
+    t.string "token", null: false
+    t.text "payment_instructions"
+    t.text "review_note"
+    t.integer "feedback_rating"
+    t.text "feedback_comment"
+    t.datetime "confirmed_at"
+    t.datetime "attended_at"
+    t.datetime "feedback_collected_at"
+    t.datetime "join_invite_sent_at"
+    t.datetime "interested_at"
+    t.datetime "kyc_submitted_at"
+    t.datetime "review_started_at"
+    t.datetime "approved_at"
+    t.datetime "rejected_at"
+    t.datetime "paid_at"
+    t.datetime "member_since_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chapter_id"], name: "index_membership_applications_on_chapter_id"
+    t.index ["event_id"], name: "index_membership_applications_on_event_id"
+    t.index ["forum_id"], name: "index_membership_applications_on_forum_id"
+    t.index ["invited_by_id"], name: "index_membership_applications_on_invited_by_id"
+    t.index ["reviewed_by_id"], name: "index_membership_applications_on_reviewed_by_id"
+    t.index ["status"], name: "index_membership_applications_on_status"
+    t.index ["token"], name: "index_membership_applications_on_token", unique: true
+    t.index ["user_id"], name: "index_membership_applications_on_user_id"
+  end
+
   create_table "motor_insurance_documents", force: :cascade do |t|
     t.bigint "motor_insurance_id", null: false
     t.string "document_type"
@@ -2003,6 +2048,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_160000) do
   add_foreign_key "life_insurance_nominees", "life_insurances"
   add_foreign_key "life_insurances", "distributors"
   add_foreign_key "loans", "customers"
+  add_foreign_key "membership_applications", "chapters"
+  add_foreign_key "membership_applications", "events"
+  add_foreign_key "membership_applications", "forums"
+  add_foreign_key "membership_applications", "users"
+  add_foreign_key "membership_applications", "users", column: "invited_by_id"
+  add_foreign_key "membership_applications", "users", column: "reviewed_by_id"
   add_foreign_key "motor_insurance_documents", "motor_insurances"
   add_foreign_key "motor_insurance_nominees", "motor_insurances"
   add_foreign_key "motor_insurances", "brokers"

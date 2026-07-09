@@ -1,0 +1,83 @@
+<style>
+  .ma-flow-wrap { overflow-x: auto; padding: 2rem 0 0.5rem; }
+  .ma-flow { display: flex; min-width: max-content; }
+
+  .ma-arrow-item {
+    position: relative;
+    flex: 1 0 128px;
+    margin-right: -17px;
+  }
+  .ma-arrow-item:last-child { margin-right: 0; }
+  .ma-arrow-item.current { z-index: 2; }
+
+  .ma-arrow {
+    padding: 0.9rem 1.4rem 0.9rem 2.1rem;
+    background: #eef0f3;
+    color: #97a0ab;
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: center;
+    white-space: nowrap;
+    clip-path: polygon(0 0, calc(100% - 17px) 0, 100% 50%, calc(100% - 17px) 100%, 0 100%, 17px 50%);
+    transition: background .2s ease, color .2s ease;
+  }
+  .ma-arrow-item:first-child .ma-arrow {
+    clip-path: polygon(0 0, calc(100% - 17px) 0, 100% 50%, calc(100% - 17px) 100%, 0 100%);
+    padding-left: 1.4rem;
+  }
+
+  .ma-arrow-item.done .ma-arrow {
+    background: linear-gradient(135deg, #34d399 0%, #198754 100%);
+    color: #fff;
+  }
+  .ma-arrow-item.current .ma-arrow {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.45);
+    animation: ma-pulse 2s ease-in-out infinite;
+  }
+  @keyframes ma-pulse {
+    0%, 100% { box-shadow: 0 4px 16px rgba(102, 126, 234, 0.45); }
+    50%      { box-shadow: 0 4px 26px rgba(102, 126, 234, 0.8); }
+  }
+
+  .ma-arrow-icon { display: block; font-size: 1.05rem; margin-bottom: 3px; }
+  .ma-arrow-date { display: block; font-size: 0.65rem; font-weight: 400; opacity: 0.85; margin-top: 2px; }
+
+  .ma-current-tag {
+    position: absolute; top: -1.65rem; left: 50%; transform: translateX(-50%);
+    background: #4c3a91; color: #fff; font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.03em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 12px; white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 3;
+  }
+  .ma-current-tag::after {
+    content: ""; position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%);
+    border-width: 4px 4px 0 4px; border-style: solid; border-color: #4c3a91 transparent transparent transparent;
+  }
+</style>
+
+<div class="ma-flow-wrap">
+  <div class="ma-flow">
+    <% steps.each do |step| %>
+      <% done = step[:completed_at].present? %>
+      <div class="ma-arrow-item <%= 'done' if done %> <%= 'current' if step[:current] %>">
+        <% if step[:current] %><span class="ma-current-tag">You are here</span><% end %>
+        <div class="ma-arrow">
+          <span class="ma-arrow-icon">
+            <% if done %>
+              <i class="bi bi-check-lg"></i>
+            <% elsif step[:current] %>
+              <i class="bi bi-arrow-right-circle-fill"></i>
+            <% else %>
+              <i class="bi bi-circle"></i>
+            <% end %>
+          </span>
+          <%= step[:label] %>
+          <% if done %><span class="ma-arrow-date"><%= step[:completed_at].strftime("%b %d") %></span><% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

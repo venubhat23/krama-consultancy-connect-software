@@ -41,6 +41,16 @@ Rails.application.routes.draw do
   # Public "apply to onboard your forum" form
   resources :forum_requests, only: [:new, :create]
 
+  # Public, token-based guest pages for the membership funnel — one evolving
+  # link sent via WhatsApp that adapts to whatever stage the applicant is at.
+  scope :apply, controller: 'public_membership_applications' do
+    get  ':token',              action: :show,            as: :public_membership_application
+    post ':token/confirm_rsvp', action: :confirm_rsvp,     as: :confirm_rsvp_public_membership_application
+    post ':token/feedback',     action: :submit_feedback,  as: :submit_feedback_public_membership_application
+    post ':token/interest',     action: :confirm_interest, as: :confirm_interest_public_membership_application
+    post ':token/kyc',          action: :submit_kyc,       as: :submit_kyc_public_membership_application
+  end
+
   # Forum/Chapter admin portal (forum_admin + chapter_admin, scoped by role in controllers)
   namespace :forum_portal do
     get 'dashboard', to: 'dashboard#index'
@@ -51,6 +61,19 @@ Rails.application.routes.draw do
       member do
         patch 'registrations/:registration_id/attendance', action: :toggle_attendance, as: :toggle_attendance
         post 'invite_guest'
+      end
+    end
+    resources :membership_applications, path: 'membership', only: [:index, :new, :create, :show] do
+      member do
+        post :confirm_rsvp
+        post :mark_attended
+        post :record_feedback
+        post :send_join_invite
+        post :start_review
+        post :approve
+        post :reject
+        post :mark_paid
+        post :convert_to_member
       end
     end
     resources :support_tickets, only: [:index, :show, :create] do

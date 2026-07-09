@@ -1,0 +1,40 @@
+<div class="container py-5" style="max-width: 640px;">
+  <div class="text-center mb-4">
+    <div class="brand-logo" style="color: #667eea; font-size: 1.6rem;"><%= @application.forum.name %></div>
+  </div>
+
+  <% if notice %><div class="alert alert-success"><%= notice %></div><% end %>
+  <% if alert %><div class="alert alert-danger"><%= alert %></div><% end %>
+
+  <div class="card section-card border-0 shadow-sm">
+    <div class="card-body p-4 p-md-5">
+      <% if @application.rejected? %>
+        <%= render "rejected", application: @application %>
+      <% elsif @application.member? %>
+        <%= render "member", application: @application %>
+      <% elsif @application.paid? %>
+        <%= render "holding", title: "Payment received!", body: "We're finalizing your membership — you'll hear from us shortly." %>
+      <% elsif @application.approved? %>
+        <%= render "approved", application: @application %>
+      <% elsif @application.kyc_submitted? || @application.under_review? %>
+        <%= render "holding", title: "Application under review", body: "Thanks for submitting your details. We're reviewing your application and will be in touch soon." %>
+      <% elsif @application.interested? %>
+        <%= render "kyc_form", application: @application %>
+      <% elsif @application.feedback_collected? %>
+        <% if @application.join_invite_sent_at.present? %>
+          <%= render "kyc_form", application: @application %>
+        <% else %>
+          <%= render "holding", title: "Thanks for the feedback!", body: "We appreciate you taking the time. We'll be in touch soon." %>
+        <% end %>
+      <% elsif @application.attended? %>
+        <%= render "feedback", application: @application %>
+      <% elsif @application.confirmed? %>
+        <%= render "holding", title: "You're confirmed!", body: "See you at #{@application.event&.title || 'the event'} on #{@application.event&.starts_at&.strftime('%B %d, %Y')}." %>
+      <% elsif @application.invited? && @application.event_led? %>
+        <%= render "rsvp", application: @application %>
+      <% elsif @application.invited? %>
+        <%= render "interest", application: @application %>
+      <% end %>
+    </div>
+  </div>
+</div>

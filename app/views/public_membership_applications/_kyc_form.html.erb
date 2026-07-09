@@ -1,0 +1,35 @@
+<div class="text-center mb-4">
+  <i class="bi bi-clipboard-check display-4" style="color: #667eea;"></i>
+  <h3 class="mt-3">Almost there, <%= application.name.split.first %>!</h3>
+  <p class="text-muted">A few details to complete your membership application to <strong><%= application.forum.name %></strong>.</p>
+</div>
+
+<%= form_with url: submit_kyc_public_membership_application_path(application.token), method: :post, local: true, multipart: true, scope: :membership_application do |f| %>
+  <div class="mb-3">
+    <label class="form-label">Company / Business Name</label>
+    <%= f.text_field :company_name, class: "form-control", value: application.company_name, required: true %>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Your Designation</label>
+    <%= f.text_field :designation, class: "form-control", placeholder: "e.g. Founder, Director" %>
+  </div>
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <label class="form-label">PAN Number</label>
+      <%= f.text_field :pan_number, class: "form-control" %>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">GST Number <span class="text-muted small">(optional)</span></label>
+      <%= f.text_field :gst_number, class: "form-control" %>
+    </div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Business Address</label>
+    <%= f.text_area :business_address, class: "form-control", rows: 2 %>
+  </div>
+  <div class="mb-4">
+    <label class="form-label">Supporting Documents <span class="text-muted small">(ID proof, business proof, etc.)</span></label>
+    <%= f.file_field :kyc_documents, class: "form-control", multiple: true %>
+  </div>
+  <%= f.submit "Submit Application", class: "btn btn-primary btn-lg w-100" %>
+<% end %>

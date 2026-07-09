@@ -22,7 +22,7 @@ window.KramaConsBusinessForum = {
     // Auto-hide sidebar backdrop on window resize
     window.addEventListener('resize', () => {
       if (window.innerWidth >= 992) {
-        sidebar.classList.remove('show');
+        sidebar.classList.remove('mobile-open');
         this.removeBackdrop();
       }
     });
@@ -183,11 +183,11 @@ function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   if (!sidebar) return;
 
-  if (sidebar.classList.contains('show')) {
-    sidebar.classList.remove('show');
+  if (sidebar.classList.contains('mobile-open')) {
+    sidebar.classList.remove('mobile-open');
     KramaConsBusinessForum.removeBackdrop();
   } else {
-    sidebar.classList.add('show');
+    sidebar.classList.add('mobile-open');
 
     // Create backdrop
     const backdrop = document.createElement('div');

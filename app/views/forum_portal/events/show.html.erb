@@ -55,12 +55,13 @@
                 <td>
                   <span class="badge bg-<%= reg.attended? ? 'success' : 'secondary' %>"><%= reg.attended? ? "Present" : "Not marked" %></span>
                 </td>
-                <td>
+                <td class="d-flex gap-1">
                   <% if reg.going? %>
                     <%= button_to toggle_attendance_forum_portal_event_path(@event, registration_id: reg.id), method: :patch, class: "btn btn-sm btn-outline-primary" do %>
                       <%= reg.attended? ? "Unmark" : "Mark Present" %>
                     <% end %>
                   <% end %>
+                  <%= link_to "Start Membership App", new_forum_portal_membership_application_path(name: reg.display_name, email: reg.guest_email, event_id: @event.id), class: "btn btn-sm btn-outline-success" %>
                 </td>
               </tr>
             <% end %>

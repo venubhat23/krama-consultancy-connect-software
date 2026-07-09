@@ -558,6 +558,11 @@ body.sidebar-collapsed .main-content {
     display: none !important;
   }
 
+  /* Hidden off-canvas by default on mobile; only .mobile-open brings it in */
+  .modern-sidebar {
+    transform: translateX(-100%) !important;
+  }
+
   .modern-sidebar.collapsed {
     width: 260px !important;
     transform: translateX(-100%) !important;
@@ -949,6 +954,12 @@ body.sidebar-collapsed .main-content {
           <%= link_to forum_portal_events_path, class: "nav-link-modern #{'active' if request.path.include?('/forum_portal/events')}", data: { tooltip: "Events" } do %>
             <div class="nav-icon-modern"><div class="icon-bg gradient-teal"><i class="bi bi-calendar-event"></i></div></div>
             <span class="nav-text">Events</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to forum_portal_membership_applications_path, class: "nav-link-modern #{'active' if request.path.include?('/forum_portal/membership')}", data: { tooltip: "Membership" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-orange"><i class="bi bi-person-vcard"></i></div></div>
+            <span class="nav-text">Membership</span>
           <% end %>
         </li>
         <li class="nav-item">

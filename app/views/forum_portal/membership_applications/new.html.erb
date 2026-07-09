@@ -1,0 +1,51 @@
+<div class="mb-4">
+  <h2 class="mb-1">Invite Someone</h2>
+  <p class="text-muted mb-0">Start a membership application — either for someone who attended (or will attend) an event, or a direct invite.</p>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <%= form_with model: @application, url: forum_portal_membership_applications_path, local: true do |form| %>
+      <% if @application.errors.any? %>
+        <div class="alert alert-danger">
+          <ul class="mb-0"><% @application.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %></ul>
+        </div>
+      <% end %>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Name</label>
+          <%= form.text_field :name, class: "form-control", required: true, value: params[:name] %>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Email</label>
+          <%= form.email_field :email, class: "form-control", required: true, value: params[:email] %>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Phone (for WhatsApp)</label>
+          <%= form.text_field :phone, class: "form-control", placeholder: "+91XXXXXXXXXX" %>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Company</label>
+          <%= form.text_field :company_name, class: "form-control" %>
+        </div>
+        <% unless current_user.chapter_admin? %>
+        <div class="col-md-6">
+          <label class="form-label">Chapter</label>
+          <%= form.select :chapter_id, @chapters.map { |c| [c.name, c.id] }, { include_blank: "No chapter yet" }, class: "form-select" %>
+        </div>
+        <% end %>
+        <div class="col-md-6">
+          <label class="form-label">Linked Event <span class="text-muted small">(optional)</span></label>
+          <%= form.select :event_id, @events.map { |e| ["#{e.title} — #{e.starts_at.strftime('%b %d, %Y')}", e.id] }, { include_blank: "None — direct invite" }, class: "form-select", value: params[:event_id] %>
+          <small class="text-muted">Leave blank for a direct chapter/forum invite. Attach an event to track RSVP, attendance and feedback first.</small>
+        </div>
+      </div>
+
+      <div class="mt-4 d-flex gap-2">
+        <%= form.submit "Create Invite", class: "btn btn-primary" %>
+        <%= link_to "Cancel", forum_portal_membership_applications_path, class: "btn btn-outline-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
