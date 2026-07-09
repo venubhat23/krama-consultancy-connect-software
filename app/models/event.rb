@@ -1,8 +1,9 @@
 class Event < ApplicationRecord
-  enum :event_type, { meeting: 0, workshop: 1, networking: 2, other: 3 }
+  enum :event_type, { meeting: 0, workshop: 1, networking: 2, other: 3, office_darshan: 4 }
 
   belongs_to :forum
   belongs_to :chapter, optional: true
+  belongs_to :created_by, class_name: "User", optional: true
   has_many :event_registrations, dependent: :destroy
   has_many :registrants, through: :event_registrations, source: :user
 
@@ -29,6 +30,14 @@ class Event < ApplicationRecord
     event_registrations.not_going.count
   end
 
+  def pending_invite_count
+    event_registrations.invited.count
+  end
+
+  def thanked_count
+    event_registrations.where(thanked: true).count
+  end
+
   def upcoming?
     starts_at >= Time.current
   end
@@ -39,5 +48,13 @@ class Event < ApplicationRecord
       .upcoming
       .where.not(id: user.event_registrations.select(:event_id))
       .order(:starts_at)
+  end
+
+  # Office Darshan invites a member hasn't responded to yet — drives the dashboard banner.
+  def self.pending_office_darshan_invites_for(user)
+    office_darshan
+      .upcoming
+      .joins(:event_registrations)
+      .merge(EventRegistration.invited.where(user_id: user.id))
   end
 end

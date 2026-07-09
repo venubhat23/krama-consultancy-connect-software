@@ -1,0 +1,101 @@
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h2 class="mb-1"><%= @event.title %></h2>
+    <p class="text-muted mb-0">
+      <i class="bi bi-clock me-1"></i><%= @event.starts_at.strftime("%b %d, %Y %I:%M %p") %>
+      <% if @event.venue.present? %> · <i class="bi bi-geo-alt me-1"></i><%= @event.venue %><% end %>
+      · Organized by <%= @event.created_by&.full_name || "—" %>
+    </p>
+  </div>
+  <% if !@organizer && @event.upcoming? %>
+    <div class="d-flex gap-2">
+      <%= button_to "Yes, I'll come", rsvp_member_portal_office_darshan_path(@event, attending: true), method: :post, class: "btn btn-sm #{@registration&.going? ? 'btn-success' : 'btn-outline-success'}" %>
+      <%= button_to "Can't make it", rsvp_member_portal_office_darshan_path(@event, attending: false), method: :post, class: "btn btn-sm #{@registration&.not_going? ? 'btn-secondary' : 'btn-outline-secondary'}" %>
+    </div>
+  <% end %>
+</div>
+
+<% if @event.description.present? %>
+  <div class="card border-0 shadow-sm mb-4"><div class="card-body"><%= @event.description %></div></div>
+<% end %>
+
+<% if !@organizer %>
+  <% if @registration&.attended? %>
+    <div class="mb-4"><span class="badge bg-success fs-6">✓ You attended<%= " · Thanked!" if @registration.thanked? %></span></div>
+  <% elsif @registration&.going? %>
+    <div class="mb-4"><%= button_to "Mark My Attendance", mark_attendance_member_portal_office_darshan_path(@event), method: :post, class: "btn btn-success" %></div>
+  <% end %>
+<% end %>
+
+<% if @organizer %>
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h5 class="mb-0">Who's Coming</h5>
+      <div class="d-flex gap-2 flex-wrap">
+        <span class="badge bg-success"><%= @event.registration_count %> going</span>
+        <span class="badge bg-warning text-dark"><%= @event.pending_invite_count %> pending</span>
+        <span class="badge bg-secondary"><%= @event.not_going_count %> declined</span>
+        <span class="badge bg-primary"><%= @event.attendance_count %> attended</span>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <% if @registrations.any? %>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="bg-light"><tr><th class="border-0">Member</th><th class="border-0">RSVP</th><th class="border-0">Attended</th><th class="border-0">Actions</th></tr></thead>
+            <tbody>
+              <% @registrations.each do |reg| %>
+                <tr>
+                  <td><%= reg.display_name %></td>
+                  <td>
+                    <% badge = { "going" => "success", "not_going" => "secondary", "invited" => "warning" }[reg.rsvp_status] %>
+                    <% label = { "going" => "Going", "not_going" => "Declined", "invited" => "Pending" }[reg.rsvp_status] %>
+                    <span class="badge bg-<%= badge %> <%= 'text-dark' if reg.invited? %>"><%= label %></span>
+                  </td>
+                  <td><span class="badge bg-<%= reg.attended? ? 'success' : 'secondary' %>"><%= reg.attended? ? "Present" : "Not marked" %></span></td>
+                  <td class="d-flex gap-1 flex-wrap">
+                    <% if reg.going? %>
+                      <%= button_to toggle_attendance_member_portal_office_darshan_path(@event, registration_id: reg.id), method: :patch, class: "btn btn-sm btn-outline-primary" do %>
+                        <%= reg.attended? ? "Unmark" : "Mark Present" %>
+                      <% end %>
+                    <% end %>
+                    <% if reg.attended? %>
+                      <%= button_to reg.thanked? ? "Thanked ✓" : "Thank", thank_attendee_member_portal_office_darshan_path(@event, registration_id: reg.id), method: :post, class: "btn btn-sm #{reg.thanked? ? 'btn-outline-success disabled' : 'btn-success'}", disabled: reg.thanked? %>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="text-center py-4 text-muted">No invites sent yet.</div>
+      <% end %>
+    </div>
+    <% if @event.attendance_count > 0 %>
+      <div class="card-footer bg-transparent border-0">
+        <%= button_to "Thank All Who Attended", thank_all_member_portal_office_darshan_path(@event), method: :post, class: "btn btn-outline-success" %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @invitable_users.present? %>
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent border-0"><h5 class="mb-0">Invite More Members</h5></div>
+      <div class="card-body">
+        <%= form_with url: invite_members_member_portal_office_darshan_path(@event), method: :post, local: true do %>
+          <input type="hidden" name="audience" value="specific">
+          <div class="row">
+            <% @invitable_users.each do |member| %>
+              <div class="col-md-4 form-check mb-2">
+                <%= check_box_tag "member_ids[]", member.id, false, class: "form-check-input", id: "invite_member_#{member.id}" %>
+                <%= label_tag "invite_member_#{member.id}", member.full_name, class: "form-check-label" %>
+              </div>
+            <% end %>
+          </div>
+          <%= submit_tag "Invite Selected", class: "btn btn-primary mt-2" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+<% end %>

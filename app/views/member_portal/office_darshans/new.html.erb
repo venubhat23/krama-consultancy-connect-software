@@ -1,0 +1,10 @@
+<div class="mb-4">
+  <h2 class="mb-1">Announce Office Darshan</h2>
+  <p class="text-muted mb-0">Invite members to visit the office — they'll be notified and can RSVP.</p>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <%= render "form", event: @event, invitable_users: @invitable_users %>
+  </div>
+</div>

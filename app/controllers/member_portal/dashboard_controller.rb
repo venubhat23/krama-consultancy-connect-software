@@ -6,6 +6,7 @@ module MemberPortal
                                .upcoming.limit(5)
       @my_open_tickets = current_user.support_tickets.where(status: :open).count
       @pending_rsvp_events = Event.pending_rsvp_for(current_user).limit(5)
+      @pending_office_darshan_invites = Event.pending_office_darshan_invites_for(current_user)
     end
   end
 end

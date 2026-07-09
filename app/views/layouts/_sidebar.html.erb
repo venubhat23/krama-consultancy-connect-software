@@ -558,9 +558,16 @@ body.sidebar-collapsed .main-content {
     display: none !important;
   }
 
-  /* Hidden off-canvas by default on mobile; only .mobile-open brings it in */
-  .modern-sidebar {
+  /* Hidden off-canvas by default on mobile; only .mobile-open brings it in.
+     #sidebar.modern-sidebar (ID + class) outranks legacy layout_fix.css's
+     plain #sidebar rules, which otherwise fight this with a different
+     "show" class name. */
+  #sidebar.modern-sidebar {
     transform: translateX(-100%) !important;
+  }
+
+  #sidebar.modern-sidebar.mobile-open {
+    transform: translateX(0) !important;
   }
 
   .modern-sidebar.collapsed {
@@ -629,10 +636,6 @@ body.sidebar-collapsed .main-content {
     width: 260px !important;
   }
 
-  /* Mobile-specific collapsed sidebar behavior */
-  .modern-sidebar.mobile-open {
-    transform: translateX(0) !important;
-  }
 }
 
 /* Dropdown and Submenu Styles */
@@ -957,6 +960,12 @@ body.sidebar-collapsed .main-content {
           <% end %>
         </li>
         <li class="nav-item">
+          <%= link_to forum_portal_office_darshans_path, class: "nav-link-modern #{'active' if request.path.include?('/forum_portal/office_darshans')}", data: { tooltip: "Office Darshan" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-amber"><i class="bi bi-building"></i></div></div>
+            <span class="nav-text">Office Darshan</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
           <%= link_to forum_portal_membership_applications_path, class: "nav-link-modern #{'active' if request.path.include?('/forum_portal/membership')}", data: { tooltip: "Membership" } do %>
             <div class="nav-icon-modern"><div class="icon-bg gradient-orange"><i class="bi bi-person-vcard"></i></div></div>
             <span class="nav-text">Membership</span>
@@ -972,6 +981,12 @@ body.sidebar-collapsed .main-content {
           <%= link_to forum_portal_support_tickets_path, class: "nav-link-modern #{'active' if request.path.include?('/forum_portal/support_tickets')}", data: { tooltip: "Support Tickets" } do %>
             <div class="nav-icon-modern"><div class="icon-bg gradient-rose"><i class="bi bi-life-preserver"></i></div></div>
             <span class="nav-text">Support Tickets</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to forum_portal_leads_path, class: "nav-link-modern #{'active' if request.path.include?('/forum_portal/leads')}", data: { tooltip: "Leads" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-pink"><i class="bi bi-funnel-fill"></i></div></div>
+            <span class="nav-text">Leads</span>
           <% end %>
         </li>
       </ul>
@@ -990,9 +1005,23 @@ body.sidebar-collapsed .main-content {
           <% end %>
         </li>
         <li class="nav-item">
+          <%= link_to edit_member_portal_profile_path, class: "nav-link-modern #{'active' if request.path.include?('/member_portal/profile')}", data: { tooltip: "My Profile" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-indigo"><i class="bi bi-person-badge"></i></div></div>
+            <span class="nav-text">My Profile</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
           <%= link_to member_portal_events_path, class: "nav-link-modern #{'active' if request.path.include?('/member_portal/events')}", data: { tooltip: "Events" } do %>
             <div class="nav-icon-modern"><div class="icon-bg gradient-teal"><i class="bi bi-calendar-event"></i></div></div>
             <span class="nav-text">Events</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to member_portal_office_darshans_path, class: "nav-link-modern #{'active' if request.path.include?('/member_portal/office_darshans')}", data: { tooltip: "Office Darshan" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-amber"><i class="bi bi-building"></i></div></div>
+            <span class="nav-text">Office Darshan</span>
+            <% pending_darshan_count = Event.pending_office_darshan_invites_for(current_user).count %>
+            <% if pending_darshan_count > 0 %><span class="badge bg-danger ms-auto"><%= pending_darshan_count %></span><% end %>
           <% end %>
         </li>
         <li class="nav-item">
@@ -1005,6 +1034,18 @@ body.sidebar-collapsed .main-content {
           <%= link_to member_portal_support_tickets_path, class: "nav-link-modern #{'active' if request.path.include?('/member_portal/support_tickets')}", data: { tooltip: "My Tickets" } do %>
             <div class="nav-icon-modern"><div class="icon-bg gradient-rose"><i class="bi bi-life-preserver"></i></div></div>
             <span class="nav-text">My Tickets</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to new_member_portal_referral_path, class: "nav-link-modern #{'active' if request.path == new_member_portal_referral_path}", data: { tooltip: "Refer" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-indigo"><i class="bi bi-send-fill"></i></div></div>
+            <span class="nav-text">Refer</span>
+          <% end %>
+        </li>
+        <li class="nav-item">
+          <%= link_to member_portal_leads_path, class: "nav-link-modern #{'active' if request.path.include?('/member_portal/leads')}", data: { tooltip: "Leads" } do %>
+            <div class="nav-icon-modern"><div class="icon-bg gradient-pink"><i class="bi bi-funnel-fill"></i></div></div>
+            <span class="nav-text">Leads</span>
           <% end %>
         </li>
       </ul>

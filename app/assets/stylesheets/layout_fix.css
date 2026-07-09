@@ -41,50 +41,55 @@ nav.sidebar.collapsed,
   transition: width 0.3s ease !important; /* Width transition only */
 }
 
-/* Force main content margin and positioning - normal sidebar */
-body:not(.sidebar-collapsed) .main-content,
-body:not(.sidebar-collapsed) main.main-content,
-body:not(.sidebar-collapsed) div.main-content,
-body:not(.sidebar-collapsed) .content-wrapper,
-body:not(.sidebar-collapsed) #main-content {
-  position: static !important;
-  margin-top: 70px !important;
-  margin-left: 260px !important;
-  margin-right: 0 !important;
-  margin-bottom: 0 !important;
-  width: calc(100% - 260px) !important;
-  height: auto !important;
-  min-height: calc(100vh - 70px) !important;
-  max-width: none !important;
-  overflow-y: visible !important;
-  overflow-x: visible !important;
-  box-sizing: border-box !important;
-  padding: 0 !important;
-  background: #f7fafc !important;
-  transition: margin-left 0.3s ease, width 0.3s ease !important;
-}
+/* Force main content margin and positioning - normal sidebar.
+   Scoped to desktop (>=992px) only: unscoped, these !important rules'
+   specificity beat the mobile resets further down/in _sidebar.html.erb,
+   shoving page content into a ~130px sliver next to an off-canvas sidebar. */
+@media (min-width: 992px) {
+  body:not(.sidebar-collapsed) .main-content,
+  body:not(.sidebar-collapsed) main.main-content,
+  body:not(.sidebar-collapsed) div.main-content,
+  body:not(.sidebar-collapsed) .content-wrapper,
+  body:not(.sidebar-collapsed) #main-content {
+    position: static !important;
+    margin-top: 70px !important;
+    margin-left: 260px !important;
+    margin-right: 0 !important;
+    margin-bottom: 0 !important;
+    width: calc(100% - 260px) !important;
+    height: auto !important;
+    min-height: calc(100vh - 70px) !important;
+    max-width: none !important;
+    overflow-y: visible !important;
+    overflow-x: visible !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+    background: #f7fafc !important;
+    transition: margin-left 0.3s ease, width 0.3s ease !important;
+  }
 
-/* Main content when sidebar is collapsed - expands to use freed space */
-body.sidebar-collapsed .main-content,
-body.sidebar-collapsed main.main-content,
-body.sidebar-collapsed div.main-content,
-body.sidebar-collapsed .content-wrapper,
-body.sidebar-collapsed #main-content {
-  position: static !important;
-  margin-top: 70px !important;
-  margin-left: 52px !important;
-  margin-right: 0 !important;
-  margin-bottom: 0 !important;
-  width: calc(100% - 52px) !important;
-  height: auto !important;
-  min-height: calc(100vh - 70px) !important;
-  max-width: none !important;
-  overflow-y: visible !important;
-  overflow-x: visible !important;
-  box-sizing: border-box !important;
-  padding: 0 !important;
-  background: #f7fafc !important;
-  transition: margin-left 0.3s ease, width 0.3s ease !important;
+  /* Main content when sidebar is collapsed - expands to use freed space */
+  body.sidebar-collapsed .main-content,
+  body.sidebar-collapsed main.main-content,
+  body.sidebar-collapsed div.main-content,
+  body.sidebar-collapsed .content-wrapper,
+  body.sidebar-collapsed #main-content {
+    position: static !important;
+    margin-top: 70px !important;
+    margin-left: 52px !important;
+    margin-right: 0 !important;
+    margin-bottom: 0 !important;
+    width: calc(100% - 52px) !important;
+    height: auto !important;
+    min-height: calc(100vh - 70px) !important;
+    max-width: none !important;
+    overflow-y: visible !important;
+    overflow-x: visible !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+    background: #f7fafc !important;
+    transition: margin-left 0.3s ease, width 0.3s ease !important;
+  }
 }
 
 /* Ensure proper container behavior */

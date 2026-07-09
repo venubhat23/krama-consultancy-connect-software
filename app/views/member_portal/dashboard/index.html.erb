@@ -3,6 +3,10 @@
   <p class="text-muted mb-0"><%= current_user.forum&.name %> · <%= current_user.chapter&.name %></p>
 </div>
 
+<% if @pending_office_darshan_invites.present? %>
+  <%= render "member_portal/office_darshans/invite_banner", events: @pending_office_darshan_invites %>
+<% end %>
+
 <% if @pending_rsvp_events.present? %>
   <%= render "member_portal/events/rsvp_popup", events: @pending_rsvp_events %>
 <% end %>

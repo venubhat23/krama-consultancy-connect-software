@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_08_170000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_09_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -559,10 +559,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_170000) do
     t.string "guest_name"
     t.string "guest_email"
     t.bigint "invited_by_id"
+    t.string "guest_phone"
+    t.string "token"
+    t.boolean "thanked", default: false, null: false
+    t.datetime "thanked_at"
     t.index ["event_id", "user_id"], name: "index_event_registrations_on_event_id_and_user_id", unique: true
     t.index ["event_id"], name: "index_event_registrations_on_event_id"
     t.index ["invited_by_id"], name: "index_event_registrations_on_invited_by_id"
     t.index ["rsvp_status"], name: "index_event_registrations_on_rsvp_status"
+    t.index ["token"], name: "index_event_registrations_on_token", unique: true
     t.index ["user_id"], name: "index_event_registrations_on_user_id"
   end
 
@@ -576,7 +581,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_170000) do
     t.string "venue"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "created_by_id"
     t.index ["chapter_id"], name: "index_events_on_chapter_id"
+    t.index ["created_by_id"], name: "index_events_on_created_by_id"
     t.index ["forum_id"], name: "index_events_on_forum_id"
   end
 
@@ -1613,6 +1620,31 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_170000) do
     t.index ["policy_type", "policy_id"], name: "index_policy_documents_on_policy_type_and_policy_id"
   end
 
+  create_table "referrals", force: :cascade do |t|
+    t.bigint "forum_id", null: false
+    t.bigint "chapter_id"
+    t.bigint "referrer_id", null: false
+    t.bigint "referred_user_id", null: false
+    t.text "business_context", null: false
+    t.string "contact_name"
+    t.string "contact_phone"
+    t.integer "status", default: 0, null: false
+    t.datetime "accepted_at"
+    t.datetime "in_progress_at"
+    t.datetime "converted_at"
+    t.datetime "rejected_at"
+    t.text "rejection_note"
+    t.datetime "thanked_at"
+    t.text "thank_you_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chapter_id"], name: "index_referrals_on_chapter_id"
+    t.index ["forum_id"], name: "index_referrals_on_forum_id"
+    t.index ["referred_user_id"], name: "index_referrals_on_referred_user_id"
+    t.index ["referrer_id"], name: "index_referrals_on_referrer_id"
+    t.index ["status"], name: "index_referrals_on_status"
+  end
+
   create_table "reports", force: :cascade do |t|
     t.string "name"
     t.string "report_type"
@@ -2005,6 +2037,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_170000) do
     t.bigint "forum_id"
     t.bigint "chapter_id"
     t.string "session_token", null: false
+    t.string "business_category"
+    t.string "speciality"
+    t.string "nature_of_business"
+    t.string "website"
     t.index ["aadhar_no"], name: "index_users_on_aadhar_no", unique: true
     t.index ["chapter_id"], name: "index_users_on_chapter_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
@@ -2064,6 +2100,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_170000) do
   add_foreign_key "other_insurance_documents", "other_insurances", name: "other_insurance_documents_other_insurance_id_fkey"
   add_foreign_key "other_insurance_nominees", "other_insurances"
   add_foreign_key "other_insurances", "policies"
+  add_foreign_key "referrals", "chapters"
+  add_foreign_key "referrals", "forums"
+  add_foreign_key "referrals", "users", column: "referred_user_id"
+  add_foreign_key "referrals", "users", column: "referrer_id"
   add_foreign_key "session_activities", "users"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

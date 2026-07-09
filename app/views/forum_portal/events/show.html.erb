@@ -13,11 +13,15 @@
   </div>
   <div class="card-body">
     <%= form_with scope: :registration, url: invite_guest_forum_portal_event_path(@event), method: :post, local: true, class: "row g-2 align-items-end" do |f| %>
-      <div class="col-sm-5">
+      <div class="col-sm-4">
         <%= f.label :guest_name, "Guest name", class: "form-label small" %>
         <%= f.text_field :guest_name, class: "form-control", required: true %>
       </div>
-      <div class="col-sm-5">
+      <div class="col-sm-3">
+        <%= f.label :guest_phone, "Phone (for WhatsApp)", class: "form-label small" %>
+        <%= f.text_field :guest_phone, class: "form-control", placeholder: "+91XXXXXXXXXX" %>
+      </div>
+      <div class="col-sm-3">
         <%= f.label :guest_email, "Guest email", class: "form-label small" %>
         <%= f.email_field :guest_email, class: "form-control" %>
       </div>
@@ -33,6 +37,7 @@
     <h5 class="mb-0">Who's Attending</h5>
     <div class="d-flex gap-2">
       <span class="badge bg-success"><%= @event.registration_count %> going</span>
+      <span class="badge bg-warning text-dark"><%= @event.pending_invite_count %> pending</span>
       <span class="badge bg-secondary"><%= @event.not_going_count %> declined</span>
     </div>
   </div>
@@ -50,18 +55,26 @@
                   <% if reg.guest? && reg.guest_email.present? %><br><small class="text-muted"><%= reg.guest_email %></small><% end %>
                 </td>
                 <td>
-                  <span class="badge bg-<%= reg.going? ? 'success' : 'secondary' %>"><%= reg.going? ? "Going" : "Declined" %></span>
+                  <% badge = { "going" => "success", "not_going" => "secondary", "invited" => "warning" }[reg.rsvp_status] %>
+                  <% label = { "going" => "Going", "not_going" => "Declined", "invited" => "Pending" }[reg.rsvp_status] %>
+                  <span class="badge bg-<%= badge %> <%= 'text-dark' if reg.invited? %>"><%= label %></span>
                 </td>
                 <td>
                   <span class="badge bg-<%= reg.attended? ? 'success' : 'secondary' %>"><%= reg.attended? ? "Present" : "Not marked" %></span>
                 </td>
-                <td class="d-flex gap-1">
+                <td class="d-flex gap-1 flex-wrap">
                   <% if reg.going? %>
                     <%= button_to toggle_attendance_forum_portal_event_path(@event, registration_id: reg.id), method: :patch, class: "btn btn-sm btn-outline-primary" do %>
                       <%= reg.attended? ? "Unmark" : "Mark Present" %>
                     <% end %>
                   <% end %>
-                  <%= link_to "Start Membership App", new_forum_portal_membership_application_path(name: reg.display_name, email: reg.guest_email, event_id: @event.id), class: "btn btn-sm btn-outline-success" %>
+                  <% if reg.guest? && reg.guest_phone.present? %>
+                    <% wa = EventWhatsappMessage.for(reg) %>
+                    <%= link_to wa[:url], target: "_blank", rel: "noopener", class: "btn btn-sm btn-outline-success" do %>
+                      <i class="bi bi-whatsapp me-1"></i><%= reg.invited? ? "Send Invite" : "Send Update" %>
+                    <% end %>
+                  <% end %>
+                  <%= link_to "Start Membership App", new_forum_portal_membership_application_path(name: reg.display_name, email: reg.guest_email, event_id: @event.id), class: "btn btn-sm btn-outline-secondary" %>
                 </td>
               </tr>
             <% end %>

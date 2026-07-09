@@ -74,7 +74,10 @@ class User < ApplicationRecord
   has_many :support_tickets, foreign_key: :raised_by_id, dependent: :destroy, inverse_of: :raised_by
   has_many :event_registrations, dependent: :destroy
   has_many :registered_events, through: :event_registrations, source: :event
+  has_many :organized_events, class_name: 'Event', foreign_key: :created_by_id, dependent: :nullify
   has_many :created_announcements, class_name: 'Announcement', foreign_key: :created_by_id, dependent: :destroy, inverse_of: :created_by
+  has_many :sent_referrals, class_name: 'Referral', foreign_key: :referrer_id, dependent: :destroy, inverse_of: :referrer
+  has_many :received_referrals, class_name: 'Referral', foreign_key: :referred_user_id, dependent: :destroy, inverse_of: :referred_user
 
   # Validations
   validates :first_name, presence: true

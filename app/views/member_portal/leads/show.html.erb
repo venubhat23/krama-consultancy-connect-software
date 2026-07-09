@@ -1,0 +1,56 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Lead from <%= @referral.referrer.full_name %></h2>
+    <p class="text-muted mb-0">Received <%= @referral.created_at.strftime("%b %d, %Y") %></p>
+  </div>
+  <%= link_to member_portal_leads_path, class: "btn btn-outline-secondary" do %><i class="bi bi-arrow-left me-1"></i>Back to Leads<% end %>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <% if @referral.rejected? %>
+      <span class="badge bg-secondary mb-3">Declined</span>
+      <% if @referral.rejection_note.present? %><p class="text-muted small">Reason: <%= @referral.rejection_note %></p><% end %>
+    <% else %>
+      <ol class="d-flex list-unstyled gap-2 mb-4 flex-wrap">
+        <% Referral::STEPS.each do |key, label| %>
+          <% reached = @referral.timeline_steps.any? { |k, _| k == key } %>
+          <li class="badge <%= reached ? 'bg-success' : 'bg-light text-muted border' %> py-2 px-3"><%= label %></li>
+        <% end %>
+      </ol>
+    <% end %>
+
+    <h6 class="text-muted mb-1">Opportunity</h6>
+    <p><%= simple_format(@referral.business_context) %></p>
+
+    <% if @referral.contact_name.present? || @referral.contact_phone.present? %>
+      <h6 class="text-muted mb-1">Contact Details</h6>
+      <p><%= @referral.contact_name %> <%= @referral.contact_phone %></p>
+    <% end %>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body d-flex gap-2 flex-wrap">
+    <% if @referral.pending? %>
+      <%= button_to "Accept", accept_member_portal_lead_path(@referral), method: :post, class: "btn btn-success" %>
+      <%= button_to "Decline", reject_member_portal_lead_path(@referral), method: :post, class: "btn btn-outline-danger" %>
+    <% elsif @referral.accepted? %>
+      <%= button_to "Mark In Progress", start_progress_member_portal_lead_path(@referral), method: :post, class: "btn btn-primary" %>
+    <% elsif @referral.in_progress? %>
+      <%= button_to "🎉 Mark Converted to Business", convert_member_portal_lead_path(@referral), method: :post, class: "btn btn-success" %>
+    <% elsif @referral.converted? && !@referral.thanked? %>
+      <%= form_with url: send_thanks_member_portal_lead_path(@referral), method: :post, local: true, class: "w-100" do |f| %>
+        <label class="form-label small text-muted">Say thanks — add your own note (optional):</label>
+        <div class="input-group">
+          <%= text_field_tag :message, nil, class: "form-control", placeholder: "Thanks for the lead! Got the business 🎉" %>
+          <%= submit_tag "Save Thanks", class: "btn btn-outline-success" %>
+        </div>
+      <% end %>
+    <% elsif @referral.converted? && @referral.thanked? && @whatsapp %>
+      <%= link_to @whatsapp[:url], target: "_blank", rel: "noopener", class: "btn btn-success" do %>
+        <i class="bi bi-whatsapp me-1"></i>Send Thanks via WhatsApp
+      <% end %>
+    <% end %>
+  </div>
+</div>

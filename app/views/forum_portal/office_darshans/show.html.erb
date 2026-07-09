@@ -1,0 +1,47 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><%= @event.title %></h2>
+    <p class="text-muted mb-0">
+      <%= @event.starts_at.strftime("%b %d, %Y %I:%M %p") %> · <%= @event.venue %> · <%= @event.chapter&.name || "Whole Forum" %>
+      · Organized by <%= @event.created_by&.full_name || "—" %>
+    </p>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h5 class="mb-0">Attendance</h5>
+    <div class="d-flex gap-2 flex-wrap">
+      <span class="badge bg-success"><%= @event.registration_count %> going</span>
+      <span class="badge bg-warning text-dark"><%= @event.pending_invite_count %> pending</span>
+      <span class="badge bg-secondary"><%= @event.not_going_count %> declined</span>
+      <span class="badge bg-primary"><%= @event.attendance_count %> attended</span>
+      <span class="badge bg-info"><%= @event.thanked_count %> thanked</span>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <% if @registrations.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light"><tr><th class="border-0">Member</th><th class="border-0">RSVP</th><th class="border-0">Attended</th><th class="border-0">Thanked</th></tr></thead>
+          <tbody>
+            <% @registrations.each do |reg| %>
+              <tr>
+                <td><%= reg.display_name %></td>
+                <td>
+                  <% badge = { "going" => "success", "not_going" => "secondary", "invited" => "warning" }[reg.rsvp_status] %>
+                  <% label = { "going" => "Going", "not_going" => "Declined", "invited" => "Pending" }[reg.rsvp_status] %>
+                  <span class="badge bg-<%= badge %> <%= 'text-dark' if reg.invited? %>"><%= label %></span>
+                </td>
+                <td><span class="badge bg-<%= reg.attended? ? 'success' : 'secondary' %>"><%= reg.attended? ? "Present" : "Not marked" %></span></td>
+                <td><%= reg.thanked? ? "✓" : "—" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-4 text-muted">No responses yet.</div>
+    <% end %>
+  </div>
+</div>

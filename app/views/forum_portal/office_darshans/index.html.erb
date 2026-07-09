@@ -1,0 +1,41 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">Office Darshan</h2>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <% if @events.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Title</th>
+              <th class="border-0">When</th>
+              <th class="border-0">Organizer</th>
+              <th class="border-0">Chapter</th>
+              <th class="border-0">Going</th>
+              <th class="border-0">Attended</th>
+              <th class="border-0"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @events.each do |event| %>
+              <tr>
+                <td><%= event.title %></td>
+                <td><%= event.starts_at.strftime("%b %d, %Y %I:%M %p") %></td>
+                <td><%= event.created_by&.full_name || "—" %></td>
+                <td><%= event.chapter&.name || "Whole Forum" %></td>
+                <td><span class="badge bg-success"><%= event.registration_count %></span></td>
+                <td><span class="badge bg-primary"><%= event.attendance_count %></span></td>
+                <td><%= link_to "View", forum_portal_office_darshan_path(event), class: "btn btn-sm btn-outline-primary" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <%= render "shared/pagination", records: @events %>
+    <% else %>
+      <div class="text-center py-4 text-muted">No Office Darshan events yet.</div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,92 @@
+<div class="mb-4">
+  <h2 class="mb-1">Referral Activity</h2>
+  <p class="text-muted mb-0">Member-to-member business referrals across <%= current_user.chapter_admin? ? "your chapter" : "your forum" %>.</p>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-2">
+    <div class="card border-0 shadow-sm text-center">
+      <div class="card-body">
+        <div class="fs-4 fw-bold"><%= @stats[:total] %></div>
+        <div class="text-muted small">Total</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="card border-0 shadow-sm text-center">
+      <div class="card-body">
+        <div class="fs-4 fw-bold text-warning"><%= @stats[:pending] %></div>
+        <div class="text-muted small">Pending</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="card border-0 shadow-sm text-center">
+      <div class="card-body">
+        <div class="fs-4 fw-bold text-info"><%= @stats[:accepted] %></div>
+        <div class="text-muted small">Accepted</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="card border-0 shadow-sm text-center">
+      <div class="card-body">
+        <div class="fs-4 fw-bold text-primary"><%= @stats[:in_progress] %></div>
+        <div class="text-muted small">In Progress</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="card border-0 shadow-sm text-center">
+      <div class="card-body">
+        <div class="fs-4 fw-bold text-success"><%= @stats[:converted] %></div>
+        <div class="text-muted small">Converted</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="card border-0 shadow-sm text-center">
+      <div class="card-body">
+        <div class="fs-4 fw-bold text-secondary"><%= @stats[:rejected] %></div>
+        <div class="text-muted small">Declined</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0"><h5 class="mb-0">All Referrals</h5></div>
+  <div class="card-body p-0">
+    <% if @referrals.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Referrer</th>
+              <th class="border-0">Referred To</th>
+              <th class="border-0">Opportunity</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @referrals.each do |ref| %>
+              <tr>
+                <td><%= ref.referrer.full_name %></td>
+                <td><%= ref.referred_user.full_name %></td>
+                <td><%= truncate(ref.business_context, length: 50) %></td>
+                <td>
+                  <% badge = { "pending" => "warning", "accepted" => "info", "in_progress" => "primary", "converted" => "success", "rejected" => "secondary" }[ref.status] %>
+                  <span class="badge bg-<%= badge %> <%= 'text-dark' if ref.pending? %>"><%= ref.status.humanize %></span>
+                </td>
+                <td><%= ref.created_at.strftime("%b %d, %Y") %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-5 text-muted">No referral activity yet.</div>
+    <% end %>
+  </div>
+</div>

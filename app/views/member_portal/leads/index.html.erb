@@ -1,0 +1,46 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">My Leads</h2>
+    <p class="text-muted mb-0">Business referrals sent to you by other members.</p>
+  </div>
+  <%= link_to new_member_portal_referral_path, class: "btn btn-primary" do %><i class="bi bi-send me-1"></i>Refer Someone<% end %>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <% if @referrals.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="border-0">Referred By</th>
+              <th class="border-0">Opportunity</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Received</th>
+              <th class="border-0"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @referrals.each do |ref| %>
+              <tr>
+                <td><%= ref.referrer.full_name %></td>
+                <td><%= truncate(ref.business_context, length: 60) %></td>
+                <td>
+                  <% badge = { "pending" => "warning", "accepted" => "info", "in_progress" => "primary", "converted" => "success", "rejected" => "secondary" }[ref.status] %>
+                  <span class="badge bg-<%= badge %> <%= 'text-dark' if ref.pending? %>"><%= ref.status.humanize %></span>
+                </td>
+                <td><%= ref.created_at.strftime("%b %d, %Y") %></td>
+                <td><%= link_to "View", member_portal_lead_path(ref), class: "btn btn-sm btn-outline-primary" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+        No leads yet. When another member refers you a business opportunity, it'll show up here.
+      </div>
+    <% end %>
+  </div>
+</div>

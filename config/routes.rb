@@ -51,6 +51,13 @@ Rails.application.routes.draw do
     post ':token/kyc',          action: :submit_kyc,       as: :submit_kyc_public_membership_application
   end
 
+  # Public, token-based event RSVP link for guests — stays open so they can
+  # change their answer any time before the event.
+  scope :rsvp, controller: 'public_event_rsvps' do
+    get  ':token',          action: :show,    as: :public_event_rsvp
+    post ':token/respond',  action: :respond, as: :respond_public_event_rsvp
+  end
+
   # Forum/Chapter admin portal (forum_admin + chapter_admin, scoped by role in controllers)
   namespace :forum_portal do
     get 'dashboard', to: 'dashboard#index'
@@ -79,6 +86,8 @@ Rails.application.routes.draw do
     resources :support_tickets, only: [:index, :show, :create] do
       member { post :reply }
     end
+    resources :leads, only: [:index]
+    resources :office_darshans, only: [:index, :show]
   end
 
   # Member portal
@@ -91,10 +100,33 @@ Rails.application.routes.draw do
         post :rsvp
       end
     end
+    resources :office_darshans, only: [:index, :new, :create, :show] do
+      member do
+        post :rsvp
+        post :mark_attendance
+        post :invite_members
+        patch 'registrations/:registration_id/attendance', action: :toggle_attendance, as: :toggle_attendance
+        post 'registrations/:registration_id/thank', action: :thank_attendee, as: :thank_attendee
+        post :thank_all
+      end
+    end
     resources :announcements, only: [:index]
     resources :support_tickets, only: [:index, :show, :create] do
       member { post :reply }
     end
+    resources :referrals, only: [:new, :create] do
+      collection { get :search_members }
+    end
+    resources :leads, only: [:index, :show] do
+      member do
+        post :accept
+        post :reject
+        post :start_progress
+        post :convert
+        post :send_thanks
+      end
+    end
+    resource :profile, only: [:edit, :update]
   end
 
   # API routes

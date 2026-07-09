@@ -1,0 +1,61 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">Office Darshan</h2>
+  <%= link_to new_member_portal_office_darshan_path, class: "btn btn-primary" do %><i class="bi bi-plus-lg me-1"></i>Announce Office Darshan<% end %>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0"><h5 class="mb-0">You're Invited</h5></div>
+  <div class="card-body p-0">
+    <% if @invited_events.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light"><tr><th class="border-0">Title</th><th class="border-0">When</th><th class="border-0">Organizer</th><th class="border-0">Your RSVP</th><th class="border-0"></th></tr></thead>
+          <tbody>
+            <% @invited_events.each do |event| %>
+              <% reg = event.event_registrations.find_by(user: current_user) %>
+              <tr>
+                <td><%= event.title %></td>
+                <td><%= event.starts_at.strftime("%b %d, %Y %I:%M %p") %></td>
+                <td><%= event.created_by&.full_name || "—" %></td>
+                <td>
+                  <% badge = { "going" => "success", "not_going" => "secondary", "invited" => "warning" }[reg&.rsvp_status] %>
+                  <% label = { "going" => "Going", "not_going" => "Declined", "invited" => "Pending" }[reg&.rsvp_status] %>
+                  <span class="badge bg-<%= badge || 'secondary' %> <%= 'text-dark' if reg&.invited? %>"><%= label || "—" %></span>
+                </td>
+                <td><%= link_to "View", member_portal_office_darshan_path(event), class: "btn btn-sm btn-outline-primary" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-4 text-muted">No Office Darshan invites yet.</div>
+    <% end %>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0"><h5 class="mb-0">Organized by You</h5></div>
+  <div class="card-body p-0">
+    <% if @organized_events.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light"><tr><th class="border-0">Title</th><th class="border-0">When</th><th class="border-0">Going</th><th class="border-0">Pending</th><th class="border-0"></th></tr></thead>
+          <tbody>
+            <% @organized_events.each do |event| %>
+              <tr>
+                <td><%= event.title %></td>
+                <td><%= event.starts_at.strftime("%b %d, %Y %I:%M %p") %></td>
+                <td><span class="badge bg-success"><%= event.registration_count %></span></td>
+                <td><span class="badge bg-warning text-dark"><%= event.pending_invite_count %></span></td>
+                <td><%= link_to "Manage", member_portal_office_darshan_path(event), class: "btn btn-sm btn-outline-primary" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-4 text-muted">You haven't announced any Office Darshan yet.</div>
+    <% end %>
+  </div>
+</div>

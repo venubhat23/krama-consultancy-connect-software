@@ -57,10 +57,10 @@ module ForumPortal
     def invite_guest
       registration = @event.event_registrations.new(guest_params)
       registration.invited_by = current_user
-      registration.rsvp_status = :going
+      registration.rsvp_status = :invited
 
       if registration.save
-        redirect_to forum_portal_event_path(@event), notice: "#{registration.guest_name} invited as a guest."
+        redirect_to forum_portal_event_path(@event), notice: "#{registration.guest_name} invited — send them the WhatsApp link to confirm."
       else
         redirect_to forum_portal_event_path(@event), alert: registration.errors.full_messages.to_sentence
       end
@@ -81,7 +81,7 @@ module ForumPortal
     end
 
     def guest_params
-      params.require(:registration).permit(:guest_name, :guest_email)
+      params.require(:registration).permit(:guest_name, :guest_email, :guest_phone)
     end
   end
 end
