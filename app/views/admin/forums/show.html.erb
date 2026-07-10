@@ -22,7 +22,13 @@
     <div class="card h-100 border-0 shadow-sm">
       <div class="card-body">
         <h6 class="text-muted mb-2">Forum Admin</h6>
-        <h5 class="mb-0"><%= @admin&.email || "— not set —" %></h5>
+        <h5 class="mb-1"><%= @admin&.email || "— not set —" %></h5>
+        <% if @admin %>
+          <div class="d-flex align-items-center gap-1">
+            <small class="text-muted"><%= @admin.original_password.presence || "Not available" %></small>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="copyToClipboard('<%= j(@admin.original_password.presence || "") %>')" title="Copy password"><i class="bi bi-clipboard small"></i></button>
+          </div>
+        <% end %>
       </div>
     </div>
   </div>
@@ -55,7 +61,7 @@
   </div>
 </div>
 
-<div class="card border-0 shadow-sm">
+<div class="card border-0 shadow-sm mb-4">
   <div class="card-header bg-transparent border-0">
     <h5 class="mb-0">Chapters</h5>
   </div>
@@ -64,13 +70,28 @@
       <div class="table-responsive">
         <table class="table table-hover mb-0">
           <thead class="bg-light">
-            <tr><th class="border-0">Chapter</th><th class="border-0">Chapter Admin</th><th class="border-0">Members</th><th class="border-0">Status</th></tr>
+            <tr><th class="border-0">Chapter</th><th class="border-0">Chapter Admin</th><th class="border-0">Username / Password</th><th class="border-0">Members</th><th class="border-0">Status</th></tr>
           </thead>
           <tbody>
             <% @chapters.each do |chapter| %>
+              <% chapter_admin = chapter.users.detect { |u| u.user_type == 'chapter_admin' } %>
               <tr>
                 <td><%= chapter.name %></td>
-                <td><%= chapter.users.detect { |u| u.user_type == 'chapter_admin' }&.email || "—" %></td>
+                <td><%= chapter_admin&.email || "—" %></td>
+                <td>
+                  <% if chapter_admin %>
+                    <div class="d-flex align-items-center gap-1 mb-1">
+                      <small class="text-muted"><%= chapter_admin.email %></small>
+                      <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="copyToClipboard('<%= j(chapter_admin.email) %>')" title="Copy username"><i class="bi bi-clipboard small"></i></button>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                      <small class="text-muted"><%= chapter_admin.original_password.presence || "Not available" %></small>
+                      <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="copyToClipboard('<%= j(chapter_admin.original_password.presence || "") %>')" title="Copy password"><i class="bi bi-clipboard small"></i></button>
+                    </div>
+                  <% else %>
+                    —
+                  <% end %>
+                </td>
                 <td><%= chapter.users.count { |u| u.user_type == 'member' } %></td>
                 <td><span class="badge bg-<%= chapter.active? ? 'success' : 'secondary' %>"><%= chapter.status.humanize %></span></td>
               </tr>
@@ -83,3 +104,66 @@
     <% end %>
   </div>
 </div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent border-0">
+    <h5 class="mb-0">Members</h5>
+  </div>
+  <div class="card-body p-0">
+    <% if @members.any? %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr><th class="border-0">Name</th><th class="border-0">Chapter</th><th class="border-0">Username</th><th class="border-0">Password</th></tr>
+          </thead>
+          <tbody>
+            <% @members.each do |member| %>
+              <tr>
+                <td><%= member.full_name %></td>
+                <td><%= member.chapter&.name || "—" %></td>
+                <td>
+                  <div class="d-flex align-items-center gap-1">
+                    <span><%= member.email %></span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="copyToClipboard('<%= j(member.email) %>')" title="Copy username"><i class="bi bi-clipboard small"></i></button>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center gap-1">
+                    <span><%= member.original_password.presence || "Not available" %></span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="copyToClipboard('<%= j(member.original_password.presence || "") %>')" title="Copy password"><i class="bi bi-clipboard small"></i></button>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <%= render "shared/pagination", records: @members %>
+    <% else %>
+      <div class="text-center py-4 text-muted">No members yet.</div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+function copyToClipboard(text) {
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(function () {
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed top-0 end-0 p-3';
+    toast.style.zIndex = '1080';
+    toast.innerHTML = `
+      <div class="toast show align-items-center text-bg-success border-0" role="alert">
+        <div class="d-flex">
+          <div class="toast-body"><i class="bi bi-check-circle me-2"></i>Copied to clipboard!</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }).catch(function (err) {
+    alert('Failed to copy: ' + err);
+  });
+}
+</script>

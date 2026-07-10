@@ -16,6 +16,7 @@ class Admin::ForumsController < Admin::SuperAdminBaseController
   def show
     @chapters = @forum.chapters.includes(:users).order(:name)
     @admin = @forum.admin
+    @members = paginate_records(@forum.users.where(user_type: 'member').order(:first_name, :last_name))
   end
 
   def new
